@@ -408,6 +408,21 @@ async function main() {
   verifica('fără linii alese → 400', (await cer('POST', '/api/sticla/comanda', { ids: [] })).stare === 400);
   verifica('pagina /sticla se serveşte', String((await cer('GET', '/sticla')).date).includes('Comandă sticlă'));
 
+  console.log('\nAfişare');
+  {
+    // data() din pagina managerului: UTC din SQLite → ora locală (România)
+    const html = fs.readFileSync(path.join(__dirname, '../web/manager/index.html'), 'utf8');
+    const sursa = html.match(/const data = s => \{[\s\S]*?\n\};/)?.[0];
+    const tzVechi = process.env.TZ;
+    process.env.TZ = 'Europe/Bucharest';
+    const data = sursa && new Function(`${sursa}; return data;`)();
+    verifica('ora din DB (UTC) se afişează în ora României — vară',
+      data?.('2026-09-16 05:52:14') === '2026-09-16 08:52', data?.('2026-09-16 05:52:14'));
+    verifica('… şi iarna (+2)', data?.('2026-01-10 22:30:00') === '2026-01-11 00:30', data?.('2026-01-10 22:30:00'));
+    verifica('dată lipsă → —', data?.(null) === '—');
+    if (tzVechi === undefined) delete process.env.TZ; else process.env.TZ = tzVechi;
+  }
+
   console.log('\nBackup');
   const dest = require('../server/db.js').backup();
   verifica('backup scris pe disc', fs.existsSync(dest) && fs.statSync(dest).size > 0);

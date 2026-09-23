@@ -141,7 +141,15 @@ const esc = t => String(t ?? '').replace(/[&<>"]/g, c =>
 // regulă ca în configurator (js/lib/num.js → qtyText).
 const qtyText = n => (Number.isInteger(n) ? n.toFixed(1) : String(n));
 const virgula = n => String(n).replace('.', ',');
-const data = s => (s ? s.slice(0, 16).replace('T', ' ') : '—');
+// Data din SQLite e UTC („2026-09-16 05:52:14", din datetime('now')) → ora
+// LOCALĂ, acelaşi format „AAAA-LL-ZZ HH:MM". Fără conversie arăta cu 2–3 ore
+// în urmă (ora României).
+const data = s => {
+  if (!s) return '—';
+  const d = new Date(s.replace(' ', 'T') + 'Z');
+  const z = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())} ${z(d.getHours())}:${z(d.getMinutes())}`;
+};
 
 let tabCurent = 'oferta';
 
