@@ -561,20 +561,6 @@ input[type="range"]::-moz-range-thumb {
 #sidebar.cote-compact #groupTracks .segmented        { padding: 2px; }
 #sidebar.cote-compact #groupTracks .segmented button { padding: 5px 8px; font-size: 11px; }
 
-/* ── Footer ── */
-.footer-note {
-  margin-top: auto;
-  padding-top: 16px;
-  border-top: 1px solid var(--line);
-  font-size: 11px;
-  color: var(--text-dim);
-  line-height: 1.6;
-}
-.footer-note code {
-  font-family: 'JetBrains Mono', monospace;
-  color: var(--accent);
-}
-
 /* ── Ofertă (coş + confirmare) ─────────────────────────────────────────────
    Panoul apare doar când configuratorul e servit de managerul de comenzi. */
 
