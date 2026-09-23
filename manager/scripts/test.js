@@ -109,6 +109,20 @@ async function main() {
     (await cer('POST', '/api/utilizatori', { nume: 'X', user: 'rol', parola: 'parola-lunga-1', rol: 'sef' })).stare === 400);
   verifica('adminul nu se poate dezactiva singur',
     (await cer('PATCH', `/api/utilizatori/${intrare.date.utilizator.id}`, { activ: 0 })).stare === 400);
+  for (const activ of [false, '']) {
+    verifica(`… nici cu activ: ${JSON.stringify(activ)}`,
+      (await cer('PATCH', `/api/utilizatori/${intrare.date.utilizator.id}`, { activ })).stare === 400);
+  }
+  verifica('adminul e tot activ după încercări',
+    db2().prepare('SELECT activ FROM utilizator WHERE id = ?').get(intrare.date.utilizator.id).activ === 1);
+
+  // parolă prea scurtă → 400 şi NIMIC salvat (nici numele, nici rolul)
+  const maria = db2().prepare("SELECT id, nume, rol FROM utilizator WHERE user = 'maria'").get();
+  verifica('modificare cu parolă prea scurtă → 400',
+    (await cer('PATCH', `/api/utilizatori/${maria.id}`, { nume: 'Alt Nume', rol: 'operator', parola: 'abc' })).stare === 400);
+  const mariaDupa = db2().prepare('SELECT nume, rol FROM utilizator WHERE id = ?').get(maria.id);
+  verifica('… şi nu s-a salvat nimic din ea', mariaDupa.nume === maria.nume && mariaDupa.rol === maria.rol,
+    JSON.stringify(mariaDupa));
 
   cookie = null;
   await cer('POST', '/api/login', { user: 'ion', parola: 'parola-ion-123' });
@@ -431,6 +445,20 @@ async function main() {
     (await cer('GET', '/api/sticla')).date.linii.length === 3);
   verifica('fără linii alese → 400', (await cer('POST', '/api/sticla/comanda', { ids: [] })).stare === 400);
   verifica('pagina /sticla se serveşte', String((await cer('GET', '/sticla')).date).includes('Comandă sticlă'));
+
+  console.log('\nRedirect după login');
+  {
+    // destinatie() din pagina de login: doar căi de pe ACELAŞI site
+    const html = fs.readFileSync(path.join(__dirname, '../web/login/index.html'), 'utf8');
+    const sursa = html.match(/function destinatie\(\) \{[\s\S]*?\n\}/)?.[0];
+    const dest = redirect => new Function('location', `${sursa}; return destinatie();`)(
+      { origin: 'https://manager.local', search: '?redirect=' + encodeURIComponent(redirect) });
+    for (const [r, asteptat] of [
+      ['/comenzi', '/comenzi'], ['/configurator/?oferta=12', '/configurator/?oferta=12'],
+      ['//evil.com', '/'], ['/\\evil.com', '/'], ['/\\/evil.com', '/'], ['https://evil.com', '/'],
+      ['javascript:alert(1)', '/'], ['/%5Cevil.com', '/%5Cevil.com'],
+    ]) verifica(`redirect ${JSON.stringify(r)} → ${asteptat}`, dest(r) === asteptat, dest(r));
+  }
 
   console.log('\nAfişare');
   {

@@ -1,5 +1,5 @@
 const { json, eroare, corpJson } = require('../http.js');
-const { db } = require('../db.js');
+const { db, tranzactie } = require('../db.js');
 const auth = require('../auth.js');
 
 // ── API utilizatori: login, logout, cine sunt, administrare conturi ─────────
@@ -56,21 +56,24 @@ async function modifica(ctx) {
   if (!auth.gasesteUtilizator(id)) return eroare(res, 404, 'Utilizator inexistent.');
 
   const { nume, rol, activ, parola } = await corpJson(ctx.req);
+  // Toate validările ÎNAINTE de orice scriere — altfel o parolă prea scurtă
+  // dădea 400, dar numele/rolul de dinainte rămâneau deja salvate.
   if (rol && !ROLURI.includes(rol)) return eroare(res, 400, `Rol necunoscut. Valori permise: ${ROLURI.join(', ')}.`);
+  if (parola != null && String(parola).length < 8) return eroare(res, 400, 'Parola trebuie să aibă cel puţin 8 caractere.');
 
   // Nu te poţi dezactiva sau retrograda singur — altfel rămâne firma fără admin.
-  if (id === ctx.utilizator.id && (activ === 0 || (rol && rol !== 'admin'))) {
+  // „Dezactivare" = orice valoare falsă (0, false, ""), cum o şi salvează mai jos.
+  const dezactivare = activ != null && !activ;
+  if (id === ctx.utilizator.id && (dezactivare || (rol && rol !== 'admin'))) {
     return eroare(res, 400, 'Nu îţi poţi retrage singur propriul acces de administrator.');
   }
 
-  if (nume  != null) db().prepare('UPDATE utilizator SET nume  = ? WHERE id = ?').run(nume, id);
-  if (rol   != null) db().prepare('UPDATE utilizator SET rol   = ? WHERE id = ?').run(rol, id);
-  if (activ != null) db().prepare('UPDATE utilizator SET activ = ? WHERE id = ?').run(activ ? 1 : 0, id);
-
-  if (parola != null) {
-    if (String(parola).length < 8) return eroare(res, 400, 'Parola trebuie să aibă cel puţin 8 caractere.');
-    auth.schimbaParola(id, parola);
-  }
+  tranzactie(d => {
+    if (nume  != null) d.prepare('UPDATE utilizator SET nume  = ? WHERE id = ?').run(nume, id);
+    if (rol   != null) d.prepare('UPDATE utilizator SET rol   = ? WHERE id = ?').run(rol, id);
+    if (activ != null) d.prepare('UPDATE utilizator SET activ = ? WHERE id = ?').run(activ ? 1 : 0, id);
+    if (parola != null) auth.schimbaParola(id, parola);
+  });
 
   json(res, 200, { utilizator: auth.gasesteUtilizator(id) });
 }

@@ -38,11 +38,19 @@
 <script>
 const $ = id => document.getElementById(id);
 
-// Unde ne întoarcem după login. Acceptăm DOAR căi relative — un `?redirect=`
-// cu URL absolut ar transforma pagina asta într-un redirector spre alt site.
+// Unde ne întoarcem după login. Acceptăm DOAR căi de pe acelaşi site — altfel
+// un link „/login?redirect=…" ar trimite omul, logat, pe alt site. Verificăm
+// adresa aşa cum o REZOLVĂ browserul, nu şirul: „/\evil.com" arată ca o cale,
+// dar browserul citeşte „\" ca „/" şi ajunge pe evil.com.
 function destinatie() {
   const cerut = new URLSearchParams(location.search).get('redirect');
-  return (cerut && cerut.startsWith('/') && !cerut.startsWith('//')) ? cerut : '/';
+  if (!cerut || !cerut.startsWith('/')) return '/';
+  try {
+    const u = new URL(cerut, location.origin);
+    return u.origin === location.origin ? u.pathname + u.search + u.hash : '/';
+  } catch {
+    return '/';
+  }
 }
 
 function arata(text, fel = 'eroare') {
