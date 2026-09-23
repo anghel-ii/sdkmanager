@@ -298,6 +298,7 @@ function leagaSticla(linii, dupa) {
 
 // Modalităţile de plată (aceleaşi coduri ca PLATI din server/api/comenzi.js)
 const PLATI = { op: 'OP (ordin de plată)', bon: 'Bon fiscal', factura: 'Factură' };
+const PLATI_SCURT = { op: 'OP', bon: 'Bon fiscal', factura: 'Factură' };   // în coloana din listă
 const virgulaLei = n => Number(n).toLocaleString('ro-RO', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 
 // Fişa comenzii, printată FĂRĂ să plece din pagina asta: configuratorul (modul
@@ -381,6 +382,8 @@ async function renderLista() {
 function randeazaTabel() {
   const eOferte = tabCurent === 'oferta';
   const cuFacturare = !eOferte;
+  // sticla doar la comenzile în lucru — la o comandă finalizată e evident comandată
+  const cuSticla = tabCurent === 'comanda';
   const btnSort = $('sortare');
   btnSort.style.display = cuFacturare ? '' : 'none';
   btnSort.textContent = sortare === 'facturare' ? '⇅ Nefacturate primele' : '⇅ Cele mai noi primele';
@@ -401,7 +404,7 @@ function randeazaTabel() {
   $('tabelLista').innerHTML = randuri.length ? `
     <table class="lista">
       <thead><tr>
-        <th></th><th>Număr</th><th>Client</th><th>Sistem</th>${cuStatus ? '<th>Status</th>' : ''}${cuFacturare ? '<th>Sticlă</th><th>Facturare</th>' : ''}
+        <th></th><th>Număr</th><th>Client</th><th>Sistem</th>${cuStatus ? '<th>Status</th>' : ''}${cuSticla ? '<th>Sticlă</th>' : ''}${cuFacturare ? '<th>Plată</th><th class="num">Avans</th><th>Facturare</th>' : ''}
         <th>Creat de</th><th>Data</th><th></th>
       </tr></thead>
       <tbody>${randuri.map(c => `
@@ -412,7 +415,10 @@ function randeazaTabel() {
           <td>${esc(c.client_nume)}</td>
           <td>${esc(c.sistem ?? '—')}</td>
           ${cuStatus ? `<td>${statusHtml(c.status)}</td>` : ''}
-          ${cuFacturare ? `<td class="facturare">${sticlaHtml(c.sticla)}</td><td class="facturare">${facturareHtml(c)}</td>` : ''}
+          ${cuSticla ? `<td class="facturare">${sticlaHtml(c.sticla)}</td>` : ''}
+          ${cuFacturare ? `<td>${esc(PLATI_SCURT[c.plata] ?? '—')}</td>
+            <td class="num">${c.avans > 0 ? `${virgulaLei(c.avans)} lei` : '<span class="dim">—</span>'}</td>
+            <td class="facturare">${facturareHtml(c)}</td>` : ''}
           <td class="dim">${esc(c.creat_de_nume)}</td>
           <td class="dim mic data">${data(dataRand(c))}</td>
           <td class="actiuni"><button class="mic fisa" data-id="${c.id}" title="Deschide fişa comenzii pentru printare">🖶 Fişă</button>${eOferte

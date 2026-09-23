@@ -234,7 +234,7 @@ function listeaza(ctx) {
 
   const randuri = db().prepare(`
     SELECT c.id, c.numar, c.numar_comanda, c.tip, c.client_nume, c.creat_la, c.confirmat_la, c.finalizat_la,
-           c.factura_nr, c.facturat_la,
+           c.factura_nr, c.facturat_la, c.plata, c.avans,
            u.nume AS creat_de_nume,
            (SELECT p.eticheta FROM pozitie p WHERE p.comanda_id = c.id ORDER BY p.idx LIMIT 1) AS sistem,
            ${config.scanare ? `(${ULTIMA_SCANARE})` : 'NULL'} AS ultima,

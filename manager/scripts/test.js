@@ -314,6 +314,11 @@ async function main() {
   verifica('a trecut în tabul Comenzi',
     (await cer('GET', '/api/comenzi?tip=comanda')).date.comenzi.length === 1);
   verifica('nu mai e în Oferte', (await cer('GET', '/api/comenzi')).date.comenzi.length === 1);
+  {
+    const rand = (await cer('GET', '/api/comenzi?tip=comanda')).date.comenzi.find(c => c.id === id);
+    verifica('lista Comenzi are plata şi avansul', rand?.plata === 'factura' && rand?.avans === 1500.5,
+      JSON.stringify({ plata: rand?.plata, avans: rand?.avans }));
+  }
 
   const s2 = (await cer('GET', '/api/sumar')).date;
   verifica('sumarul urmăreşte acceptarea', s2.oferte === 1 && s2.comenzi === 1, JSON.stringify(s2));
