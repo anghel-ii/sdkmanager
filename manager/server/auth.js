@@ -33,7 +33,7 @@ function verificaParola(parola, hash, salt) {
 
 const PUBLIC = 'id, nume, user, rol, activ, creat_la';   // niciodată hash/salt
 
-function creeazaUtilizator({ nume, user, parola, rol = 'operator' }) {
+function creeazaUtilizator({ nume, user, parola, rol = 'birou' }) {
   const { hash, salt } = hashParola(parola);
   const info = db().prepare(`
     INSERT INTO utilizator (nume, user, parola_hash, parola_salt, rol)

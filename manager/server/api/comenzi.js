@@ -342,6 +342,11 @@ async function factura(ctx) {
   const c = db().prepare('SELECT * FROM comanda WHERE id = ?').get(id);
   if (!c)                  return eroare(ctx.res, 404, 'Comandă inexistentă.');
   if (c.tip !== 'comanda') return eroare(ctx.res, 409, 'Doar o comandă acceptată se poate factura.');
+  // Rolul „birou" doar TRECE numărul pe o comandă nefacturată — schimbarea sau
+  // anularea unui număr existent e a conducerii / administratorului.
+  if (c.factura_nr && ctx.utilizator.rol === 'birou') {
+    return eroare(ctx.res, 403, 'Numărul unei facturi deja trecute îl poate schimba sau anula doar conducerea sau administratorul.');
+  }
   const numar = String(corp.numar ?? '').trim().slice(0, 40);
   if (!numar && !corp.anuleaza) return eroare(ctx.res, 400, 'Completează numărul facturii.');
   db().prepare(`UPDATE comanda SET factura_nr = ?, facturat_la = ${numar ? "datetime('now')" : 'NULL'} WHERE id = ?`)

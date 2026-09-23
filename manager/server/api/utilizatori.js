@@ -32,7 +32,12 @@ const listeaza = ctx => json(ctx.res, 200, {
   ).all(),
 });
 
-const ROLURI = ['admin', 'birou', 'operator'];
+// Rolurile (userul, 2026-09-23):
+//   admin     — tot
+//   conducere — tot, în afară de conturi (creare / modificare)
+//   birou     — ca conducere, dar un nr. de factură doar îl TRECE pe o comandă
+//               nefacturată; nu-l poate schimba sau anula (vezi api/comenzi.js)
+const ROLURI = ['admin', 'conducere', 'birou'];
 
 async function creeaza(ctx) {
   const { res } = ctx;

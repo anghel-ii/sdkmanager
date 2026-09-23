@@ -54,7 +54,7 @@ async function main() {
 
   console.log('Conturi');
   creeazaUtilizator({ nume: 'Admin Test', user: 'admin',  parola: 'parola-admin-1', rol: 'admin' });
-  creeazaUtilizator({ nume: 'Ion Atelier', user: 'ion',   parola: 'parola-ion-123', rol: 'operator' });
+  creeazaUtilizator({ nume: 'Ion Conducere', user: 'ion', parola: 'parola-ion-123', rol: 'conducere' });
   verifica('parola nu se stochează în clar', !JSON.stringify(
     require('../server/db.js').db().prepare('SELECT * FROM utilizator').all()
   ).includes('parola-admin-1'));
@@ -79,7 +79,7 @@ async function main() {
     const randuri = db2().prepare('SELECT token FROM sesiune').all().map(r => r.token);
     verifica('tokenul din cookie NU apare în clar în DB', !randuri.includes(token));
     verifica('în DB stă SHA-256 al tokenului', randuri.includes(sha(token)));
-    verifica('schema la versiunea 7', db2().prepare('PRAGMA user_version').get().user_version === 7);
+    
 
     // o sesiune veche, salvată în clar înainte de v6, trebuie să rămână validă
     const vechi = 'token-vechi-in-clar-' + Date.now();
@@ -107,6 +107,10 @@ async function main() {
     (await cer('POST', '/api/utilizatori', { nume: 'X', user: 'scurt', parola: 'abc' })).stare === 400);
   verifica('rol necunoscut → 400',
     (await cer('POST', '/api/utilizatori', { nume: 'X', user: 'rol', parola: 'parola-lunga-1', rol: 'sef' })).stare === 400);
+  verifica('rolul vechi „operator" nu mai există → 400',
+    (await cer('POST', '/api/utilizatori', { nume: 'X', user: 'rolv', parola: 'parola-lunga-1', rol: 'operator' })).stare === 400);
+  verifica('rol implicit la cont nou = birou',
+    (await cer('POST', '/api/utilizatori', { nume: 'Fara Rol', user: 'fararol', parola: 'parola-lunga-1' })).date.utilizator?.rol === 'birou');
   verifica('adminul nu se poate dezactiva singur',
     (await cer('PATCH', `/api/utilizatori/${intrare.date.utilizator.id}`, { activ: 0 })).stare === 400);
   for (const activ of [false, '']) {
@@ -119,7 +123,7 @@ async function main() {
   // parolă prea scurtă → 400 şi NIMIC salvat (nici numele, nici rolul)
   const maria = db2().prepare("SELECT id, nume, rol FROM utilizator WHERE user = 'maria'").get();
   verifica('modificare cu parolă prea scurtă → 400',
-    (await cer('PATCH', `/api/utilizatori/${maria.id}`, { nume: 'Alt Nume', rol: 'operator', parola: 'abc' })).stare === 400);
+    (await cer('PATCH', `/api/utilizatori/${maria.id}`, { nume: 'Alt Nume', rol: 'conducere', parola: 'abc' })).stare === 400);
   const mariaDupa = db2().prepare('SELECT nume, rol FROM utilizator WHERE id = ?').get(maria.id);
   verifica('… şi nu s-a salvat nimic din ea', mariaDupa.nume === maria.nume && mariaDupa.rol === maria.rol,
     JSON.stringify(mariaDupa));
@@ -127,7 +131,7 @@ async function main() {
   cookie = null;
   await cer('POST', '/api/login', { user: 'ion', parola: 'parola-ion-123' });
   const interzis = await cer('GET', '/api/utilizatori');
-  verifica('operatorul NU vede conturile (403)', interzis.stare === 403, `stare ${interzis.stare}`);
+  verifica('conducerea NU vede conturile (403)', interzis.stare === 403, `stare ${interzis.stare}`);
 
   console.log('\nParolă proprie');
   verifica('parola curentă greşită → 403',
@@ -402,6 +406,38 @@ async function main() {
     (await cer('GET', '/api/comenzi?tip=finalizata')).date.comenzi[0]?.factura_nr === 'SDK 1234');
   const anul = await cer('POST', `/api/comenzi/${id}/factura`, { numar: '', anuleaza: true });
   verifica('anulare facturare → nefacturată', anul.stare === 200 && anul.date.comanda.factura_nr === null);
+
+  console.log('\n  facturare pe roluri');
+  {
+    const ca = async (user, parola, fn) => { const k = cookie; cookie = null;
+      await cer('POST', '/api/login', { user, parola }); try { return await fn(); } finally { cookie = k; } };
+    const fact = corp => cer('POST', `/api/comenzi/${id}/factura`, corp);
+    const nr = () => db2().prepare('SELECT factura_nr FROM comanda WHERE id = ?').get(id).factura_nr;
+
+    await ca('maria', 'parola-maria-1', async () => {
+      verifica('birou: trece nr. pe o comandă nefacturată → 200', (await fact({ numar: 'B-1' })).stare === 200 && nr() === 'B-1');
+      verifica('birou: NU poate modifica nr. existent → 403', (await fact({ numar: 'B-2' })).stare === 403 && nr() === 'B-1');
+      verifica('birou: NU poate anula facturarea → 403', (await fact({ numar: '', anuleaza: true })).stare === 403 && nr() === 'B-1');
+      verifica('birou: NU vede conturile → 403', (await cer('GET', '/api/utilizatori')).stare === 403);
+      const eu = (await cer('GET', '/api/eu')).date.utilizator;
+      verifica('/api/eu spune rolul (pt. interfaţă)', eu?.rol === 'birou');
+    });
+    await ca('ion', 'parola-noua-1', async () => {
+      verifica('conducere: modifică nr. existent → 200', (await fact({ numar: 'C-2' })).stare === 200 && nr() === 'C-2');
+      verifica('conducere: anulează facturarea → 200', (await fact({ numar: '', anuleaza: true })).stare === 200 && nr() === null);
+      verifica('conducere: NU vede conturile → 403', (await cer('GET', '/api/utilizatori')).stare === 403);
+      verifica('conducere: NU creează conturi → 403',
+        (await cer('POST', '/api/utilizatori', { nume: 'X', user: 'x2', parola: 'parola-lunga-1' })).stare === 403);
+    });
+    verifica('admin: modifică şi anulează', (await fact({ numar: 'A-1' })).stare === 200 && (await fact({ numar: 'A-2' })).stare === 200
+      && (await fact({ numar: '', anuleaza: true })).stare === 200 && nr() === null);
+
+    // migraţia v7 → v8: rolul vechi „operator" devine „birou"
+    const idVechi = Number(db2().prepare("INSERT INTO utilizator (nume, user, parola_hash, parola_salt, rol) VALUES ('Vechi', 'vechi', 'x', 'x', 'operator')").run().lastInsertRowid);
+    require('../server/db.js').roluriNoi(db2());
+    verifica('migraţie: operator → birou', db2().prepare('SELECT rol FROM utilizator WHERE id = ?').get(idVechi).rol === 'birou');
+    verifica('schema la versiunea 8', db2().prepare('PRAGMA user_version').get().user_version === 8);
+  }
 
   console.log('\nFixare şi sortare — per utilizator');
   verifica('fixare → 200', (await cer('POST', `/api/comenzi/${id}/fixare`, { fixat: true })).stare === 200);

@@ -337,6 +337,10 @@ const statusHtml = st => st
 // fără cereri noi. Căutarea rămâne la schimbarea tabului şi la actualizarea
 // live; sortarea e preferinţa utilizatorului (salvată pe server, /api/preferinte).
 let lista = [], cautare = '', sortare = 'data';
+// utilizatorul logat (/api/eu) — rolul decide ce butoane apar. Serverul verifică
+// oricum: „birou" nu poate schimba / anula un nr. de factură deja trecut.
+let eu = null;
+const poateAnulaFactura = () => eu?.rol === 'admin' || eu?.rol === 'conducere';
 
 const TABURI = [['oferta', 'Oferte'], ['comanda', 'Comenzi în lucru'], ['finalizata', 'Comenzi finalizate']];
 
@@ -548,7 +552,7 @@ async function renderDetaliu(id) {
         ${c.finalizat_la ? `<dt>Finalizată</dt><dd>${data(c.finalizat_la)}</dd>` : ''}
         ${!eOferta ? `<dt>Sticlă</dt><dd>${sticlaHtml(sticla)}${blocSticla(sticlaLinii)}</dd>` : ''}
         ${!eOferta ? `<dt>Facturare</dt><dd class="facturare">${facturareHtml(c, true)}${c.factura_nr
-          ? ` <span class="dim mic">· ${data(c.facturat_la)}</span> <button class="mic" id="anuleazaFactura">Anulează</button>` : ''}</dd>` : ''}
+          ? ` <span class="dim mic">· ${data(c.facturat_la)}</span> ${poateAnulaFactura() ? '<button class="mic" id="anuleazaFactura">Anulează</button>' : ''}` : ''}</dd>` : ''}
         ${c.observatii ? `<dt>Observaţii</dt><dd>${esc(c.observatii)}</dd>` : ''}
       </dl>
     </div>
@@ -702,7 +706,8 @@ function asculta() {
 (async () => {
   const r = await api('/api/eu');
   if (!r) return;
-  $('cine').textContent = (await r.json()).utilizator.nume;
+  eu = (await r.json()).utilizator;
+  $('cine').textContent = eu.nume;
   actualizeazaSticla();
   const pr = await api('/api/preferinte');
   if (pr?.ok) sortare = (await pr.json()).sortare ?? 'data';

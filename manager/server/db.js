@@ -95,7 +95,15 @@ const MIGRATII = [
     d.exec('ALTER TABLE comanda ADD COLUMN plata TEXT');
     d.exec('ALTER TABLE comanda ADD COLUMN avans REAL');
   },
+  // v7 → v8 (2026-09-23): rolurile devin admin / conducere / birou; vechiul
+  // 'operator' (şi orice rol necunoscut) trece pe 'birou', cel mai restrâns.
+  d => roluriNoi(d),
 ];
+
+// Exportată pt. test.
+function roluriNoi(d) {
+  d.prepare("UPDATE utilizator SET rol = 'birou' WHERE rol NOT IN ('admin', 'conducere', 'birou')").run();
+}
 
 // Înlocuieşte tokenurile în clar din `sesiune` cu SHA-256 lor (acelaşi calcul
 // ca hashToken din auth.js). Sigură şi la o a doua rulare: un hash (64 de
@@ -194,4 +202,4 @@ function inchide() {
   if (_db) { _db.close(); _db = null; }
 }
 
-module.exports = { db, deschide, inchide, backup, tranzactie, hashSesiuniInClar };
+module.exports = { db, deschide, inchide, backup, tranzactie, hashSesiuniInClar, roluriNoi };

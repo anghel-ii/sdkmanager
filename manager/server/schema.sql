@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS utilizator (
   user        TEXT    NOT NULL UNIQUE,               -- numele de login, minuscule
   parola_hash TEXT    NOT NULL,
   parola_salt TEXT    NOT NULL,
-  rol         TEXT    NOT NULL DEFAULT 'operator',   -- 'admin' | 'birou' | 'operator'
+  rol         TEXT    NOT NULL DEFAULT 'operator',   -- 'admin' | 'conducere' | 'birou' (v8; 'operator' = vechi)
   activ       INTEGER NOT NULL DEFAULT 1,
   creat_la    TEXT    NOT NULL DEFAULT (datetime('now'))
 );
