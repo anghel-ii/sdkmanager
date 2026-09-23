@@ -34,6 +34,8 @@ configurator_usi/js/catalog/*.sqlite
 /schite/
 /schite rame/
 *.tar.gz
+# manualul exportat pt. tipar (sursa e documentul din Claude Docs)
+/Manual*.pdf
 
 # ── Unelte / editor / sistem ────────────────────────────────────────────────
 .idea/
