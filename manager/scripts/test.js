@@ -454,12 +454,20 @@ async function main() {
   verifica('sortare implicită = data', (await cer('GET', '/api/preferinte')).date.sortare === 'data');
   verifica('sortare salvată', (await cer('PUT', '/api/preferinte', { sortare: 'facturare' })).date.sortare === 'facturare');
   verifica('sortare invalidă → 400', (await cer('PUT', '/api/preferinte', { sortare: 'altceva' })).stare === 400);
+  verifica('lăţimea barei configuratorului: implicit nesetată', (await cer('GET', '/api/preferinte')).date.latimeBara == null);
+  verifica('lăţimea barei se salvează pe cont (număr)', (await cer('PUT', '/api/preferinte', { latimeBara: 612 })).date.latimeBara === 612);
+  verifica('… şi se citeşte înapoi', (await cer('GET', '/api/preferinte')).date.latimeBara === 612);
+  verifica('lăţime invalidă → 400', (await cer('PUT', '/api/preferinte', { latimeBara: 50 })).stare === 400
+    && (await cer('PUT', '/api/preferinte', { latimeBara: 'lata' })).stare === 400);
+  verifica('… şi n-a stricat valoarea salvată', (await cer('GET', '/api/preferinte')).date.latimeBara === 612);
   const cookieAdmin = cookie; cookie = null;
   await cer('POST', '/api/login', { user: 'maria', parola: 'parola-maria-1' });
   const fixMaria = (await cer('GET', '/api/comenzi?tip=finalizata')).date.comenzi.find(c => c.id === id);
   verifica('alt utilizator NU o vede fixată', fixMaria && fixMaria.fixat === false);
   verifica('alt utilizator are sortarea lui', (await cer('GET', '/api/preferinte')).date.sortare === 'data');
+  verifica('alt utilizator NU are lăţimea barei adminului', (await cer('GET', '/api/preferinte')).date.latimeBara == null);
   cookie = cookieAdmin;
+  verifica('lăţime null = înapoi la implicit', (await cer('PUT', '/api/preferinte', { latimeBara: null })).date.latimeBara == null);
   // pin-ul ajunge DOAR la conexiunile aceluiaşi utilizator
   const cookieMaria = (await (async () => { const k = cookie; cookie = null;
     await cer('POST', '/api/login', { user: 'maria', parola: 'parola-maria-1' }); const m = cookie; cookie = k; return m; })());

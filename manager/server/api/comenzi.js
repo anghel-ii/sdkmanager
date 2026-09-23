@@ -373,23 +373,37 @@ async function fixeaza(ctx) {
   json(ctx.res, 200, { fixat: !!corp.fixat });
 }
 
-// Preferinţe per utilizator (azi: `sortare` = 'data' | 'facturare') — ţinute
-// pe server, ca să-l urmeze pe om pe orice calculator / telefon.
-const PREFERINTE = { sortare: ['data', 'facturare'] };
+// Preferinţe per utilizator — ţinute pe server, ca să-l urmeze pe om pe orice
+// calculator / telefon:
+//   sortare    — lista de comenzi: 'data' | 'facturare'
+//   latimeBara — lăţimea barei laterale din configurator (px); null = implicită
+// Fiecare cheie are validarea ei; valoarea null şterge preferinţa.
+const PREFERINTE = {
+  sortare:    v => ['data', 'facturare'].includes(v),
+  latimeBara: v => Number.isInteger(v) && v >= 380 && v <= 4000,
+};
+const DIN_TEXT = { latimeBara: Number };   // în DB totul e text
 
 function preferinte(ctx) {
   const rows = db().prepare('SELECT cheie, valoare FROM preferinta WHERE utilizator_id = ?').all(ctx.utilizator.id);
-  json(ctx.res, 200, { sortare: 'data', ...Object.fromEntries(rows.map(r => [r.cheie, r.valoare])) });
+  json(ctx.res, 200, { sortare: 'data', latimeBara: null,
+    ...Object.fromEntries(rows.map(r => [r.cheie, (DIN_TEXT[r.cheie] ?? String)(r.valoare)])) });
 }
 
 async function salveazaPreferinte(ctx) {
   const corp = await corpJson(ctx.req);
+  for (const [cheie, valid] of Object.entries(PREFERINTE)) {
+    if (corp[cheie] !== undefined && corp[cheie] !== null && !valid(corp[cheie])) {
+      return eroare(ctx.res, 400, `Valoare invalidă pentru ${cheie}.`);
+    }
+  }
   const pune = db().prepare(`INSERT INTO preferinta (utilizator_id, cheie, valoare) VALUES (?, ?, ?)
     ON CONFLICT(utilizator_id, cheie) DO UPDATE SET valoare = excluded.valoare`);
-  for (const [cheie, valori] of Object.entries(PREFERINTE)) {
+  const sterge = db().prepare('DELETE FROM preferinta WHERE utilizator_id = ? AND cheie = ?');
+  for (const cheie of Object.keys(PREFERINTE)) {
     if (corp[cheie] === undefined) continue;
-    if (!valori.includes(corp[cheie])) return eroare(ctx.res, 400, `Valoare invalidă pentru ${cheie}.`);
-    pune.run(ctx.utilizator.id, cheie, corp[cheie]);
+    if (corp[cheie] === null) sterge.run(ctx.utilizator.id, cheie);
+    else pune.run(ctx.utilizator.id, cheie, String(corp[cheie]));
   }
   anuntaUtilizator(ctx.utilizator.id, { preferinte: true });
   preferinte(ctx);
