@@ -509,6 +509,59 @@ async function main() {
   verifica('fără linii alese → 400', (await cer('POST', '/api/sticla/comanda', { ids: [] })).stare === 400);
   verifica('pagina /sticla se serveşte', String((await cer('GET', '/sticla')).date).includes('Comandă sticlă'));
 
+  console.log('\nConturi create de admin, activate de utilizator la primul login');
+  {
+    const ca = async fn => { const k = cookie; cookie = null; try { return await fn(); } finally { cookie = k; } };
+    // ca admin
+    const nou = await cer('POST', '/api/utilizatori', { user: ' Ana.Pop ', rol: 'birou' });
+    verifica('admin creează cont DOAR cu utilizator + rol → 201', nou.stare === 201 && nou.date.utilizator?.user === 'ana.pop', JSON.stringify(nou.date));
+    verifica('… numele afişat = utilizatorul', nou.date.utilizator?.nume === 'ana.pop');
+    verifica('… contul apare neactivat în listă',
+      (await cer('GET', '/api/utilizatori')).date.utilizatori.find(u => u.user === 'ana.pop')?.activat === false);
+    verifica('utilizator cu caractere nepermise → 400', (await cer('POST', '/api/utilizatori', { user: 'ana pop!', rol: 'birou' })).stare === 400);
+    verifica('utilizator existent → 409', (await cer('POST', '/api/utilizatori', { user: 'ana.pop', rol: 'birou' })).stare === 409);
+
+    await ca(async () => {
+      const r1 = await cer('POST', '/api/login', { user: 'ana.pop', parola: 'parola-ana-1' });
+      verifica('primul login pe cont neactivat → cere confirmarea parolei', r1.stare === 409 && r1.date.activare === true, JSON.stringify(r1));
+      verifica('… fără sesiune încă', cookie === null);
+      verifica('parole diferite → 400, contul rămâne neactivat',
+        (await cer('POST', '/api/login', { user: 'ana.pop', parola: 'parola-ana-1', parolaConfirmare: 'alta-parola-1' })).stare === 400);
+      verifica('parolă prea scurtă → 400',
+        (await cer('POST', '/api/login', { user: 'ana.pop', parola: 'scurt', parolaConfirmare: 'scurt' })).stare === 400);
+      const r2 = await cer('POST', '/api/login', { user: 'ana.pop', parola: 'parola-ana-1', parolaConfirmare: 'parola-ana-1' });
+      verifica('parole identice → cont activat + logat', r2.stare === 200 && !!cookie && r2.date.utilizator?.rol === 'birou');
+      verifica('… sesiunea merge', (await cer('GET', '/api/eu')).date.utilizator?.user === 'ana.pop');
+    });
+    await ca(async () => {
+      verifica('după activare: login normal', (await cer('POST', '/api/login', { user: 'ana.pop', parola: 'parola-ana-1' })).stare === 200);
+      verifica('după activare: altcineva NU mai poate „reactiva" cu altă parolă → 401',
+        (await cer('POST', '/api/login', { user: 'ana.pop', parola: 'alta-parola-2', parolaConfirmare: 'alta-parola-2' })).stare === 401);
+    });
+    const ana = (await cer('GET', '/api/utilizatori')).date.utilizatori.find(u => u.user === 'ana.pop');
+    verifica('lista o arată activată', ana.activat === true);
+    verifica('lista nu scoate hash-ul / salt-ul', !JSON.stringify(ana).includes('parola'));
+
+    // resetare parolă (parolă uitată)
+    verifica('admin resetează parola → 200', (await cer('PATCH', `/api/utilizatori/${ana.id}`, { reseteazaParola: true })).stare === 200);
+    verifica('… contul e iar neactivat', (await cer('GET', '/api/utilizatori')).date.utilizatori.find(u => u.id === ana.id).activat === false);
+    verifica('… şi sesiunile ei au căzut', !db2().prepare('SELECT 1 FROM sesiune WHERE utilizator_id = ?').get(ana.id));
+    await ca(async () => {
+      verifica('… parola veche nu mai merge (cere activare)', (await cer('POST', '/api/login', { user: 'ana.pop', parola: 'parola-ana-1' })).stare === 409);
+      verifica('… îşi pune parolă nouă', (await cer('POST', '/api/login', { user: 'ana.pop', parola: 'parola-ana-2', parolaConfirmare: 'parola-ana-2' })).stare === 200);
+    });
+    const eu = (await cer('GET', '/api/eu')).date.utilizator;
+    verifica('adminul NU îşi poate reseta singur parola → 400', (await cer('PATCH', `/api/utilizatori/${eu.id}`, { reseteazaParola: true })).stare === 400);
+    // cont dezactivat, neactivat: nu se poate activa
+    const blocat = (await cer('POST', '/api/utilizatori', { user: 'blocat', rol: 'birou' })).date.utilizator;
+    await cer('PATCH', `/api/utilizatori/${blocat.id}`, { activ: false });
+    await ca(async () => {
+      verifica('cont dezactivat → nu se poate activa (401)',
+        (await cer('POST', '/api/login', { user: 'blocat', parola: 'parola-lunga-9', parolaConfirmare: 'parola-lunga-9' })).stare === 401);
+    });
+    verifica('pagina /admin se serveşte', String((await cer('GET', '/admin')).date).includes('Utilizatori'));
+  }
+
   console.log('\nRedirect după login');
   {
     // destinatie() din pagina de login: doar căi de pe ACELAŞI site

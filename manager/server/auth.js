@@ -33,13 +33,30 @@ function verificaParola(parola, hash, salt) {
 
 const PUBLIC = 'id, nume, user, rol, activ, creat_la';   // niciodată hash/salt
 
+// Fără parolă = cont NEACTIVAT (hash şi salt goale): adminul creează doar
+// utilizatorul şi rolul, iar omul îşi alege parola la primul login (vezi
+// postLogin în api/utilizatori.js). Cu hash-ul gol, nicio parolă nu se verifică,
+// deci contul nu se poate folosi până nu e activat.
 function creeazaUtilizator({ nume, user, parola, rol = 'birou' }) {
-  const { hash, salt } = hashParola(parola);
+  const u = String(user).trim().toLowerCase();
+  const { hash, salt } = parola ? hashParola(parola) : { hash: '', salt: '' };
   const info = db().prepare(`
     INSERT INTO utilizator (nume, user, parola_hash, parola_salt, rol)
     VALUES (?, ?, ?, ?, ?)
-  `).run(nume, String(user).trim().toLowerCase(), hash, salt, rol);
+  `).run(String(nume || u).trim(), u, hash, salt, rol);
   return gasesteUtilizator(Number(info.lastInsertRowid));
+}
+
+// Contul unui utilizator care încă n-are parolă (şi nu e dezactivat), sau null.
+const contNeactivat = user => db().prepare(
+  "SELECT id FROM utilizator WHERE user = ? AND parola_hash = '' AND activ = 1"
+).get(String(user || '').trim().toLowerCase()) ?? null;
+
+// Parolă uitată: contul redevine neactivat, sesiunile lui cad; la următorul
+// login omul îşi alege o parolă nouă.
+function reseteazaParola(id) {
+  db().prepare("UPDATE utilizator SET parola_hash = '', parola_salt = '' WHERE id = ?").run(id);
+  db().prepare('DELETE FROM sesiune WHERE utilizator_id = ?').run(id);
 }
 
 const gasesteUtilizator = id =>
@@ -128,7 +145,7 @@ function tokenDinCerere(req) {
 
 module.exports = {
   hashParola, verificaParola,
-  creeazaUtilizator, gasesteUtilizator, schimbaParola,
+  creeazaUtilizator, gasesteUtilizator, schimbaParola, contNeactivat, reseteazaParola,
   login, logout, dinToken, curataSesiuni,
   cookieSesiune, cookieSters, tokenDinCerere,
 };

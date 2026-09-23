@@ -84,6 +84,7 @@ async function trateaza(req, res) {
     '/comenzi':     'manager',   // (adresa veche — linkurile existente merg în continuare)
     '/sticla':      'sticla',    // comanda de sticlă la furnizori
     '/login':       'login',
+    '/admin':       'admin',     // conturile (API-ul e doar pt. admin; pagina se autoverifică)
     ...(config.scanare ? { '/scan': 'scan', '/test-camera': 'test-camera' } : {}),
   };
   const pagina = PAGINI[cale.replace(/\/$/, '') || '/'];

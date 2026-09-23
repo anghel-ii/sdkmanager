@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Utilizatori — Manager comenzi</title>
+<link rel="stylesheet" href="/comun.css">
+<script src="/dialog.js"></script>
+<script src="/data.js"></script>
+<style>
+  #bara {
+    display: flex; align-items: center; gap: 16px;
+    padding: 14px 24px;
+    background: var(--panel); border-bottom: 1px solid var(--line);
+    position: sticky; top: 0; z-index: 10;
+  }
+  #bara .spatiu { flex: 1; }
+  #bara a.mic { color: var(--text); text-decoration: none; }
+  #bara a.mic:hover { color: var(--accent); }
+  #continut { padding: 24px; max-width: 1000px; margin: 0 auto; display: grid; gap: 20px; }
+
+  .panou { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px; }
+  .panou h2 { font-size: 1.05rem; margin-bottom: 12px; }
+  .cont-nou { display: grid; grid-template-columns: 1.2fr 1fr 1.2fr auto; gap: 10px; align-items: end; }
+  .cont-nou label { margin: 0; }
+  @media (max-width: 720px) { .cont-nou { grid-template-columns: 1fr; } }
+
+  table.conturi { width: 100%; border-collapse: collapse; font-size: .88rem; }
+  table.conturi th { text-align: left; font-size: .72rem; font-weight: 600; letter-spacing: .05em;
+                     text-transform: uppercase; color: var(--text-dim); padding: 6px 8px; border-bottom: 1px solid var(--line); }
+  table.conturi td { padding: 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  table.conturi select { width: auto; padding: 5px 8px; }
+  td.actiuni { white-space: nowrap; text-align: right; }
+  td.actiuni button { margin-left: 6px; }
+  button.mic { padding: 6px 12px; font-size: .82rem; }
+  .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+  .stare-activ { color: var(--ok); }
+  .stare-asteapta { color: #d4a24c; }
+  .stare-dezactivat { color: var(--danger); }
+  #mesajNou .mesaj { margin-top: 12px; }   /* .mesaj ok / eroare vin din comun.css */
+</style>
+</head>
+<body>
+
+<div id="bara">
+  <a href="/" class="mic">← Manager comenzi</a>
+  <strong>Utilizatori</strong>
+  <span class="spatiu"></span>
+  <span class="dim mic" id="cine"></span>
+  <button id="iesire">Ieşi</button>
+</div>
+
+<div id="continut">
+  <!-- Cont nou: doar utilizatorul şi rolul. Omul îşi alege parola la primul
+       login (scrie parola de două ori) — vezi postLogin în api/utilizatori.js. -->
+  <form class="panou" id="formNou" autocomplete="off">
+    <h2>Cont nou</h2>
+    <div class="cont-nou">
+      <label>Utilizator
+        <input id="nouUser" placeholder="ex. ana.pop" autocapitalize="none" spellcheck="false" required>
+      </label>
+      <label>Rol
+        <select id="nouRol" required>
+          <option value="" selected disabled>Alege…</option>
+          <option value="birou">birou</option>
+          <option value="conducere">conducere</option>
+          <option value="admin">admin</option>
+        </select>
+      </label>
+      <label>Nume afişat (opţional)
+        <input id="nouNume" placeholder="ex. Ana Pop">
+      </label>
+      <button type="submit" class="primar">Creează</button>
+    </div>
+    <div class="dim mic" style="margin-top:10px">Colegul intră pe pagina de login cu utilizatorul de aici şi parola pe care
+      şi-o alege; i se cere s-o scrie de două ori, apoi contul e activ. Creează contul abia când îi spui lui.</div>
+    <div id="mesajNou"></div>
+  </form>
+
+  <div class="panou">
+    <h2>Conturi</h2>
+    <div id="lista">Se încarcă…</div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const ROLURI = ['birou', 'conducere', 'admin'];
+let eu = null;
+
+async function api(cale, optiuni = {}) {
+  const r = await fetch(cale, { headers: { 'Content-Type': 'application/json' }, ...optiuni });
+  if (r.status === 401) { location.href = '/login?redirect=' + encodeURIComponent(location.pathname); return null; }
+  return r;
+}
+const eroareDin = async r => (await r.json().catch(() => ({}))).eroare || 'Operaţia a eşuat.';
+
+const stare = u => !u.activ ? '<span class="stare-dezactivat">dezactivat</span>'
+  : u.activat ? '<span class="stare-activ">activ</span>'
+  : '<span class="stare-asteapta">aşteaptă prima autentificare</span>';
+
+async function incarca() {
+  const r = await api('/api/utilizatori');
+  if (!r) return;
+  if (!r.ok) { $('lista').textContent = await eroareDin(r); return; }
+  const { utilizatori } = await r.json();
+  $('lista').innerHTML = `
+    <table class="conturi">
+      <thead><tr><th>Nume</th><th>Utilizator</th><th>Rol</th><th>Stare</th><th>Creat</th><th></th></tr></thead>
+      <tbody>${utilizatori.map(u => {
+        const euInsumi = u.id === eu.id;
+        return `<tr data-id="${u.id}">
+          <td>${esc(u.nume)}${euInsumi ? ' <span class="dim mic">(tu)</span>' : ''}</td>
+          <td class="mono">${esc(u.user)}</td>
+          <td>${euInsumi ? esc(u.rol) : `<select class="rol">${ROLURI.map(r =>
+            `<option${r === u.rol ? ' selected' : ''}>${r}</option>`).join('')}</select>`}</td>
+          <td>${stare(u)}</td>
+          <td class="dim mic">${dataOra(u.creat_la)}</td>
+          <td class="actiuni">${euInsumi ? '' : `
+            ${u.activat ? '<button class="mic reset">Resetează parola</button>' : ''}
+            <button class="mic activ">${u.activ ? 'Dezactivează' : 'Reactivează'}</button>`}</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>`;
+
+  document.querySelectorAll('tr[data-id]').forEach(tr => {
+    const id = +tr.dataset.id;
+    const u = utilizatori.find(x => x.id === id);
+    const patch = async corp => {
+      const r = await api(`/api/utilizatori/${id}`, { method: 'PATCH', body: JSON.stringify(corp) });
+      if (r && !r.ok) await alerta(await eroareDin(r));
+      incarca();
+    };
+    tr.querySelector('select.rol')?.addEventListener('change', async e => {
+      if (await confirma(`Schimbi rolul lui ${u.nume} din „${u.rol}" în „${e.target.value}"?`, 'Schimbă rolul')) patch({ rol: e.target.value });
+      else e.target.value = u.rol;
+    });
+    tr.querySelector('button.reset')?.addEventListener('click', async () => {
+      if (await confirma(`Resetezi parola lui ${u.nume}?\n\nContul redevine neactivat şi e scos din toate sesiunile; la următorul login îşi alege o parolă nouă (o scrie de două ori).`, 'Resetează parola'))
+        patch({ reseteazaParola: true });
+    });
+    tr.querySelector('button.activ')?.addEventListener('click', async () => {
+      const text = u.activ ? `Dezactivezi contul lui ${u.nume}? Nu se mai poate autentifica.` : `Reactivezi contul lui ${u.nume}?`;
+      if (await confirma(text, u.activ ? 'Dezactivează' : 'Reactivează')) patch({ activ: !u.activ });
+    });
+  });
+}
+
+$('formNou').addEventListener('submit', async e => {
+  e.preventDefault();
+  const user = $('nouUser').value.trim().toLowerCase();
+  const r = await api('/api/utilizatori', { method: 'POST',
+    body: JSON.stringify({ user, rol: $('nouRol').value, nume: $('nouNume').value.trim() || undefined }) });
+  if (!r) return;
+  if (!r.ok) { $('mesajNou').innerHTML = `<div class="mesaj eroare">${esc(await eroareDin(r))}</div>`; return; }
+  $('mesajNou').innerHTML = `<div class="mesaj ok">Contul <strong class="mono">${esc(user)}</strong> e creat. Spune-i colegului
+    să intre pe pagina de login cu utilizatorul ăsta şi parola pe care şi-o alege.</div>`;
+  $('formNou').reset();
+  incarca();
+});
+
+$('iesire').addEventListener('click', async () => {
+  await fetch('/api/logout', { method: 'POST' });
+  location.href = '/login';
+});
+
+(async () => {
+  const r = await api('/api/eu');
+  if (!r) return;
+  eu = (await r.json()).utilizator;
+  $('cine').textContent = eu.nume;
+  if (eu.rol !== 'admin') {
+    $('continut').innerHTML = '<div class="panou">Pagina asta e doar pentru administrator. <a href="/">Înapoi la comenzi</a></div>';
+    return;
+  }
+  incarca();
+})();
+</script>
+</body>
+</html>

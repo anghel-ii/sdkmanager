@@ -32,6 +32,13 @@
     <input id="parola" name="password" type="password" autocomplete="current-password" required>
   </div>
 
+  <!-- Primul login pe un cont creat de admin (încă fără parolă): parola scrisă
+       mai sus devine parola contului, după ce e reintrodusă aici identic. -->
+  <div class="camp" id="campConfirmare" hidden>
+    <label for="confirmare">Confirmă parola</label>
+    <input id="confirmare" type="password" autocomplete="new-password">
+  </div>
+
   <button type="submit" class="primar" id="trimite">Intră</button>
 </form>
 
@@ -67,10 +74,22 @@ $('formular').addEventListener('submit', async e => {
     const r = await fetch('/api/login', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ user: $('user').value, parola: $('parola').value }),
+      body:    JSON.stringify({ user: $('user').value, parola: $('parola').value,
+                                ...(activare ? { parolaConfirmare: $('confirmare').value } : {}) }),
     });
     const date = await r.json();
 
+    // Cont nou, fără parolă încă → cere parola a doua oară
+    if (r.status === 409 && date.activare) {
+      pornesteActivarea(date.eroare);
+      return;
+    }
+    if (!r.ok && activare) {
+      arata(date.eroare || 'Activarea a eşuat.');
+      $('confirmare').value = '';
+      $('confirmare').focus();
+      return;
+    }
     if (!r.ok) {
       arata(date.eroare || 'Autentificare eşuată.');
       $('parola').value = '';
@@ -82,8 +101,30 @@ $('formular').addEventListener('submit', async e => {
     arata('Serverul nu răspunde. Verifică legătura la reţea.');
   } finally {
     $('trimite').disabled = false;
-    $('trimite').textContent = 'Intră';
+    $('trimite').textContent = activare ? 'Activează contul' : 'Intră';
   }
+});
+
+// ── Activarea contului la primul login ──────────────────────────────────────
+let activare = false;
+function pornesteActivarea(mesaj) {
+  activare = true;
+  $('campConfirmare').hidden = false;
+  $('confirmare').required = true;
+  $('parola').autocomplete = 'new-password';
+  arata(`${mesaj} Parola trebuie să aibă cel puţin 8 caractere.`, 'info');
+  $('confirmare').value = '';
+  $('confirmare').focus();
+}
+// alt utilizator scris → înapoi la login-ul obişnuit
+$('user').addEventListener('input', () => {
+  if (!activare) return;
+  activare = false;
+  $('campConfirmare').hidden = true;
+  $('confirmare').required = false;
+  $('parola').autocomplete = 'current-password';
+  arata('');
+  $('trimite').textContent = 'Intră';
 });
 </script>
 </body>
