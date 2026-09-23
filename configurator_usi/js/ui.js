@@ -867,9 +867,9 @@ async function trimiteOferta() {
   // Câmpurile NU se mai golesc: aceleaşi date servesc şi la fişa de atelier,
   // care se printează de obicei imediat după. CLEAR PAGE resetează tot.
   ofertaSalvata = { comanda: r.comanda, stare: JSON.stringify(state) };
-  mesajOferta(`${ofertaEditata ? 'Ofertă actualizată' : 'Ofertă salvată'}: <strong>${esc(r.comanda.numar)}</strong> ·
-    <a href="/comenzi#comanda/${r.comanda.id}">vezi în manager</a>
-    <div class="dim mic">Fişa printată acum are şi codul de bare.</div>`, 'ok');
+  // butonul duce la lista de oferte din manager (acolo apare oferta, sus)
+  mesajOferta(`${ofertaEditata ? 'Ofertă actualizată' : 'Ofertă salvată'}: <strong>${esc(r.comanda.numar)}</strong>
+    <a class="oferta-link" href="/#oferte">Vezi lista de oferte →</a>`, 'ok');
 }
 
 // Ultima ofertă salvată + configuraţia de atunci. Fişa primeşte codurile de

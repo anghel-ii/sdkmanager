@@ -623,6 +623,12 @@ input[type="range"]::-moz-range-thumb {
 }
 .oferta-msg.eroare { border-color: var(--danger); background: rgba(185, 106, 91, .12); }
 .oferta-msg.ok     { border-color: #6b9b7a;       background: rgba(107, 155, 122, .12); }
+/* „Vezi lista de oferte" — buton principal, aceleaşi culori ca în manager */
+.oferta-link {
+  display: block; margin-top: 8px; padding: 8px 10px; border-radius: 6px; text-align: center;
+  border: 1px solid var(--accent); background: var(--accent-dim); color: #fff; font-weight: 600; text-decoration: none;
+}
+.oferta-link:hover { background: #2f82e6; }
 
 .oferta-client { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
 .client-butoane { display: flex; flex-direction: column; gap: 8px; }
