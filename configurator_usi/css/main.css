@@ -46,7 +46,17 @@ body {
 
 .sep { border: none; border-top: 1px solid var(--line); margin: 6px 0 22px; }
 
-#stage    { flex: 1; position: relative; }
+/* mânerul de redimensionare al barei (js/bara.js) */
+#sidebarResize {
+  flex: 0 0 6px; margin-left: -3px; margin-right: -3px; z-index: 5;
+  cursor: col-resize; background: transparent; transition: background .15s;
+  touch-action: none;
+}
+#sidebarResize:hover, #sidebarResize:focus-visible, body.redimensionare #sidebarResize { background: var(--accent-dim); outline: none; }
+body.redimensionare { cursor: col-resize; user-select: none; }
+body.redimensionare #stage { pointer-events: none; }   /* 3D-ul nu „fură" tragerea */
+
+#stage    { flex: 1; position: relative; min-width: 0; }
 #canvas-holder { position: absolute; inset: 0; }
 canvas    { display: block; }
 
