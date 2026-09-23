@@ -1102,6 +1102,12 @@ export async function initUI() {
     mesajOferta(`Fişa comenzii <strong>${esc(modFisa.numar)}</strong> — deschisă doar pentru printare; de aici nu se salvează nimic.`, 'ok');
     deschideFisa(modFisa.client, { numar: modFisa.numar }, modFisa);
   }
+  // Managerul încarcă pagina asta într-un cadru ascuns (butonul „Fişă") şi
+  // aşteaptă răspunsul: fişa e gata (dialogul de print porneşte singur) sau eroare.
+  if (params.get('fisa') && window.parent !== window) {
+    window.parent.postMessage({ tip: 'fisa', eroare: modFisa ? null : (eroareIncarcare || 'Fişa nu s-a putut deschide.') },
+      location.origin);
+  }
 
   // asincron: decide dacă panoul de ofertă are unde să trimită
   oferta.initOferta(renderOferta);

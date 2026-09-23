@@ -299,9 +299,30 @@ function leagaSticla(linii, dupa) {
 const PLATI = { op: 'OP (ordin de plată)', bon: 'Bon fiscal', factura: 'Factură' };
 const virgulaLei = n => Number(n).toLocaleString('ro-RO', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 
-// Fişa comenzii — configuratorul o deschide în modul „doar fişă" (necesarul şi
-// facturarea din listele SALVATE ale comenzii) şi porneşte printarea.
-const deschideFisa = id => window.open(`/configurator/?fisa=${encodeURIComponent(id)}`, '_blank');
+// Fişa comenzii, printată FĂRĂ să plece din pagina asta: configuratorul (modul
+// „doar fişă" — necesarul şi facturarea din listele SALVATE ale comenzii) se
+// încarcă într-un cadru ascuns, iar dialogul de print al fişei apare peste
+// pagina curentă. Cadrul rămâne până la următoarea fişă (scoaterea lui ar
+// închide dialogul de print). Configuratorul răspunde prin postMessage.
+let butonFisa = null;
+function deschideFisa(id, buton) {
+  document.getElementById('cadruFisa')?.remove();
+  if (butonFisa) { butonFisa.disabled = false; butonFisa.textContent = butonFisa.dataset.text; }
+  butonFisa = buton ?? null;
+  if (butonFisa) { butonFisa.dataset.text ??= butonFisa.textContent; butonFisa.disabled = true; butonFisa.textContent = 'Se pregăteşte…'; }
+  const f = document.createElement('iframe');
+  f.id = 'cadruFisa';
+  f.setAttribute('aria-hidden', 'true');
+  // nu display:none — configuratorul are nevoie de un cadru „viu" (3D, print)
+  f.style.cssText = 'position:fixed; left:-10000px; top:0; width:1200px; height:900px; border:0; visibility:hidden';
+  f.src = `/configurator/?fisa=${encodeURIComponent(id)}`;
+  document.body.appendChild(f);
+}
+window.addEventListener('message', e => {
+  if (e.origin !== location.origin || e.data?.tip !== 'fisa') return;
+  if (butonFisa) { butonFisa.disabled = false; butonFisa.textContent = butonFisa.dataset.text; butonFisa = null; }
+  if (e.data.eroare) alert(e.data.eroare);
+});
 
 const statusHtml = st => st
   ? `<strong>${esc(st.operatie)}</strong> <span class="dim mic">· ${cand(st.moment)} · ${esc(st.cine)}</span>`
@@ -410,7 +431,7 @@ function randeazaTabel() {
     tr.addEventListener('click', () => { location.hash = '#comanda/' + tr.dataset.id; }));
   // „Modifică oferta" — redeschide configuratorul cu configuraţia salvată
   document.querySelectorAll('button.fisa').forEach(b =>
-    b.addEventListener('click', e => { e.stopPropagation(); deschideFisa(b.dataset.id); }));
+    b.addEventListener('click', e => { e.stopPropagation(); deschideFisa(b.dataset.id, b); }));
   document.querySelectorAll('button.modifica').forEach(b =>
     b.addEventListener('click', e => { e.stopPropagation(); location.href = '/configurator/?oferta=' + b.dataset.id; }));
   // pin — per utilizator; se schimbă local imediat, apoi se salvează
@@ -570,7 +591,7 @@ async function renderDetaliu(id) {
   leagaCopiere($('copCod'),  total.map(l => l.cod));
   leagaCopiere($('copCant'), total.map(l => qtyText(l.cantitate)));
 
-  $('fisaDetaliu')?.addEventListener('click', () => deschideFisa(id));
+  $('fisaDetaliu')?.addEventListener('click', e => deschideFisa(id, e.currentTarget));
 
   // Acceptare: dialogul cere modalitatea de plată (obligatoriu) şi avansul.
   $('accepta')?.addEventListener('click', () => {
