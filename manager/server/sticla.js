@@ -63,6 +63,7 @@ function lista(ctx) {
       LEFT JOIN utilizator u ON u.id = l.comandat_de
      WHERE l.lista = 'sticla' AND c.tip = 'comanda' AND c.anulat = 0
        AND l.comandat_la IS ${comandate ? 'NOT NULL' : 'NULL'}
+       ${comandate ? 'AND c.finalizat_la IS NULL' : ''}   -- „comandate": doar comenzile încă în lucru
      ORDER BY ${comandate ? 'l.comandat_la DESC,' : ''} c.creat_la, l.idx
      ${comandate ? 'LIMIT 500' : ''}`).all();
 

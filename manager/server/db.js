@@ -98,6 +98,14 @@ const MIGRATII = [
   // v7 → v8 (2026-09-23): rolurile devin admin / conducere / birou; vechiul
   // 'operator' (şi orice rol necunoscut) trece pe 'birou', cel mai restrâns.
   d => roluriNoi(d),
+  // v8 → v9 (2026-09-23): cine a făcut fiecare pas al comenzii (pe lângă
+  // creat_de): acceptată / facturată / finalizată de. Comenzile de dinainte
+  // rămân cu NULL — nu se ştie cine.
+  d => {
+    d.exec('ALTER TABLE comanda ADD COLUMN confirmat_de INTEGER REFERENCES utilizator(id)');
+    d.exec('ALTER TABLE comanda ADD COLUMN facturat_de  INTEGER REFERENCES utilizator(id)');
+    d.exec('ALTER TABLE comanda ADD COLUMN finalizat_de INTEGER REFERENCES utilizator(id)');
+  },
 ];
 
 // Exportată pt. test.

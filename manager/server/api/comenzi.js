@@ -258,9 +258,14 @@ function listeaza(ctx) {
 
 function detaliu(ctx) {
   const id = Number(ctx.params.id);
+  // cine a făcut fiecare pas — numele, pentru pagina comenzii
   const comanda = db().prepare(`
-    SELECT c.*, u.nume AS creat_de_nume
+    SELECT c.*, u.nume AS creat_de_nume, ua.nume AS confirmat_de_nume,
+           uf.nume AS facturat_de_nume, ufi.nume AS finalizat_de_nume
       FROM comanda c JOIN utilizator u ON u.id = c.creat_de
+      LEFT JOIN utilizator ua  ON ua.id  = c.confirmat_de
+      LEFT JOIN utilizator uf  ON uf.id  = c.facturat_de
+      LEFT JOIN utilizator ufi ON ufi.id = c.finalizat_de
      WHERE c.id = ?
   `).get(id);
   if (!comanda) return eroare(ctx.res, 404, 'Comandă inexistentă.');
@@ -313,9 +318,9 @@ async function accepta(ctx) {
 
   const numarComanda = c.numar.replace(/^OF-/, 'CMD-');
   db().prepare(`
-    UPDATE comanda SET tip = 'comanda', numar_comanda = ?, confirmat_la = datetime('now'), plata = ?, avans = ?
+    UPDATE comanda SET tip = 'comanda', numar_comanda = ?, confirmat_la = datetime('now'), confirmat_de = ?, plata = ?, avans = ?
      WHERE id = ?
-  `).run(numarComanda, corp.plata, Math.round(avans * 100) / 100, id);
+  `).run(numarComanda, ctx.utilizator.id, corp.plata, Math.round(avans * 100) / 100, id);
 
   anunta({ comanda: id });
   json(ctx.res, 200, { comanda: db().prepare('SELECT * FROM comanda WHERE id = ?').get(id) });
@@ -328,7 +333,8 @@ function schimbaFinalizare(finalizata) {
     const c = db().prepare('SELECT * FROM comanda WHERE id = ?').get(id);
     if (!c)                  return eroare(ctx.res, 404, 'Comandă inexistentă.');
     if (c.tip !== 'comanda') return eroare(ctx.res, 409, 'Doar o comandă acceptată se poate finaliza.');
-    db().prepare(`UPDATE comanda SET finalizat_la = ${finalizata ? "datetime('now')" : 'NULL'} WHERE id = ?`).run(id);
+    db().prepare(`UPDATE comanda SET finalizat_la = ${finalizata ? "datetime('now')" : 'NULL'}, finalizat_de = ? WHERE id = ?`)
+      .run(finalizata ? ctx.utilizator.id : null, id);
     anunta({ comanda: id });
   json(ctx.res, 200, { comanda: db().prepare('SELECT * FROM comanda WHERE id = ?').get(id) });
   };
@@ -349,8 +355,8 @@ async function factura(ctx) {
   }
   const numar = String(corp.numar ?? '').trim().slice(0, 40);
   if (!numar && !corp.anuleaza) return eroare(ctx.res, 400, 'Completează numărul facturii.');
-  db().prepare(`UPDATE comanda SET factura_nr = ?, facturat_la = ${numar ? "datetime('now')" : 'NULL'} WHERE id = ?`)
-    .run(numar || null, id);
+  db().prepare(`UPDATE comanda SET factura_nr = ?, facturat_la = ${numar ? "datetime('now')" : 'NULL'}, facturat_de = ? WHERE id = ?`)
+    .run(numar || null, numar ? ctx.utilizator.id : null, id);
   anunta({ comanda: id });
   json(ctx.res, 200, { comanda: db().prepare('SELECT * FROM comanda WHERE id = ?').get(id) });
 }

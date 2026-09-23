@@ -6,6 +6,7 @@
 <title>Manager comenzi</title>
 <link rel="stylesheet" href="/comun.css">
 <script src="/dialog.js"></script>
+<script src="/data.js"></script>
 <script src="/live.js"></script>
 <script src="/copiaza.js"></script>
 <script src="/mail-sticla.js"></script>
@@ -169,15 +170,6 @@ const esc = t => String(t ?? '').replace(/[&<>"]/g, c =>
 // regulă ca în configurator (js/lib/num.js → qtyText).
 const qtyText = n => (Number.isInteger(n) ? n.toFixed(1) : String(n));
 const virgula = n => String(n).replace('.', ',');
-// Data din SQLite e UTC („2026-09-16 05:52:14", din datetime('now')) → ora
-// LOCALĂ, acelaşi format „AAAA-LL-ZZ HH:MM". Fără conversie arăta cu 2–3 ore
-// în urmă (ora României).
-const data = s => {
-  if (!s) return '—';
-  const d = new Date(s.replace(' ', 'T') + 'Z');
-  const z = n => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())} ${z(d.getHours())}:${z(d.getMinutes())}`;
-};
 
 let tabCurent = 'oferta';
 
@@ -209,10 +201,6 @@ function leagaCopiere(el, randuri) {
 // ── Lista ────────────────────────────────────────────────────────────────────
 
 const HASH_TAB = { oferta: '#oferte', comanda: '#comenzi', finalizata: '#finalizate' };
-
-// Data unei scanări (UTC din SQLite) → ora locală scurtă
-const cand = m => new Date(m.replace(' ', 'T') + 'Z').toLocaleString('ro-RO',
-  { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 
 // Coloana „Status" = ultima operaţie scanată în atelier
 // Facturare: nr. facturii sau „nefacturat". Câmpul pt. număr + „Marchează
@@ -249,7 +237,7 @@ const sticlaHtml = st => !st ? '<span class="dim">—</span>'
   : !st.comandate ? '<span class="sticla-nu">necomandată</span>'
   : `<span class="${st.comandate < st.total ? 'sticla-partial' : 'sticla-da'}">${st.comandate < st.total
       ? `parţial ${st.comandate}/${st.total}` : '✓ comandată'}</span>
-     <span class="dim mic">· ${cand(st.moment)} · ${esc(st.cine ?? '')}</span>`;
+     <span class="dim mic">· ${dataOra(st.moment)} · ${esc(st.cine ?? '')}</span>`;
 
 // Pagina comenzii: pe fiecare furnizor, „Comandă sticla" = mail cu DOAR sticla
 // necomandată a comenzii ăsteia, apoi confirmarea obligatorie (a plecat
@@ -274,7 +262,7 @@ const blocSticla = linii => !linii.length ? '' : `<div class="sticla-furnizori">
       ? `<button class="mic primar sticla-comanda" data-furnizor="${esc(f.cod)}"
            title="${f.email ? 'Către ' + esc(f.email) : 'Fără adresă salvată — o completezi în mail'}">✉ Comandă sticla${
            ult ? ` (${bucati(deComandat)} buc rămase)` : ''}</button>`
-      : `<span class="sticla-da">✓ comandată</span> <span class="dim mic">· ${cand(ult.comandat_la)} · ${esc(ult.comandat_de_nume ?? '')}</span>
+      : `<span class="sticla-da">✓ comandată</span> <span class="dim mic">· ${dataOra(ult.comandat_la)} · ${esc(ult.comandat_de_nume ?? '')}</span>
          <button class="mic sticla-anuleaza" data-furnizor="${esc(f.cod)}">Anulează</button>`}
   </div>`;
 }).join('')}</div>`;
@@ -300,6 +288,10 @@ function leagaSticla(linii, dupa) {
 }
 
 // Modalităţile de plată (aceleaşi coduri ca PLATI din server/api/comenzi.js)
+// „Ion Popescu · 16/09/2026 08:52" — cine a făcut pasul şi când (la comenzile
+// de dinainte de 23.09.2026 numele nu se ştie → doar data).
+const deCine = (nume, cand) => (nume ? `${esc(nume)} · ` : '') + dataOra(cand);
+
 const PLATI = { op: 'OP (ordin de plată)', bon: 'Bon fiscal', factura: 'Factură' };
 const PLATI_SCURT = { op: 'OP', bon: 'Bon fiscal', factura: 'Factură' };   // în coloana din listă
 const virgulaLei = n => Number(n).toLocaleString('ro-RO', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
@@ -330,7 +322,7 @@ window.addEventListener('message', e => {
 });
 
 const statusHtml = st => st
-  ? `<strong>${esc(st.operatie)}</strong> <span class="dim mic">· ${cand(st.moment)} · ${esc(st.cine)}</span>`
+  ? `<strong>${esc(st.operatie)}</strong> <span class="dim mic">· ${dataOra(st.moment)} · ${esc(st.cine)}</span>`
   : '<span class="dim">—</span>';
 
 // Lista curentă (de pe server) + căutarea şi sortarea — filtrate/sortate aici,
@@ -427,7 +419,7 @@ function randeazaTabel() {
             <td class="num">${c.avans > 0 ? `${virgulaLei(c.avans)} lei` : '<span class="dim">—</span>'}</td>
             <td class="facturare">${facturareHtml(c)}</td>` : ''}
           <td class="dim">${esc(c.creat_de_nume)}</td>
-          <td class="dim mic data">${data(dataRand(c))}</td>
+          <td class="dim mic data">${dataOra(dataRand(c))}</td>
           <td class="actiuni"><button class="mic fisa" data-id="${c.id}" title="Deschide fişa comenzii pentru printare">🖶 Fişă</button>${eOferte
             ? ` <button class="mic modifica" data-id="${c.id}">Modifică oferta</button>` : ''}</td>
         </tr>`).join('')}</tbody>
@@ -476,7 +468,7 @@ function tabelAtelier(coduri, scanari) {
     <table class="date" style="margin-top:8px">
       <thead><tr><th>Operaţie</th><th>Cine</th><th>Când</th></tr></thead>
       <tbody>${[...scanari].reverse().map(x => `<tr>
-        <td><strong>${esc(x.operatie)}</strong></td><td>${esc(x.cine)}</td><td class="dim mic">${cand(x.moment)}</td>
+        <td><strong>${esc(x.operatie)}</strong></td><td>${esc(x.cine)}</td><td class="dim mic">${dataOra(x.moment)}</td>
       </tr>`).join('')}</tbody>
     </table>` : '<p class="dim mic" style="margin-top:6px">Nicio operaţie scanată încă.</p>'}`;
 }
@@ -545,14 +537,14 @@ async function renderDetaliu(id) {
         <dt>Client</dt><dd>${esc(c.client_nume)}</dd>
         ${c.client_telefon ? `<dt>Telefon / adresă</dt><dd>${esc(c.client_telefon)}</dd>` : ''}
         ${c.client_email   ? `<dt>E-mail</dt><dd>${esc(c.client_email)}</dd>` : ''}
-        <dt>Creat de</dt><dd>${esc(c.creat_de_nume)} · ${data(c.creat_la)}</dd>
-        ${c.confirmat_la ? `<dt>Acceptată</dt><dd>${data(c.confirmat_la)}</dd>` : ''}
+        <dt>Creat de</dt><dd>${esc(c.creat_de_nume)} · ${dataOra(c.creat_la)}</dd>
+        ${c.confirmat_la ? `<dt>Acceptată (în lucru)</dt><dd>${deCine(c.confirmat_de_nume, c.confirmat_la)}</dd>` : ''}
         ${!eOferta ? `<dt>Plată</dt><dd>${esc(PLATI[c.plata] ?? '— (nealeasă)')} · ${c.avans > 0
           ? `avans <strong>${virgulaLei(c.avans)} lei</strong>` : '<span class="dim">fără avans</span>'}</dd>` : ''}
-        ${c.finalizat_la ? `<dt>Finalizată</dt><dd>${data(c.finalizat_la)}</dd>` : ''}
+        ${c.finalizat_la ? `<dt>Finalizată</dt><dd>${deCine(c.finalizat_de_nume, c.finalizat_la)}</dd>` : ''}
         ${!eOferta ? `<dt>Sticlă</dt><dd>${sticlaHtml(sticla)}${blocSticla(sticlaLinii)}</dd>` : ''}
         ${!eOferta ? `<dt>Facturare</dt><dd class="facturare">${facturareHtml(c, true)}${c.factura_nr
-          ? ` <span class="dim mic">· ${data(c.facturat_la)}</span> ${poateAnulaFactura() ? '<button class="mic" id="anuleazaFactura">Anulează</button>' : ''}` : ''}</dd>` : ''}
+          ? ` <span class="dim mic">· ${deCine(c.facturat_de_nume, c.facturat_la)}</span> ${poateAnulaFactura() ? '<button class="mic" id="anuleazaFactura">Anulează</button>' : ''}` : ''}</dd>` : ''}
         ${c.observatii ? `<dt>Observaţii</dt><dd>${esc(c.observatii)}</dd>` : ''}
       </dl>
     </div>

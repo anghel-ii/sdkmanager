@@ -28,7 +28,7 @@ async function trimiteMailSticla(furnizor, linii) {
   }
   const corp = [...peModel].map(([model, cote]) =>
     [model, ...[...cote].map(([cota, buc]) => `${cota}x${buc}`)].join('\r\n')).join('\r\n\r\n');
-  const subiect = `Comandă sticlă — ${new Date().toLocaleDateString('ro-RO')}`;
+  const subiect = `Comandă sticlă — ${dataOra(new Date()).slice(0, 10)}`;   // zz/ll/aaaa, din /data.js
   const catre = encodeURIComponent(furnizor.email || '');
   let url = `mailto:${catre}?subject=${encodeURIComponent(subiect)}&body=${encodeURIComponent(corp)}`;
   if (url.length > 1900) {

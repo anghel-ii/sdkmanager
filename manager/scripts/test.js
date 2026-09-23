@@ -393,6 +393,7 @@ async function main() {
   await pauza(200);
   verifica('serverul împinge schimbarea', live.mesaje.some(m => m.includes('"schimbare"')), JSON.stringify(live.mesaje));
   live.inchide();
+  verifica('redeschisă → fără „finalizat de"', (await cer('GET', `/api/comenzi/${id}`)).date.comanda.finalizat_de_nume == null);
   await cer('POST', `/api/comenzi/${id}/finalizeaza`);   // înapoi cum era, pt. testele de mai jos
 
   console.log('\nFacturare');
@@ -404,7 +405,14 @@ async function main() {
   verifica('cu număr → facturată', fac.stare === 200 && fac.date.comanda.factura_nr === 'SDK 1234' && !!fac.date.comanda.facturat_la);
   verifica('lista arată nr. facturii',
     (await cer('GET', '/api/comenzi?tip=finalizata')).date.comenzi[0]?.factura_nr === 'SDK 1234');
+  {
+    const c = (await cer('GET', `/api/comenzi/${id}`)).date.comanda;
+    verifica('detaliu: acceptată de …', c.confirmat_de_nume === 'Admin Test' && !!c.confirmat_la, c.confirmat_de_nume);
+    verifica('detaliu: facturată de …', c.facturat_de_nume === 'Admin Test', c.facturat_de_nume);
+    verifica('detaliu: finalizată de …', c.finalizat_de_nume === 'Admin Test', c.finalizat_de_nume);
+  }
   const anul = await cer('POST', `/api/comenzi/${id}/factura`, { numar: '', anuleaza: true });
+  verifica('anulare facturare → şterge şi „facturat de"', (await cer('GET', `/api/comenzi/${id}`)).date.comanda.facturat_de_nume == null);
   verifica('anulare facturare → nefacturată', anul.stare === 200 && anul.date.comanda.factura_nr === null);
 
   console.log('\n  facturare pe roluri');
@@ -436,7 +444,7 @@ async function main() {
     const idVechi = Number(db2().prepare("INSERT INTO utilizator (nume, user, parola_hash, parola_salt, rol) VALUES ('Vechi', 'vechi', 'x', 'x', 'operator')").run().lastInsertRowid);
     require('../server/db.js').roluriNoi(db2());
     verifica('migraţie: operator → birou', db2().prepare('SELECT rol FROM utilizator WHERE id = ?').get(idVechi).rol === 'birou');
-    verifica('schema la versiunea 8', db2().prepare('PRAGMA user_version').get().user_version === 8);
+    verifica('schema la versiunea 9', db2().prepare('PRAGMA user_version').get().user_version === 9);
   }
 
   console.log('\nFixare şi sortare — per utilizator');
@@ -492,6 +500,10 @@ async function main() {
   verifica('lista comenzilor arată sticla parţial comandată, cu cine', stL?.total === 3 && stL.comandate === 1 && !!stL.cine,
     JSON.stringify(stL));
   verifica('detaliul comenzii arată starea sticlei', (await cer('GET', `/api/comenzi/${ofS.id}`)).date.sticla?.comandate === 1);
+  await cer('POST', `/api/comenzi/${ofS.id}/finalizeaza`);
+  verifica('comandă finalizată → dispare din „comandate"', (await cer('GET', '/api/sticla?comandate=1')).date.linii.length === 0);
+  await cer('POST', `/api/comenzi/${ofS.id}/redeschide`);
+  verifica('redeschisă → apare din nou la „comandate"', (await cer('GET', '/api/sticla?comandate=1')).date.linii.length === 1);
   verifica('anulare → înapoi la „de comandat"', (await cer('POST', '/api/sticla/anuleaza', { ids: [idGG] })).stare === 200 &&
     (await cer('GET', '/api/sticla')).date.linii.length === 3);
   verifica('fără linii alese → 400', (await cer('POST', '/api/sticla/comanda', { ids: [] })).stare === 400);
@@ -513,17 +525,22 @@ async function main() {
 
   console.log('\nAfişare');
   {
-    // data() din pagina managerului: UTC din SQLite → ora locală (România)
-    const html = fs.readFileSync(path.join(__dirname, '../web/manager/index.html'), 'utf8');
-    const sursa = html.match(/const data = s => \{[\s\S]*?\n\};/)?.[0];
+    // web/data.js: UTC din SQLite → ora locală (România), format zz/ll/aaaa hh:mm
+    const sursa = fs.readFileSync(path.join(__dirname, '../web/data.js'), 'utf8');
     const tzVechi = process.env.TZ;
     process.env.TZ = 'Europe/Bucharest';
-    const data = sursa && new Function(`${sursa}; return data;`)();
-    verifica('ora din DB (UTC) se afişează în ora României — vară',
-      data?.('2026-09-16 05:52:14') === '2026-09-16 08:52', data?.('2026-09-16 05:52:14'));
-    verifica('… şi iarna (+2)', data?.('2026-01-10 22:30:00') === '2026-01-11 00:30', data?.('2026-01-10 22:30:00'));
-    verifica('dată lipsă → —', data?.(null) === '—');
+    const dataOra = new Function(`${sursa}; return dataOra;`)();
+    verifica('dată din DB (UTC) → zz/ll/aaaa hh:mm, ora României — vară',
+      dataOra('2026-09-16 05:52:14') === '16/09/2026 08:52', dataOra('2026-09-16 05:52:14'));
+    verifica('… şi iarna (+2, trece în ziua următoare)', dataOra('2026-01-10 22:30:00') === '11/01/2026 00:30', dataOra('2026-01-10 22:30:00'));
+    verifica('dată lipsă → —', dataOra(null) === '—');
+    verifica('un Date (ora de acum) în acelaşi format', /^\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}$/.test(dataOra(new Date())));
     if (tzVechi === undefined) delete process.env.TZ; else process.env.TZ = tzVechi;
+    for (const pagina of ['manager', 'sticla']) {
+      const html = fs.readFileSync(path.join(__dirname, `../web/${pagina}/index.html`), 'utf8');
+      verifica(`pagina ${pagina} foloseşte data.js, fără toLocaleString propriu`,
+        html.includes('<script src="/data.js">') && !/toLocaleDateString\(|toLocaleTimeString\(|day: '2-digit'/.test(html));
+    }
   }
 
   console.log('\nBackup');

@@ -6,6 +6,7 @@
 <title>Comandă sticlă</title>
 <link rel="stylesheet" href="/comun.css">
 <script src="/dialog.js"></script>
+<script src="/data.js"></script>
 <script src="/live.js"></script>
 <script src="/copiaza.js"></script>
 <script src="/mail-sticla.js"></script>
@@ -77,8 +78,6 @@
 const $ = id => document.getElementById(id);
 const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const virgula = n => String(n).replace('.', ',');
-const cand = m => m ? new Date(m.replace(' ', 'T') + 'Z').toLocaleString('ro-RO',
-  { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
 
 async function api(cale, optiuni = {}) {
   const r = await fetch(cale, { headers: { 'Content-Type': 'application/json' }, ...optiuni });
@@ -144,7 +143,7 @@ function randeaza() {
           <td class="num">${l.mp != null ? virgula(l.mp) : '—'}</td>
           <td class="cod">${esc(l.numar)}</td>
           <td>${esc(l.client_nume)}</td>
-          ${comandate ? `<td class="dim mic">${cand(l.comandat_la)} · ${esc(l.comandat_de_nume ?? '')}</td>` : ''}
+          ${comandate ? `<td class="dim mic">${dataOra(l.comandat_la)} · ${esc(l.comandat_de_nume ?? '')}</td>` : ''}
         </tr>`).join('')}</tbody>
       </table>
     </div>`).join('');

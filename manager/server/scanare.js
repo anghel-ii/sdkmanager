@@ -62,7 +62,7 @@ function inregistreaza(utilizator, codBrut, opCod) {
   // „Coletare" = ultima etapă: comanda (acceptată) trece la finalizate
   let finalizata = false;
   if (op.cod === 'COLETARE' && u.tip === 'comanda' && !u.finalizat_la) {
-    db().prepare("UPDATE comanda SET finalizat_la = datetime('now') WHERE id = ?").run(u.comanda_id);
+    db().prepare("UPDATE comanda SET finalizat_la = datetime('now'), finalizat_de = ? WHERE id = ?").run(utilizator.id, u.comanda_id);
     finalizata = true;
   }
   if (!recent) anunta({ comanda: u.comanda_id });

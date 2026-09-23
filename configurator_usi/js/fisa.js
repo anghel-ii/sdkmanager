@@ -30,9 +30,11 @@ const esc = t => String(t ?? '').replace(/[&<>"]/g, c =>
 
 const virgula = n => String(n).replace('.', ',');   // aceeaşi convenţie ca-n manager
 
-const acum = () => new Date().toLocaleString('ro-RO', {
-  day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
-});
+// data de pe fişă — acelaşi format ca în manager: zz/ll/aaaa hh:mm
+const acum = () => {
+  const d = new Date(), z = n => String(n).padStart(2, '0');
+  return `${z(d.getDate())}/${z(d.getMonth() + 1)}/${d.getFullYear()} ${z(d.getHours())}:${z(d.getMinutes())}`;
+};
 
 const amortizareLabel = v => (v === 'fara' || !v ? 'Fără' : v);
 
