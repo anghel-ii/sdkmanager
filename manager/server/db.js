@@ -1,5 +1,6 @@
-const fs   = require('node:fs');
-const path = require('node:path');
+const fs     = require('node:fs');
+const path   = require('node:path');
+const crypto = require('node:crypto');
 const { config } = require('./config.js');
 
 // taci warning-ul „SQLite is an experimental feature" de la node:sqlite
@@ -84,15 +85,35 @@ const MIGRATII = [
     d.exec('ALTER TABLE pozitie_linie ADD COLUMN comandat_la TEXT');
     d.exec('ALTER TABLE pozitie_linie ADD COLUMN comandat_de INTEGER REFERENCES utilizator(id)');
   },
+  // v5 → v6 (2026-09-23): sesiunile ţin SHA-256 al tokenului, nu tokenul în
+  // clar (vezi auth.js). Sesiunile deschise se convertesc — nimeni nu e delogat.
+  d => hashSesiuniInClar(d),
 ];
+
+// Înlocuieşte tokenurile în clar din `sesiune` cu SHA-256 lor (acelaşi calcul
+// ca hashToken din auth.js). Sigură şi la o a doua rulare: un hash (64 de
+// caractere hex) se lasă în pace — tokenurile în clar sunt base64url, 43 car.
+// Exportată pt. test.
+function hashSesiuniInClar(d) {
+  const pune = d.prepare('UPDATE sesiune SET token = ? WHERE token = ?');
+  for (const { token } of d.prepare('SELECT token FROM sesiune').all()) {
+    if (/^[0-9a-f]{64}$/.test(token)) continue;
+    pune.run(crypto.createHash('sha256').update(token).digest('hex'), token);
+  }
+}
 
 function migreaza() {
   _db.exec(fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8'));
 
+  // Fiecare migraţie, cu tot cu ridicarea versiunii, într-o tranzacţie: ori
+  // se aplică întreagă, ori deloc. Altfel o migraţie oprită la jumătate (ex.
+  // după primul din două ALTER-uri) bloca pornirea serverului pentru totdeauna.
   const versiune = _db.prepare('PRAGMA user_version').get().user_version ?? 0;
   MIGRATII.slice(versiune).forEach((mig, i) => {
-    mig(_db);
-    _db.exec(`PRAGMA user_version = ${versiune + i + 1}`);
+    tranzactie(d => {
+      mig(d);
+      d.exec(`PRAGMA user_version = ${versiune + i + 1}`);
+    });
     console.log(`DB: migraţie ${versiune + i + 1} aplicată`);
   });
 
@@ -160,4 +181,4 @@ function tranzactie(fn) {
   }
 }
 
-module.exports = { db, deschide, backup, tranzactie };
+module.exports = { db, deschide, backup, tranzactie, hashSesiuniInClar };

@@ -71,6 +71,30 @@ async function main() {
   const eu = await cer('GET', '/api/eu');
   verifica('sesiunea ţine peste cereri', eu.stare === 200 && eu.date.utilizator.user === 'admin');
 
+  console.log('\nSesiuni în DB');
+  {
+    const crypto = require('node:crypto');
+    const sha = t => crypto.createHash('sha256').update(t).digest('hex');
+    const token = cookie.split('=').slice(1).join('=');
+    const randuri = db2().prepare('SELECT token FROM sesiune').all().map(r => r.token);
+    verifica('tokenul din cookie NU apare în clar în DB', !randuri.includes(token));
+    verifica('în DB stă SHA-256 al tokenului', randuri.includes(sha(token)));
+    verifica('schema la versiunea 6', db2().prepare('PRAGMA user_version').get().user_version === 6);
+
+    // o sesiune veche, salvată în clar înainte de v6, trebuie să rămână validă
+    const vechi = 'token-vechi-in-clar-' + Date.now();
+    const adminId = db2().prepare("SELECT id FROM utilizator WHERE user = 'admin'").get().id;
+    db2().prepare("INSERT INTO sesiune (token, utilizator_id, expira_la) VALUES (?, ?, datetime('now', '+1 day'))").run(vechi, adminId);
+    require('../server/db.js').hashSesiuniInClar(db2());
+    verifica('migraţia: tokenul vechi nu mai e în clar', !db2().prepare('SELECT 1 FROM sesiune WHERE token = ?').get(vechi));
+    verifica('migraţia nu strică sesiunile deja convertite', (await cer('GET', '/api/eu')).stare === 200);
+    const pastrat = cookie; cookie = `sesiune=${vechi}`;
+    verifica('migraţia: omul logat înainte rămâne logat', (await cer('GET', '/api/eu')).stare === 200);
+    await cer('POST', '/api/logout');
+    verifica('logout şterge sesiunea (după hash)', (await cer('GET', '/api/eu')).stare === 401);
+    cookie = pastrat;
+  }
+
   console.log('\nDrepturi');
   verifica('admin vede lista de conturi', (await cer('GET', '/api/utilizatori')).stare === 200);
 

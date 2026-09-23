@@ -8,9 +8,14 @@ const { config } = require('./config.js');
 // sparg în bloc. Comparaţia e timing-safe.
 //
 // Sesiuni: token aleator de 32 de octeţi, ţinut în DB (nu în memorie), ca
-// repornirea serverului să nu delogheze omul din atelier de pe telefon.
+// repornirea serverului să nu delogheze omul din atelier de pe telefon. În DB
+// stă doar SHA-256 al tokenului (tokenul în clar e doar în cookie): cine ajunge
+// la o copie a bazei sau la un backup nu poate intra în contul nimănui.
 
 const COOKIE = 'sesiune';
+
+// cheia sesiunii în DB — acelaşi calcul ca în migraţia v5 → v6 din db.js
+const hashToken = token => crypto.createHash('sha256').update(String(token)).digest('hex');
 const SCRYPT = { N: 16384, r: 8, p: 1, keylen: 64 };
 
 function hashParola(parola, salt = crypto.randomBytes(16).toString('hex')) {
@@ -64,13 +69,13 @@ function login(user, parola) {
   const token = crypto.randomBytes(32).toString('base64url');
   const expira = new Date(Date.now() + config.sesiuneZile * 864e5).toISOString().replace('T', ' ').slice(0, 19);
   db().prepare('INSERT INTO sesiune (token, utilizator_id, expira_la) VALUES (?, ?, ?)')
-      .run(token, rand.id, expira);
+      .run(hashToken(token), rand.id, expira);
 
   return { token, utilizator: gasesteUtilizator(rand.id) };
 }
 
 const logout = token => {
-  if (token) db().prepare('DELETE FROM sesiune WHERE token = ?').run(token);
+  if (token) db().prepare('DELETE FROM sesiune WHERE token = ?').run(hashToken(token));
 };
 
 // Utilizatorul din spatele unui token, sau null. Împrospătează `vazut_la` şi
@@ -78,18 +83,19 @@ const logout = token => {
 // e delogat niciodată, cine dispare o lună trebuie să se logheze din nou.
 function dinToken(token) {
   if (!token) return null;
+  const cheie = hashToken(token);
 
   const s = db().prepare(`
     SELECT s.token, s.utilizator_id
       FROM sesiune s
       JOIN utilizator u ON u.id = s.utilizator_id
      WHERE s.token = ? AND s.expira_la > datetime('now') AND u.activ = 1
-  `).get(token);
+  `).get(cheie);
   if (!s) return null;
 
   const expira = new Date(Date.now() + config.sesiuneZile * 864e5).toISOString().replace('T', ' ').slice(0, 19);
   db().prepare("UPDATE sesiune SET vazut_la = datetime('now'), expira_la = ? WHERE token = ?")
-      .run(expira, token);
+      .run(expira, cheie);
 
   return gasesteUtilizator(s.utilizator_id);
 }
