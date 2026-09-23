@@ -73,4 +73,11 @@ function anuntaUtilizator(utilizatorId) {
   for (const [s, uid] of conexiuni) if (uid === utilizatorId) trimite(s, { tip: 'personal' });
 }
 
-module.exports = { anunta, anuntaUtilizator, upgrade, rute: [] };
+// La oprirea serverului: cadru „close" şi socket închis pe fiecare conexiune —
+// altfel server.close() aştepta la nesfârşit tab-urile deschise (ping la 25 s).
+function inchideToate() {
+  for (const s of conexiuni.keys()) { try { s.end(cadru(0x8)); } catch {} s.destroy(); }
+  conexiuni.clear();
+}
+
+module.exports = { anunta, anuntaUtilizator, upgrade, inchideToate, rute: [] };

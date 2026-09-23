@@ -181,4 +181,10 @@ function tranzactie(fn) {
   }
 }
 
-module.exports = { db, deschide, backup, tranzactie, hashSesiuniInClar };
+// Închidere curată (la oprirea serverului): SQLite scrie WAL-ul în fişierul
+// principal, ca manager.sqlite să fie complet şi fără -wal alături.
+function inchide() {
+  if (_db) { _db.close(); _db = null; }
+}
+
+module.exports = { db, deschide, inchide, backup, tranzactie, hashSesiuniInClar };

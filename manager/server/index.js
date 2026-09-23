@@ -3,7 +3,7 @@ const https = require('node:https');
 const fs    = require('node:fs');
 
 const { config } = require('./config.js');
-const { deschide, backup } = require('./db.js');
+const { deschide, inchide, backup } = require('./db.js');
 const { json, eroare, redirect, serveste, router } = require('./http.js');
 const auth = require('./auth.js');
 
@@ -153,7 +153,22 @@ function porneste() {
   zilnic();
   setInterval(zilnic, 24 * 3600 * 1000).unref();
 
-  const opreste = () => server.close(() => process.exit(0));
+  // Ctrl+C / systemctl stop. server.close() singur aştepta ca TOATE conexiunile
+  // să se închidă — dar fiecare tab al managerului ţine una live (WebSocket), iar
+  // browserele ţin şi conexiuni HTTP keep-alive, deci serverul nu mai ieşea.
+  // Aşa: închidem conexiunile live + cele inactive, cererile în curs se termină,
+  // apoi baza se închide curat. Plasă de siguranţă: ieşire după 2 s oricum; un al
+  // doilea Ctrl+C iese imediat.
+  let seOpreste = false;
+  const opreste = () => {
+    if (seOpreste) process.exit(1);
+    seOpreste = true;
+    console.log('\nSe opreşte serverul…');
+    evenimente.inchideToate();
+    server.close(() => { inchide(); process.exit(0); });
+    server.closeIdleConnections();
+    setTimeout(() => { inchide(); process.exit(0); }, 2000).unref();
+  };
   process.on('SIGINT',  opreste);
   process.on('SIGTERM', opreste);
 
