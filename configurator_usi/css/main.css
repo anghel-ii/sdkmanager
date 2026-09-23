@@ -1,0 +1,691 @@
+:root {
+  --bg:         #14161a;
+  --panel:      #1b1e24;
+  --panel-2:    #21252c;
+  --line:       #2c313a;
+  --text:       #e9ebee;
+  --text-dim:   #8b92a0;
+  /* albastru aprins, ca în manager — cel „mov" vechi (#5b8fb9 / #3a5a74)
+     abia se vedea pe fundalul închis (userul, 2026-09-22) */
+  --accent:     #4da3ff;
+  --accent-dim: #1f6fd1;
+  --danger:     #b96a5b;
+  --glass:      #5b8fb9;
+  --glass-bg:   rgba(91, 143, 185, 0.16);
+  --pal:        #a3784f;
+  --pal-bg:     rgba(163, 120, 79, 0.18);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+}
+
+#app {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+}
+
+/* ── Sidebar ── */
+#sidebar {
+  width: 40vw;
+  min-width: 420px;
+  background: var(--panel);
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  padding: 22px 20px;
+  overflow-y: auto;
+}
+
+.sep { border: none; border-top: 1px solid var(--line); margin: 6px 0 22px; }
+
+#stage    { flex: 1; position: relative; }
+#canvas-holder { position: absolute; inset: 0; }
+canvas    { display: block; }
+
+/* ── Brand ── */
+.brand         { display: flex; flex-direction: column; gap: 2px; margin-bottom: 26px; }
+.brand .name   { font-size: 16px; font-weight: 600; letter-spacing: 0.2px; }
+.brand .sub    { font-size: 12px; color: var(--text-dim); }
+
+/* ── Groups ── */
+.group       { margin-bottom: 22px; }
+.group-label { font-size: 11px; color: var(--text-dim); margin-bottom: 10px; font-weight: 500; }
+
+/* ── Segmented control ── */
+.segmented {
+  display: flex;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 3px;
+  flex-wrap: wrap;
+}
+.segmented button {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-family: 'Inter', sans-serif;
+  font-size: 12.5px;
+  font-weight: 500;
+  padding: 8px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.segmented button.active          { background: var(--accent-dim); color: #fff; }
+.segmented button:hover:not(.active) { color: var(--text); }
+
+.segmented.mini { padding: 2px; }
+.segmented.mini button { padding: 6px 4px; font-size: 11px; }
+
+/* ── Model — tabel Deschidere Totală / Parţială ── */
+.model-table { width: 100%; border-collapse: separate; border-spacing: 6px; }
+.model-table th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-dim);
+  padding: 0 0 4px 6px;
+}
+.model-table td { padding: 0; }
+.model-table button {
+  width: 100%;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  color: var(--text-dim);
+  font-family: 'Inter', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  padding: 20px 6px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.model-table button:hover:not(.active) { color: var(--text); border-color: var(--accent-dim); }
+.model-table button.active { background: var(--accent-dim); border-color: var(--accent-dim); color: #fff; }
+
+/* ── Uşi — un card per uşă: coloană stânga = panourile (stivă verticală,
+   sus→jos = uşa reală), coloană dreapta = Uşa+Montaj / Divizări+tip / Sticlă / Role ── */
+#wheelsUI { display: flex; flex-direction: column; gap: 8px; }
+.door-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 7px 9px;
+  display: flex;
+  flex-direction: row;
+  gap: 9px;
+}
+.door-panels-col {
+  display: flex;
+  flex-direction: column;   /* panoul 0 sus, în ordinea array-ului */
+  gap: 4px;
+  flex: 0 0 20%;
+  min-width: 0;
+}
+.door-fields-col { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 0; }
+
+.door-row { display: flex; align-items: center; gap: 8px; }
+.door-row-wrap { flex-wrap: wrap; }
+
+/* ── Opţiuni avansate (toate cardurile de uşă) — panoul se aşază pe toată
+   lăţimea cardului, sub cele două coloane. */
+.door-card.cu-avansat { flex-wrap: wrap; }
+.btn-avansat {
+  background: transparent;
+  border: 1px dashed var(--line);
+  border-radius: 5px;
+  color: var(--text-dim);
+  font-family: 'Inter', sans-serif;
+  font-size: 10.5px;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+.btn-avansat:hover, .btn-avansat.active { color: var(--text); border-color: var(--accent-dim); }
+.door-avansat {
+  flex-basis: 100%;
+  border-top: 1px solid var(--line);
+  padding-top: 6px;
+  display: flex;
+  gap: 10px;
+}
+.av-stanga, .av-dreapta { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.av-stanga  { flex: 1; }
+.av-dreapta { flex: 0 0 44%; border-left: 1px solid var(--line); padding-left: 10px; }
+.av-dreapta .segmented { width: 100%; }
+.av-nota { font-size: 10px; color: var(--text-dim); }
+.av-rand { display: flex; align-items: center; gap: 6px; font-size: 11px; }
+.av-panou { padding: 2px 0; }
+.av-eticheta { color: var(--text-dim); font-family: 'JetBrains Mono', monospace; font-size: 10px; min-width: 104px; }
+.av-inaltime {
+  width: 86px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  padding: 3px 6px;
+  -moz-appearance: textfield;
+}
+.av-inaltime::-webkit-inner-spin-button, .av-inaltime::-webkit-outer-spin-button { -webkit-appearance: none; }
+.av-unit { font-size: 10px; color: var(--text-dim); }
+.av-profil { margin: 0; }
+.av-eroare { font-size: 10.5px; color: #e08a6b; }
+.av-eroare:empty { display: none; }
+.door-row-label {
+  font-size: 10px;
+  color: var(--text-dim);
+  width: 48px;
+  flex-shrink: 0;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.panel-chip {
+  border: 1px solid var(--line);
+  font-family: 'Inter', sans-serif;
+  font-size: 9.5px;
+  font-weight: 500;
+  padding: 6px 8px;
+  border-radius: 5px;
+  min-width: 36px;
+  cursor: pointer;
+  background: var(--glass-bg);
+  border-color: var(--glass);
+  color: #9fc3e0;
+}
+.panel-chip.pal { background: var(--pal-bg); border-color: var(--pal); color: #d3ac82; }
+
+.door-row select.geam-select {
+  flex: 1;
+  min-width: 0;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 5px 8px;
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  font-size: 10.5px;
+  outline: none;
+  cursor: pointer;
+}
+.door-row select.geam-select option { background: var(--panel-2); color: var(--text); }
+.door-row select.geam-select:disabled { color: var(--text-dim); cursor: default; opacity: 0.7; }
+
+.stepper.mini { padding: 2px 4px; gap: 5px; }
+.stepper.mini button { width: 17px; height: 17px; font-size: 12px; line-height: 1; }
+.stepper.mini .n { font-size: 11px; width: 12px; flex: none; }
+
+.door-row-role { align-items: flex-start; }
+
+/* ── Amortizări (Confort) — un singur rând, „Stânga"/„Dreapta" deasupra
+   fiecărui grup de butoane, nu în eticheta din stânga a rândului ── */
+.door-row-amortizare { align-items: flex-start; }
+.amortizare-grup { display: flex; gap: 8px; flex: 1; min-width: 0; }
+.amortizare-parte { flex: 1; min-width: 0; }
+.amortizare-parte-label {
+  display: block;
+  text-align: center;
+  font-size: 9px;
+  color: var(--text-dim);
+  margin-bottom: 3px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.amortizare-parte .segmented { width: 100%; }
+
+/* ── Range slider ── */
+.field        { margin-bottom: 16px; }
+.field-head   { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+.field-head label { font-size: 13px; color: var(--text); }
+.field-head .val  { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--accent); font-weight: 500; }
+
+input[type="range"] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line);
+  outline: none;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 15px; height: 15px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  border: 2px solid #0e1013;
+}
+input[type="range"]::-moz-range-thumb {
+  width: 15px; height: 15px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  border: 2px solid #0e1013;
+}
+
+/* ── Stepper ── */
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 4px 6px;
+}
+.stepper button {
+  width: 26px; height: 26px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 16px;
+  cursor: pointer;
+}
+.stepper button:hover { background: var(--line); }
+.stepper .n {
+  flex: 1;
+  text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+}
+
+/* ── Color swatches ── */
+/* Finisaje — pastila de culoare PLUS numele. Numai culoarea nu ajunge:
+   „şampanie lucios" şi „auriu periat" se deosebesc greu pe un ecran, iar
+   tooltip-ul de dinainte nu se vedea deloc pe telefon. */
+.swatches { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.swatch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px 6px 7px;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--text-dim);
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background .15s, border-color .15s, color .15s;
+}
+.swatch:hover { background: #272c34; color: var(--text); }
+
+.swatch.active {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+  color: var(--text);
+  font-weight: 500;
+}
+
+.swatch .pastila {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  flex: none;
+  /* contur subţire, ca negrul să se vadă şi el pe fundal închis */
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .22);
+}
+
+/* ── Specificaţie / necesar / facturare (în sidebar) ── */
+#sidebar .row {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  font-size: 12.5px;
+  padding: 3px 0;
+  color: var(--text-dim);
+  font-family: 'JetBrains Mono', monospace;
+}
+#sidebar .row span:last-child { color: var(--text); text-align: right; }
+
+.bom-title {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  color: var(--accent);
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  margin-bottom: 10px;
+}
+#sidebar table { width: 100%; border-collapse: collapse; font-size: 12px; font-family: 'JetBrains Mono', monospace; }
+#sidebar th {
+  text-align: left;
+  color: var(--text-dim);
+  font-weight: 500;
+  font-family: 'Inter', sans-serif;
+  padding: 2px 10px 6px 0;
+}
+#sidebar td { color: var(--text); padding: 4px 10px 4px 0; vertical-align: top; }
+#sidebar td.code { color: var(--text-dim); white-space: nowrap; }
+#sidebar th.num, #sidebar td.num { text-align: right; white-space: nowrap; }
+
+/* ── Facturare ── */
+.bill-mode {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9.5px; font-weight: 500;
+  color: var(--text-dim);
+  border: 1px solid var(--line); border-radius: 4px;
+  padding: 1px 5px; margin-left: 4px;
+  text-transform: uppercase; letter-spacing: 0.3px;
+}
+.bill-err {
+  font-size: 11px; color: var(--danger);
+  margin: 6px 0; line-height: 1.4;
+}
+.bill-err code { font-family: 'JetBrains Mono', monospace; }
+.bill-copy-buttons { display: flex; gap: 8px; margin-top: 10px; }
+.btn-copy {
+  flex: 1;
+  background: var(--accent-dim); color: #fff;
+  border: none; border-radius: 6px;
+  font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600;
+  padding: 9px 10px; cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-copy:hover:not(:disabled) { background: #2f82e6; }
+.btn-copy:disabled { opacity: 0.4; cursor: not-allowed; }
+.bill-hint { font-size: 10.5px; color: var(--text-dim); margin-top: 8px; line-height: 1.5; }
+
+.hint {
+  position: absolute;
+  top: 22px; right: 22px;
+  font-size: 11.5px;
+  color: var(--text-dim);
+  background: rgba(27, 30, 36, 0.6);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+/* ── Number input ── */
+.num-input-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 14px;
+}
+.num-input-row input[type="number"] {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 16px;
+  font-weight: 500;
+  outline: none;
+  width: 70px;
+  -moz-appearance: textfield;
+}
+.num-input-row input[type="number"]::-webkit-inner-spin-button,
+.num-input-row input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+.num-input-row .unit { font-size: 13px; color: var(--text-dim); white-space: nowrap; }
+.num-input-row .dim-hint { font-size: 11px; color: var(--accent); }
+
+/* ── Schita ── */
+.schita-box {
+  max-width: 300px;
+  margin: 0 auto;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: #fff;
+  line-height: 0;
+}
+.schita-box img { width: 100%; display: block; }
+
+/* ── Model + Schiţă alăturate — doar gamele "solo" (Confort), pusă de
+   renderModelList() în ui.js. Implicit (Suspendată) rămâne stivuit vertical,
+   exact ca înainte — vezi comentariul din index.html. */
+.model-schita.langa-schita {
+  display: flex;
+  flex-direction: row;   /* DOM: model apoi schiţă → vizual model stânga, schiţă dreapta */
+  gap: 14px;
+}
+/* coloana dreaptă (schiţă + CLEAR PAGE) — cele două coloane au aceeaşi
+   înălţime (stretch), iar butonul stă jos, în dreptul ultimului model (ALFA) */
+.model-schita.langa-schita { align-items: stretch; }
+.model-schita.langa-schita .col-dreapta { flex: 0 0 38%; min-width: 0; display: flex; flex-direction: column; }
+.model-schita.langa-schita .col-dreapta #groupSchita { margin-bottom: 8px; }
+.btn-clear { display: none; }
+/* Suspendate (tabel de modele, schiţa dedesubt): CLEAR PAGE pe toată lăţimea,
+   sub schiţă */
+.model-schita:not(.langa-schita) .btn-clear {
+  display: block;
+  width: 100%;
+  margin: 0 0 22px;
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 14px 6px;
+  border-radius: 8px;
+  border: 1px solid var(--danger);
+  background: transparent;
+  color: var(--danger);
+  cursor: pointer;
+}
+.model-schita:not(.langa-schita) .btn-clear:hover { background: rgba(185, 106, 91, .15); }
+.model-schita.langa-schita .btn-clear {
+  display: block;
+  margin-top: auto;
+  margin-bottom: 26px;   /* aliniat cu marginea de jos a butonului ALFA (verificat în Chrome) */
+  width: 100%;
+  font-family: 'Inter', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  padding: 20px 6px;
+  border-radius: 8px;
+  border: 1px solid var(--danger);
+  background: transparent;
+  color: var(--danger);
+  cursor: pointer;
+}
+.model-schita.langa-schita .btn-clear:hover { background: rgba(185, 106, 91, .15); }
+.model-schita.langa-schita #groupSchita .schita-box { max-width: none; margin: 0; }
+.model-schita.langa-schita > .group:first-child { flex: 1; min-width: 0; }
+
+/* ── Confort: câmpuri de cotă compacte, etichetă pe acelaşi rând cu câmpul
+   (cerut explicit, 2026-09-17) — scopat strict sub #sidebar.cote-compact,
+   clasă pusă de renderModelList() (ui.js) DOAR la gamele solo (azi Confort).
+   Suspendată nu primeşte niciodată clasa asta, deci rămâne EXACT ca înainte
+   (eticheta pe rândul ei, deasupra câmpului). */
+#sidebar.cote-compact #groupHeight,
+#sidebar.cote-compact #groupWidth {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+#sidebar.cote-compact #groupHeight .group-label,
+#sidebar.cote-compact #groupWidth .group-label {
+  margin-bottom: 0;
+  flex: 0 0 auto;
+  width: 72px;
+}
+#sidebar.cote-compact #groupHeight .num-input-row,
+#sidebar.cote-compact #groupWidth .num-input-row {
+  flex: 1;
+  padding: 5px 10px;
+  gap: 6px;
+}
+#sidebar.cote-compact #groupHeight input[type="number"],
+#sidebar.cote-compact #groupWidth input[type="number"] {
+  width: 54px;
+  font-size: 14px;
+}
+
+/* NR. UŞI + SUPRAPUNERI — acelaşi rând (cerut explicit), fiecare subgrup
+   compact la fel ca H/L de mai sus. Elementele astea sunt oricum exclusiv
+   Confort (ascunse mereu la Suspendată via display:none inline+JS), deci
+   stilul de bază nu mai trebuie scopat separat. */
+#sidebar.cote-compact #groupDoorsTracks {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 10px;
+}
+#sidebar.cote-compact .subgroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+#sidebar.cote-compact .subgroup .group-label {
+  margin-bottom: 0;
+  white-space: nowrap;
+}
+#sidebar.cote-compact #groupDoors .stepper       { padding: 2px 4px; gap: 6px; }
+#sidebar.cote-compact #groupDoors .stepper button { width: 20px; height: 20px; font-size: 13px; }
+#sidebar.cote-compact #groupDoors .stepper .n     { font-size: 12px; }
+#sidebar.cote-compact #groupTracks .segmented        { padding: 2px; }
+#sidebar.cote-compact #groupTracks .segmented button { padding: 5px 8px; font-size: 11px; }
+
+/* ── Footer ── */
+.footer-note {
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.6;
+}
+.footer-note code {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--accent);
+}
+
+/* ── Ofertă (coş + confirmare) ─────────────────────────────────────────────
+   Panoul apare doar când configuratorul e servit de managerul de comenzi. */
+
+.oferta-cine { margin-bottom: 10px; }
+.oferta-cine a, .oferta-hint a { color: var(--accent); }
+
+.oferta-hint {
+  padding: 10px 12px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--text-dim);
+  font-size: .82rem;
+  margin-bottom: 10px;
+}
+
+.oferta-confirma {
+  width: 100%;
+  margin-top: 2px;
+  padding: 10px;
+  font: inherit;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid var(--accent);
+  background: var(--accent-dim);
+  color: var(--text);
+}
+.oferta-confirma:hover:not(:disabled) { background: #2f82e6; }
+.oferta-confirma:disabled { opacity: .5; cursor: not-allowed; }
+
+/* Ce anume se trimite — rezumatul configuraţiei, deasupra formularului. */
+.oferta-sumar {
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+.oferta-msg {
+  margin-top: 10px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid;
+  font-size: .82rem;
+}
+.oferta-msg.eroare { border-color: var(--danger); background: rgba(185, 106, 91, .12); }
+.oferta-msg.ok     { border-color: #6b9b7a;       background: rgba(107, 155, 122, .12); }
+
+.oferta-client { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+.client-butoane { display: flex; flex-direction: column; gap: 8px; }
+.oferta-client input, .oferta-client textarea {
+  width: 100%;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: .86rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  resize: vertical;
+}
+.oferta-client input:focus, .oferta-client textarea:focus {
+  outline: none; border-color: var(--accent);
+}
+
+/* Drumul înapoi spre pagina principală — apare doar când configuratorul e
+   servit de manager (gama nu se mai schimbă din configurator). */
+.brand .acasa {
+  display: inline-block;
+  margin-bottom: 8px;
+  font-size: .8rem;
+  color: var(--accent);
+  text-decoration: none;
+}
+.brand .acasa:hover { text-decoration: underline; }
+
+/* ── Fişă atelier ─────────────────────────────────────────────────────────
+   Butonul e vizibil oricând — nu depinde de server/ofertă (vezi js/fisa.js) */
+
+.fisa-print {
+  width: 100%;
+  padding: 10px;
+  font: inherit;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  color: var(--text);
+}
+.fisa-print:hover { background: #272c34; border-color: var(--accent-dim); }
+
+/* ── Rame (gama „rame") — tabel de rânduri + câmpurile formularului ── */
+.rame-nota { font-size: 11px; color: var(--text-dim); margin: 0 0 6px; line-height: 1.35; }
+.rame-tabel { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 6px; }
+.rame-tabel th { font-size: 10.5px; font-weight: 500; color: var(--text-dim); text-align: left; padding: 0 3px 4px; }
+.rame-tabel td { padding: 2px 3px; vertical-align: middle; }
+.rame-tabel td.rame-nr { color: var(--text-dim); width: 16px; }
+.rame-tabel input, .rame-camp input, .rame-camp select {
+  width: 100%; min-width: 0; background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px;
+  color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 5px 6px;
+}
+.rame-tabel input { width: 64px; }
+.rame-tabel input.mic { width: 46px; }
+.rame-tabel input::-webkit-inner-spin-button, .rame-tabel input::-webkit-outer-spin-button,
+.rame-camp input::-webkit-inner-spin-button, .rame-camp input::-webkit-outer-spin-button { -webkit-appearance: none; }
+.rame-camp select { font-family: 'Inter', sans-serif; }
+.rame-camp select option { background: var(--panel-2); color: var(--text); }
+.rame-cod { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent); white-space: nowrap; }
+.rame-cod.eroare { color: var(--danger); }
+.rame-sterge, .rame-maner-sterge {
+  background: none; border: 1px solid var(--line); border-radius: 6px; color: var(--text-dim);
+  cursor: pointer; padding: 3px 7px; font-size: 11px;
+}
+.rame-sterge:disabled, .rame-maner-sterge:disabled { opacity: .35; cursor: default; }
+.rame-adauga {
+  background: var(--panel-2); border: 1px dashed var(--line); border-radius: 6px; color: var(--text);
+  cursor: pointer; font-size: 12px; padding: 6px 10px; margin: 0 0 12px;
+}
+.rame-adauga:hover { border-color: var(--accent); }
+.rame-camp { display: grid; grid-template-columns: 118px 1fr; align-items: center; gap: 8px; margin-bottom: 8px; }
+.rame-et { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .03em; }
+.rame-camp input.mic { width: 80px; }
+.rame-maner { margin-top: -2px; }

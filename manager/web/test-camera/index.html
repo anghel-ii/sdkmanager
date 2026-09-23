@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Test cameră</title>
+<link rel="stylesheet" href="/comun.css">
+<style>
+  #continut { padding: 20px; max-width: 560px; margin: 0 auto; }
+  h1 { margin-bottom: 4px; }
+  .sub { margin-bottom: 20px; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: .88rem; }
+  td { padding: 9px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+  td:first-child { color: var(--text-dim); width: 42%; }
+  td:last-child { text-align: right; }
+  .da { color: var(--ok); }    .nu { color: var(--danger); }
+  video { width: 100%; border-radius: 8px; background: #000; display: none; margin-top: 16px; }
+  video.pornit { display: block; }
+  button { width: 100%; }
+  .sfat { margin-top: 20px; }
+  .sfat li { margin: 0 0 8px 20px; }
+</style>
+</head>
+<body>
+
+<div id="continut">
+  <h1>Test cameră</h1>
+  <div class="sub dim mic">
+    Deschide pagina asta <strong>de pe telefonul</strong> cu care se va scana.
+    Dacă trece aici, va merge şi scanarea codurilor de bare.
+  </div>
+
+  <table>
+    <tr><td>Adresă</td><td class="mono" id="origine"></td></tr>
+    <tr><td>Context securizat</td><td id="securizat"></td></tr>
+    <tr><td>API cameră disponibil</td><td id="api"></td></tr>
+    <tr><td>Decodare nativă coduri</td><td id="detector"></td></tr>
+  </table>
+
+  <div id="mesaj"></div>
+  <button id="porneste" class="primar">Cere acces la cameră</button>
+  <video id="video" playsinline muted></video>
+
+  <div id="sfat"></div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const bifa = ok => `<span class="${ok ? 'da' : 'nu'}">${ok ? '✓ da' : '✗ nu'}</span>`;
+
+// `isSecureContext` e exact condiţia pe care o cere getUserMedia. localhost e
+// considerat securizat chiar şi pe http — de-aia testul trebuie făcut de pe
+// telefon, prin adresa reală, nu de pe calculatorul pe care rulează serverul.
+const securizat = window.isSecureContext;
+const areApi    = !!navigator.mediaDevices?.getUserMedia;
+const areDetect = 'BarcodeDetector' in window;
+
+$('origine').textContent  = location.origin;
+$('securizat').innerHTML  = bifa(securizat);
+$('api').innerHTML        = bifa(areApi);
+$('detector').innerHTML   = bifa(areDetect) +
+  (areDetect ? '' : ' <span class="dim mic">(se foloseşte ZXing)</span>');
+
+const arata = (text, fel) => { $('mesaj').innerHTML = `<div class="mesaj ${fel}">${text}</div>`; };
+
+function sfaturi(titlu, lista) {
+  $('sfat').innerHTML += `<div class="mesaj info"><strong>${titlu}</strong>
+    <ul class="sfat">${lista.map(s => `<li>${s}</li>`).join('')}</ul></div>`;
+}
+
+// Chrome pe Android acceptă o excepţie explicită pentru o origine anume — e
+// singura scurtătură reală cât timp nu există certificat. Pe iOS NU există
+// echivalent (toate browserele de acolo folosesc motorul Safari), deci acolo
+// certificatul rămâne obligatoriu.
+const eAndroid = /Android/i.test(navigator.userAgent);
+
+if (!securizat) {
+  arata('Pagina nu rulează într-un context securizat, deci browserul nu va da acces la cameră.', 'eroare');
+
+  if (eAndroid) {
+    sfaturi('Soluţie rapidă, pe telefonul ăsta (Chrome pe Android):', [
+      'Deschide <code>chrome://flags/#unsafely-treat-insecure-origin-as-secure</code>',
+      `Lipeşte în câmp exact: <code id="origine2">${location.origin}</code>
+       <button id="copiaza" style="padding:4px 10px; margin-left:6px; font-size:.8rem">copiază</button>`,
+      'Pune lista pe <strong>Enabled</strong>, apoi apasă <strong>Relaunch</strong>.',
+      'Revino aici şi reîncarcă pagina.',
+    ]);
+    sfaturi('De reţinut:', [
+      'Excepţia e <strong>per telefon</strong> şi se poate pierde la actualizări de Chrome.',
+      'Nu funcţionează pe iPhone — acolo e nevoie de certificat real.',
+      'Pe HTTP simplu, parola de login circulă necriptată prin reţea.',
+    ]);
+  }
+
+  sfaturi(eAndroid ? 'Soluţia durabilă (obligatorie când apare primul iPhone):'
+                   : 'Ce e de făcut:', [
+    'Serverul trebuie să meargă pe <strong>https://</strong>, cu certificat valid.',
+    'Intră pe telefon prin <strong>numele de domeniu</strong>, nu prin adresa IP — certificatul e emis pe nume.',
+    'Dacă numele nu se rezolvă în reţea, vinovatul e de obicei „DNS rebinding protection" din router.',
+  ]);
+
+  $('copiaza')?.addEventListener('click', async e => {
+    try {
+      await navigator.clipboard.writeText(location.origin);
+      e.target.textContent = '✓ copiat';
+    } catch {
+      // clipboard-ul cere şi el context securizat — pe HTTP cade aici
+      getSelection().selectAllChildren($('origine2'));
+      e.target.textContent = 'selectat, copiază manual';
+    }
+  });
+
+  $('porneste').disabled = true;
+} else if (!areApi) {
+  arata('Contextul e securizat, dar browserul nu oferă API-ul de cameră. Încearcă alt browser.', 'eroare');
+  $('porneste').disabled = true;
+}
+
+$('porneste').addEventListener('click', async () => {
+  $('porneste').disabled = true;
+  $('porneste').textContent = 'Se cere permisiunea…';
+
+  try {
+    // `environment` = camera din spate, cea cu care se scanează.
+    const flux = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: 'environment' } },
+    });
+    $('video').srcObject = flux;
+    $('video').classList.add('pornit');
+    await $('video').play();
+
+    const pista = flux.getVideoTracks()[0];
+    arata(`Camera funcţionează: <strong>${pista.label || 'cameră'}</strong>. ` +
+          'Scanarea codurilor de bare va merge pe telefonul ăsta.', 'ok');
+    $('porneste').textContent = 'Opreşte camera';
+    $('porneste').disabled = false;
+    $('porneste').onclick = () => {
+      flux.getTracks().forEach(t => t.stop());
+      $('video').classList.remove('pornit');
+      location.reload();
+    };
+  } catch (e) {
+    $('porneste').textContent = 'Încearcă din nou';
+    $('porneste').disabled = false;
+
+    if (e.name === 'NotAllowedError') {
+      arata('Ai refuzat accesul la cameră (sau l-ai refuzat mai devreme şi browserul ţine minte).', 'eroare');
+      $('sfat').innerHTML = '';
+      sfaturi('Cum dai permisiunea înapoi:', [
+        'Android: apasă lacătul din bara de adrese → Permisiuni → Cameră → Permite.',
+        'iPhone: Setări → Safari → Cameră → Întreabă sau Permite, apoi reîncarcă pagina.',
+      ]);
+    } else if (e.name === 'NotFoundError') {
+      arata('Nu s-a găsit nicio cameră pe dispozitivul ăsta.', 'eroare');
+    } else {
+      arata(`Camera n-a putut porni: <strong>${e.name}</strong> — ${e.message}`, 'eroare');
+    }
+  }
+});
+</script>
+</body>
+</html>

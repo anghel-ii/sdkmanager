@@ -1,0 +1,99 @@
+/* Paleta e aceeaşi cu a configuratorului (configurator_usi/css/main.css), ca
+   trecerea dintr-o aplicaţie în alta să nu pară o schimbare de program. */
+
+:root {
+  --bg:         #14161a;
+  --panel:      #1b1e24;
+  --panel-2:    #21252c;
+  --line:       #2c313a;
+  --text:       #e9ebee;
+  --text-dim:   #8b92a0;
+  /* albastru mai aprins decât în configurator — cel „mov" (#3a5a74 / #5b8fb9)
+     abia se vedea pe fundalul închis (userul, 2026-09-22). Textul pe
+     --accent-dim e alb (contrast ~5:1). */
+  --accent:     #4da3ff;
+  --accent-dim: #1f6fd1;
+  --danger:     #b96a5b;
+  --ok:         #6b9b7a;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+}
+
+h1 { font-size: 1.25rem; font-weight: 600; }
+h2 { font-size: 1rem;    font-weight: 600; }
+
+code, .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+/* ── Controale ── */
+
+button, .btn {
+  font: inherit;
+  padding: 10px 16px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel-2);
+  color: var(--text);
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+button:hover:not(:disabled) { background: #272c34; border-color: #3a4049; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+
+button.primar { background: var(--accent-dim); border-color: var(--accent); }
+button.primar { color: #fff; font-weight: 600; }
+button.primar:hover:not(:disabled) { background: #2f82e6; }
+a { color: var(--accent); }
+
+input, select, textarea {
+  font: inherit;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+}
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+label { display: block; margin-bottom: 6px; color: var(--text-dim); font-size: .8rem;
+        text-transform: uppercase; letter-spacing: .04em; }
+
+.camp { margin-bottom: 16px; }
+
+/* ── Mesaje ── */
+
+.mesaj {
+  padding: 10px 14px;
+  border-radius: 6px;
+  border: 1px solid;
+  margin-bottom: 16px;
+  font-size: .9rem;
+}
+.mesaj.eroare { border-color: var(--danger); background: rgba(185, 106, 91, .12); }
+.mesaj.ok     { border-color: var(--ok);     background: rgba(107, 155, 122, .12); }
+.mesaj.info   { border-color: var(--line);   background: var(--panel-2); color: var(--text-dim); }
+
+/* ── Card ── */
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 24px;
+}
+
+.dim { color: var(--text-dim); }
+.mic { font-size: .82rem; }

@@ -1,0 +1,47 @@
+# ── Date de producţie şi secrete — NU intră niciodată în git ─────────────────
+# baza managerului (clienţi, comenzi, utilizatori, sesiuni) + backup-urile ei
+manager/date/
+*.sqlite-wal
+*.sqlite-shm
+# certificate TLS / chei
+manager/certs/
+*.pem
+*.key
+*.p12
+*.pfx
+# variabile de mediu (MANAGER_*, chei API)
+.env
+.env.*
+.dev.vars
+# conectorul ERP (exemplul furnizorului; fişierul de parametri va ţine parola)
+/TestWebConnector*.php
+
+# ── Generate — se refac la build ────────────────────────────────────────────
+node_modules/
+configurator_usi/dist/
+configurator_usi/dist_pages/
+# cataloagele binare se reconstruiesc din *.seed.sql (sursa, care intră în git)
+configurator_usi/js/catalog/*.sqlite
+
+# ── Documente de lucru şi fişiere ale firmei (rămân doar local) ─────────────
+*.xlsx
+*.xlsm
+*.xls
+*.doc
+*.docx
+/Screenshot_*.png
+/schita*.png
+/schite/
+/schite rame/
+*.tar.gz
+
+# ── Unelte / editor / sistem ────────────────────────────────────────────────
+.idea/
+.vscode/
+.claude/
+.wrangler/
+graphify-out/
+.graphifyignore
+.directory
+.DS_Store
+*.log

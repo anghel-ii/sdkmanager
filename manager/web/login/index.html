@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Autentificare — Manager comenzi</title>
+<link rel="stylesheet" href="/comun.css">
+<style>
+  body { display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .card { width: 100%; max-width: 380px; }
+  .titlu { margin-bottom: 4px; }
+  .sub { margin-bottom: 24px; }
+  button[type=submit] { width: 100%; }
+</style>
+</head>
+<body>
+
+<form class="card" id="formular" autocomplete="on">
+  <h1 class="titlu">Manager comenzi</h1>
+  <div class="sub dim mic">Autentifică-te ca să continui</div>
+
+  <div id="mesaj"></div>
+
+  <div class="camp">
+    <label for="user">Utilizator</label>
+    <input id="user" name="username" autocomplete="username"
+           autocapitalize="none" autocorrect="off" spellcheck="false" required autofocus>
+  </div>
+
+  <div class="camp">
+    <label for="parola">Parolă</label>
+    <input id="parola" name="password" type="password" autocomplete="current-password" required>
+  </div>
+
+  <button type="submit" class="primar" id="trimite">Intră</button>
+</form>
+
+<script>
+const $ = id => document.getElementById(id);
+
+// Unde ne întoarcem după login. Acceptăm DOAR căi relative — un `?redirect=`
+// cu URL absolut ar transforma pagina asta într-un redirector spre alt site.
+function destinatie() {
+  const cerut = new URLSearchParams(location.search).get('redirect');
+  return (cerut && cerut.startsWith('/') && !cerut.startsWith('//')) ? cerut : '/';
+}
+
+function arata(text, fel = 'eroare') {
+  $('mesaj').innerHTML = text ? `<div class="mesaj ${fel}">${text}</div>` : '';
+}
+
+$('formular').addEventListener('submit', async e => {
+  e.preventDefault();
+  arata('');
+  $('trimite').disabled = true;
+  $('trimite').textContent = 'Se verifică…';
+
+  try {
+    const r = await fetch('/api/login', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ user: $('user').value, parola: $('parola').value }),
+    });
+    const date = await r.json();
+
+    if (!r.ok) {
+      arata(date.eroare || 'Autentificare eşuată.');
+      $('parola').value = '';
+      $('parola').focus();
+      return;
+    }
+    location.href = destinatie();
+  } catch {
+    arata('Serverul nu răspunde. Verifică legătura la reţea.');
+  } finally {
+    $('trimite').disabled = false;
+    $('trimite').textContent = 'Intră';
+  }
+});
+</script>
+</body>
+</html>

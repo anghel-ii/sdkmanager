@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="ro"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cod de test</title>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+<style>body{font-family:system-ui,sans-serif;text-align:center;padding:30px;background:#fff;color:#000}svg{max-width:100%}</style>
+</head><body>
+<h2>Coduri de test — deschide pe PC şi scanează-le cu telefonul</h2>
+<svg id="c1"></svg><br><br><svg id="c2"></svg>
+<script>
+  JsBarcode('#c1', '2026-0042-03', { format: 'CODE128', height: 110, width: 3, fontSize: 22 });
+  JsBarcode('#c2', 'CMD-2026-0007-01', { format: 'CODE128', height: 110, width: 3, fontSize: 22 });
+</script>
+</body></html>

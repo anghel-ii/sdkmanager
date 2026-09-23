@@ -1,0 +1,17 @@
+{
+  "name": "configurator-usi",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "node build.js",
+    "dev": "node dev.js",
+    "catalog": "node build.js --catalog-only",
+    "test": "node test/ruleaza.js"
+  },
+  "dependencies": {
+    "three": "0.128.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "jsbarcode": "^3.11.6"
+  }
+}

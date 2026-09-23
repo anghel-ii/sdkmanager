@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Manager comenzi</title>
+<link rel="stylesheet" href="/comun.css">
+<script src="/live.js"></script>
+<script src="/copiaza.js"></script>
+<script src="/mail-sticla.js"></script>
+<style>
+  #bara {
+    display: flex; align-items: center; gap: 16px;
+    padding: 14px 24px;
+    background: var(--panel); border-bottom: 1px solid var(--line);
+    position: sticky; top: 0; z-index: 10;
+  }
+  #bara .nume { font-weight: 600; }
+  #bara .spatiu { flex: 1; }
+  #bara a.mic { color: var(--text); text-decoration: none; }
+  #bara a.mic:hover { color: var(--accent); }
+  #bara button.primar { background: var(--accent-dim); border-color: var(--accent); color: #fff; font-weight: 600; }
+  #bara a.buton { padding: 10px 16px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel-2);
+                  color: var(--text); text-decoration: none; }
+  #bara a.buton:hover { border-color: var(--accent); }
+  .sticla-nu { color: var(--danger); font-size: .84rem; }
+  .sticla-furnizori { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .sticla-furnizor { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .bifa-sticla { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; margin: 0;
+                 text-transform: none; letter-spacing: normal; font-size: .9rem; color: var(--text); }
+  .bifa-sticla input { width: auto; }
+  .sticla-partial { color: #d4a24c; font-size: .84rem; }
+  .sticla-da { color: var(--ok); }
+  #bara .insigna { display: inline-block; min-width: 1.5em; padding: 0 6px; margin-left: 4px; border-radius: 10px;
+                   background: var(--accent-dim); color: #fff; font-size: .75rem; text-align: center; }
+  #bara .insigna:empty { display: none; }
+
+  .fundal { position: fixed; inset: 0; background: rgba(0, 0, 0, .55); z-index: 50;
+            display: grid; place-items: center; padding: 16px; }
+  .fundal[hidden] { display: none; }
+  .fereastra { background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+               padding: 20px; width: min(640px, 100%); }
+  .fereastra-cap { display: flex; align-items: center; margin-bottom: 14px; }
+  .fereastra-cap h2 { flex: 1; font-size: 1.05rem; }
+  .game { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+  .game a { display: block; padding: 16px; background: var(--panel-2); border: 1px solid var(--line);
+            border-radius: 10px; color: var(--text); text-decoration: none; }
+  .game a:hover { border-color: var(--accent); }
+  .game a .titlu { display: block; font-weight: 600; font-size: 1.05rem; margin-bottom: 4px; }
+  .game a .sub { display: block; font-size: .8rem; color: var(--text-dim); }
+  #continut { padding: 24px; max-width: 1320px; margin: 0 auto; }
+  table.lista td.mono, table.lista td.data { white-space: nowrap; }
+
+  .taburi { display: flex; gap: 8px; }
+  .bara-lista { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+  .bara-lista .spatiu { flex: 1; }
+  #cauta { width: 280px; max-width: 100%; }
+  #sortare.activ { background: var(--accent-dim); border-color: var(--accent); color: #fff; }
+  td.pin { width: 34px; padding-right: 0; }
+  .btn-pin { background: none; border: none; padding: 2px 4px; font-size: 15px; cursor: pointer;
+             filter: grayscale(1); opacity: .25; }
+  .btn-pin:hover { opacity: .7; }
+  .btn-pin.activ { filter: none; opacity: 1; }
+  table.lista tr.fixat td { background: rgba(77, 163, 255, .10); }
+  .taburi button.activ { background: var(--accent-dim); border-color: var(--accent); color: #fff; font-weight: 600; }
+  .taburi .cate { opacity: .6; margin-left: 6px; }
+
+  table.lista { width: 100%; border-collapse: collapse; }
+  table.lista th {
+    text-align: left; padding: 8px 10px; font-size: .74rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .05em; color: var(--text-dim);
+    border-bottom: 1px solid var(--line);
+  }
+  table.lista td { padding: 11px 10px; border-bottom: 1px solid var(--line); }
+  table.lista tbody tr { cursor: pointer; }
+  table.lista tbody tr:hover { background: var(--panel-2); }
+  .num { text-align: right; }
+
+  .gol { padding: 48px 24px; text-align: center; }
+
+  /* ── detaliu ── */
+  .inapoi { margin-bottom: 16px; }
+  .antet { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 20px; }
+  .antet .spatiu { flex: 1; }
+  .antet h1 { margin-bottom: 4px; }
+  .perechi { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; font-size: .86rem; }
+  .perechi dt { color: var(--text-dim); }
+
+  .sectiune { margin-top: 24px; }
+  .sectiune > h2 { margin-bottom: 10px; }
+  table.date { width: 100%; border-collapse: collapse; font-size: .86rem; }
+  table.date th {
+    text-align: left; padding: 6px 8px; font-size: .72rem; text-transform: uppercase;
+    letter-spacing: .05em; color: var(--text-dim); border-bottom: 1px solid var(--line);
+  }
+  table.date td { padding: 7px 8px; border-bottom: 1px solid var(--line); }
+  table.date td.cod { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+  td.facturare, dd.facturare { white-space: nowrap; }
+  .facturat { color: var(--ok); }
+  .nefacturat { color: var(--danger); font-size: .84rem; margin-right: 8px; }
+  .factura-form { display: inline-flex; gap: 6px; vertical-align: middle; }
+  .factura-form input { width: 110px; padding: 5px 8px; font-size: .84rem; }
+  button.mic { padding: 5px 10px; font-size: .8rem; }
+  .butoane { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  details > summary { cursor: pointer; color: var(--text-dim); font-size: .84rem; padding: 6px 0; }
+</style>
+</head>
+<body>
+
+<div id="bara">
+  <a href="/" class="nume" style="color:inherit; text-decoration:none">Manager comenzi</a>
+  <button id="ofertaNoua" class="primar">+ OFERTĂ NOUĂ</button>
+  <a href="/sticla" class="buton" id="linkSticla">Comandă sticlă <span class="insigna" id="nrSticla"></span></a>
+  <span class="spatiu"></span>
+  <span class="dim mic" id="cine"></span>
+  <button id="iesire">Ieşi</button>
+</div>
+
+<!-- OFERTĂ NOUĂ — alegi gama, apoi se deschide configuratorul pe ea.
+     Gamele vin din configurator (game.json), aceeaşi sursă ca selectorul lui. -->
+<div id="alegeGama" class="fundal" hidden>
+  <div class="fereastra" role="dialog" aria-labelledby="titluGama">
+    <div class="fereastra-cap">
+      <h2 id="titluGama">Ofertă nouă — alege gama</h2>
+      <button id="inchideGama" class="mic" aria-label="Închide">✕</button>
+    </div>
+    <div id="listaGame" class="game"></div>
+  </div>
+</div>
+
+<div id="continut">Se încarcă…</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = t => String(t ?? '').replace(/[&<>"]/g, c =>
+  ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+// Cantitate pentru paste în NeoManager: zecimale cu PUNCT, întotdeauna cel
+// puţin o zecimală (1 → "1.0"), ca toate liniile să arate la fel — aceeaşi
+// regulă ca în configurator (js/lib/num.js → qtyText).
+const qtyText = n => (Number.isInteger(n) ? n.toFixed(1) : String(n));
+const virgula = n => String(n).replace('.', ',');
+const data = s => (s ? s.slice(0, 16).replace('T', ' ') : '—');
+
+let tabCurent = 'oferta';
+
+// ── API ──────────────────────────────────────────────────────────────────────
+
+async function api(cale, optiuni = {}) {
+  const r = await fetch(cale, { headers: { 'Content-Type': 'application/json' }, ...optiuni });
+  if (r.status === 401) {
+    location.href = '/login?redirect=' + encodeURIComponent(location.pathname + location.hash);
+    return null;
+  }
+  return r;
+}
+
+// ── Copiere pe coloană (pentru grila NeoManager) ─────────────────────────────
+// Doar text/plain, fără flavour HTML — confirmat că HTML-ul e exact ce încurca
+// NeoManager la paste (vezi configurator_usi/js/lib/clipboard.js).
+
+const copiaza = randuri => copiazaText(randuri.join('\r\n') + '\r\n');   // /copiaza.js
+
+function leagaCopiere(el, randuri) {
+  el.addEventListener('click', async () => {
+    const original = el.textContent;
+    el.textContent = (await copiaza(randuri)) ? '✓ copiat' : '⚠ eroare';
+    setTimeout(() => { el.textContent = original; }, 1400);
+  });
+}
+
+// ── Lista ────────────────────────────────────────────────────────────────────
+
+const HASH_TAB = { oferta: '#oferte', comanda: '#comenzi', finalizata: '#finalizate' };
+
+// Data unei scanări (UTC din SQLite) → ora locală scurtă
+const cand = m => new Date(m.replace(' ', 'T') + 'Z').toLocaleString('ro-RO',
+  { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+
+// Coloana „Status" = ultima operaţie scanată în atelier
+// Facturare: nr. facturii sau „nefacturat". Câmpul pt. număr + „Marchează
+// facturat" (activ doar cu numărul completat) apar DOAR în pagina comenzii
+// (`cuCamp`), nu în listă.
+const facturareHtml = (c, cuCamp = false) => c.factura_nr
+  ? `<span class="facturat">✓ <strong class="mono">${esc(c.factura_nr)}</strong></span>`
+  : `<span class="nefacturat">nefacturat</span>${!cuCamp ? '' : `
+     <span class="factura-form" data-id="${c.id}">
+       <input class="factura-nr" placeholder="nr. factură" autocomplete="off">
+       <button class="mic factura-ok" disabled>Marchează facturat</button>
+     </span>`}`;
+
+// Leagă câmpurile de facturare din `radacina`; după salvare, `dupa()` re-randează.
+function leagaFacturare(radacina, dupa) {
+  radacina.querySelectorAll('.factura-form').forEach(f => {
+    const inp = f.querySelector('.factura-nr'), btn = f.querySelector('.factura-ok');
+    f.addEventListener('click', e => e.stopPropagation());   // nu deschide detaliul
+    inp.addEventListener('input', () => { btn.disabled = !inp.value.trim(); });
+    const trimite = async () => {
+      if (!inp.value.trim()) return;
+      btn.disabled = true;
+      const r = await api(`/api/comenzi/${f.dataset.id}/factura`, { method: 'POST', body: JSON.stringify({ numar: inp.value }) });
+      if (r && !r.ok) { alert((await r.json().catch(() => ({}))).eroare || 'Salvarea a eşuat.'); btn.disabled = false; return; }
+      dupa();
+    };
+    btn.addEventListener('click', trimite);
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') trimite(); });
+  });
+}
+
+// Coloana „Sticlă": comandată la furnizor sau nu, cine şi când (pagina Comandă sticlă)
+const sticlaHtml = st => !st ? '<span class="dim">—</span>'
+  : !st.comandate ? '<span class="sticla-nu">necomandată</span>'
+  : `<span class="${st.comandate < st.total ? 'sticla-partial' : 'sticla-da'}">${st.comandate < st.total
+      ? `parţial ${st.comandate}/${st.total}` : '✓ comandată'}</span>
+     <span class="dim mic">· ${cand(st.moment)} · ${esc(st.cine ?? '')}</span>`;
+
+// Pagina comenzii: pe fiecare furnizor, mail cu DOAR sticla comenzii ăsteia +
+// bifa „comandată" (cu confirmare înainte). Liniile vin din /api/comenzi/:id.
+function peFurnizoriSticla(linii) {
+  const m = new Map();
+  for (const l of linii) {
+    const f = m.get(l.furnizor.cod) ?? { ...l.furnizor, linii: [] };
+    f.linii.push(l);
+    m.set(l.furnizor.cod, f);
+  }
+  return [...m.values()];
+}
+const blocSticla = linii => !linii.length ? '' : `<div class="sticla-furnizori">${peFurnizoriSticla(linii).map(f => {
+  const comandat = f.linii.every(l => l.comandat_la);
+  const ult = f.linii.filter(l => l.comandat_la).sort((a, b) => b.comandat_la.localeCompare(a.comandat_la))[0];
+  return `<div class="sticla-furnizor" data-furnizor="${esc(f.cod)}">
+    <button class="mic primar mail-sticla" data-furnizor="${esc(f.cod)}"
+      title="${f.email ? 'Către ' + esc(f.email) : 'Fără adresă salvată — o completezi în mail'}">✉ ${esc(f.nume)}</button>
+    <span class="dim mic">${f.linii.reduce((s, l) => s + l.buc, 0)} buc</span>
+    <label class="bifa-sticla"><input type="checkbox" class="sticla-comandata" data-furnizor="${esc(f.cod)}"${comandat ? ' checked' : ''}>
+      comandată${ult ? ` <span class="dim mic">· ${cand(ult.comandat_la)} · ${esc(ult.comandat_de_nume ?? '')}</span>` : ''}</label>
+  </div>`;
+}).join('')}</div>`;
+
+function leagaSticla(linii, dupa) {
+  const furnizori = peFurnizoriSticla(linii);
+  document.querySelectorAll('button.mail-sticla').forEach(b => b.addEventListener('click', () => {
+    const f = furnizori.find(x => x.cod === b.dataset.furnizor);
+    trimiteMailSticla(f, f.linii);
+  }));
+  document.querySelectorAll('input.sticla-comandata').forEach(i => i.addEventListener('change', async () => {
+    const f = furnizori.find(x => x.cod === i.dataset.furnizor);
+    const ok = confirm(i.checked
+      ? `Confirmi că sticla de la ${f.nume} pentru comanda asta a fost COMANDATĂ?\n\nApare ca şi comandată de tine, cu ora de acum.`
+      : `Anulezi marcarea — sticla de la ${f.nume} redevine NECOMANDATĂ?`);
+    if (!ok) { i.checked = !i.checked; return; }
+    const r = await api(i.checked ? '/api/sticla/comanda' : '/api/sticla/anuleaza',
+      { method: 'POST', body: JSON.stringify({ ids: f.linii.map(l => l.id) }) });
+    if (r && !r.ok) alert((await r.json().catch(() => ({}))).eroare || 'Operaţia a eşuat.');
+    dupa();
+  }));
+}
+
+const statusHtml = st => st
+  ? `<strong>${esc(st.operatie)}</strong> <span class="dim mic">· ${cand(st.moment)} · ${esc(st.cine)}</span>`
+  : '<span class="dim">—</span>';
+
+// Lista curentă (de pe server) + căutarea şi sortarea — filtrate/sortate aici,
+// fără cereri noi. Căutarea rămâne la schimbarea tabului şi la actualizarea
+// live; sortarea e preferinţa utilizatorului (salvată pe server, /api/preferinte).
+let lista = [], cautare = '', sortare = 'data';
+
+const TABURI = [['oferta', 'Oferte'], ['comanda', 'Comenzi în lucru'], ['finalizata', 'Comenzi finalizate']];
+
+// fără diacritice şi litere mari: „şerban" găseşte „Serban"
+const normal = t => String(t ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
+// Bara de sus (taburi + căutare + sortare) se construieşte o singură dată —
+// actualizarea live refoloseşte-o, ca să nu piardă ce scrii în căutare.
+function asiguraBaraLista() {
+  if (!$('tabelLista')) {
+    $('continut').innerHTML = `
+      <div class="bara-lista">
+        <div class="taburi">${TABURI.map(([t, n]) => `<button data-tab="${t}">${n}</button>`).join('')}</div>
+        <span class="spatiu"></span>
+        <input id="cauta" type="search" placeholder="Caută client, sistem, nr. factură…" autocomplete="off">
+        <button id="sortare" class="mic" title="Sortarea ta (se păstrează pe contul tău)"></button>
+      </div>
+      <div id="tabelLista"></div>`;
+    $('cauta').value = cautare;
+    $('cauta').addEventListener('input', () => { cautare = $('cauta').value; randeazaTabel(); });
+    document.querySelectorAll('.taburi button').forEach(b =>
+      b.addEventListener('click', () => {
+        tabCurent = b.dataset.tab;
+        // înlocuim hash-ul fără să declanşăm hashchange
+        history.replaceState(null, '', HASH_TAB[tabCurent]);
+        renderLista();
+      }));
+    $('sortare').addEventListener('click', async () => {
+      sortare = sortare === 'facturare' ? 'data' : 'facturare';
+      randeazaTabel();
+      await api('/api/preferinte', { method: 'PUT', body: JSON.stringify({ sortare }) });
+    });
+  }
+  document.querySelectorAll('.taburi button').forEach(b => b.classList.toggle('activ', b.dataset.tab === tabCurent));
+}
+
+async function renderLista() {
+  asiguraBaraLista();
+  const tab = tabCurent;
+  const r = await api(`/api/comenzi?tip=${tab}`);
+  if (!r || tab !== tabCurent) return;   // între timp s-a schimbat tabul
+  lista = (await r.json()).comenzi;
+  randeazaTabel();
+}
+
+function randeazaTabel() {
+  const eOferte = tabCurent === 'oferta';
+  const cuFacturare = !eOferte;
+  const btnSort = $('sortare');
+  btnSort.style.display = cuFacturare ? '' : 'none';
+  btnSort.textContent = sortare === 'facturare' ? '⇅ Nefacturate primele' : '⇅ Cele mai noi primele';
+  btnSort.classList.toggle('activ', sortare === 'facturare');
+
+  const q = normal(cautare.trim());
+  const dataRand = c => (tabCurent === 'finalizata' ? c.finalizat_la : c.creat_la) || c.creat_la;
+  const randuri = lista
+    .filter(c => !q || [c.client_nume, c.sistem, c.factura_nr, c.numar, c.numar_comanda].some(v => normal(v).includes(q)))
+    .sort((a, b) =>
+      (b.fixat - a.fixat) ||                                                        // fixate sus (ale tale)
+      (cuFacturare && sortare === 'facturare' ? (!!a.factura_nr) - (!!b.factura_nr) : 0) ||   // nefacturate întâi
+      dataRand(b).localeCompare(dataRand(a)));                                      // apoi cele mai noi
+
+  // coloana „Status" (ultima operaţie scanată) doar cu scanarea pornită pe server
+  const cuStatus = lista.some(c => 'status' in c);
+
+  $('tabelLista').innerHTML = randuri.length ? `
+    <table class="lista">
+      <thead><tr>
+        <th></th><th>Număr</th><th>Client</th><th>Sistem</th>${cuStatus ? '<th>Status</th>' : ''}${cuFacturare ? '<th>Sticlă</th><th>Facturare</th>' : ''}
+        <th>Creat de</th><th>Data</th>${eOferte ? '<th></th>' : ''}
+      </tr></thead>
+      <tbody>${randuri.map(c => `
+        <tr data-id="${c.id}"${c.fixat ? ' class="fixat"' : ''}>
+          <td class="pin"><button class="btn-pin${c.fixat ? ' activ' : ''}" data-id="${c.id}"
+                title="${c.fixat ? 'Scoate de sus' : 'Fixează sus (doar pentru tine)'}">📌</button></td>
+          <td class="mono">${esc(c.numar_comanda || c.numar)}</td>
+          <td>${esc(c.client_nume)}</td>
+          <td>${esc(c.sistem ?? '—')}</td>
+          ${cuStatus ? `<td>${statusHtml(c.status)}</td>` : ''}
+          ${cuFacturare ? `<td class="facturare">${sticlaHtml(c.sticla)}</td><td class="facturare">${facturareHtml(c)}</td>` : ''}
+          <td class="dim">${esc(c.creat_de_nume)}</td>
+          <td class="dim mic data">${data(dataRand(c))}</td>
+          ${eOferte ? `<td><button class="mic modifica" data-id="${c.id}">Modifică oferta</button></td>` : ''}
+        </tr>`).join('')}</tbody>
+    </table>` : lista.length ? `
+    <div class="card gol"><h2>Nimic nu se potriveşte cu „${esc(cautare.trim())}"</h2></div>` : `
+    <div class="card gol">
+      <h2>${{ oferta: 'Nicio ofertă încă', comanda: 'Nicio comandă în lucru', finalizata: 'Nicio comandă finalizată' }[tabCurent]}</h2>
+      <p class="dim" style="margin-top:8px">${{
+        oferta: 'Ofertele salvate în <a href="/configurator/">configurator</a> apar aici.',
+        comanda: 'O ofertă acceptată trece în tabul ăsta.',
+        finalizata: 'O comandă ajunge aici cu „Marchează finalizată".' }[tabCurent]}</p>
+    </div>`;
+
+  document.querySelectorAll('table.lista tbody tr').forEach(tr =>
+    tr.addEventListener('click', () => { location.hash = '#comanda/' + tr.dataset.id; }));
+  // „Modifică oferta" — redeschide configuratorul cu configuraţia salvată
+  document.querySelectorAll('button.modifica').forEach(b =>
+    b.addEventListener('click', e => { e.stopPropagation(); location.href = '/configurator/?oferta=' + b.dataset.id; }));
+  // pin — per utilizator; se schimbă local imediat, apoi se salvează
+  document.querySelectorAll('button.btn-pin').forEach(b =>
+    b.addEventListener('click', async e => {
+      e.stopPropagation();
+      const c = lista.find(x => x.id === +b.dataset.id);
+      c.fixat = !c.fixat;
+      randeazaTabel();
+      await api(`/api/comenzi/${c.id}/fixare`, { method: 'POST', body: JSON.stringify({ fixat: c.fixat }) });
+    }));
+}
+
+// ── Detaliu ──────────────────────────────────────────────────────────────────
+
+const TABELE = {
+  facturare: { titlu: 'Facturare — NeoManager', coloane: ['Cod', 'Denumire', 'Cant.'] },
+  necesar:   { titlu: 'Necesar materiale',      coloane: ['Cod', 'Reper', 'Cant.', 'Debitare'] },
+  client:    { titlu: 'Necesar client',         coloane: ['Reper', 'Cant.', 'Debitare'] },
+};
+
+// Codul de bare al comenzii + tot ce s-a scanat în atelier (cel mai nou sus)
+// — vine din tabelul `scanare`, vezi server/scanare.js.
+function tabelAtelier(coduri, scanari) {
+  return `
+    <p class="dim mic">Cod de bare: ${coduri.map(c => `<span class="cod mono">${esc(c)}</span>`).join(', ') || '—'}</p>
+    ${scanari.length ? `
+    <table class="date" style="margin-top:8px">
+      <thead><tr><th>Operaţie</th><th>Cine</th><th>Când</th></tr></thead>
+      <tbody>${[...scanari].reverse().map(x => `<tr>
+        <td><strong>${esc(x.operatie)}</strong></td><td>${esc(x.cine)}</td><td class="dim mic">${cand(x.moment)}</td>
+      </tr>`).join('')}</tbody>
+    </table>` : '<p class="dim mic" style="margin-top:6px">Nicio operaţie scanată încă.</p>'}`;
+}
+
+function tabelLinii(lista, linii) {
+  if (!linii.length) return '';
+  const areCod = lista !== 'client';
+  return `
+    <details${lista === 'facturare' ? ' open' : ''}>
+      <summary>${TABELE[lista].titlu} (${linii.length})</summary>
+      <table class="date">
+        <thead><tr>${TABELE[lista].coloane.map((c, i) =>
+          `<th${i === (areCod ? 2 : 1) ? ' class="num"' : ''}>${c}</th>`).join('')}</tr></thead>
+        <tbody>${linii.map(l => `<tr>
+          ${areCod ? `<td class="cod">${esc(l.cod ?? '—')}</td>` : ''}
+          <td>${esc(l.denumire)}</td>
+          <td class="num">${virgula(l.cantitate)}${l.um && l.um !== 'buc' ? ' ' + esc(l.um) : ''}</td>
+          ${lista !== 'facturare' ? `<td class="num dim">${esc(l.debitare ?? '—')}</td>` : ''}
+        </tr>`).join('')}</tbody>
+      </table>
+    </details>`;
+}
+
+// Facturarea pentru paste se face pe TOATĂ comanda, nu per poziţie: în
+// NeoManager se lipeşte o singură comandă. Liniile cu acelaşi cod se adună.
+function facturareTotala(pozitii) {
+  const pe = new Map();
+  for (const p of pozitii) {
+    for (const l of p.linii.facturare) {
+      const e = pe.get(l.cod) ?? { cod: l.cod, denumire: l.denumire, um: l.um, cantitate: 0 };
+      e.cantitate = Math.round((e.cantitate + l.cantitate) * 100) / 100;
+      pe.set(l.cod, e);
+    }
+  }
+  return [...pe.values()];
+}
+
+async function renderDetaliu(id) {
+  const r = await api('/api/comenzi/' + id);
+  if (!r) return;
+  if (!r.ok) { $('continut').innerHTML = '<div class="mesaj eroare">Comanda nu există.</div>'; return; }
+
+  const { comanda: c, pozitii, coduri, scanari, sticla, sticlaLinii = [] } = await r.json();
+  const p = pozitii[0];   // o comandă = un singur sistem
+  const total = facturareTotala(pozitii);
+  const eOferta = c.tip === 'oferta';
+
+  $('continut').innerHTML = `
+    <button class="inapoi" id="inapoi">← Înapoi la listă</button>
+
+    <div class="antet">
+      <div>
+        <h1 class="mono">${esc(c.numar_comanda || c.numar)}</h1>
+        <div class="dim mic">${eOferta ? 'Ofertă' : `Comandă${c.finalizat_la ? ' finalizată' : ''} · din oferta ${esc(c.numar)}`}</div>
+      </div>
+      <div class="spatiu"></div>
+      ${eOferta ? `<button id="modifica">Modifică oferta</button>
+                   <button class="primar" id="accepta">Acceptă oferta</button>` : ''}
+      ${!eOferta && !c.finalizat_la ? '<button id="finalizeaza">Marchează finalizată</button>' : ''}
+      ${c.finalizat_la ? '<button id="redeschide">Redeschide</button>' : ''}
+    </div>
+
+    <div class="card">
+      <dl class="perechi">
+        <dt>Client</dt><dd>${esc(c.client_nume)}</dd>
+        ${c.client_telefon ? `<dt>Telefon / adresă</dt><dd>${esc(c.client_telefon)}</dd>` : ''}
+        ${c.client_email   ? `<dt>E-mail</dt><dd>${esc(c.client_email)}</dd>` : ''}
+        <dt>Creat de</dt><dd>${esc(c.creat_de_nume)} · ${data(c.creat_la)}</dd>
+        ${c.confirmat_la ? `<dt>Acceptată</dt><dd>${data(c.confirmat_la)}</dd>` : ''}
+        ${c.finalizat_la ? `<dt>Finalizată</dt><dd>${data(c.finalizat_la)}</dd>` : ''}
+        ${!eOferta ? `<dt>Sticlă</dt><dd>${sticlaHtml(sticla)}${blocSticla(sticlaLinii)}</dd>` : ''}
+        ${!eOferta ? `<dt>Facturare</dt><dd class="facturare">${facturareHtml(c, true)}${c.factura_nr
+          ? ` <span class="dim mic">· ${data(c.facturat_la)}</span> <button class="mic" id="anuleazaFactura">Anulează</button>` : ''}</dd>` : ''}
+        ${c.observatii ? `<dt>Observaţii</dt><dd>${esc(c.observatii)}</dd>` : ''}
+      </dl>
+    </div>
+
+    <div class="sectiune">
+      <h2>Facturare — NeoManager</h2>
+      <table class="date" style="margin-top:10px">
+        <thead><tr><th>Cod</th><th>Denumire</th><th class="num">Cant.</th></tr></thead>
+        <tbody>${total.map(l => `<tr>
+          <td class="cod">${esc(l.cod)}</td>
+          <td>${esc(l.denumire)}</td>
+          <td class="num">${virgula(l.cantitate)}${l.um && l.um !== 'buc' ? ' ' + esc(l.um) : ''}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+      <div class="butoane">
+        <button id="copCod">Copiază coduri</button>
+        <button id="copCant">Copiază cantităţi</button>
+      </div>
+      <p class="dim mic" style="margin-top:8px">Paste pe coloană în grila NeoManager:
+        întâi celula de start din „Cod", apoi cea din „Cantitate".</p>
+    </div>
+
+    ${scanari ? `<div class="sectiune">
+      <h2>Atelier</h2>
+      ${tabelAtelier(coduri ?? [], scanari)}
+    </div>` : ''}
+
+    ${p ? `<div class="sectiune">
+      <h2>${esc(p.eticheta)} <span class="dim mic" style="font-weight:400">· ${esc(p.finisaj)}</span></h2>
+      ${['necesar', 'client'].map(l => tabelLinii(l, p.linii[l])).join('')}
+    </div>` : ''}`;
+
+  $('inapoi').addEventListener('click', () => { location.hash = HASH_TAB[tabCurent]; });
+  tabCurent = eOferta ? 'oferta' : c.finalizat_la ? 'finalizata' : 'comanda';
+  $('modifica')?.addEventListener('click', () => { location.href = '/configurator/?oferta=' + id; });
+  leagaFacturare($('continut'), () => renderDetaliu(id));
+  leagaSticla(sticlaLinii, () => renderDetaliu(id));
+  $('anuleazaFactura')?.addEventListener('click', async () => {
+    if (!confirm('Anulezi facturarea (se şterge nr. facturii)?')) return;
+    await api(`/api/comenzi/${id}/factura`, { method: 'POST', body: JSON.stringify({ numar: '', anuleaza: true }) });
+    renderDetaliu(id);
+  });
+  for (const [btn, cale] of [['finalizeaza', 'finalizeaza'], ['redeschide', 'redeschide']]) {
+    $(btn)?.addEventListener('click', async () => {
+      const rr = await api(`/api/comenzi/${id}/${cale}`, { method: 'POST' });
+      if (rr && !rr.ok) alert((await rr.json().catch(() => ({}))).eroare || 'Operaţia a eşuat.');
+      renderDetaliu(id);
+    });
+  }
+  leagaCopiere($('copCod'),  total.map(l => l.cod));
+  leagaCopiere($('copCant'), total.map(l => qtyText(l.cantitate)));
+
+  $('accepta')?.addEventListener('click', async () => {
+    $('accepta').disabled = true;
+    const rr = await api(`/api/comenzi/${id}/accepta`, { method: 'POST' });
+    if (!rr) return;
+    if (!rr.ok) {
+      const d = await rr.json().catch(() => ({}));
+      alert(d.eroare || 'Acceptarea a eşuat.');
+      $('accepta').disabled = false;
+      return;
+    }
+    tabCurent = 'comanda';
+    renderDetaliu(id);
+  });
+}
+
+// ── Rutare pe hash ───────────────────────────────────────────────────────────
+
+// #comanda/<id> → detaliu;  #comenzi → „Comenzi în lucru";  #finalizate → „Comenzi finalizate";  restul → Oferte.
+// Aşa cele două plăci din pagina principală deschid fiecare tabul ei.
+function ruteaza() {
+  const m = location.hash.match(/^#comanda\/(\d+)$/);
+  if (m) return renderDetaliu(m[1]);
+  if (location.hash === '#comenzi') tabCurent = 'comanda';
+  else if (location.hash === '#finalizate') tabCurent = 'finalizata';
+  else if (location.hash === '#oferte') tabCurent = 'oferta';
+  return renderLista();
+}
+
+window.addEventListener('hashchange', ruteaza);
+
+// ── Ofertă nouă — alegerea gamei ─────────────────────────────────────────────
+async function deschideAlegereGama() {
+  if (!$('listaGame').children.length) {
+    const g = await fetch('/configurator/game.json').then(r => (r.ok ? r.json() : null)).catch(() => null);
+    const cate = x => (x.tabel ? x.modele.flat() : x.modele).length;
+    $('listaGame').innerHTML = (g?.game ?? []).map(x => `
+      <a href="/configurator/?gama=${encodeURIComponent(x.id)}">
+        <span class="titlu">${esc(x.label)}</span>
+        <span class="sub">${cate(x)} ${cate(x) === 1 ? 'model' : 'modele'} · ${esc(x.descriere ?? '')}</span>
+      </a>`).join('') || '<p class="dim">Configuratorul nu e construit (cd configurator_usi && node build.js).</p>';
+  }
+  $('alegeGama').hidden = false;
+}
+const inchideAlegereGama = () => { $('alegeGama').hidden = true; };
+$('ofertaNoua').addEventListener('click', deschideAlegereGama);
+$('inchideGama').addEventListener('click', inchideAlegereGama);
+$('alegeGama').addEventListener('click', e => { if (e.target === $('alegeGama')) inchideAlegereGama(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') inchideAlegereGama(); });
+
+// câte bucăţi de sticlă aşteaptă să fie comandate — insigna de lângă link
+async function actualizeazaSticla() {
+  const r = await api('/api/sumar');
+  if (r?.ok) $('nrSticla').textContent = (await r.json()).sticla || '';
+}
+
+// ── Actualizare live ─────────────────────────────────────────────────────────
+// La orice schimbare (ofertă, scanare, finalizare, facturare — vezi /live.js şi
+// server/evenimente.js) pagina curentă se re-randează singură.
+// Nu o re-randăm cât timp omul scrie într-un câmp (ex. nr. facturii) — atunci
+// aşteptăm să iasă din el. Poziţia de scroll rămâne.
+let deReimprospatat = false, temporizare = null;
+function reimprospateaza() {
+  const activ = document.activeElement;
+  // căutarea nu se pierde la re-randare (bara listei rămâne pe loc)
+  if (activ?.matches?.('input, textarea') && activ.value && activ.id !== 'cauta') { deReimprospatat = true; return; }
+  deReimprospatat = false;
+  const y = window.scrollY;
+  Promise.resolve(ruteaza()).then(() => window.scrollTo(0, y));
+  actualizeazaSticla();
+}
+document.addEventListener('focusout', () => { if (deReimprospatat) setTimeout(reimprospateaza, 0); });
+
+function asculta() {
+  const programeaza = () => {
+    clearTimeout(temporizare);
+    temporizare = setTimeout(reimprospateaza, 150);
+  };
+  // pin / sortare schimbate din ALT tab (sau alt dispozitiv) al aceluiaşi cont
+  urmareste(programeaza, async () => {
+    const pr = await api('/api/preferinte');
+    if (pr?.ok) sortare = (await pr.json()).sortare ?? 'data';
+    programeaza();
+  });
+}
+
+(async () => {
+  const r = await api('/api/eu');
+  if (!r) return;
+  $('cine').textContent = (await r.json()).utilizator.nume;
+  actualizeazaSticla();
+  const pr = await api('/api/preferinte');
+  if (pr?.ok) sortare = (await pr.json()).sortare ?? 'data';
+  ruteaza();
+  asculta();
+})();
+
+$('iesire').addEventListener('click', async () => {
+  await fetch('/api/logout', { method: 'POST' });
+  location.href = '/login';
+});
+</script>
+</body>
+</html>

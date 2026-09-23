@@ -1,0 +1,128 @@
+{
+  "_comentariu": [
+    "Gamele de produse — SURSĂ UNICĂ, citită din două locuri:",
+    "  · js/ui.js  (selectorul GAMĂ + tabelul MODEL din bara laterală)",
+    "  · managerul de comenzi, pentru butoanele din pagina principală;",
+    "    build.js copiază fişierul în dist/, deci e servit ca /configurator/game.json",
+    "",
+    "Sistem nou: adaugă-l în js/systems/registry.js ŞI în lista `modele` de aici.",
+    "  tabel : true  → două coloane (Deschidere Totală ↔ Parţială), perechi pe rând",
+    "          false → listă simplă, două modele pe rând",
+    "  implicit = sistemul pe care se deschide gama când o alegi"
+  ],
+  "game": [
+    {
+      "id": "suspendata",
+      "label": "Uşi suspendate",
+      "descriere": "Culisante suspendate, deschidere totală sau parţială",
+      "implicit": "suspendataA",
+      "tabel": true,
+      "coloane": [
+        "Deschidere Totală",
+        "Deschidere Parțială"
+      ],
+      "modele": [
+        [
+          {
+            "id": "suspendataD",
+            "label": "Configurație D"
+          },
+          {
+            "id": "suspendataA",
+            "label": "Configurație A"
+          }
+        ],
+        [
+          {
+            "id": "suspendataE",
+            "label": "Configurație E"
+          },
+          {
+            "id": "suspendataB",
+            "label": "Configurație B"
+          }
+        ],
+        [
+          {
+            "id": "suspendataF",
+            "label": "Configurație F"
+          },
+          {
+            "id": "suspendataC",
+            "label": "Configurație C"
+          }
+        ],
+        [
+          {
+            "id": "suspendataStandard",
+            "label": "Configurație Standard"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "confort",
+      "label": "Confort",
+      "descriere": "Culisante cu nr. de uşi ales de tine (1–7)",
+      "implicit": "confortVerona",
+      "tabel": false,
+      "modele": [
+        {
+          "id": "confortVerona",
+          "label": "Verona"
+        },
+        {
+          "id": "confortGamma",
+          "label": "Gamma"
+        },
+        {
+          "id": "confortAtrani",
+          "label": "Atrani"
+        },
+        {
+          "id": "confortAlfa",
+          "label": "Alfa"
+        }
+      ]
+    },
+    {
+      "id": "rame",
+      "label": "Rame",
+      "descriere": "Rame de aluminiu pt. uşi de mobilier, cu geam sau oglindă",
+      "implicit": "rama820",
+      "tabel": true,
+      "modele": [
+        [
+          {
+            "id": "rama820",
+            "label": "Ramă 820"
+          },
+          {
+            "id": "rama831",
+            "label": "Ramă 831"
+          }
+        ],
+        [
+          {
+            "id": "rama822",
+            "label": "Ramă 822"
+          },
+          {
+            "id": "rama841",
+            "label": "Ramă 841"
+          }
+        ],
+        [
+          {
+            "id": "rama824",
+            "label": "Ramă 824"
+          },
+          {
+            "id": "rama842",
+            "label": "Ramă 842"
+          }
+        ]
+      ]
+    }
+  ]
+}

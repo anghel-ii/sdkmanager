@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <title>Configurator Sisteme Uși</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+<div id="app">
+  <div id="sidebar">
+    <div class="brand">
+      <!-- apare doar când configuratorul e servit de managerul de comenzi;
+           deschis direct de pe disc rămâne ascuns (vezi js/ui.js) -->
+      <a class="acasa" id="linkAcasa" href="/" style="display:none">← Acasă</a>
+      <div class="name" id="brandNume">Configurator sisteme uși</div>
+      <div class="sub">Randare 3D live</div>
+    </div>
+
+    <!-- 1+2. MODEL + SCHIŢĂ — gama e fixată de linkul din pagina principală
+         (?gama=), nu se mai schimbă din configurator. La gamele "solo" (fără
+         tabel Totală/Parţială — azi doar Confort), js/ui.js pune clasa
+         .langa-schita pe wrapper şi randează toate modelele într-o singură
+         coloană, cu schiţa alături (nu dedesubt) — cerut explicit. La gamele
+         cu tabel (Suspendată) rămâne stivuit vertical, ca înainte. -->
+    <div class="model-schita" id="modelSchitaWrap">
+      <div class="group">
+        <div class="group-label" id="modelLabel">MODEL</div>
+        <div id="systemType"></div>
+      </div>
+
+      <!-- coloana dreaptă: schiţa + (doar la Confort, .langa-schita) butonul
+           CLEAR PAGE, aşezat jos, în dreptul ultimului buton de model -->
+      <div class="col-dreapta">
+        <div class="group" id="groupSchita" style="display:none">
+          <div class="group-label">SCHIȚĂ</div>
+          <div class="schita-box">
+            <img id="schitaImg" src="" alt="Schiță configurație">
+          </div>
+        </div>
+        <button id="btnClear" class="btn-clear" type="button">CLEAR PAGE</button>
+      </div>
+    </div>
+
+    <!-- 3. FINISAJ -->
+    <div class="group">
+      <div class="group-label">FINISAJ</div>
+      <div class="swatches" id="colorSwatches"></div>
+    </div>
+
+    <!-- 4. ÎNĂLȚIME GOL — id-uri pt. randul compact de la Confort (vezi
+         #sidebar.confort-compact în main.css); la Suspendată clasa nu se
+         pune niciodată, deci layout-ul rămâne EXACT cel de dinainte. -->
+    <div class="group" id="groupHeight">
+      <div class="group-label">ÎNĂLȚIME GOL</div>
+      <div class="num-input-row">
+        <input type="number" id="heightInput" step="10" value="2200">
+        <span class="unit">mm <span class="dim-hint" id="heightHint"></span></span>
+      </div>
+    </div>
+
+    <!-- 5. LĂȚIME GOL -->
+    <div class="group" id="groupWidth">
+      <div class="group-label">LĂȚIME GOL</div>
+      <div class="num-input-row">
+        <input type="number" id="widthInput" step="10" value="2400">
+        <span class="unit">mm <span class="dim-hint" id="widthHint"></span></span>
+      </div>
+    </div>
+
+    <!-- 6b. NR. UŞI + NR. SUPRAPUNERI — doar sisteme cu nr. de uşi variabil
+         (Confort), pe acelaşi rând (cerut explicit). Opţiunile de
+         suprapuneri (0, plus valoarea confirmată din tabelul de suprapuneri
+         pt. nr. curent de uşi) se randează dinamic în ui.js → renderDoorsUI,
+         fiindcă depind de câte uşi sunt. 0 = şină simplă (tracks 1), cealaltă
+         valoare = şină dublă (tracks 2). La 1 uşă şi la 3+ uşi nu există
+         alegere reală — vezi comentariul din renderDoorsUI (ui.js). -->
+    <div class="group group-row" id="groupDoorsTracks" style="display:none">
+      <div class="subgroup" id="groupDoors">
+        <div class="group-label">NR. UŞI</div>
+        <div class="stepper">
+          <button id="doorsMinus">−</button>
+          <div class="n" id="doorsVal">2</div>
+          <button id="doorsPlus">+</button>
+        </div>
+      </div>
+      <div class="subgroup" id="groupTracks">
+        <div class="group-label">SUPRAPUNERI</div>
+        <div class="segmented" id="tracksToggle"></div>
+      </div>
+    </div>
+
+    <!-- RAME — doar la gama „rame": rânduri H × L × buc + opţiunile din
+         formularul de comandă (js/ui_rame.js). Înlocuieşte cotele de gol,
+         nr. de uşi şi cardurile de uşă. -->
+    <div class="group" id="groupRame" style="display:none">
+      <div class="group-label">RAME</div>
+      <div id="rameUI"></div>
+    </div>
+
+    <!-- 4. UŞI — per uşă: montaj, divizări (+ tip), panouri (sticlă/PAL),
+         tipul de sticlă, role (simplă/amortizor). La Confort rămâne ascuns
+         până alegi model + culoare + cote + nr. de uşi (vezi renderWheels,
+         ui.js) — nu apare niciun card „implicit". -->
+    <div class="group" id="groupUsi">
+      <div class="group-label">UŞI</div>
+      <div id="wheelsUI"></div>
+    </div>
+
+    <hr class="sep">
+
+    <!-- 5. SPECIFICAȚIE / NECESAR / FACTURARE -->
+    <div class="group">
+      <div class="group-label">SPECIFICAȚIE — <span id="roModel"></span></div>
+      <div id="roSummary"></div>
+    </div>
+    <div class="group" id="roBom"></div>
+    <div class="group" id="roClient"></div>
+    <div class="group" id="roBilling"></div>
+
+    <!-- 6. CLIENT — un singur set de câmpuri, folosit şi de fişa de atelier şi
+         de ofertă. „Salvează oferta" apare doar când configuratorul e servit de
+         managerul de comenzi şi eşti logat (vezi renderOferta în ui.js);
+         „Printează fişa" merge oricând, şi deschis de pe disc. -->
+    <div class="group" id="groupClient">
+      <div class="group-label">CLIENT</div>
+      <div class="oferta-client">
+        <input type="text" id="clientNume"    placeholder="Nume client" autocomplete="off">
+        <input type="text" id="clientContact" placeholder="Adresă sau nr. telefon" autocomplete="off">
+      </div>
+      <div id="ofertaUI"></div>
+      <div class="client-butoane">
+        <button id="btnConfirma" class="oferta-confirma" type="button" style="display:none">Salvează oferta</button>
+        <button id="btnFisa" class="fisa-print" type="button">🖶 Printează fişa</button>
+      </div>
+      <div id="ofertaMesaj"></div>
+    </div>
+
+    <div class="footer-note">
+      Model nou: copiază un fișier din <code>js/systems/</code> (secțiunile 1–7:
+      profile → șină → spec → BOM → randare → facturare) și înregistrează-l în
+      <code>registry.js</code>. Codurile NeoManager se caută în
+      <code>catalog.sqlite</code> (→ <code>npm run catalog</code>).
+    </div>
+  </div>
+
+  <div id="stage">
+    <div id="canvas-holder"></div>
+    <div class="hint">Click + drag pentru rotire · scroll pentru zoom</div>
+  </div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.module.js",
+    "three/examples/jsm/": "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

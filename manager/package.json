@@ -1,0 +1,10 @@
+{
+  "name": "manager-comenzi",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "node server/index.js",
+    "init": "node scripts/init.js",
+    "test": "node scripts/test.js && node scripts/test-fara-scanare.js"
+  }
+}

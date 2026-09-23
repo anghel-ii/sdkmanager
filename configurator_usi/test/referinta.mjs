@@ -1,0 +1,352 @@
+// ═══════════════════════════════════════════════════════════════════════════
+//  TEST DE REFERINŢĂ — tot ce iese din configurator, pe o grilă de configuraţii
+//
+//  Pentru fiecare sistem × culoare × cotă × variantă (montaj, PAL, divizări,
+//  opţiuni avansate) calculează exact ce ajunge la client şi în atelier:
+//    F  facturare NeoManager (cod, cantitate, um)   — ce se lipeşte în NeoManager
+//    N  necesar atelier (cod, cantitate, debitare)
+//    C  necesar client (cote de panouri)
+//    S  sticla de comandat la furnizor
+//    E  erori (facturare + panouri)
+//  şi compară cu test/referinta.json. Orice diferenţă = s-a schimbat un cod sau
+//  o cantitate — trebuie să fie intenţionat.
+//
+//  Verifică şi integritatea liniilor de facturare (vezi `integritate`).
+//
+//  Importă DOAR prin builder.js / state.js / registry.js — nimic din lib/ —
+//  ca să rămână valabil oricum s-ar reorganiza bibliotecile familiilor.
+//
+//  Rulare: npm test            (compară)
+//          npm test -- --actualizeaza   (rescrie referinţa, după o schimbare voită)
+// ═══════════════════════════════════════════════════════════════════════════
+
+import * as THREE from 'three';
+import fs from 'node:fs';
+import { state } from '../js/state.js';
+import { systems } from '../js/systems/registry.js';
+import { initBuilder, buildConfig, currentSpec, currentBom, currentBilling,
+         currentClientPanels, currentSticla, finishesOf } from '../js/builder.js';
+import catalog from '../js/catalog/catalog.generated.json';
+
+const FISIER = new URL('./referinta.json', import.meta.url);
+const actualizeaza = process.argv.includes('--actualizeaza');
+
+initBuilder(new THREE.Group(), { target: { set() {} } });
+
+// ── Starea unei configuraţii (ce face ui.js → syncDoors, fără DOM) ─────────
+const GEAM_4   = 'GG004';    // geam float 4mm
+const OGLINDA  = (catalog.geam ?? []).find(g => g.oglinda)?.cod;
+const PERUSA   = (n, f) => Array.from({ length: n }, (_, i) => f(i));
+
+function reseteaza() {
+  for (const k of Object.keys(state)) delete state[k];
+}
+
+function stareUsi(sys, { W, H, finish, doors, tracks, varianta }) {
+  reseteaza();
+  const m = sys.meta;
+  const n = m.doorsRange ? doors : (m.doors ?? 1);
+  const pal = !!m.pal;
+  Object.assign(state, { system: m.id, width: W, height: H, finish, doors: n, tracks });
+
+  // A = totul „noi", sticlă, 1 divizare, geam 4mm
+  // B = totul „client", PAL jos (dacă modelul are PAL), geam client 8mm, role amortizor
+  // C = amestec: 2 divizări, PAL-PAL-sticlă, profil H, înălţime fixată, divizări
+  //     aplicate, amortizare, oglindă, montaj alternat
+  const V = {
+    A: i => ({ asm: 'noi', div: 1, panels: ['sticla', 'sticla'], geam: GEAM_4, gc: 4,
+               wheel: { left: 'simpla', right: 'simpla' } }),
+    B: i => ({ asm: 'client', div: 1, panels: [pal ? 'pal' : 'sticla', 'sticla'], geam: GEAM_4, gc: 8,
+               wheel: { left: 'amortizor', right: 'simpla' } }),
+    X: i => ({ asm: 'noi', div: 1, panels: ['sticla', 'sticla'], hPanouri: [5000, null], geam: GEAM_4, gc: 4,
+               wheel: { left: 'simpla', right: 'simpla' } }),
+    D: i => ({ asm: 'noi', div: 0, panels: ['sticla'], geam: GEAM_4, gc: 4,
+               wheel: { left: 'simpla', right: 'simpla' } }),
+    C: i => ({ asm: i % 2 ? 'client' : 'noi', div: 2,
+               panels: pal ? ['pal', 'pal', 'sticla'] : ['sticla', 'sticla', 'sticla'],
+               divProfil: ['H', 'confort'], hPanouri: [600, null, null],
+               geam: OGLINDA, gc: 4, wheel: { left: 'amortizor', right: 'amortizor' },
+               amort: { left: '35kg', right: '60kg' },
+               aplicate: { latime: '20', parte: 'ambele', verticale: 1, orizontale: 2 } }),
+  }[varianta];
+
+  const u = PERUSA(n, V);
+  state.assembly    = u.map(x => x.asm);
+  state.divisions   = u.map(x => x.div);
+  state.panels      = u.map(x => [...x.panels]);
+  state.hPanouri    = u.map(x => x.hPanouri ? [...x.hPanouri] : Array(x.div + 1).fill(null));
+  state.divProfil   = u.map(x => x.divProfil ? [...x.divProfil] : Array(x.div).fill('confort'));
+  state.geam        = u.map(x => x.geam);
+  state.geamClient  = u.map(x => x.gc);
+  state.wheels      = u.map(x => ({ ...x.wheel }));
+  state.amortizare  = u.map(x => ({ ...(x.amort ?? { left: 'fara', right: 'fara' }) }));
+  state.divAplicate = u.map(x => ({ ...(x.aplicate ?? { latime: 'fara', parte: 'fata', verticale: 0, orizontale: 0 }) }));
+}
+
+function stareRame(sys, { finish, varianta, randuri }) {
+  reseteaza();
+  Object.assign(state, { system: sys.meta.id, width: 1200, height: 2100, finish, doors: 1, tracks: 1,
+    divisions: [0], panels: [['sticla']], assembly: ['noi'], geam: [null], geamClient: [4],
+    wheels: [{ left: 'simpla', right: 'simpla' }], hPanouri: [[null]], divProfil: [[]],
+    amortizare: [{ left: 'fara', right: 'fara' }],
+    divAplicate: [{ latime: 'fara', parte: 'fata', verticale: 0, orizontale: 0 }] });
+  const grup820 = ['rama820', 'rama822', 'rama824'].includes(sys.meta.id);
+  state.rame = {
+    randuri: randuri.map(([h, l, buc, gauri]) => ({ h, l, buc, gauri })),
+    asamblare: varianta === 'client' ? 'client' : 'noi',
+    geam: varianta === 'oglinda' ? OGLINDA : GEAM_4,
+    gaurire: grup820 ? '100 mm sus/jos si la mijloc' : 'Gaurire Standard',
+    balama: grup820 ? (varianta === 'client' ? 'Fara balamale de la noi' : sys.meta.id === 'rama820' ? '71B3550 NICHEL' : '9072524') : null,
+    placuta: grup820 ? (varianta === 'client' ? 'Fara placute de la noi' : sys.meta.id === 'rama820' ? '173H7100 NICHEL' : '9071576') : null,
+    manson: varianta !== 'client',
+    maner: grup820 && varianta !== 'client'
+      ? { profil: '771', randuri: [{ lungime: 1200, buc: 2 }, { lungime: 800, buc: 3 }] }
+      : { profil: 'Fara profil maner', randuri: [{ lungime: null, buc: 1 }] },
+    ral: '', vopsitCant: varianta === 'oglinda' ? 2 : 0,
+    livrare: varianta === 'client' ? 'Ridicare personala' : 'Curier ramburs',
+    agent: 'Birou', facturare: 'Factura fiscala',
+  };
+}
+
+// ── Ce iese dintr-o configuraţie, ca linii de text comparabile ──────────────
+const q = v => (typeof v === 'number' ? String(v) : String(v ?? ''));
+
+function rezultat() {
+  buildConfig();
+  const spec = currentSpec();
+  const f = currentBilling();
+  return [
+    ...f.lines.map(l => `F ${l.cod} | ${q(l.cantitate)} ${l.um ?? ''}`),
+    ...currentBom().map(r => `N ${r.code} | ${q(r.qty)} ${r.unit ?? ''} | ${r.cut ?? ''}`),
+    ...currentClientPanels().map(r => `C ${r.label} | ${q(r.qty)} | ${r.cut ?? ''}`),
+    ...currentSticla().map(s => `S ${s.cod} | ${s.h}x${s.l} | ${s.buc}`),
+    ...f.errors.map(e => `E ${e}`),
+    ...(spec?.glass?.panels ?? []).filter(p => p.eroare).map((p, i) => `E panouri: ${p.eroare}`),
+  ];
+}
+
+// ── Integritatea liniilor de facturare NeoManager ───────────────────────────
+// Ce se lipeşte în NeoManager trebuie să fie curat, indiferent de configuraţie:
+//   • cod real (nu gol, nu „⚠", nu placeholder)
+//   • cantitate număr finit > 0, cu cel mult 2 zecimale ŞI fără zgomot de
+//     virgulă mobilă (1.1 nu 1.1100000000000001, şi nu 1.11 când aria e 1.1)
+//   • un cod căutat în catalog chiar există în catalogul familiei
+const TOATE_CODURILE = new Set(Object.values(catalog).flat().map(a => String(a.cod)));
+const probleme = [];
+const coduriFixe = new Map();   // coduri facturate care NU vin din catalog → sistemele care le folosesc
+
+function integritate(cheie, sys) {
+  const { lines } = currentBilling();
+  for (const l of lines) {
+    if (!TOATE_CODURILE.has(String(l.cod))) {
+      if (!coduriFixe.has(l.cod)) coduriFixe.set(l.cod, new Set());
+      coduriFixe.get(l.cod).add(sys.meta.family);
+    }
+    const c = l.cantitate;
+    if (!l.cod || /^⚠|LIPS/.test(String(l.cod)))                  probleme.push(`${cheie}: cod invalid „${l.cod}"`);
+    if (!Number.isFinite(c) || !(c > 0))                            probleme.push(`${cheie}: ${l.cod} cantitate ${c}`);
+    else if (Math.round(c * 100) / 100 !== c || String(c).length > String(Math.round(c * 100) / 100).length)
+                                                                    probleme.push(`${cheie}: ${l.cod} cantitate cu zgomot ${c}`);
+  }
+  // Cote greşite de panouri → facturarea trebuie blocată (altfel s-ar putea
+  // copia în NeoManager / salva o ofertă cu geam şi cote greşite)
+  if ((currentSpec()?.glass?.panels ?? []).some(p => p.eroare) && !currentBilling().errors.length)
+    probleme.push(`${cheie}: panouri cu cote greşite, dar facturarea nu e blocată`);
+
+  // Geamul facturat în mp = aria EXACTĂ a panourilor de sticlă ale uşilor
+  // asamblate de noi, rotunjită în sus la 0,01 — nici mai puţin (pierdere),
+  // nici 0,01 în plus din zgomotul de virgulă mobilă (1100×1000 → 1.1, nu 1.11).
+  // Folia (283, la oglinzi) = aria / 25 × 1.15, rotunjită la fel.
+  const a = ariaExacta(currentSpec());
+  const geamCod = state.rame ? state.rame.geam : state.geam.find((g, i) => state.assembly[i] !== 'client');
+  if (a > 0 && geamCod) {
+    const linie = lines.find(l => l.cod === geamCod);
+    if (linie?.cantitate !== ceilCorect(a)) probleme.push(`${cheie}: geam ${geamCod} facturat ${linie?.cantitate}, aria exactă ${+a.toFixed(6)} → ${ceilCorect(a)}`);
+    const folie = lines.find(l => l.cod === '283');
+    if (folie && folie.cantitate !== ceilCorect(a / 25 * 1.15)) probleme.push(`${cheie}: folie 283 facturată ${folie.cantitate}, trebuie ${ceilCorect(a / 25 * 1.15)}`);
+  }
+}
+
+// rotunjire în sus la 0,01 care ignoră zgomotul de virgulă mobilă sub 1e-6
+const ceilCorect = x => Math.ceil(Math.round(x * 1e6) / 1e4 - 1e-9) / 100;
+
+// Aria (mp) a sticlei facturate: panourile de sticlă ale uşilor „noi" (rame:
+// toate ramele, dacă asamblăm noi). Calculată aici, independent de lib/.
+function ariaExacta(spec) {
+  if (!spec) return 0;
+  if (state.rame) return state.rame.asamblare === 'noi' ? spec.ariaGeam : 0;
+  const g = spec.glass;
+  if (!g) return 0;
+  let a = 0;
+  g.panels.forEach((p, i) => {
+    if (state.assembly[i] === 'client') return;
+    const hs = p.heights ?? Array(p.divisions + 1).fill(p.paneH);
+    hs.forEach((h, k) => {
+      const mat = p.mats?.[k] ?? state.panels[i][k];
+      if (mat !== 'pal' && h > 0) a += (g.glassW / 1000) * (h / 1000);
+    });
+  });
+  return a;
+}
+
+// ── Grila ────────────────────────────────────────────────────────────────────
+const rezultate = {};
+let nrCazuri = 0;
+
+for (const sys of Object.values(systems)) {
+  const m = sys.meta;
+  const culori = finishesOf(m).map(f => f.id);
+
+  if (m.rame) {
+    const seturi = {
+      mici:  [[500, 400, 2, 3], [1100, 450, 1, 4]],
+      mari:  [[1250, 610, 1, 4], [2600, 700, 3, 5]],
+      peste: [[3100, 1300, 1, 2]],   // peste mărimea maximă → eroare
+    };
+    for (const finish of culori) for (const varianta of ['noi', 'client', 'oglinda']) for (const [nume, randuri] of Object.entries(seturi)) {
+      const cheie = `${m.id} | ${finish} | ${varianta} | ${nume}`;
+      stareRame(sys, { finish, varianta, randuri });
+      rezultate[cheie] = rezultat();
+      integritate(cheie, sys);
+      nrCazuri++;
+    }
+    continue;
+  }
+
+  const lim = m.limits;
+  const intre = ([a, b], x) => Math.min(b, Math.max(a, x));
+  const usiTracks = m.doorsRange ? [[1, 1], [2, 1], [3, 2], [5, 2]] : [[m.doors ?? 1, 2]];
+
+  for (const [doors, tracks] of usiTracks) {
+    // cota „tipică": ~900 mm pe uşă la Confort (altfel uşi de 200 mm, fără cod)
+    const Wtipic = intre(lim.width, m.doorsRange ? doors * 900 + 200 : 1100);
+    const Htipic = intre(lim.height, 2100);
+    const cote = [[lim.width[0], lim.height[0]], [lim.width[1], lim.height[1]], [Wtipic, Htipic]];
+
+    for (const finish of culori) for (const [W, H] of cote) for (const varianta of ['A', 'B', 'C']) {
+      const cheie = `${m.id} | ${finish} | ${W}x${H} | ${doors}u/${tracks}s | ${varianta}`;
+      stareUsi(sys, { W, H, finish, doors, tracks, varianta });
+      rezultate[cheie] = rezultat();
+      integritate(cheie, sys);
+      nrCazuri++;
+    }
+
+    // baleiere fină a lăţimii (pas 10 mm, prima culoare) — prinde rotunjirile
+    // care greşesc doar la anumite cote
+    for (let W = Wtipic - 150; W <= Wtipic + 150; W += 10) {
+      if (W < lim.width[0] || W > lim.width[1]) continue;
+      const cheie = `${m.id} | ${culori[0]} | ${W}x${Htipic} | ${doors}u/${tracks}s | A`;
+      if (rezultate[cheie]) continue;
+      stareUsi(sys, { W, H: Htipic, finish: culori[0], doors, tracks, varianta: 'A' });
+      rezultate[cheie] = rezultat();
+      integritate(cheie, sys);
+      nrCazuri++;
+    }
+  }
+}
+
+// Cote alese ca aria geamului să fie EXACT un număr cu 2 zecimale — acolo
+// greşea rotunjirea în sus (1100×1000 → 1,11 în loc de 1,1). Varianta D = un
+// singur panou de sticlă, fără divizare.
+//   Suspendată A  987×2227 → sticlă 1000 × 2200 mm = 2,2 mp (dădea 2,21)
+//   Confort Verona 1048×2297, 1 uşă, şină simplă → 500 × 2200 mm = 1,1 mp (dădea 1,11)
+// Varianta X = un panou fixat la 5000 mm, mai înalt decât uşa → eroare de panouri.
+for (const [id, W, H, doors, tracks, varianta] of [
+  ['suspendataA', 987, 2227, 1, 2, 'D'], ['confortVerona', 1048, 2297, 1, 1, 'D'],
+  ['suspendataA', 1200, 2100, 1, 2, 'X'], ['confortVerona', 1800, 2100, 2, 2, 'X'],
+]) {
+  const sys = systems[id];
+  const finish = finishesOf(sys.meta)[0].id;
+  const cheie = `${id} | ${finish} | ${W}x${H} | ${doors}u/${tracks}s | ${varianta}`;
+  stareUsi(sys, { W, H, finish, doors, tracks, varianta });
+  rezultate[cheie] = rezultat();
+  integritate(cheie, sys);
+  nrCazuri++;
+}
+
+// ── Graniţele dintre familii ────────────────────────────────────────────────
+// Codul unei familii (lib/<familie>/ + systems/<prefix>_*.js) importă doar din
+// folderul ei, din lib/comun/, din catalog şi din three — niciodată din altă
+// familie. lib/comun/ nu importă din nicio familie. Aşa o schimbare la Confort
+// nu poate atinge suspendatele sau ramele, şi invers.
+const JS = new URL('../js/', import.meta.url);
+const FAMILII = { suspendata: 'suspendata_', confort: 'confort_', rame: 'rama_' };
+const incalcari = [];
+
+function verificaImporturi(fisier, permise) {
+  const src = fs.readFileSync(new URL(fisier, JS), 'utf8');
+  for (const [, spec] of src.matchAll(/^\s*(?:import|export)\b[^'"]*?from\s+['"]([^'"]+)['"]/gm)) {
+    if (!spec.startsWith('.')) continue;                         // three, jsbarcode
+    const tinta = new URL(spec, new URL(fisier, JS)).href.slice(JS.href.length);
+    if (!permise.some(p => tinta.startsWith(p))) incalcari.push(`${fisier} → ${tinta}`);
+  }
+}
+
+for (const [fam, prefix] of Object.entries(FAMILII)) {
+  const permise = [`lib/${fam}/`, 'lib/comun/', 'catalog/'];
+  for (const f of fs.readdirSync(new URL(`lib/${fam}/`, JS))) verificaImporturi(`lib/${fam}/${f}`, permise);
+  for (const f of fs.readdirSync(new URL('systems/', JS)).filter(f => f.startsWith(prefix))) verificaImporturi(`systems/${f}`, permise);
+}
+for (const f of fs.readdirSync(new URL('lib/comun/', JS))) verificaImporturi(`lib/comun/${f}`, ['lib/comun/', 'catalog/']);
+
+// ── Comparare / actualizare ─────────────────────────────────────────────────
+let cazut = false;
+
+if (incalcari.length) {
+  cazut = true;
+  console.log(`✗ graniţe între familii: ${incalcari.length} importuri interzise`);
+  for (const x of incalcari) console.log(`    ${x}`);
+} else {
+  console.log('✓ graniţe între familii: suspendata / confort / rame nu importă una din alta');
+}
+
+if (actualizeaza || !fs.existsSync(FISIER)) {
+  fs.writeFileSync(FISIER, JSON.stringify(rezultate, null, 1) + '\n');
+  console.log(`Referinţă scrisă: ${nrCazuri} configuraţii → test/referinta.json`);
+} else {
+  const ref = JSON.parse(fs.readFileSync(FISIER, 'utf8'));
+  const chei = new Set([...Object.keys(ref), ...Object.keys(rezultate)]);
+  const diferite = [];
+  for (const k of chei) {
+    const a = ref[k], b = rezultate[k];
+    if (!a || !b) { diferite.push({ k, lipsa: !a ? 'nou' : 'dispărut' }); continue; }
+    const sa = new Set(a), sb = new Set(b);
+    const minus = a.filter(x => !sb.has(x)), plus = b.filter(x => !sa.has(x));
+    if (minus.length || plus.length || a.length !== b.length) diferite.push({ k, minus, plus });
+  }
+  if (diferite.length) {
+    cazut = true;
+    console.log(`✗ ${diferite.length} din ${chei.size} configuraţii diferă de referinţă:`);
+    for (const d of diferite.slice(0, 15)) {
+      console.log(`  ${d.k}${d.lipsa ? ` — ${d.lipsa}` : ''}`);
+      for (const x of d.minus ?? []) console.log(`      - ${x}`);
+      for (const x of d.plus ?? [])  console.log(`      + ${x}`);
+    }
+    if (diferite.length > 15) console.log(`  … şi încă ${diferite.length - 15}`);
+  } else {
+    console.log(`✓ ${nrCazuri} configuraţii identice cu referinţa`);
+  }
+}
+
+// statistici utile: câte configuraţii au erori (arătate userului în UI)
+const cuErori = Object.entries(rezultate).filter(([, r]) => r.some(x => x.startsWith('E '))).length;
+console.log(`  (${cuErori} configuraţii au erori afişate în UI — incluse în referinţă)`);
+
+if (probleme.length) {
+  cazut = true;
+  const tipuri = {};
+  for (const p of probleme) { const t = p.split(': ').slice(1).join(': ').replace(/[\d.]+/g, '#'); tipuri[t] = (tipuri[t] ?? 0) + 1; }
+  console.log(`✗ integritate facturare: ${probleme.length} probleme`);
+  for (const p of probleme.slice(0, 10)) console.log(`    ${p}`);
+  console.log('  pe tipuri:', tipuri);
+} else {
+  console.log('✓ integritate facturare: toate liniile au cod real şi cantităţi curate');
+}
+
+// Codurile scrise direct în program (nu în catalog) — de confruntat cu NeoManager
+if (process.argv.includes('--coduri-fixe')) {
+  console.log('Coduri facturate care nu vin din catalog:');
+  for (const [cod, fam] of [...coduriFixe].sort()) console.log(`  ${cod}  (${[...fam].join(', ')})`);
+}
+
+process.exit(cazut ? 1 : 0);

@@ -1,0 +1,126 @@
+// ═══════════════════════════════════════════════════════════════════════════
+//  SUSPENDATĂ STANDARD — 2–7 uşi alese de user, fără pereţi, cu suprapuneri
+//  (acelaşi tabel ca la Confort: 2→1, 3→2, 4→2, 5→4, 6→4, 7→5).
+//  Date de user (2026-09-21):
+//    lăţime uşă  = (gol + 19 × nr. suprapuneri − 5) ÷ nr. uşi
+//    înălţime    = gol − 62
+//    şină        = doar SIMPLĂ, lungime = lăţimea golului; cu suprapuneri
+//                  vin 2 şine (una pe pistă). Fără profil de mascare.
+// ═══════════════════════════════════════════════════════════════════════════
+
+import { mm } from '../lib/comun/geo.js';
+import { makeMaterials } from '../lib/suspendata/materials.js';
+import { glazing } from '../lib/suspendata/glazing.js';
+import { doorFrameRows, railRows, wheelRows, screwRows, glassRows } from '../lib/suspendata/bom.js';
+import { billQuantities } from '../lib/suspendata/billing.js';
+import { billAplicate, aplicateRows, usa3D } from '../lib/suspendata/aplicate.js';
+import { suprapuneri, layout2Track } from '../lib/suspendata/suprapuneri.js';
+import { FINISAJE_STANDARD, finishHex } from '../lib/suspendata/finish.js';
+import { GROSIME_PAL_SUSPENDATE_MM, suspendedRail, hungDoor } from '../lib/suspendata/suspended.js';
+import { clamp } from '../lib/suspendata/num.js';
+
+// ── 1. Identitate + limite gol (mm) ─────────────────────────────────────────
+export const meta = {
+  id:          'suspendataStandard',
+  label:       'Suspendată Standard',
+  family:      'suspendata',
+  pal:         true,                  // sticlă sau PAL 10mm
+  doorsRange:  [2, 7],                // nr. de uşi ales de user (stepper UI)
+  suprapuneriObligatorii: true,       // fără varianta „0 suprapuneri" (vezi ui.js)
+  // lăţime: banda de şină din catalog (1201–5800 = lăţimea golului)
+  limits:      { width: [1300, 5800], height: [1900, 2700] },
+  finishes:    FINISAJE_STANDARD,
+};
+
+// ── 2. Profile (mm) — aceleaşi secţiuni ca la celelalte suspendate ─────────
+const LPROFIL = 19;
+export const profiles = {
+  montant:     { w: LPROFIL, d: 35 },
+  traversaSus: { w: 24,      d: 35 },
+  traversaJos: { w: 36,      d: 35 },
+  divizare:    { w: 28,      d: 30 },
+  sina:        { w: 70,      h: 50 },
+};
+
+// ── 3. Cote de comandă — SURSĂ UNICĂ (mm) ───────────────────────────────────
+export function spec(state) {
+  const { width: W, height: H } = state;
+  const doors = clamp(state.doors ?? 2, meta.doorsRange[0], meta.doorsRange[1]);
+  const supr  = suprapuneri(doors);
+  const doorW = Math.round((W + LPROFIL * supr - 5) / doors);
+  const doorH = H - 62;
+  const rail  = W;
+  const nrSine = supr > 0 ? 2 : 1;
+
+  const parts = {
+    opening: { w: W, h: H },
+    door:    { w: doorW, h: doorH, count: doors },
+    rail:    { length: rail },
+    glass:   glazing({ doorW, doorH, divisionsPerDoor: state.divisions, panelsPerDoor: state.panels, inaltimiPerDoor: state.hPanouri }),
+  };
+
+  return {
+    ...parts,
+    nrSine,
+    bill: { ...billQuantities(profiles, parts, state), ...billAplicate(parts, state), nrSine },
+    summary: [
+      { label: 'Înălţime gol',    value: `${H} mm` },
+      { label: 'Lăţime gol',      value: `${W} mm` },
+      { label: 'Înălţimea uşii',  value: `${doorH} mm` },
+      { label: 'Lăţimea uşii',    value: `${doorW} mm × ${doors} uşi` },
+      { label: 'Nr. suprapuneri', value: `${supr}` },
+      { label: 'Lungime şină',    value: `${rail} mm × ${nrSine}` },
+    ],
+  };
+}
+
+// ── 4. Necesar materiale (atelier) ─────────────────────────────────────────
+export function bom(state, s) {
+  return [
+    ...doorFrameRows(profiles, s, state, meta.family),
+    ...railRows(s, state, meta.family, 0, s.nrSine),   // fără mascare
+    ...wheelRows(state),
+    ...screwRows(state),
+    ...glassRows(s, state),
+    ...aplicateRows(meta.family, s, state),
+  ];
+}
+
+// ── 5. Randare 3D — fără pereţi; câte o şină pe pistă, uşile pe 2 piste ─────
+export function build(group, state, s) {
+  const mats = makeMaterials(finishHex(meta, state), { palColor: 0xf4f4f2 });   // PAL alb
+  const W = mm(s.opening.w), H = mm(s.opening.h);
+  const doorW = mm(s.door.w), doorH = mm(s.door.h);
+  const piste = s.nrSine === 2 ? [0, 1] : [0];
+
+  // şina stă în gol, sub buiandrug (uşa e cu 62mm mai joasă decât golul)
+  piste.forEach(t => suspendedRail(group, { length: W, centerX: 0, H: H - 0.07, mat: mats.trackMat, track: t }));
+
+  layout2Track(W, doorW, s.door.count).forEach(({ offsetX, track }, i) => {
+    hungDoor(group, {
+      profiles, doorW, doorH, offsetX,
+      track: piste.length === 2 ? track : 0,
+      divisions: state.divisions[i], panelMaterials: state.panels[i],
+      ...usa3D(s, state, i, GROSIME_PAL_SUSPENDATE_MM), mats,
+    });
+  });
+}
+
+// ── 6. Facturare (NeoManager) ─────────────────────────────────────────────
+export const billing = {
+  mode: 'complet',
+  linii: [
+    { tip: 'usa',      dim: 'doorWmm',   qty: 'usi' },
+    { tip: 'sina',     dim: 'sinaLenMm', qty: 'nrSine' },
+    { tip: 'divizare', dim: 'innerWmm',  qty: 'divizariBuc' },
+
+    { cod: '381', denumire: 'Rolă simplă',       qty: 'roleSimple',    factor: 0.5, um: 'set' },
+    { cod: '380', denumire: 'Rolă cu amortizor', qty: 'roleAmortizor', factor: 0.5, um: 'set' },
+    { cod: '274', denumire: 'Perie laterală',    qty: 'perieMl', um: 'm' },
+
+    { tip: 'divizare aplicata 10', dim: 'innerWmm', qty: 'bareAplicate10' },
+    { tip: 'divizare aplicata 20', dim: 'innerWmm', qty: 'bareAplicate20' },
+    // Geam/oglindă + garnitură + folie se adaugă automat (js/lib/suspendata/geam.js).
+    // Verticalele, orizontalele şi şuruburile sunt incluse în codul uşii.
+  ],
+};
