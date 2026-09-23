@@ -689,3 +689,25 @@ input[type="range"]::-moz-range-thumb {
 .rame-et { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .03em; }
 .rame-camp input.mic { width: 80px; }
 .rame-maner { margin-top: -2px; }
+
+/* ── Meniuri căutabile (js/campuri.js) — caseta ia locul <select>-ului ascuns ── */
+.cautabil { flex: 1; min-width: 0; }
+.cautabil-in {
+  width: 100%; min-width: 0; box-sizing: border-box;
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px;
+  color: var(--text); font-family: 'Inter', sans-serif; font-size: 12px; padding: 5px 8px; outline: none;
+}
+.door-row .cautabil-in { font-size: 10.5px; }
+.cautabil-in:focus { border-color: var(--accent); }
+.cautabil-in::placeholder { color: var(--text-dim); }
+.cautabil-lista {
+  position: fixed; z-index: 1000; margin: 0; padding: 4px 0; list-style: none;
+  max-width: 460px; max-height: 280px; overflow-y: auto;
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .45); font-family: 'Inter', sans-serif; font-size: 12px;
+}
+.cautabil-lista li { padding: 6px 10px; cursor: pointer; color: var(--text); }
+.cautabil-lista li small { color: var(--text-dim); font-size: 10px; margin-left: 6px; }
+.cautabil-lista li.activ, .cautabil-lista li:hover { background: var(--accent-dim); color: #fff; }
+.cautabil-lista li.activ small, .cautabil-lista li:hover small { color: #dbe8fb; }
+.cautabil-lista li.nimic { color: var(--text-dim); cursor: default; background: none; }

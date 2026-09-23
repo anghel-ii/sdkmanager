@@ -11,6 +11,7 @@ import { deschideFisa } from './fisa.js';
 import { suprapuneriConfort, areCodH, areSinaSimpla } from './lib/confort/index.js';
 import gameJson from './systems/game.json';
 import { renderRame, syncRame, refreshRame } from './ui_rame.js';
+import { activeazaCampuri } from './campuri.js';
 import { stareRameGoala } from './lib/rame/rame.js';
 
 // Toate accesele la DOM sunt tolerante la elemente lipsă (HTML din cache vechi).
@@ -979,6 +980,7 @@ function renderModelList() {
 }
 
 export async function initUI() {
+  activeazaCampuri();   // Enter = câmpul următor; meniuri lungi căutabile
   // Pagina principală a managerului trimite `?gama=suspendata|confort|rame`;
   // „Modifică oferta" din manager trimite `?oferta=<id>`.
   const params = new URLSearchParams(location.search);
