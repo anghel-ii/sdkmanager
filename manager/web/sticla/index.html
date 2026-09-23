@@ -45,12 +45,6 @@
   table.sticla input[type=checkbox] { width: auto; }
   .gol { text-align: center; padding: 40px; color: var(--text-dim); }
 
-  /* confirmarea după mail — <dialog> nativ, blochează pagina până răspunzi */
-  dialog.confirmare { background: var(--panel); color: var(--text); border: 1px solid var(--line);
-    border-radius: 12px; padding: 20px; width: min(440px, calc(100% - 32px)); }
-  dialog.confirmare::backdrop { background: rgba(0, 0, 0, .6); }
-  dialog.confirmare h2 { font-size: 1.05rem; margin-bottom: 8px; }
-  dialog.confirmare .butoane { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; flex-wrap: wrap; }
 </style>
 </head>
 <body>
@@ -71,16 +65,6 @@
   <div id="lista">Se încarcă…</div>
 </div>
 
-<!-- După „Trimite pe mail": pagina e blocată până confirmi dacă mailul a plecat.
-     Esc nu o închide — trebuie ales un răspuns. -->
-<dialog id="dialogTrimis" class="confirmare" aria-labelledby="titluTrimis">
-  <h2 id="titluTrimis">Ai trimis mailul?</h2>
-  <p id="textTrimis" class="dim"></p>
-  <div class="butoane">
-    <button type="button" id="nuTrimis">Nu, n-am trimis</button>
-    <button type="button" class="primar" id="daTrimis">Da, am trimis — marchează comandate</button>
-  </div>
-</dialog>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════════════
@@ -178,12 +162,16 @@ function randeaza() {
     });
 
     // Trimite pe mail — doar rândurile bifate (vezi /mail-sticla.js), apoi
-    // dialogul blocant: „Da" le marchează comandate, „Nu" le lasă aici.
+    // confirmarea obligatorie (dialog.js): „Da" le marchează comandate.
     bloc.querySelector('.mail')?.addEventListener('click', async () => {
       const ids = bifate();
       if (!ids.length) return alerta('Bifează cel puţin o linie.');
       await trimiteMailSticla(f, alese());
-      confirmaTrimis(f, ids);
+      if (!(await confirmaMailTrimis(f, sumaBuc(alese())))) return;
+      const r = await api('/api/sticla/comanda', { method: 'POST', body: JSON.stringify({ ids }) });
+      if (r && !r.ok) return alerta((await r.json().catch(() => ({}))).eroare || 'Marcarea a eşuat — încearcă din nou.');
+      ids.forEach(id => debifate.delete(id));
+      incarca();
     });
 
     const trimite = async (cale, mesaj) => {
@@ -198,32 +186,6 @@ function randeaza() {
     bloc.querySelector('.anuleaza')?.addEventListener('click', () =>
       trimite('/api/sticla/anuleaza', n => `Readuci ${n} ${n === 1 ? 'linie' : 'linii'} la „de comandat"?`));
   });
-}
-
-// Dialogul de după mail. showModal() blochează restul paginii. Esc: Chrome
-// lasă o pagină să-l oprească doar o dată (a doua oară închide oricum), deci
-// dacă dialogul se închide fără răspuns, se redeschide — singura ieşire e unul
-// din cele două butoane.
-function confirmaTrimis(f, ids) {
-  const dlg = $('dialogTrimis');
-  const n = ids.length;
-  let raspuns = false;
-  $('textTrimis').textContent = `Mail către ${f.nume}${f.email ? ` (${f.email})` : ''} — ${n} ${n === 1 ? 'linie' : 'linii'}. ` +
-    'Dacă l-ai trimis, liniile trec la „Comandate".';
-  dlg.oncancel = e => e.preventDefault();
-  dlg.onclose = () => { if (!raspuns) dlg.showModal(); };
-  const inchide = () => { raspuns = true; dlg.close(); };
-  $('nuTrimis').onclick = inchide;
-  $('daTrimis').onclick = async () => {
-    $('daTrimis').disabled = true;
-    const r = await api('/api/sticla/comanda', { method: 'POST', body: JSON.stringify({ ids }) });
-    $('daTrimis').disabled = false;
-    if (r && !r.ok) return alerta((await r.json().catch(() => ({}))).eroare || 'Marcarea a eşuat — încearcă din nou.');
-    inchide();
-    ids.forEach(id => debifate.delete(id));
-    incarca();
-  };
-  dlg.showModal();
 }
 
 document.querySelectorAll('.taburi button').forEach(b => b.addEventListener('click', () => {

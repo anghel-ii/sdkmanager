@@ -27,9 +27,6 @@
   .sticla-nu { color: var(--danger); font-size: .84rem; }
   .sticla-furnizori { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
   .sticla-furnizor { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-  .bifa-sticla { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; margin: 0;
-                 text-transform: none; letter-spacing: normal; font-size: .9rem; color: var(--text); }
-  .bifa-sticla input { width: auto; }
   .sticla-partial { color: #d4a24c; font-size: .84rem; }
   .sticla-da { color: var(--ok); }
   #bara .insigna { display: inline-block; min-width: 1.5em; padding: 0 6px; margin-left: 4px; border-radius: 10px;
@@ -254,8 +251,10 @@ const sticlaHtml = st => !st ? '<span class="dim">—</span>'
       ? `parţial ${st.comandate}/${st.total}` : '✓ comandată'}</span>
      <span class="dim mic">· ${cand(st.moment)} · ${esc(st.cine ?? '')}</span>`;
 
-// Pagina comenzii: pe fiecare furnizor, mail cu DOAR sticla comenzii ăsteia +
-// bifa „comandată" (cu confirmare înainte). Liniile vin din /api/comenzi/:id.
+// Pagina comenzii: pe fiecare furnizor, „Comandă sticla" = mail cu DOAR sticla
+// necomandată a comenzii ăsteia, apoi confirmarea obligatorie (a plecat
+// mailul?) — „Da" o marchează comandată. Comandată: ora + cine + „Anulează".
+// Liniile vin din /api/comenzi/:id.
 function peFurnizoriSticla(linii) {
   const m = new Map();
   for (const l of linii) {
@@ -265,34 +264,38 @@ function peFurnizoriSticla(linii) {
   }
   return [...m.values()];
 }
+const bucati = ls => ls.reduce((s, l) => s + l.buc, 0);
 const blocSticla = linii => !linii.length ? '' : `<div class="sticla-furnizori">${peFurnizoriSticla(linii).map(f => {
-  const comandat = f.linii.every(l => l.comandat_la);
+  const deComandat = f.linii.filter(l => !l.comandat_la);
   const ult = f.linii.filter(l => l.comandat_la).sort((a, b) => b.comandat_la.localeCompare(a.comandat_la))[0];
   return `<div class="sticla-furnizor" data-furnizor="${esc(f.cod)}">
-    <button class="mic primar mail-sticla" data-furnizor="${esc(f.cod)}"
-      title="${f.email ? 'Către ' + esc(f.email) : 'Fără adresă salvată — o completezi în mail'}">✉ ${esc(f.nume)}</button>
-    <span class="dim mic">${f.linii.reduce((s, l) => s + l.buc, 0)} buc</span>
-    <label class="bifa-sticla"><input type="checkbox" class="sticla-comandata" data-furnizor="${esc(f.cod)}"${comandat ? ' checked' : ''}>
-      comandată${ult ? ` <span class="dim mic">· ${cand(ult.comandat_la)} · ${esc(ult.comandat_de_nume ?? '')}</span>` : ''}</label>
+    <strong>${esc(f.nume)}</strong> <span class="dim mic">${bucati(f.linii)} buc</span>
+    ${deComandat.length
+      ? `<button class="mic primar sticla-comanda" data-furnizor="${esc(f.cod)}"
+           title="${f.email ? 'Către ' + esc(f.email) : 'Fără adresă salvată — o completezi în mail'}">✉ Comandă sticla${
+           ult ? ` (${bucati(deComandat)} buc rămase)` : ''}</button>`
+      : `<span class="sticla-da">✓ comandată</span> <span class="dim mic">· ${cand(ult.comandat_la)} · ${esc(ult.comandat_de_nume ?? '')}</span>
+         <button class="mic sticla-anuleaza" data-furnizor="${esc(f.cod)}">Anulează</button>`}
   </div>`;
 }).join('')}</div>`;
 
 function leagaSticla(linii, dupa) {
   const furnizori = peFurnizoriSticla(linii);
-  document.querySelectorAll('button.mail-sticla').forEach(b => b.addEventListener('click', () => {
-    const f = furnizori.find(x => x.cod === b.dataset.furnizor);
-    trimiteMailSticla(f, f.linii);
-  }));
-  document.querySelectorAll('input.sticla-comandata').forEach(i => i.addEventListener('change', async () => {
-    const f = furnizori.find(x => x.cod === i.dataset.furnizor);
-    const ok = await confirma(i.checked
-      ? `Confirmi că sticla de la ${f.nume} pentru comanda asta a fost COMANDATĂ?\n\nApare ca şi comandată de tine, cu ora de acum.`
-      : `Anulezi marcarea — sticla de la ${f.nume} redevine NECOMANDATĂ?`);
-    if (!ok) { i.checked = !i.checked; return; }
-    const r = await api(i.checked ? '/api/sticla/comanda' : '/api/sticla/anuleaza',
-      { method: 'POST', body: JSON.stringify({ ids: f.linii.map(l => l.id) }) });
+  const marcheaza = async (cale, ids) => {
+    const r = await api(cale, { method: 'POST', body: JSON.stringify({ ids }) });
     if (r && !r.ok) alerta((await r.json().catch(() => ({}))).eroare || 'Operaţia a eşuat.');
     dupa();
+  };
+  document.querySelectorAll('button.sticla-comanda').forEach(b => b.addEventListener('click', async () => {
+    const f = furnizori.find(x => x.cod === b.dataset.furnizor);
+    const ls = f.linii.filter(l => !l.comandat_la);
+    await trimiteMailSticla(f, ls);
+    if (await confirmaMailTrimis(f, bucati(ls))) marcheaza('/api/sticla/comanda', ls.map(l => l.id));
+  }));
+  document.querySelectorAll('button.sticla-anuleaza').forEach(b => b.addEventListener('click', async () => {
+    const f = furnizori.find(x => x.cod === b.dataset.furnizor);
+    if (await confirma(`Anulezi marcarea — sticla de la ${f.nume} redevine NECOMANDATĂ?`, 'Anulează marcarea'))
+      marcheaza('/api/sticla/anuleaza', f.linii.map(l => l.id));
   }));
 }
 
