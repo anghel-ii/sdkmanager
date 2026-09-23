@@ -79,7 +79,7 @@ async function main() {
     const randuri = db2().prepare('SELECT token FROM sesiune').all().map(r => r.token);
     verifica('tokenul din cookie NU apare în clar în DB', !randuri.includes(token));
     verifica('în DB stă SHA-256 al tokenului', randuri.includes(sha(token)));
-    verifica('schema la versiunea 6', db2().prepare('PRAGMA user_version').get().user_version === 6);
+    verifica('schema la versiunea 7', db2().prepare('PRAGMA user_version').get().user_version === 7);
 
     // o sesiune veche, salvată în clar înainte de v6, trebuie să rămână validă
     const vechi = 'token-vechi-in-clar-' + Date.now();
@@ -296,12 +296,21 @@ async function main() {
 
   console.log('\n  acceptare');
   verifica('oferta apare în tabul Oferte', (await cer('GET', '/api/comenzi')).date.comenzi.length === 2);
-  const acc = await cer('POST', `/api/comenzi/${id}/accepta`);
+  // modalitatea de plată e obligatorie; avansul e opţional (0 = fără avans)
+  for (const [corp, ce] of [
+    [undefined, 'fără modalitate de plată'], [{ plata: 'card' }, 'modalitate necunoscută'],
+    [{ plata: 'op', avans: -5 }, 'avans negativ'], [{ plata: 'op', avans: 'mult' }, 'avans nenumeric'],
+  ]) verifica(`acceptare respinsă: ${ce} → 400`, (await cer('POST', `/api/comenzi/${id}/accepta`, corp)).stare === 400);
+  verifica('… şi oferta a rămas ofertă', db2().prepare('SELECT tip FROM comanda WHERE id = ?').get(id).tip === 'oferta');
+
+  const acc = await cer('POST', `/api/comenzi/${id}/accepta`, { plata: 'factura', avans: '1500.5' });
   verifica('acceptare → 200', acc.stare === 200);
+  verifica('se salvează plata şi avansul', acc.date.comanda?.plata === 'factura' && acc.date.comanda?.avans === 1500.5,
+    JSON.stringify({ plata: acc.date.comanda?.plata, avans: acc.date.comanda?.avans }));
   verifica('acelaşi număr, alt prefix',
     acc.date.comanda?.numar_comanda === oferta.date.comanda.numar.replace('OF-', 'CMD-'),
     acc.date.comanda?.numar_comanda);
-  verifica('acceptată de două ori → 409', (await cer('POST', `/api/comenzi/${id}/accepta`)).stare === 409);
+  verifica('acceptată de două ori → 409', (await cer('POST', `/api/comenzi/${id}/accepta`, { plata: 'op' })).stare === 409);
   verifica('a trecut în tabul Comenzi',
     (await cer('GET', '/api/comenzi?tip=comanda')).date.comenzi.length === 1);
   verifica('nu mai e în Oferte', (await cer('GET', '/api/comenzi')).date.comenzi.length === 1);
@@ -423,7 +432,8 @@ async function main() {
     ] } }] });
   const ofS = (await cer('POST', '/api/comenzi', cuSticla('Client Sticla'))).date.comanda;
   verifica('oferta neacceptată NU apare la sticlă', (await cer('GET', '/api/sticla')).date.linii.length === 0);
-  await cer('POST', `/api/comenzi/${ofS.id}/accepta`);
+  const accS = await cer('POST', `/api/comenzi/${ofS.id}/accepta`, { plata: 'bon' });
+  verifica('acceptare fără avans → avans 0', accS.date.comanda?.avans === 0, accS.date.comanda?.avans);
   const st = (await cer('GET', '/api/sticla')).date.linii;
   verifica('comanda acceptată → 3 linii de sticlă', st.length === 3, st.length);
   const dupaCod = c => st.find(l => l.cod === c);

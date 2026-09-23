@@ -42,6 +42,13 @@
                padding: 20px; width: min(640px, 100%); }
   .fereastra-cap { display: flex; align-items: center; margin-bottom: 14px; }
   .fereastra-cap h2 { flex: 1; font-size: 1.05rem; }
+  /* <dialog> nativ (showModal) — blochează pagina până se închide */
+  dialog.fereastra { color: var(--text); width: min(440px, calc(100% - 32px)); }
+  dialog.fereastra::backdrop { background: rgba(0, 0, 0, .55); }
+  .camp { display: grid; gap: 6px; margin-bottom: 14px; }
+  .camp select, .camp input { font: inherit; padding: 8px 10px; border-radius: 8px;
+    border: 1px solid var(--line); background: var(--panel-2); color: var(--text); }
+  .butoane { display: flex; gap: 8px; justify-content: flex-end; }
   .game { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
   .game a { display: block; padding: 16px; background: var(--panel-2); border: 1px solid var(--line);
             border-radius: 10px; color: var(--text); text-decoration: none; }
@@ -128,6 +135,29 @@
     <div id="listaGame" class="game"></div>
   </div>
 </div>
+
+<!-- ACCEPTARE OFERTĂ — modalitatea de plată e obligatorie; avansul opţional
+     (0 = fără avans). Vezi POST /api/comenzi/:id/accepta. -->
+<dialog id="dialogAccepta" class="fereastra" aria-labelledby="titluAccepta">
+  <form method="dialog" id="formAccepta">
+    <div class="fereastra-cap"><h2 id="titluAccepta">Acceptă oferta</h2></div>
+    <label class="camp">Modalitate de plată
+      <select id="accPlata" required>
+        <option value="" selected disabled>Alege…</option>
+        <option value="op">OP (ordin de plată)</option>
+        <option value="bon">Bon fiscal</option>
+        <option value="factura">Factură</option>
+      </select>
+    </label>
+    <label class="camp">Avans încasat (lei) — 0 dacă nu se încasează avans
+      <input id="accAvans" type="number" min="0" step="0.01" value="0" inputmode="decimal" required>
+    </label>
+    <div class="butoane">
+      <button type="button" id="accRenunta">Renunţă</button>
+      <button type="submit" class="primar" id="accOk">Acceptă oferta</button>
+    </div>
+  </form>
+</dialog>
 
 <div id="continut">Se încarcă…</div>
 
@@ -265,6 +295,14 @@ function leagaSticla(linii, dupa) {
   }));
 }
 
+// Modalităţile de plată (aceleaşi coduri ca PLATI din server/api/comenzi.js)
+const PLATI = { op: 'OP (ordin de plată)', bon: 'Bon fiscal', factura: 'Factură' };
+const virgulaLei = n => Number(n).toLocaleString('ro-RO', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+
+// Fişa comenzii — configuratorul o deschide în modul „doar fişă" (necesarul şi
+// facturarea din listele SALVATE ale comenzii) şi porneşte printarea.
+const deschideFisa = id => window.open(`/configurator/?fisa=${encodeURIComponent(id)}`, '_blank');
+
 const statusHtml = st => st
   ? `<strong>${esc(st.operatie)}</strong> <span class="dim mic">· ${cand(st.moment)} · ${esc(st.cine)}</span>`
   : '<span class="dim">—</span>';
@@ -342,7 +380,7 @@ function randeazaTabel() {
     <table class="lista">
       <thead><tr>
         <th></th><th>Număr</th><th>Client</th><th>Sistem</th>${cuStatus ? '<th>Status</th>' : ''}${cuFacturare ? '<th>Sticlă</th><th>Facturare</th>' : ''}
-        <th>Creat de</th><th>Data</th>${eOferte ? '<th></th>' : ''}
+        <th>Creat de</th><th>Data</th><th></th>
       </tr></thead>
       <tbody>${randuri.map(c => `
         <tr data-id="${c.id}"${c.fixat ? ' class="fixat"' : ''}>
@@ -355,7 +393,8 @@ function randeazaTabel() {
           ${cuFacturare ? `<td class="facturare">${sticlaHtml(c.sticla)}</td><td class="facturare">${facturareHtml(c)}</td>` : ''}
           <td class="dim">${esc(c.creat_de_nume)}</td>
           <td class="dim mic data">${data(dataRand(c))}</td>
-          ${eOferte ? `<td><button class="mic modifica" data-id="${c.id}">Modifică oferta</button></td>` : ''}
+          <td class="actiuni"><button class="mic fisa" data-id="${c.id}" title="Deschide fişa comenzii pentru printare">🖶 Fişă</button>${eOferte
+            ? ` <button class="mic modifica" data-id="${c.id}">Modifică oferta</button>` : ''}</td>
         </tr>`).join('')}</tbody>
     </table>` : lista.length ? `
     <div class="card gol"><h2>Nimic nu se potriveşte cu „${esc(cautare.trim())}"</h2></div>` : `
@@ -370,6 +409,8 @@ function randeazaTabel() {
   document.querySelectorAll('table.lista tbody tr').forEach(tr =>
     tr.addEventListener('click', () => { location.hash = '#comanda/' + tr.dataset.id; }));
   // „Modifică oferta" — redeschide configuratorul cu configuraţia salvată
+  document.querySelectorAll('button.fisa').forEach(b =>
+    b.addEventListener('click', e => { e.stopPropagation(); deschideFisa(b.dataset.id); }));
   document.querySelectorAll('button.modifica').forEach(b =>
     b.addEventListener('click', e => { e.stopPropagation(); location.href = '/configurator/?oferta=' + b.dataset.id; }));
   // pin — per utilizator; se schimbă local imediat, apoi se salvează
@@ -457,6 +498,7 @@ async function renderDetaliu(id) {
         <div class="dim mic">${eOferta ? 'Ofertă' : `Comandă${c.finalizat_la ? ' finalizată' : ''} · din oferta ${esc(c.numar)}`}</div>
       </div>
       <div class="spatiu"></div>
+      <button id="fisaDetaliu" title="Deschide fişa comenzii pentru printare">🖶 Printează fişa</button>
       ${eOferta ? `<button id="modifica">Modifică oferta</button>
                    <button class="primar" id="accepta">Acceptă oferta</button>` : ''}
       ${!eOferta && !c.finalizat_la ? '<button id="finalizeaza">Marchează finalizată</button>' : ''}
@@ -470,6 +512,8 @@ async function renderDetaliu(id) {
         ${c.client_email   ? `<dt>E-mail</dt><dd>${esc(c.client_email)}</dd>` : ''}
         <dt>Creat de</dt><dd>${esc(c.creat_de_nume)} · ${data(c.creat_la)}</dd>
         ${c.confirmat_la ? `<dt>Acceptată</dt><dd>${data(c.confirmat_la)}</dd>` : ''}
+        ${!eOferta ? `<dt>Plată</dt><dd>${esc(PLATI[c.plata] ?? '— (nealeasă)')} · ${c.avans > 0
+          ? `avans <strong>${virgulaLei(c.avans)} lei</strong>` : '<span class="dim">fără avans</span>'}</dd>` : ''}
         ${c.finalizat_la ? `<dt>Finalizată</dt><dd>${data(c.finalizat_la)}</dd>` : ''}
         ${!eOferta ? `<dt>Sticlă</dt><dd>${sticlaHtml(sticla)}${blocSticla(sticlaLinii)}</dd>` : ''}
         ${!eOferta ? `<dt>Facturare</dt><dd class="facturare">${facturareHtml(c, true)}${c.factura_nr
@@ -526,18 +570,31 @@ async function renderDetaliu(id) {
   leagaCopiere($('copCod'),  total.map(l => l.cod));
   leagaCopiere($('copCant'), total.map(l => qtyText(l.cantitate)));
 
-  $('accepta')?.addEventListener('click', async () => {
-    $('accepta').disabled = true;
-    const rr = await api(`/api/comenzi/${id}/accepta`, { method: 'POST' });
-    if (!rr) return;
-    if (!rr.ok) {
-      const d = await rr.json().catch(() => ({}));
-      alert(d.eroare || 'Acceptarea a eşuat.');
-      $('accepta').disabled = false;
-      return;
-    }
-    tabCurent = 'comanda';
-    renderDetaliu(id);
+  $('fisaDetaliu')?.addEventListener('click', () => deschideFisa(id));
+
+  // Acceptare: dialogul cere modalitatea de plată (obligatoriu) şi avansul.
+  $('accepta')?.addEventListener('click', () => {
+    const dlg = $('dialogAccepta');
+    $('formAccepta').reset();
+    $('accOk').disabled = false;
+    $('accRenunta').onclick = () => dlg.close();
+    $('formAccepta').onsubmit = async e => {
+      e.preventDefault();
+      $('accOk').disabled = true;
+      const rr = await api(`/api/comenzi/${id}/accepta`, { method: 'POST',
+        body: JSON.stringify({ plata: $('accPlata').value, avans: $('accAvans').value }) });
+      if (!rr) return;
+      if (!rr.ok) {
+        const d = await rr.json().catch(() => ({}));
+        alert(d.eroare || 'Acceptarea a eşuat.');
+        $('accOk').disabled = false;
+        return;
+      }
+      dlg.close();
+      tabCurent = 'comanda';
+      renderDetaliu(id);
+    };
+    dlg.showModal();
   });
 }
 

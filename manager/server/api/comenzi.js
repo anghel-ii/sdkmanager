@@ -292,21 +292,30 @@ function detaliu(ctx) {
   });
 }
 
+// Modalităţile de plată alese la acceptare (userul, 2026-09-23).
+const PLATI = ['op', 'bon', 'factura'];   // OP (ordin de plată) | bon fiscal | factură
+
 // Acceptarea unei oferte: acelaşi rând, alt tip, plus numărul de comandă cu
-// ACELEAŞI cifre — ca etichetele deja tipărite să rămână valabile.
-function accepta(ctx) {
+// ACELEAŞI cifre — ca etichetele deja tipărite să rămână valabile. Cere
+// obligatoriu modalitatea de plată; avansul (lei) e opţional, implicit 0.
+async function accepta(ctx) {
   const id = Number(ctx.params.id);
+  const corp = await corpJson(ctx.req);
   const c = db().prepare('SELECT * FROM comanda WHERE id = ?').get(id);
 
   if (!c)                  return eroare(ctx.res, 404, 'Comandă inexistentă.');
   if (c.anulat)            return eroare(ctx.res, 400, 'Oferta e anulată.');
   if (c.tip === 'comanda') return eroare(ctx.res, 409, `Oferta e deja comandă (${c.numar_comanda}).`);
 
+  if (!PLATI.includes(corp.plata)) return eroare(ctx.res, 400, 'Alege modalitatea de plată: OP, bon fiscal sau factură.');
+  const avans = corp.avans == null || String(corp.avans).trim() === '' ? 0 : Number(String(corp.avans).replace(',', '.'));
+  if (!Number.isFinite(avans) || avans < 0) return eroare(ctx.res, 400, 'Avansul trebuie să fie un număr (0 = fără avans).');
+
   const numarComanda = c.numar.replace(/^OF-/, 'CMD-');
   db().prepare(`
-    UPDATE comanda SET tip = 'comanda', numar_comanda = ?, confirmat_la = datetime('now')
+    UPDATE comanda SET tip = 'comanda', numar_comanda = ?, confirmat_la = datetime('now'), plata = ?, avans = ?
      WHERE id = ?
-  `).run(numarComanda, id);
+  `).run(numarComanda, corp.plata, Math.round(avans * 100) / 100, id);
 
   anunta({ comanda: id });
   json(ctx.res, 200, { comanda: db().prepare('SELECT * FROM comanda WHERE id = ?').get(id) });

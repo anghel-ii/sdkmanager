@@ -316,13 +316,17 @@ function necesarSticlaPal(sys, spec) {
 
 // `oferta` = ultima ofertă salvată pt. configuraţia de pe ecran (sau null) — dă
 // numărul ofertei şi codurile de bare.
-export function deschideFisa(client, oferta = null) {
+// `salvate` = { bom, factura } — listele SALVATE ale unei comenzi (fişa deschisă
+// din manager, ?fisa=<id>): necesarul şi facturarea se tipăresc exact cum au
+// fost îngheţate la salvare, nu recalculate cu catalogul de azi. Desenele şi
+// cotele vin tot din configuraţia salvată.
+export function deschideFisa(client, oferta = null, salvate = null) {
   const sys  = systems[state.system];
   const spec = currentSpec();
   if (!sys || !spec) { alert('Configuraţia nu e gata.'); return; }
 
-  const bom     = currentBom();
-  const factura = currentBilling();
+  const bom     = salvate?.bom ?? currentBom();
+  const factura = salvate?.factura ?? currentBilling();
   // cale absolută — fereastra nouă porneşte de la about:blank, o cale
   // relativă la sketch (ex. 'assets/verona.jpeg') nu s-ar rezolva acolo
   const sketch  = sys.meta.sketch ? new URL(sys.meta.sketch, location.href).href : null;

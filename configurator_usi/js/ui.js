@@ -812,7 +812,7 @@ function renderOferta() {
   // Câmpurile clientului şi „Printează fişa" sunt statice (index.html) şi merg
   // mereu; aici se decide doar ce ţine de ofertă: butonul de salvare şi
   // rezumatul de deasupra lui.
-  if (!servit) { box.innerHTML = ''; btn.style.display = 'none'; return; }
+  if (!servit || modFisa) { box.innerHTML = ''; btn.style.display = 'none'; return; }
 
   if (stare === 'nelogat') {
     btn.style.display = 'none';
@@ -878,6 +878,10 @@ let ofertaSalvata = null;
 // id-ul ofertei deschise din manager cu „Modifică oferta" (?oferta=<id>) — la
 // salvare se actualizează ea, nu se creează una nouă.
 let ofertaEditata = null;
+// Fişa unei comenzi deschisă din manager (?fisa=<id>) — orice stare (ofertă,
+// în lucru, finalizată): { numar, client, bom, factura } din listele salvate.
+// În modul ăsta nu se salvează nimic (butonul de ofertă e ascuns).
+let modFisa = null;
 const ofertaPtFisa = () =>
   ofertaSalvata && ofertaSalvata.stare === JSON.stringify(state) ? ofertaSalvata.comanda : null;
 
@@ -1002,6 +1006,28 @@ export async function initUI() {
     }
   }
 
+  // Fişa unei comenzi (butonul „Fişă" din manager): configuraţia salvată +
+  // listele îngheţate la salvare; fişa se deschide singură la final.
+  if (params.get('fisa')) {
+    const o = await oferta.incarcaOferta(params.get('fisa'));
+    const poz = o.pozitii?.[0];
+    if (o.eroare || !poz?.config) eroareIncarcare = o.eroare || 'Comanda n-are configuraţie.';
+    else {
+      Object.assign(state, structuredClone(poz.config));
+      gamaActiva = systems[state.system]?.meta.family ?? null;
+      $('clientNume').value    = o.comanda.client_nume ?? '';
+      $('clientContact').value = o.comanda.client_telefon ?? '';
+      modFisa = {
+        numar:  o.comanda.numar_comanda || o.comanda.numar,
+        client: o.comanda.client_nume ?? '',
+        bom: (poz.linii?.necesar ?? []).map(l =>
+          ({ code: l.cod, label: l.denumire, qty: l.cantitate, unit: l.um, cut: l.debitare })),
+        factura: { mode: null, errors: [], lines: (poz.linii?.facturare ?? []).map(l =>
+          ({ cod: l.cod, denumire: l.denumire, um: l.um, cantitate: l.cantitate })) },
+      };
+    }
+  }
+
   // Ecran gol la ORICE gamă cerută (suspendate din 2026-09-21): niciun model,
   // nicio culoare, cotele goale. Fără ?gama= (dist/ deschis direct) rămâne
   // comportamentul vechi — modelul implicit din state.js.
@@ -1041,7 +1067,9 @@ export async function initUI() {
     rebuild();
   });
 
-  $('btnFisa')?.addEventListener('click', () => deschideFisa($('clientNume')?.value, ofertaPtFisa()));
+  $('btnFisa')?.addEventListener('click', () => modFisa
+    ? deschideFisa(modFisa.client, { numar: modFisa.numar }, modFisa)
+    : deschideFisa($('clientNume')?.value, ofertaPtFisa()));
   $('btnConfirma')?.addEventListener('click', trimiteOferta);
   // CLEAR PAGE — configuraţie nouă de la zero: reîncărcarea paginii (cu acelaşi
   // ?gama=) readuce exact ecranul iniţial gol, fără stare rămasă pe undeva.
@@ -1070,6 +1098,10 @@ export async function initUI() {
     mesajOferta(`Modifici oferta <strong>${esc(ofertaSalvata.comanda.numar)}</strong>.`, 'ok');
   }
   if (eroareIncarcare) mesajOferta(esc(eroareIncarcare), 'eroare');
+  if (modFisa) {
+    mesajOferta(`Fişa comenzii <strong>${esc(modFisa.numar)}</strong> — deschisă doar pentru printare; de aici nu se salvează nimic.`, 'ok');
+    deschideFisa(modFisa.client, { numar: modFisa.numar }, modFisa);
+  }
 
   // asincron: decide dacă panoul de ofertă are unde să trimită
   oferta.initOferta(renderOferta);

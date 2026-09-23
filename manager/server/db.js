@@ -88,6 +88,13 @@ const MIGRATII = [
   // v5 → v6 (2026-09-23): sesiunile ţin SHA-256 al tokenului, nu tokenul în
   // clar (vezi auth.js). Sesiunile deschise se convertesc — nimeni nu e delogat.
   d => hashSesiuniInClar(d),
+  // v6 → v7 (2026-09-23): la acceptarea ofertei se alege obligatoriu modalitatea
+  // de plată ('op' | 'bon' | 'factura') şi, opţional, avansul încasat (lei; 0 =
+  // fără avans). Comenzile acceptate înainte rămân cu NULL (nealese).
+  d => {
+    d.exec('ALTER TABLE comanda ADD COLUMN plata TEXT');
+    d.exec('ALTER TABLE comanda ADD COLUMN avans REAL');
+  },
 ];
 
 // Înlocuieşte tokenurile în clar din `sesiune` cu SHA-256 lor (acelaşi calcul
