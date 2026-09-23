@@ -44,16 +44,12 @@
   table.sticla input[type=checkbox] { width: auto; }
   .gol { text-align: center; padding: 40px; color: var(--text-dim); }
 
-  /* Print: doar furnizorul ales, alb-negru, fără butoane şi bife */
-  .doar-print { display: none; }
-  @media print {
-    body { background: #fff; color: #000; }
-    #bara, .taburi, .nu-print, .furnizor:not(.de-printat), td.bifa, th.bifa { display: none !important; }
-    #continut { padding: 0; max-width: none; }
-    .furnizor { border: none; padding: 0; background: none; }
-    .doar-print { display: block; margin-bottom: 8px; }
-    table.sticla th, table.sticla td { color: #000; border-color: #999; }
-  }
+  /* confirmarea după mail — <dialog> nativ, blochează pagina până răspunzi */
+  dialog.confirmare { background: var(--panel); color: var(--text); border: 1px solid var(--line);
+    border-radius: 12px; padding: 20px; width: min(440px, calc(100% - 32px)); }
+  dialog.confirmare::backdrop { background: rgba(0, 0, 0, .6); }
+  dialog.confirmare h2 { font-size: 1.05rem; margin-bottom: 8px; }
+  dialog.confirmare .butoane { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; flex-wrap: wrap; }
 </style>
 </head>
 <body>
@@ -74,12 +70,24 @@
   <div id="lista">Se încarcă…</div>
 </div>
 
+<!-- După „Trimite pe mail": pagina e blocată până confirmi dacă mailul a plecat.
+     Esc nu o închide — trebuie ales un răspuns. -->
+<dialog id="dialogTrimis" class="confirmare" aria-labelledby="titluTrimis">
+  <h2 id="titluTrimis">Ai trimis mailul?</h2>
+  <p id="textTrimis" class="dim"></p>
+  <div class="butoane">
+    <button type="button" id="nuTrimis">Nu, n-am trimis</button>
+    <button type="button" class="primar" id="daTrimis">Da, am trimis — marchează comandate</button>
+  </div>
+</dialog>
+
 <script>
 // ═══════════════════════════════════════════════════════════════════════════
 //  Comandă sticlă — sticla din comenzile acceptate, grupată pe furnizor
 //  (furnizorul = literele de la începutul codului; vezi server/sticla.js).
-//  Pe fiecare furnizor: bifezi ce trimiţi, „Copiază" / „Printează" lista şi
-//  „Marchează comandate" — liniile trec în tabul „Comandate".
+//  Pe fiecare furnizor: bifezi ce trimiţi şi „Trimite pe mail"; după mail,
+//  un dialog blocant întreabă dacă l-ai trimis — „Da" mută liniile în tabul
+//  „Comandate" (userul, 2026-09-23: fără Copiază / Printează / Marchează).
 // ═══════════════════════════════════════════════════════════════════════════
 const $ = id => document.getElementById(id);
 const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -126,18 +134,14 @@ function randeaza() {
   }
   $('lista').innerHTML = furnizori.map(f => `
     <div class="furnizor" data-furnizor="${esc(f.cod)}">
-      <div class="doar-print"><strong>Comandă sticlă — ${esc(f.nume)}</strong> · ${new Date().toLocaleDateString('ro-RO')}</div>
       <div class="cap">
         <h2>${esc(f.nume)}${f.nume !== f.cod ? ` <span class="dim mic">(${esc(f.cod)})</span>` : ''}</h2>
         <span class="total">${sumaBuc(f.linii)} buc · ${virgula(sumaMp(f.linii))} mp</span>
         <span class="spatiu"></span>
-        <span class="nu-print">
-          <button class="mic primar mail" title="${f.email ? 'Către ' + esc(f.email) : 'Fără adresă salvată — o completezi în mail'}">✉ Trimite pe mail</button>
-          <button class="mic copiaza">Copiază</button>
-          <button class="mic printeaza">Printează</button>
+        <span>
           ${comandate
             ? '<button class="mic anuleaza">Înapoi la „de comandat"</button>'
-            : '<button class="mic primar marcheaza">Marchează comandate</button>'}
+            : `<button class="mic primar mail" title="${f.email ? 'Către ' + esc(f.email) : 'Fără adresă salvată — o completezi în mail'}">✉ Trimite comanda pe mail</button>`}
         </span>
       </div>
       <table class="sticla">
@@ -172,31 +176,13 @@ function randeaza() {
       bloc.querySelectorAll('input.rand').forEach(i => { i.checked = e.target.checked; i.dispatchEvent(new Event('change')); });
     });
 
-    // Copiază — tabel pt. e-mail / Excel: Cod, Denumire, H, L, Buc, Comanda
-    bloc.querySelector('.copiaza').addEventListener('click', async e => {
-      const text = ['Cod\tDenumire\tH (mm)\tL (mm)\tBuc\tComanda',
-        ...alese().map(l => [l.cod, l.denumire, l.h ?? '', l.l ?? '', l.buc, l.numar].join('\t'))].join('\r\n') + '\r\n';
-      const ok = await copiazaText(text);   // /copiaza.js — merge şi pe http://
-      const b = e.target, t = b.textContent;
-      b.textContent = ok ? '✓ copiat' : '⚠ eroare';
-      setTimeout(() => { b.textContent = t; }, 1400);
-    });
-
-    // Trimite pe mail — doar rândurile bifate (vezi /mail-sticla.js)
-    bloc.querySelector('.mail').addEventListener('click', () => {
-      const ls = alese();
-      if (!ls.length) return alert('Bifează cel puţin o linie.');
-      trimiteMailSticla(f, ls);
-    });
-
-    // Printează — doar blocul furnizorului ăstuia, doar rândurile bifate
-    bloc.querySelector('.printeaza').addEventListener('click', () => {
-      bloc.classList.add('de-printat');
-      const ascunse = [...bloc.querySelectorAll('input.rand:not(:checked)')].map(i => i.closest('tr'));
-      ascunse.forEach(tr => { tr.style.display = 'none'; });
-      window.print();
-      bloc.classList.remove('de-printat');
-      ascunse.forEach(tr => { tr.style.display = ''; });
+    // Trimite pe mail — doar rândurile bifate (vezi /mail-sticla.js), apoi
+    // dialogul blocant: „Da" le marchează comandate, „Nu" le lasă aici.
+    bloc.querySelector('.mail')?.addEventListener('click', async () => {
+      const ids = bifate();
+      if (!ids.length) return alert('Bifează cel puţin o linie.');
+      await trimiteMailSticla(f, alese());
+      confirmaTrimis(f, ids);
     });
 
     const trimite = async (cale, mesaj) => {
@@ -208,11 +194,35 @@ function randeaza() {
       ids.forEach(id => debifate.delete(id));
       incarca();
     };
-    bloc.querySelector('.marcheaza')?.addEventListener('click', () =>
-      trimite('/api/sticla/comanda', n => `Marchezi ${n} ${n === 1 ? 'linie' : 'linii'} ca trimise la ${f.nume}?`));
     bloc.querySelector('.anuleaza')?.addEventListener('click', () =>
       trimite('/api/sticla/anuleaza', n => `Readuci ${n} ${n === 1 ? 'linie' : 'linii'} la „de comandat"?`));
   });
+}
+
+// Dialogul de după mail. showModal() blochează restul paginii. Esc: Chrome
+// lasă o pagină să-l oprească doar o dată (a doua oară închide oricum), deci
+// dacă dialogul se închide fără răspuns, se redeschide — singura ieşire e unul
+// din cele două butoane.
+function confirmaTrimis(f, ids) {
+  const dlg = $('dialogTrimis');
+  const n = ids.length;
+  let raspuns = false;
+  $('textTrimis').textContent = `Mail către ${f.nume}${f.email ? ` (${f.email})` : ''} — ${n} ${n === 1 ? 'linie' : 'linii'}. ` +
+    'Dacă l-ai trimis, liniile trec la „Comandate".';
+  dlg.oncancel = e => e.preventDefault();
+  dlg.onclose = () => { if (!raspuns) dlg.showModal(); };
+  const inchide = () => { raspuns = true; dlg.close(); };
+  $('nuTrimis').onclick = inchide;
+  $('daTrimis').onclick = async () => {
+    $('daTrimis').disabled = true;
+    const r = await api('/api/sticla/comanda', { method: 'POST', body: JSON.stringify({ ids }) });
+    $('daTrimis').disabled = false;
+    if (r && !r.ok) return alert((await r.json().catch(() => ({}))).eroare || 'Marcarea a eşuat — încearcă din nou.');
+    inchide();
+    ids.forEach(id => debifate.delete(id));
+    incarca();
+  };
+  dlg.showModal();
 }
 
 document.querySelectorAll('.taburi button').forEach(b => b.addEventListener('click', () => {
