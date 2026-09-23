@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Manager comenzi</title>
 <link rel="stylesheet" href="/comun.css">
+<script src="/dialog.js"></script>
 <script src="/live.js"></script>
 <script src="/copiaza.js"></script>
 <script src="/mail-sticla.js"></script>
@@ -238,7 +239,7 @@ function leagaFacturare(radacina, dupa) {
       if (!inp.value.trim()) return;
       btn.disabled = true;
       const r = await api(`/api/comenzi/${f.dataset.id}/factura`, { method: 'POST', body: JSON.stringify({ numar: inp.value }) });
-      if (r && !r.ok) { alert((await r.json().catch(() => ({}))).eroare || 'Salvarea a eşuat.'); btn.disabled = false; return; }
+      if (r && !r.ok) { alerta((await r.json().catch(() => ({}))).eroare || 'Salvarea a eşuat.'); btn.disabled = false; return; }
       dupa();
     };
     btn.addEventListener('click', trimite);
@@ -284,13 +285,13 @@ function leagaSticla(linii, dupa) {
   }));
   document.querySelectorAll('input.sticla-comandata').forEach(i => i.addEventListener('change', async () => {
     const f = furnizori.find(x => x.cod === i.dataset.furnizor);
-    const ok = confirm(i.checked
+    const ok = await confirma(i.checked
       ? `Confirmi că sticla de la ${f.nume} pentru comanda asta a fost COMANDATĂ?\n\nApare ca şi comandată de tine, cu ora de acum.`
       : `Anulezi marcarea — sticla de la ${f.nume} redevine NECOMANDATĂ?`);
     if (!ok) { i.checked = !i.checked; return; }
     const r = await api(i.checked ? '/api/sticla/comanda' : '/api/sticla/anuleaza',
       { method: 'POST', body: JSON.stringify({ ids: f.linii.map(l => l.id) }) });
-    if (r && !r.ok) alert((await r.json().catch(() => ({}))).eroare || 'Operaţia a eşuat.');
+    if (r && !r.ok) alerta((await r.json().catch(() => ({}))).eroare || 'Operaţia a eşuat.');
     dupa();
   }));
 }
@@ -321,7 +322,7 @@ function deschideFisa(id, buton) {
 window.addEventListener('message', e => {
   if (e.origin !== location.origin || e.data?.tip !== 'fisa') return;
   if (butonFisa) { butonFisa.disabled = false; butonFisa.textContent = butonFisa.dataset.text; butonFisa = null; }
-  if (e.data.eroare) alert(e.data.eroare);
+  if (e.data.eroare) alerta(e.data.eroare);
 });
 
 const statusHtml = st => st
@@ -577,14 +578,14 @@ async function renderDetaliu(id) {
   leagaFacturare($('continut'), () => renderDetaliu(id));
   leagaSticla(sticlaLinii, () => renderDetaliu(id));
   $('anuleazaFactura')?.addEventListener('click', async () => {
-    if (!confirm('Anulezi facturarea (se şterge nr. facturii)?')) return;
+    if (!(await confirma('Anulezi facturarea (se şterge nr. facturii)?'))) return;
     await api(`/api/comenzi/${id}/factura`, { method: 'POST', body: JSON.stringify({ numar: '', anuleaza: true }) });
     renderDetaliu(id);
   });
   for (const [btn, cale] of [['finalizeaza', 'finalizeaza'], ['redeschide', 'redeschide']]) {
     $(btn)?.addEventListener('click', async () => {
       const rr = await api(`/api/comenzi/${id}/${cale}`, { method: 'POST' });
-      if (rr && !rr.ok) alert((await rr.json().catch(() => ({}))).eroare || 'Operaţia a eşuat.');
+      if (rr && !rr.ok) alerta((await rr.json().catch(() => ({}))).eroare || 'Operaţia a eşuat.');
       renderDetaliu(id);
     });
   }
@@ -607,7 +608,7 @@ async function renderDetaliu(id) {
       if (!rr) return;
       if (!rr.ok) {
         const d = await rr.json().catch(() => ({}));
-        alert(d.eroare || 'Acceptarea a eşuat.');
+        alerta(d.eroare || 'Acceptarea a eşuat.');
         $('accOk').disabled = false;
         return;
       }

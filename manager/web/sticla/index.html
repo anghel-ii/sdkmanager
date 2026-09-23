@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Comandă sticlă</title>
 <link rel="stylesheet" href="/comun.css">
+<script src="/dialog.js"></script>
 <script src="/live.js"></script>
 <script src="/copiaza.js"></script>
 <script src="/mail-sticla.js"></script>
@@ -180,17 +181,17 @@ function randeaza() {
     // dialogul blocant: „Da" le marchează comandate, „Nu" le lasă aici.
     bloc.querySelector('.mail')?.addEventListener('click', async () => {
       const ids = bifate();
-      if (!ids.length) return alert('Bifează cel puţin o linie.');
+      if (!ids.length) return alerta('Bifează cel puţin o linie.');
       await trimiteMailSticla(f, alese());
       confirmaTrimis(f, ids);
     });
 
     const trimite = async (cale, mesaj) => {
       const ids = bifate();
-      if (!ids.length) return alert('Bifează cel puţin o linie.');
-      if (!confirm(mesaj(ids.length))) return;
+      if (!ids.length) return alerta('Bifează cel puţin o linie.');
+      if (!(await confirma(mesaj(ids.length)))) return;
       const r = await api(cale, { method: 'POST', body: JSON.stringify({ ids }) });
-      if (r && !r.ok) alert((await r.json().catch(() => ({}))).eroare || 'Operaţia a eşuat.');
+      if (r && !r.ok) alerta((await r.json().catch(() => ({}))).eroare || 'Operaţia a eşuat.');
       ids.forEach(id => debifate.delete(id));
       incarca();
     };
@@ -217,7 +218,7 @@ function confirmaTrimis(f, ids) {
     $('daTrimis').disabled = true;
     const r = await api('/api/sticla/comanda', { method: 'POST', body: JSON.stringify({ ids }) });
     $('daTrimis').disabled = false;
-    if (r && !r.ok) return alert((await r.json().catch(() => ({}))).eroare || 'Marcarea a eşuat — încearcă din nou.');
+    if (r && !r.ok) return alerta((await r.json().catch(() => ({}))).eroare || 'Marcarea a eşuat — încearcă din nou.');
     inchide();
     ids.forEach(id => debifate.delete(id));
     incarca();

@@ -35,7 +35,7 @@ async function trimiteMailSticla(furnizor, linii) {
     await copiazaText(corp);
     url = `mailto:${catre}?subject=${encodeURIComponent(subiect)}&body=${encodeURIComponent(
       'Lista e în clipboard — lipeşte-o aici (Ctrl+V).')}`;
-    alert('Lista e prea lungă pentru un link de mail — am copiat-o în clipboard. În mail dă Ctrl+V.');
+    await alerta('Lista e prea lungă pentru un link de mail — am copiat-o în clipboard. În mail dă Ctrl+V.');
   }
   location.href = url;
 }
