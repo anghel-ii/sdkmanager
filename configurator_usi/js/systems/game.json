@@ -123,6 +123,27 @@
           }
         ]
       ]
+    },
+    {
+      "id": "util",
+      "label": "UTIL",
+      "descriere": "Uşi culisante din profile — panourile le pune clientul",
+      "implicit": "utilAtena",
+      "tabel": false,
+      "modele": [
+        {
+          "id": "utilAtena",
+          "label": "Atena"
+        },
+        {
+          "id": "utilRoma",
+          "label": "Roma"
+        },
+        {
+          "id": "utilSoft",
+          "label": "Soft"
+        }
+      ]
     }
   ]
 }

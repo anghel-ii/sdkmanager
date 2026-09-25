@@ -15,6 +15,9 @@ import * as rama824 from './rama_824.js';
 import * as rama831 from './rama_831.js';
 import * as rama841 from './rama_841.js';
 import * as rama842 from './rama_842.js';
+import * as utilAtena from './util_atena.js';
+import * as utilRoma  from './util_roma.js';
+import * as utilSoft  from './util_soft.js';
 
 // Sistem nou:
 //   1) copiază un fişier din js/systems/ ca şablon (secţiunile 1–7)
@@ -41,6 +44,9 @@ export const systems = {
   rama831,
   rama841,
   rama842,
+  utilAtena,
+  utilRoma,
+  utilSoft,
 };
 
 export const defaultSystem = 'suspendataA';
