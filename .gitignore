@@ -1,6 +1,8 @@
 # ── Date de producţie şi secrete — NU intră niciodată în git ─────────────────
 # baza managerului (clienţi, comenzi, utilizatori, sesiuni) + backup-urile ei
 manager/date/
+# orice copie a bazei (ex. manager.sqlite scos pt. server) — conţine clienţii
+*.sqlite
 *.sqlite-wal
 *.sqlite-shm
 # certificate TLS / chei

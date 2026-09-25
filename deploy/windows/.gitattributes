@@ -1,0 +1,4 @@
+# scripturile Windows: mereu cu CRLF, indiferent unde sunt scoase din git
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf

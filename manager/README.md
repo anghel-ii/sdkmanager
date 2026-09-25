@@ -34,6 +34,11 @@ Conturile următoare se adaugă din aplicaţie, cu un cont de administrator.
 npm test       # 35 de verificări end-to-end, pe o bază temporară
 ```
 
+## Pe serverul Windows al firmei
+
+Instalare şi update-uri: vezi [`deploy/windows/CITESTE.md`](../deploy/windows/CITESTE.md)
+(Node + Git instalate automat, pornire odată cu serverul, update cu revenire automată).
+
 ## Configurare
 
 Totul din variabile de mediu; în atelier se pun într-un fişier de unit systemd.
