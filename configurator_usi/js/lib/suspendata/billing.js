@@ -1,5 +1,5 @@
 import catalog from '../../catalog/catalog.generated.json';
-import { garnituraCod, FOLIE_COD, folieCantitate, glassPerDoor } from './geam.js';
+import { garnituraCod, GARNITURA_DENUMIRE, FOLIE_COD, folieCantitate, glassPerDoor } from './geam.js';
 import { ceilHalf } from './num.js';
 // catalog = { "<family>": [ {articol}, ... ] } — un tabel per familie de sisteme
 
@@ -166,11 +166,11 @@ export function billingLines(system, state, spec) {
   for (const { geam, areaM2 } of byGeam.values()) {
     lines.push({ cod: geam.cod, denumire: geam.denumire, um: 'mp', cantitate: ceil2(areaM2) });
     if (geam.oglinda) {
-      lines.push({ cod: FOLIE_COD, denumire: 'Folie de securizare', um: 'buc', cantitate: folieCantitate(areaM2) });
+      lines.push({ cod: FOLIE_COD, denumire: 'Folie pentru securizare 1 rola 50x05ml cod 283', um: 'buc', cantitate: folieCantitate(areaM2) });
     }
   }
-  for (const [cod, { grosime, m }] of byGarnitura) {
-    lines.push({ cod, denumire: `Garnitură sticlă ${grosime}mm`, um: 'm', cantitate: ceilHalf(m) });
+  for (const [cod, { m }] of byGarnitura) {
+    lines.push({ cod, denumire: GARNITURA_DENUMIRE[cod], um: 'm', cantitate: ceilHalf(m) });
   }
 
   // Manoperă — o linie per uşă asamblată de NOI (nu de client). Restul liniilor
@@ -178,7 +178,7 @@ export function billingLines(system, state, spec) {
   // asamblează — doar manopera se adaugă/scoate în funcţie de asta.
   const noiCount = (state.assembly ?? []).filter(a => a === 'noi').length;
   if (noiCount > 0) {
-    lines.push({ cod: 'Manopera 1', denumire: 'Manoperă asamblare', um: 'buc', cantitate: noiCount });
+    lines.push({ cod: 'Manopera 1', denumire: 'Manopera 1', um: 'buc', cantitate: noiCount });
   }
 
   return { lines, errors, mode: b.mode ?? null };

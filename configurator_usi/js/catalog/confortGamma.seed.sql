@@ -20,42 +20,42 @@ CREATE TABLE articol (
   activ    INTEGER NOT NULL DEFAULT 1
 );
 
-INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('266', 'divizare', 'AURIU', 'DIVIZARE AURIU PERIAT');
-INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('248', 'divizare', 'ALB', 'DIVIZARE CONFORT ALB MAT');
-INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('208', 'divizare', 'ALUMINIU', 'DIVIZARE CONFORT ALUMINIU');
-INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('228', 'divizare', 'SAMPANIE', 'DIVIZARE CONFORT SAMPANIE');
-INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('295', 'divizare', 'CUPRU', 'DIVIZARE CUPRU');
-INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('258', 'divizare', 'NEGRU', 'DIVIZARE NEGRU PERIAT');
-INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('247', 'orizontal inferior', 'ALB', 'ORIZONTAL INFERIOR ALB MAT');
-INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('207', 'orizontal inferior', 'ALUMINIU', 'ORIZONTAL INFERIOR ALUMINIU');
-INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('265', 'orizontal inferior', 'AURIU', 'ORIZONTAL INFERIOR AURIU PERIAT');
-INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('294', 'orizontal inferior', 'CUPRU', 'ORIZONTAL INFERIOR CUPRU');
-INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('257', 'orizontal inferior', 'NEGRU', 'ORIZONTAL INFERIOR NEGRU PERIAT');
-INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('227', 'orizontal inferior', 'SAMPANIE', 'ORIZONTAL INFERIOR SAMPANIE');
-INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('248', 'orizontal superior', 'ALB', 'ORIZONTAL SUPERIOR ALB MAT');
-INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('208', 'orizontal superior', 'ALUMINIU', 'ORIZONTAL SUPERIOR ALUMINIU');
-INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('266', 'orizontal superior', 'AURIU', 'ORIZONTAL SUPERIOR AURIU PERIAT');
-INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('295', 'orizontal superior', 'CUPRU', 'ORIZONTAL SUPERIOR CUPRU');
-INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('258', 'orizontal superior', 'NEGRU', 'ORIZONTAL SUPERIOR NEGRU PERIAT');
-INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('228', 'orizontal superior', 'SAMPANIE', 'ORIZONTAL SUPERIOR SAMPANIE');
-INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('246', 'vertical', 'ALB', 'PROFIL VERTICAL GAMMA ALB MAT');
-INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('206', 'vertical', 'ALUMINIU', 'PROFIL VERTICAL GAMMA ALUMINIU');
-INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('264', 'vertical', 'AURIU', 'PROFIL VERTICAL GAMMA AURIU PERIAT');
-INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('292', 'vertical', 'CUPRU', 'PROFIL VERTICAL GAMMA GAMMA CUPRU');
-INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('256', 'vertical', 'NEGRU', 'PROFIL VERTICAL GAMMA NEGRU PERIAT');
-INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('226', 'vertical', 'SAMPANIE', 'PROFIL VERTICAL GAMMA SAMPANIE');
-INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('241', 'sina inferioara', 'ALB', 'SINA INFERIOARA DUBLA ALB MAT');
-INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('201', 'sina inferioara', 'ALUMINIU', 'SINA INFERIOARA DUBLA ALUMINIU');
-INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('261', 'sina inferioara', 'AURIU', 'SINA INFERIOARA DUBLA AURIU PERIAT');
-INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('291', 'sina inferioara', 'CUPRU', 'SINA INFERIOARA DUBLA CUPRU');
-INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('251', 'sina inferioara', 'NEGRU', 'SINA INFERIOARA DUBLA NEGRU PERIAT');
-INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('221', 'sina inferioara', 'SAMPANIE', 'SINA INFERIOARA DUBLA SAMPANIE');
-INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('240', 'sina superioara', 'ALB', 'SINA SUPERIOARA DUBLA ALB MAT');
-INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('200', 'sina superioara', 'ALUMINIU', 'SINA SUPERIOARA DUBLA ALUMINIU');
-INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('260', 'sina superioara', 'AURIU', 'SINA SUPERIOARA DUBLA AURIU PERIAT');
-INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('290', 'sina superioara', 'CUPRU', 'SINA SUPERIOARA DUBLA CUPRU');
-INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('250', 'sina superioara', 'NEGRU', 'SINA SUPERIOARA DUBLA NEGRU PERIAT');
-INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('220', 'sina superioara', 'SAMPANIE', 'SINA SUPERIOARA DUBLA SAMPANIE');
+INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('266', 'divizare', 'AURIU', 'Orizontal superior/divizare Confort finisaj auriu periat 5,8 m cod 266');
+INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('248', 'divizare', 'ALB', 'Orizontal superior/divizare Confort finisaj alb mat 5,8 m cod 248');
+INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('208', 'divizare', 'ALUMINIU', 'Orizontal superior/divizare Confort finisaj aluminiu 5,8 m cod 208');
+INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('228', 'divizare', 'SAMPANIE', 'Orizontal superior/divizare Confort finisaj sampanie 5,8 m cod 228');
+INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('295', 'divizare', 'CUPRU', 'Orizontal superior/divizare Confort finisaj cupru 3,5 m cod 295');
+INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('258', 'divizare', 'NEGRU', 'Orizontal superior/divizare Confort finisaj negru periat 5,8 m cod 258');
+INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('247', 'orizontal inferior', 'ALB', 'Orizontal inferior Confort finisaj alb mat 5,8 m cod 247');
+INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('207', 'orizontal inferior', 'ALUMINIU', 'Orizontal inferior Confort finisaj aluminiu 5,8 m cod 207');
+INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('265', 'orizontal inferior', 'AURIU', 'Orizontal inferior Confort finisaj auriu periat 5,8 m cod 265');
+INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('294', 'orizontal inferior', 'CUPRU', 'Orizontal inferior Confort finisaj cupru 3,5 m cod 294');
+INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('257', 'orizontal inferior', 'NEGRU', 'Orizontal inferior Confort finisaj negru periat 5,8 m cod 257');
+INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('227', 'orizontal inferior', 'SAMPANIE', 'Orizontal inferior Confort finisaj sampanie 5,8 m cod 227');
+INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('248', 'orizontal superior', 'ALB', 'Orizontal superior/divizare Confort finisaj alb mat 5,8 m cod 248');
+INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('208', 'orizontal superior', 'ALUMINIU', 'Orizontal superior/divizare Confort finisaj aluminiu 5,8 m cod 208');
+INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('266', 'orizontal superior', 'AURIU', 'Orizontal superior/divizare Confort finisaj auriu periat 5,8 m cod 266');
+INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('295', 'orizontal superior', 'CUPRU', 'Orizontal superior/divizare Confort finisaj cupru 3,5 m cod 295');
+INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('258', 'orizontal superior', 'NEGRU', 'Orizontal superior/divizare Confort finisaj negru periat 5,8 m cod 258');
+INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('228', 'orizontal superior', 'SAMPANIE', 'Orizontal superior/divizare Confort finisaj sampanie 5,8 m cod 228');
+INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('246', 'vertical', 'ALB', 'Profil maner Gamma finisaj alb mat 5,5 m cod 246');
+INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('206', 'vertical', 'ALUMINIU', 'Profil maner Gamma finisaj aluminiu 5,5 m cod 206');
+INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('264', 'vertical', 'AURIU', 'Profil maner Gamma finisaj auriu periat 5,5 m cod 264');
+INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('292', 'vertical', 'CUPRU', 'Profil maner Gamma finisaj cupru 3 m cod 292');
+INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('256', 'vertical', 'NEGRU', 'Profil maner Gamma finisaj negru periat 5,5 m cod 256');
+INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('226', 'vertical', 'SAMPANIE', 'Profil maner Gamma finisaj sampanie 5,5 m cod 226');
+INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('241', 'sina inferioara', 'ALB', 'Sina inferioara dubla Confort/Lux finisaj alb mat 5,8 m cod 241');
+INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('201', 'sina inferioara', 'ALUMINIU', 'Sina inferioara dubla Confort/Lux finisaj aluminiu 5,8 m cod 201');
+INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('261', 'sina inferioara', 'AURIU', 'Sina inferioara dubla Confort/Lux finisaj auriu periat 5,8 m cod 261');
+INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('291', 'sina inferioara', 'CUPRU', 'Sina inferioara dubla Confort/Lux finisaj cupru 3,5 m cod 291');
+INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('251', 'sina inferioara', 'NEGRU', 'Sina inferioara dubla Confort/Lux finisaj negru periat 5,8 m cod 251');
+INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('221', 'sina inferioara', 'SAMPANIE', 'Sina inferioara dubla Confort finisaj sampanie 5,8 m cod 221');
+INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('240', 'sina superioara', 'ALB', 'Sina superioara dubla Confort/Lux finisaj alb mat  5,8 m cod 240');
+INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('200', 'sina superioara', 'ALUMINIU', 'Sina superioara dubla Confort/Lux finisaj aluminiu  5,8 m cod 200');
+INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('260', 'sina superioara', 'AURIU', 'Sina superioara dubla Confort/Lux finisaj auriu periat 5,8 m cod 260');
+INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('290', 'sina superioara', 'CUPRU', 'Sina superioara dubla Confort/Lux finisaj cupru 3.5 m cod 290');
+INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('250', 'sina superioara', 'NEGRU', 'Sina superioara dubla Confort/Lux finisaj negru periat 5,8 m cod 250');
+INSERT INTO articol (cod, tip, finisaj, denumire) VALUES ('220', 'sina superioara', 'SAMPANIE', 'Sina superioara dubla Confort finisaj sampanie  5,8 m cod 220');
 
 -- ═══════════════════════════════════════════════════════════════════════════
 --  FACTURARE — din "coduri facturare confort.xlsx" (userul, 2026-09-17).
@@ -89,13 +89,13 @@ INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('206.4
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('206.025', 'divizare_vanzare', 'ALUMINIU', 501, 600, 'Profil orizontal divizare Aluminiu 501-600mm Cod 206.025', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('206.026', 'divizare_vanzare', 'ALUMINIU', 601, 700, 'Profil orizontal divizare Aluminiu 601-700mm Cod 206.026', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('206.027', 'divizare_vanzare', 'ALUMINIU', 701, 800, 'Profil orizontal divizare Aluminiu 701-800mm Cod 206.027', 'buc');
-INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('206.028', 'divizare_vanzare', 'ALUMINIU', 801, 900, 'Profil orizontal divizare Aluminiu 801-900mm Cod 206.028', 'buc');
+INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('206.028', 'divizare_vanzare', 'ALUMINIU', 801, 900, 'Profil orizontal divizare Aluminiu 801-900mm Cod 206.208', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('206.029', 'divizare_vanzare', 'ALUMINIU', 901, 1000, 'Profil orizontal divizare Aluminiu 901-1000mm Cod 206.029', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('206.210', 'divizare_vanzare', 'ALUMINIU', 1001, 1100, 'Profil orizontal divizare Aluminiu 1001-1100mm Cod 206.210', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('206.211', 'divizare_vanzare', 'ALUMINIU', 1101, 1200, 'Profil orizontal divizare Aluminiu 1101-1200mm Cod 206.211', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('206.212', 'divizare_vanzare', 'ALUMINIU', 1201, 1300, 'Profil orizontal divizare Aluminiu 1201-1300mm Cod 206.212', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('206.213', 'divizare_vanzare', 'ALUMINIU', 1301, 1400, 'Profil orizontal divizare Aluminiu 1301-1400mm Cod 206.213', 'buc');
-INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('206.214', 'divizare_vanzare', 'ALUMINIU', 1401, 1500, 'Profil orizontal divizare Aluminiu 1401-1500mm Cod 206.214', 'buc');
+INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('206.214', 'divizare_vanzare', 'ALUMINIU', 1401, 1500, 'Profil orizontal divizare Aluminiu 1401-1500m Cod 206.214', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('206.215', 'divizare_vanzare', 'ALUMINIU', 1501, 2000, 'Profil orizontal divizare Aluminiu 1501-2000mm Cod 206.215', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('206.065', 'divizare_vanzare', 'AURIU', 501, 600, 'Profil orizontal divizare Auriu Periat 501-600mm Cod 206.065', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('206.066', 'divizare_vanzare', 'AURIU', 601, 700, 'Profil orizontal divizare Auriu Periat 601-700mm Cod 206.066', 'buc');
@@ -137,7 +137,7 @@ INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('206.0
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('206.310', 'divizare_vanzare', 'SAMPANIE', 1001, 1100, 'Profil orizontal divizare Sampanie 1001-1100mm Cod 206.310', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('206.311', 'divizare_vanzare', 'SAMPANIE', 1101, 1200, 'Profil orizontal divizare Sampanie 1101-1200mm Cod 206.311', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('206.312', 'divizare_vanzare', 'SAMPANIE', 1201, 1300, 'Profil orizontal divizare Sampanie 1201-1300mm Cod 206.312', 'buc');
-INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('206.313', 'divizare_vanzare', 'SAMPANIE', 1301, 1400, 'Profil orizontal divizare Sampanie 1300-1400mm Cod 206.313', 'buc');
+INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('206.313', 'divizare_vanzare', 'SAMPANIE', 1301, 1400, 'Profil orizontal divizare Sampanie 1300-1400  Cod 206.313', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('206.314', 'divizare_vanzare', 'SAMPANIE', 1401, 1500, 'Profil orizontal divizare Sampanie 1401-1500mm Cod 206.314', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('206.315', 'divizare_vanzare', 'SAMPANIE', 1501, 2000, 'Profil orizontal divizare Sampanie 1501-2000mm Cod 206.315', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('201.045', 'usa', 'ALB', 501, 600, 'Usa culisanta Gamma Alb 501-600mm Cod 201.045', 'buc');
@@ -210,10 +210,10 @@ INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('201.3
 -- Există DOAR în 4 culori (fără AURIU/CUPRU). Aceleaşi coduri la toate modelele.
 -- Necesar: bucăţi la cota de debitare (ca divizarea Confort). Facturare: la bară
 -- întreagă de 5800mm, rotunjit în sus la jumătate de bară — de-aia um = 'bară'.
-INSERT INTO articol (cod, tip, finisaj, denumire, um) VALUES ('305', 'divizare H', 'ALUMINIU', 'DIVIZARE H ALUMINIU', 'bară');
-INSERT INTO articol (cod, tip, finisaj, denumire, um) VALUES ('315', 'divizare H', 'SAMPANIE', 'DIVIZARE H SAMPANIE', 'bară');
-INSERT INTO articol (cod, tip, finisaj, denumire, um) VALUES ('324', 'divizare H', 'ALB', 'DIVIZARE H ALB', 'bară');
-INSERT INTO articol (cod, tip, finisaj, denumire, um) VALUES ('334', 'divizare H', 'NEGRU', 'DIVIZARE H NEGRU', 'bară');
+INSERT INTO articol (cod, tip, finisaj, denumire, um) VALUES ('305', 'divizare H', 'ALUMINIU', 'Divizare ''''H'''' inegal finisaj aluminiu  5,8 m cod 305', 'bară');
+INSERT INTO articol (cod, tip, finisaj, denumire, um) VALUES ('315', 'divizare H', 'SAMPANIE', 'Divizare ''''H'''' finisaj sampanie 5,8 m cod 315', 'bară');
+INSERT INTO articol (cod, tip, finisaj, denumire, um) VALUES ('324', 'divizare H', 'ALB', 'Divizare ''''H'''' finisaj alb mat  5,8 m cod 324', 'bară');
+INSERT INTO articol (cod, tip, finisaj, denumire, um) VALUES ('334', 'divizare H', 'NEGRU', 'Divizare ''''H'''' finisaj negru periat  5,8 m cod 334', 'bară');
 
 -- Divizări APLICATE — benzi lipite pe panourile de PAL/sticlă (nu separă panouri),
 -- opţiuni avansate. Bară de 3m, se cumpără la bară întreagă (um 'bară').
@@ -225,7 +225,7 @@ INSERT INTO articol (cod, tip, finisaj, denumire, um) VALUES ('138', 'divizare a
 INSERT INTO articol (cod, tip, finisaj, denumire, um) VALUES ('149', 'divizare aplicata 10', 'NEGRU',    'Divizare aplicata 10x1,4 mm, finisaj negru mat 3 m cod 149', 'bară');
 INSERT INTO articol (cod, tip, finisaj, denumire, um) VALUES ('156', 'divizare aplicata 10', 'AURIU',    'Divizare aplicata 10x1,4 mm, finisaj auriu periat 3 m cod 156', 'bară');
 INSERT INTO articol (cod, tip, finisaj, denumire, um) VALUES ('182', 'divizare aplicata 10', 'CUPRU',    'Divizare aplicata  10x1,4 mm, finisaj cupru 3 m cod 182', 'bară');
-INSERT INTO articol (cod, tip, finisaj, denumire, um) VALUES ('105', 'divizare aplicata 20', 'ALUMINIU', 'Divizare aplicata 20x1,4 mm, finisaj aluminiu 3 m cod 105', 'bară');
+INSERT INTO articol (cod, tip, finisaj, denumire, um) VALUES ('105', 'divizare aplicata 20', 'ALUMINIU', 'Divizare aplicata 20x1,4 mm, finisaj aluminiu 3 m cod 105 cod 105', 'bară');
 INSERT INTO articol (cod, tip, finisaj, denumire, um) VALUES ('119', 'divizare aplicata 20', 'SAMPANIE', 'Divizare aplicata 20x1,4 mm, finisaj sampanie lucioasa 3 m cod 119', 'bară');
 INSERT INTO articol (cod, tip, finisaj, denumire, um) VALUES ('139', 'divizare aplicata 20', 'ALB',      'Divizare aplicata 20x1,4 mm, alb mat 3 m cod 139', 'bară');
 INSERT INTO articol (cod, tip, finisaj, denumire, um) VALUES ('150', 'divizare aplicata 20', 'NEGRU',    'Divizare aplicata 20x1,4 mm, finisaj negru mat 3 m cod 150', 'bară');

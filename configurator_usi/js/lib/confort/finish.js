@@ -18,9 +18,9 @@ export const FINISAJE_STANDARD = [
 export const FINISAJE_CONFORT = [
   { id: 'ALUMINIU', label: 'Aluminiu', hex: '#c4c8ca' },
   { id: 'ALB',      label: 'Alb',      hex: '#eceeef' },
-  { id: 'NEGRU',    label: 'Negru',    hex: '#2a2a2c' },
+  { id: 'NEGRU',    label: 'Negru periat', hex: '#2a2a2c' },
   { id: 'SAMPANIE', label: 'Șampanie', hex: '#cabb92' },
-  { id: 'AURIU',    label: 'Auriu',    hex: '#b89a4e' },
+  { id: 'AURIU',    label: 'Auriu periat', hex: '#b89a4e' },
   { id: 'CUPRU',    label: 'Cupru',    hex: '#a05a3c' },
 ];
 

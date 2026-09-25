@@ -24,6 +24,8 @@ export const meta = {
   doors:   1,
   sketch:   'assets/schita_d.png',
   limits:   { width: [700, 1900], height: [1900, 2700] },   // acoperit de catalog (uşă ≤2000)
+  // Cupru: doar ce acoperă codurile Cupru din NeoManager — uşa Cupru max 1500 mm (USA409).
+  limitsFinisaj: { CUPRU: { width: [700, 1431] } },
   finishes: FINISAJE_STANDARD,
 };
 
@@ -115,9 +117,9 @@ export const billing = {
     { tip: 'divizare',     dim: 'innerWmm',  qty: 'divizariBuc' },
 
     // role: vin la set de 2 buc → se facturează în 'set', 0.5/rolă (factor)
-    { cod: '381', denumire: 'Rolă simplă',       qty: 'roleSimple',    factor: 0.5, um: 'set' },
-    { cod: '380', denumire: 'Rolă cu amortizor', qty: 'roleAmortizor', factor: 0.5, um: 'set' },
-    { cod: '274', denumire: 'Perie laterală',    qty: 'perieMl', um: 'm' },
+    { cod: '381', denumire: 'Rotile pentru 1 usa cu rama din aluminiu, opritor si ghidaj cu rulment inclus cod 381',       qty: 'roleSimple',    factor: 0.5, um: 'set' },
+    { cod: '380', denumire: 'Rotile la set cu amortizare pentru 1 usa cu rama din aluminiu, opritor si ghidaj cu rulment inclus cod 380', qty: 'roleAmortizor', factor: 0.5, um: 'set' },
+    { cod: '274', denumire: 'Perie laterala 11x5mm cod 274',    qty: 'perieMl', um: 'm' },
 
     // Divizări aplicate (opţiuni avansate) — bare de 3m, nr. calculat din
     // segmente (vezi segmenteAplicate / bareNecesare în lib/suspendata/aplicate.js).

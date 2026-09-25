@@ -450,14 +450,13 @@ export function confortAplicateRows(family, spec, state) {
 // Facturarea: la şina dublă roţile sunt incluse în linia 'usa'; la şina simplă
 // se facturează separat — vezi confortBillSinaSimpla / liniiSinaSimpla mai jos.
 //
-// Denumirile efective din `line(...)` de mai jos sunt textul EXACT dat de
-// utilizator (majuscule, fără diacritice) — nu le "corecta" gramatical, a
-// cerut explicit să rămână aşa cum le-a scris.
+// Denumirile de mai jos sunt cele din NeoManager („baza de date completa.xlsx",
+// 2026-09-24), verbatim — nu le reformula.
 const ROTI_SUPERIOARE = {
-  confortVerona: { cod: '270', model: 'K3' },
-  confortAtrani: { cod: '270', model: 'K3' },
-  confortGamma:  { cod: '271', model: 'K4' },
-  confortAlfa:   { cod: '272', model: 'K5' },
+  confortVerona: { cod: '270', denumire: 'Rotila superioara Verona/Atrani K3 cod 270' },
+  confortAtrani: { cod: '270', denumire: 'Rotila superioara Verona/Atrani K3 cod 270' },
+  confortGamma:  { cod: '271', denumire: 'Rotila superioara Gamma K4 cod 271' },
+  confortAlfa:   { cod: '272', denumire: 'Rotila superioara Alfa K5 cod 272' },
 };
 const ROATA_INFERIOARA_COD = '273';
 
@@ -465,11 +464,9 @@ export function confortWheelRows(sistemId, state) {
   const n = clientDoors(state);
   if (!n) return [];
 
-  // Denumirile de mai jos sunt EXACT cele date de utilizator (2026-09-16),
-  // verbatim, cu tot cu majuscule şi fără diacritice — nu le reformula.
-  const rows = [line(ROATA_INFERIOARA_COD, 'ROTILE INFERIOARE LA SET', n, 'set')];
+  const rows = [line(ROATA_INFERIOARA_COD, 'Rotila inferioara Confort la set cod 273', n, 'set')];
   const sup = ROTI_SUPERIOARE[sistemId];
-  if (sup) rows.push(line(sup.cod, `ROTILE SUPERIOARE LA BUCATA COD ${sup.model}`, 2 * n, 'buc'));
+  if (sup) rows.push(line(sup.cod, sup.denumire, 2 * n, 'buc'));
   return rows;
 }
 
@@ -478,14 +475,14 @@ export function confortWheelRows(sistemId, state) {
 // la uşile asamblate de CLIENT.
 export function confortScrewRows(state) {
   const n = clientDoors(state);
-  return n ? [line('276', 'SURUBURI ASAMBLARE', 4 * n, 'buc')] : [];
+  return n ? [line('276', 'Suruburi cuplare Confort/Lux cod 276', 4 * n, 'buc')] : [];
 }
 
-// Opritori cu adeziv — cod fix, 1 per uşă, tot doar la CLIENT. Denumire
-// verbatim, dată de utilizator (2026-09-16).
+// Opritori cu adeziv — cod fix, 1 per uşă, tot doar la CLIENT.
+// Denumirea din NeoManager.
 export function confortOpritoriRows(state) {
   const n = clientDoors(state);
-  return n ? [line('280', 'OPRITORI CU ADEZIV', n, 'buc')] : [];
+  return n ? [line('280', 'Opritor din aluminiu cod 280', n, 'buc')] : [];
 }
 
 // Cleme perie laterală — cod fix, 2 buc/uşă, tot doar la CLIENT (dat explicit
@@ -494,7 +491,7 @@ export function confortOpritoriRows(state) {
 // tot restul feroneriei noi (roţi/şuruburi/opritori/amortizare).
 export function confortClemeRows(state) {
   const n = clientDoors(state);
-  return n ? [line('279', 'CLEME PERIE LATERALA', 2 * n, 'buc')] : [];
+  return n ? [line('279', 'Cleme fixare perie cod 279', 2 * n, 'buc')] : [];
 }
 
 // ── Facturare la ŞINĂ SIMPLĂ (userul, 2026-09-18) ──────────────────────────
@@ -544,11 +541,11 @@ export function liniiSinaSimpla(sistemId) {
     { tip: 'sina inferioara simpla', dim: 'sinaLenMm', qty: 'sinaInfSimpla' },
     { tip: 'sina superioara',        dim: 'sinaLenMm', qty: 'sinaSupDubla' },
     { tip: 'sina inferioara',        dim: 'sinaLenMm', qty: 'sinaInfDubla' },
-    { cod: ROATA_INFERIOARA_COD, denumire: 'ROTILE INFERIOARE LA SET', qty: 'rotiInfSet', um: 'set' },
-    ...(sup ? [{ cod: sup.cod, denumire: `ROTILE SUPERIOARE LA BUCATA COD ${sup.model}`, qty: 'rotiSupBuc' }] : []),
-    { cod: '276', denumire: 'SURUBURI ASAMBLARE',   qty: 'suruburiBuc' },
-    { cod: '280', denumire: 'OPRITORI CU ADEZIV',   qty: 'opritoriBuc' },
-    { cod: '279', denumire: 'CLEME PERIE LATERALA', qty: 'clemeBuc' },
+    { cod: ROATA_INFERIOARA_COD, denumire: 'Rotila inferioara Confort la set cod 273', qty: 'rotiInfSet', um: 'set' },
+    ...(sup ? [{ cod: sup.cod, denumire: sup.denumire, qty: 'rotiSupBuc' }] : []),
+    { cod: '276', denumire: 'Suruburi cuplare Confort/Lux cod 276',   qty: 'suruburiBuc' },
+    { cod: '280', denumire: 'Opritor din aluminiu cod 280',   qty: 'opritoriBuc' },
+    { cod: '279', denumire: 'Cleme fixare perie cod 279', qty: 'clemeBuc' },
   ];
 }
 
@@ -565,7 +562,7 @@ export function confortPerieSpateRows(sistemId, state, spec) {
   const suprapuneri = suprapuneriEfective(state.doors, state.tracks);
   if (!suprapuneri) return [];
   const m = ceilHalf(suprapuneri * spec.door.h / 1000);
-  return [line('275', 'PERIE SPATE ANTIPRAF 6x8mm', m, 'm')];
+  return [line('275', 'Perie spate antipraf 6x8mm Confort/Lux cod 275', m, 'm')];
 }
 
 // Amortizare — accesoriu opţional per PARTE (stânga/dreapta), 3 clase:
@@ -574,6 +571,10 @@ export function confortPerieSpateRows(sistemId, state, spec) {
 // rolele vechi din familia "suspendata": vin la set de 2, se facturează/
 // consumă la bucată). Tot doar la uşile asamblate de CLIENT.
 const AMORTIZARE_COD = { '35kg': '282', '60kg': '281' };
+const AMORTIZARE_DENUMIRE = {
+  '35kg': 'Amortizare la set 35 kg pentru gama Confort/Lux cod 282',
+  '60kg': 'Amortizare la set 60kg pentru gama Confort/Lux cod 281',
+};
 
 export function confortAmortizareRows(state) {
   const amortizare = state.amortizare ?? [];
@@ -584,7 +585,7 @@ export function confortAmortizareRows(state) {
   const rows = [];
   for (const clasa of ['35kg', '60kg']) {
     const buc = numara(clasa);
-    if (buc) rows.push(line(AMORTIZARE_COD[clasa], `AMORTIZARE ${clasa.toUpperCase()}`, buc * 0.5, 'set'));
+    if (buc) rows.push(line(AMORTIZARE_COD[clasa], AMORTIZARE_DENUMIRE[clasa], buc * 0.5, 'set'));
   }
   return rows;
 }

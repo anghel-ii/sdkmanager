@@ -19,6 +19,7 @@ export const findGeam  = cod => geamList().find(g => g.cod === cod) ?? null;
 // Garnitura depinde de grosimea geamului/oglinzii: 4mm → cod 277, 8mm → cod 278.
 const GARNITURA_COD = { 4: '277', 8: '278' };
 export const garnituraCod = grosime => GARNITURA_COD[grosime] ?? GARNITURA_COD[4];
+export const GARNITURA_DENUMIRE = { '277': 'Garnitura pentru geam de 4 mm cod 277', '278': 'Garnitura pentru geam de 8 mm cod 278' };
 
 // Folie de securizare — doar la oglinzi. Formulă: (aria sticlei / 25) × 1.15.
 export const FOLIE_COD = '283';

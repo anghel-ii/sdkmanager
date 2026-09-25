@@ -1,4 +1,4 @@
-import { garnituraCod, glassPerDoor } from './geam.js';
+import { garnituraCod, GARNITURA_DENUMIRE, glassPerDoor } from './geam.js';
 import { ceilHalf } from './num.js';
 
 // ── Necesar de materiale (BOM) ───────────────────────────────────────────────
@@ -87,11 +87,11 @@ export function glassRows(spec, state) {
     byGarnitura.set(cod, e);
   }
 
-  const rows = [...byGarnitura].map(([cod, { grosime, m }]) =>
-    line(cod, `Garnitură sticlă ${grosime}mm`, ceilHalf(m), 'm'));
+  const rows = [...byGarnitura].map(([cod, { m }]) =>
+    line(cod, GARNITURA_DENUMIRE[cod], ceilHalf(m), 'm'));
 
   const doorH = spec.door.h;
-  rows.push(line('274', 'Perie laterală', ceilHalf(perDoor.length * 2 * doorH / 1000), 'm'));
+  rows.push(line('274', 'Perie laterala 11x5mm cod 274', ceilHalf(perDoor.length * 2 * doorH / 1000), 'm'));
 
   return rows;
 }

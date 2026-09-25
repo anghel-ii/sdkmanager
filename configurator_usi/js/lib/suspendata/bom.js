@@ -1,4 +1,4 @@
-import { garnituraCod, glassPerDoor } from './geam.js';
+import { garnituraCod, GARNITURA_DENUMIRE, glassPerDoor } from './geam.js';
 import { ceilHalf } from './num.js';
 import catalog from '../../catalog/catalog.generated.json';
 import { FINISAJE_STANDARD } from './finish.js';
@@ -135,11 +135,11 @@ export function glassRows(spec, state) {
     byGarnitura.set(cod, e);
   }
 
-  const rows = [...byGarnitura].map(([cod, { grosime, m }]) =>
-    line(cod, `Garnitură sticlă ${grosime}mm`, ceilHalf(m), 'm'));
+  const rows = [...byGarnitura].map(([cod, { m }]) =>
+    line(cod, GARNITURA_DENUMIRE[cod], ceilHalf(m), 'm'));
 
   const doorH = spec.door.h;
-  rows.push(line('274', 'Perie laterală', ceilHalf(perDoor.length * 2 * doorH / 1000), 'm'));
+  rows.push(line('274', 'Perie laterala 11x5mm cod 274', ceilHalf(perDoor.length * 2 * doorH / 1000), 'm'));
 
   return rows;
 }
@@ -155,14 +155,14 @@ export function wheelRows(state) {
   const amortizor = countSide('amortizor');
 
   const rows = [];
-  if (simpla)    rows.push(line('381', 'Rolă simplă',       simpla,    'buc'));
-  if (amortizor) rows.push(line('380', 'Rolă cu amortizor', amortizor, 'buc'));
+  if (simpla)    rows.push(line('381', 'Rotile pentru 1 usa cu rama din aluminiu, opritor si ghidaj cu rulment inclus cod 381',       simpla,    'buc'));
+  if (amortizor) rows.push(line('380', 'Rotile la set cu amortizare pentru 1 usa cu rama din aluminiu, opritor si ghidaj cu rulment inclus cod 380', amortizor, 'buc'));
   return rows;
 }
 
-// Şuruburi de asamblare — cod 276, 4 per uşă asamblată de CLIENT (denumire ca
-// la Confort, verbatim de la user). La facturare sunt incluse în codul uşii.
+// Şuruburi de asamblare — cod 276, 4 per uşă asamblată de CLIENT (denumirea din
+// NeoManager). La facturare sunt incluse în codul uşii.
 export function screwRows(state) {
   const n = clientDoors(state);
-  return n ? [line('276', 'SURUBURI ASAMBLARE', 4 * n, 'buc')] : [];
+  return n ? [line('276', 'Suruburi cuplare Confort/Lux cod 276', 4 * n, 'buc')] : [];
 }

@@ -29,6 +29,9 @@ export const meta = {
   suprapuneriObligatorii: true,       // fără varianta „0 suprapuneri" (vezi ui.js)
   // lăţime: banda de şină din catalog (1201–5800 = lăţimea golului)
   limits:      { width: [1300, 5800], height: [1900, 2700] },
+  // Cupru: doar ce acoperă codurile Cupru din NeoManager — şina Cupru e bară de 3,5 m,
+  // uşa max 1500 (USA409): cu 2 uşi golul max 2986; de la 6 uşi nu mai încap în 3,5 m.
+  limitsFinisaj: { CUPRU: { width: [1300, 3500], widthUsi: { 2: [1300, 2986] }, doors: [2, 5] } },
   finishes:    FINISAJE_STANDARD,
 };
 
@@ -114,9 +117,9 @@ export const billing = {
     { tip: 'sina',     dim: 'sinaLenMm', qty: 'nrSine' },
     { tip: 'divizare', dim: 'innerWmm',  qty: 'divizariBuc' },
 
-    { cod: '381', denumire: 'Rolă simplă',       qty: 'roleSimple',    factor: 0.5, um: 'set' },
-    { cod: '380', denumire: 'Rolă cu amortizor', qty: 'roleAmortizor', factor: 0.5, um: 'set' },
-    { cod: '274', denumire: 'Perie laterală',    qty: 'perieMl', um: 'm' },
+    { cod: '381', denumire: 'Rotile pentru 1 usa cu rama din aluminiu, opritor si ghidaj cu rulment inclus cod 381',       qty: 'roleSimple',    factor: 0.5, um: 'set' },
+    { cod: '380', denumire: 'Rotile la set cu amortizare pentru 1 usa cu rama din aluminiu, opritor si ghidaj cu rulment inclus cod 380', qty: 'roleAmortizor', factor: 0.5, um: 'set' },
+    { cod: '274', denumire: 'Perie laterala 11x5mm cod 274',    qty: 'perieMl', um: 'm' },
 
     { tip: 'divizare aplicata 10', dim: 'innerWmm', qty: 'bareAplicate10' },
     { tip: 'divizare aplicata 20', dim: 'innerWmm', qty: 'bareAplicate20' },

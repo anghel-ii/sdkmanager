@@ -164,13 +164,13 @@ export const billing = {
     // facturează separat — sunt deja incluse în preţul liniei 'usa' de mai
     // sus. Rolele vechi (380/381) au fost SCOASE — nu mai corespund la nimic
     // fizic de când roţile (273/270-272) sunt piesa reală.
-    { cod: '274', denumire: 'Perie laterală',                qty: 'perieMl', um: 'm' },
+    { cod: '274', denumire: 'Perie laterala 11x5mm cod 274',                qty: 'perieMl', um: 'm' },
     // Perie spate — doar Verona/Atrani; la Gamma/Alfa bill.perieSpateM nu
     // există, deci linia asta se omite automat (cantitate 0).
-    { cod: '275', denumire: 'PERIE SPATE ANTIPRAF 6x8mm',    qty: 'perieSpateM', um: 'm' },
+    { cod: '275', denumire: 'Perie spate antipraf 6x8mm Confort/Lux cod 275',    qty: 'perieSpateM', um: 'm' },
 
-    { cod: '282', denumire: 'AMORTIZARE 35KG', qty: 'amortizare35', factor: 0.5, um: 'set' },
-    { cod: '281', denumire: 'AMORTIZARE 60KG', qty: 'amortizare60', factor: 0.5, um: 'set' },
+    { cod: '282', denumire: 'Amortizare la set 35 kg pentru gama Confort/Lux cod 282', qty: 'amortizare35', factor: 0.5, um: 'set' },
+    { cod: '281', denumire: 'Amortizare la set 60kg pentru gama Confort/Lux cod 281', qty: 'amortizare60', factor: 0.5, um: 'set' },
 
     // Geam/oglindă + garnitura ei + folia de securizare (la oglinzi) NU stau
     // aici — se adaugă automat de billingLines() (lib/confort/billing.js), la uşile
