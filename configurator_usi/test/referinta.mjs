@@ -93,15 +93,18 @@ function stareRame(sys, { finish, varianta, randuri }) {
   const grup820 = ['rama820', 'rama822', 'rama824'].includes(sys.meta.id);
   state.rame = {
     randuri: randuri.map(([h, l, buc, gauri]) => ({ h, l, buc, gauri })),
+    // mânerul: la „noi" modelul PE RÂND (L 32 + Neo, două coduri), la „oglinda"
+    // formatul vechi (un cod pe toată secţiunea — ofertele salvate înainte)
+    maner: grup820 && varianta !== 'client'
+      ? varianta === 'oglinda' ? { profil: '771', randuri: [{ lungime: 1200, buc: 2 }, { lungime: 800, buc: 3 }] }
+                               : { randuri: [{ model: 'L32', lungime: 1200, buc: 2 }, { model: 'Neo', lungime: 800, buc: 3 }] }
+      : { randuri: [{ model: null, lungime: null, buc: 1 }] },
     asamblare: varianta === 'client' ? 'client' : 'noi',
     geam: varianta === 'oglinda' ? OGLINDA : GEAM_4,
-    gaurire: grup820 ? '100 mm sus/jos si la mijloc' : 'Gaurire Standard',
-    balama: grup820 ? (varianta === 'client' ? 'Fara balamale de la noi' : sys.meta.id === 'rama820' ? '71B3550 NICHEL' : '9072524') : null,
-    placuta: grup820 ? (varianta === 'client' ? 'Fara placute de la noi' : sys.meta.id === 'rama820' ? '173H7100 NICHEL' : '9071576') : null,
+    gaurire: varianta === 'fara-gaurire' ? 'Fara gaurire' : grup820 ? '100 mm sus/jos si la mijloc' : 'Gaurire Standard',
+    balama: varianta === 'fara-gaurire' ? null : grup820 ? (varianta === 'client' ? 'Fara balamale de la noi' : sys.meta.id === 'rama820' ? '71B3550 NICHEL' : '9072524') : null,
+    placuta: varianta === 'fara-gaurire' ? null : grup820 ? (varianta === 'client' ? 'Fara placute de la noi' : sys.meta.id === 'rama820' ? '173H7100 NICHEL' : '9071576') : null,
     manson: varianta !== 'client',
-    maner: grup820 && varianta !== 'client'
-      ? { profil: '771', randuri: [{ lungime: 1200, buc: 2 }, { lungime: 800, buc: 3 }] }
-      : { profil: 'Fara profil maner', randuri: [{ lungime: null, buc: 1 }] },
     ral: '', vopsitCant: varianta === 'oglinda' ? 2 : 0,
     livrare: varianta === 'client' ? 'Ridicare personala' : 'Curier ramburs',
     agent: 'Birou', facturare: 'Factura fiscala',
@@ -175,6 +178,7 @@ const ceilCorect = x => Math.ceil(Math.round(x * 1e6) / 1e4 - 1e-9) / 100;
 function ariaExacta(spec) {
   if (!spec) return 0;
   if (state.rame) return state.rame.asamblare === 'noi' ? spec.ariaGeam : 0;
+  if (state.util) return 0;   // UTIL: sticla (Roma) o ia clientul
   const g = spec.glass;
   if (!g) return 0;
   let a = 0;
@@ -203,13 +207,47 @@ for (const sys of Object.values(systems)) {
       mari:  [[1250, 610, 1, 4], [2600, 700, 3, 5]],
       peste: [[3100, 1300, 1, 2]],   // peste mărimea maximă → eroare
     };
-    for (const finish of culori) for (const varianta of ['noi', 'client', 'oglinda']) for (const [nume, randuri] of Object.entries(seturi)) {
+    for (const finish of culori) for (const varianta of ['noi', 'client', 'oglinda', 'fara-gaurire']) for (const [nume, randuri] of Object.entries(seturi)) {
       const cheie = `${m.id} | ${finish} | ${varianta} | ${nume}`;
       stareRame(sys, { finish, varianta, randuri });
       rezultate[cheie] = rezultat();
       integritate(cheie, sys);
       nrCazuri++;
     }
+    continue;
+  }
+
+  // UTIL: cote, nr. de uşi, comutatorul de orizontale U, amortizări şi — pe uşă —
+  // divizări H, înălţimi fixate şi divizări aplicate. Lăţimile trec prin pragurile şinei.
+  if (m.family === 'util') {
+    const V = {
+      simplu: i => ({ oriz: 'ambele', div: 0 }),
+      fara:   i => ({ oriz: 'fara', div: 0, asm: 'noi' }),
+      sus:    i => ({ oriz: 'sus', div: 1, am: { left: '35kg', right: 'fara' } }),
+      mixt:   i => ({ oriz: 'jos', div: i % 3, fixe: i % 3 === 2 ? [600, null, null] : null,
+                      asm: i % 2 ? 'noi' : 'client', am: { left: '35kg', right: i % 2 ? '35kg' : 'fara' },
+                      aplicate: i % 2 ? { latime: '10', parte: 'fata', verticale: 1, orizontale: 2 }
+                                      : { latime: '20', parte: 'fata', verticale: 0, orizontale: 1 } }),
+      gresit: i => ({ oriz: 'ambele', div: 1, fixe: [5000, null] }),   // panou mai înalt decât uşa
+    };
+    for (const finish of culori) for (let doors = 2; doors <= 7; doors++)
+      for (const [W, H] of [[500, 500], [2000, 2100], [2001, 2100], [4000, 2600], [5800, 2788]])
+        for (const [nume, f] of Object.entries(V)) {
+          if (nume === 'gresit' && W !== 2000) continue;
+          const cheie = `${m.id} | ${finish} | ${W}x${H} | ${doors}u | ${nume}`;
+          const u = PERUSA(doors, f);
+          reseteaza();
+          Object.assign(state, { system: m.id, width: W, height: H, finish, doors, tracks: 2, geam: [],
+            assembly: u.map(x => x.asm ?? 'client'),
+            amortizare: u.map(x => ({ ...(x.am ?? { left: 'fara', right: 'fara' }) })),
+            divisions: u.map(x => x.div),
+            hPanouri: u.map(x => x.fixe ? [...x.fixe] : Array(x.div + 1).fill(null)),
+            divAplicate: u.map(x => ({ ...(x.aplicate ?? { latime: 'fara', parte: 'fata', verticale: 0, orizontale: 0 }) })),
+            util: { orizontale: u[0].oriz } });
+          rezultate[cheie] = rezultat();
+          integritate(cheie, sys);
+          nrCazuri++;
+        }
     continue;
   }
 
@@ -264,13 +302,41 @@ for (const [id, W, H, doors, tracks, varianta] of [
   nrCazuri++;
 }
 
+// Livrare prin curier → transportul pe factură, la orice gamă (nu doar la rame)
+for (const [id, W, H, doors, tracks] of [['confortVerona', 1800, 2100, 2, 2], ['suspendataA', 1200, 2100, 1, 2], ['utilAtena', 2000, 2100, 2, 2]]) {
+  const sys = systems[id];
+  const finish = finishesOf(sys.meta)[0].id;
+  const cheie = `${id} | ${finish} | ${W}x${H} | ${doors}u/${tracks}s | A | curier`;
+  stareUsi(sys, { W, H, finish, doors, tracks, varianta: 'A' });
+  state.comanda = { livrare: 'Curier ramburs', agent: 'Birou', facturare: 'Factura fiscala' };
+  rezultate[cheie] = rezultat();
+  integritate(cheie, sys);
+  nrCazuri++;
+}
+
+// Rame (userul, 2026-09-25): „100 mm de margini sus/jos" = mereu 2 găuri pe ramă,
+// oricât scrie pe rând; mânerul se aşază pe bare de 3000 mm (2 × 1400 = o bară).
+{
+  const sys = systems.rama820;
+  state.system = sys.meta.id;
+  stareRame(sys, { finish: 'ALUMINIU', varianta: 'noi', randuri: [[600, 400, 3, 5]] });
+  state.rame.gaurire = '100 mm de margini sus/jos';
+  state.rame.maner = { randuri: [{ model: 'L32', lungime: 1400, buc: 2 }] };
+  buildConfig();
+  const s = currentSpec();
+  const verifica = (ok, mesaj) => { if (!ok) { console.error('✗ rame: ' + mesaj); process.exit(1); } };
+  verifica(s.nrGauri === 6, `sus/jos: aştept 3 rame × 2 găuri = 6, am ${s.nrGauri}`);
+  verifica(s.manere[0]?.bare === 1, `mâner 2 × 1400 mm: aştept 1 bară de 3000, am ${s.manere[0]?.bare}`);
+  console.log('✓ rame: 2 găuri la „sus/jos", bare de mâner de 3000 mm');
+}
+
 // ── Graniţele dintre familii ────────────────────────────────────────────────
 // Codul unei familii (lib/<familie>/ + systems/<prefix>_*.js) importă doar din
 // folderul ei, din lib/comun/, din catalog şi din three — niciodată din altă
 // familie. lib/comun/ nu importă din nicio familie. Aşa o schimbare la Confort
 // nu poate atinge suspendatele sau ramele, şi invers.
 const JS = new URL('../js/', import.meta.url);
-const FAMILII = { suspendata: 'suspendata_', confort: 'confort_', rame: 'rama_' };
+const FAMILII = { suspendata: 'suspendata_', confort: 'confort_', rame: 'rama_', util: 'util_' };
 const incalcari = [];
 
 function verificaImporturi(fisier, permise) {
@@ -297,7 +363,7 @@ if (incalcari.length) {
   console.log(`✗ graniţe între familii: ${incalcari.length} importuri interzise`);
   for (const x of incalcari) console.log(`    ${x}`);
 } else {
-  console.log('✓ graniţe între familii: suspendata / confort / rame nu importă una din alta');
+  console.log('✓ graniţe între familii: suspendata / confort / rame / util nu importă una din alta');
 }
 
 if (actualizeaza || !fs.existsSync(FISIER)) {

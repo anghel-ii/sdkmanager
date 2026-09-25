@@ -16,7 +16,7 @@
       "finisaj": "ALUMINIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "Divizare aplicata 20x1,4 mm, finisaj aluminiu 3 m cod 105",
+      "denumire": "Divizare aplicata 20x1,4 mm, finisaj aluminiu 3 m cod 105 cod 105",
       "um": "bară",
       "activ": 1
     },
@@ -126,7 +126,7 @@
       "finisaj": "ALUMINIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "SINA SUPERIOARA DUBLA ALUMINIU",
+      "denumire": "Sina superioara dubla Confort/Lux finisaj aluminiu  5,8 m cod 200",
       "um": "buc",
       "activ": 1
     },
@@ -136,7 +136,7 @@
       "finisaj": "ALUMINIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "SINA INFERIOARA DUBLA ALUMINIU",
+      "denumire": "Sina inferioara dubla Confort/Lux finisaj aluminiu 5,8 m cod 201",
       "um": "buc",
       "activ": 1
     },
@@ -366,7 +366,7 @@
       "finisaj": "ALUMINIU",
       "lmin": 500,
       "lmax": 600,
-      "denumire": "Profil Orizontal De Divizare Alfa Aluminiu 500-600Mm Cod 207.025",
+      "denumire": "Profil Orizontal De Divizare Alfa 500-600Mm Cod 207.025",
       "um": "buc",
       "activ": 1
     },
@@ -376,7 +376,7 @@
       "finisaj": "ALUMINIU",
       "lmin": 601,
       "lmax": 700,
-      "denumire": "Profil Orizontal De Divizare Alfa Aluminiu 600-700Mm Cod 207.026",
+      "denumire": "Profil Orizontal De Divizare Alfa 600-700Mm Cod 207.026",
       "um": "buc",
       "activ": 1
     },
@@ -386,7 +386,7 @@
       "finisaj": "ALUMINIU",
       "lmin": 701,
       "lmax": 800,
-      "denumire": "Profil Orizontal De Divizare Alfa Aluminiu 700-800Mm Cod 207.027",
+      "denumire": "Profil Orizontal De Divizare Alfa 700-800Mm Cod 207.027",
       "um": "buc",
       "activ": 1
     },
@@ -396,7 +396,7 @@
       "finisaj": "ALUMINIU",
       "lmin": 801,
       "lmax": 900,
-      "denumire": "Profil Orizontal De Divizare Alfa Aluminiu 800-900Mm Cod 207.028",
+      "denumire": "Profil Orizontal De Divizare Alfa 800-900Mm Cod 207.028",
       "um": "buc",
       "activ": 1
     },
@@ -406,7 +406,7 @@
       "finisaj": "ALUMINIU",
       "lmin": 901,
       "lmax": 1000,
-      "denumire": "Profil Orizontal De Divizare Alfa Aluminiu 900-1000Mm Cod 207.029",
+      "denumire": "Profil Orizontal De Divizare Alfa 900-1000Mm Cod 207.029",
       "um": "buc",
       "activ": 1
     },
@@ -466,7 +466,7 @@
       "finisaj": "ALUMINIU",
       "lmin": 1001,
       "lmax": 1100,
-      "denumire": "Profil Orizontal De Divizare Alfa Aluminiu 1000-1100Mm Cod 207.210",
+      "denumire": "Profil Orizontal De Divizare Alfa 1000-1100Mm Cod 207.210",
       "um": "buc",
       "activ": 1
     },
@@ -476,7 +476,7 @@
       "finisaj": "ALUMINIU",
       "lmin": 1101,
       "lmax": 1200,
-      "denumire": "Profil Orizontal De Divizare Alfa Aluminiu 1100-1200Mm Cod 207.211",
+      "denumire": "Profil Orizontal De Divizare Alfa 1100-1200Mm Cod 207.211",
       "um": "buc",
       "activ": 1
     },
@@ -486,7 +486,7 @@
       "finisaj": "ALUMINIU",
       "lmin": 1201,
       "lmax": 1300,
-      "denumire": "Profil Orizontal De Divizare Alfa Aluminiu 1200-1300Mm Cod 207.212",
+      "denumire": "Profil Orizontal De Divizare Alfa 1200-1300Mm Cod 207.212",
       "um": "buc",
       "activ": 1
     },
@@ -496,7 +496,7 @@
       "finisaj": "ALUMINIU",
       "lmin": 1301,
       "lmax": 1400,
-      "denumire": "Profil Orizontal De Divizare Alfa Aluminiu 1300-1400Mm Cod 207.213",
+      "denumire": "Profil Orizontal De Divizare Alfa 1300-1400Mm Cod 207.213",
       "um": "buc",
       "activ": 1
     },
@@ -506,7 +506,7 @@
       "finisaj": "ALUMINIU",
       "lmin": 1401,
       "lmax": 1500,
-      "denumire": "Profil Orizontal De Divizare Alfa Aluminiu 1400-1500Mm Cod 207.214",
+      "denumire": "Profil Orizontal De Divizare Alfa 1400-1500Mm Cod 207.214",
       "um": "buc",
       "activ": 1
     },
@@ -516,7 +516,7 @@
       "finisaj": "ALUMINIU",
       "lmin": 1501,
       "lmax": 2000,
-      "denumire": "Profil Orizontal De Divizare Alfa Aluminiu 1500-2000Mm Cod 207.215",
+      "denumire": "Profil Orizontal De Divizare Alfa 1500-2000Mm Cod 207.215",
       "um": "buc",
       "activ": 1
     },
@@ -586,7 +586,7 @@
       "finisaj": "ALUMINIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "PROFIL VERTICAL ALFA ALUMINIU",
+      "denumire": "Profil maner Alfa finisaj aluminiu 5,5 m cod 211",
       "um": "buc",
       "activ": 1
     },
@@ -596,7 +596,7 @@
       "finisaj": "ALUMINIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "ORIZONTAL INFERIOR ALFA ALUMINIU",
+      "denumire": "Orizontal inferior Alfa finisaj aluminiu 5,8 m cod 212",
       "um": "buc",
       "activ": 1
     },
@@ -606,7 +606,7 @@
       "finisaj": "ALUMINIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "DIVIZARI CONFORT ALFA ALUMINIU",
+      "denumire": "Orizontal superior/divizare Alfa finisaj aluminiu 5,8 m cod 213",
       "um": "buc",
       "activ": 1
     },
@@ -616,7 +616,7 @@
       "finisaj": "ALUMINIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "ORIZONTAL SUPERIOR ALFA ALUMINIU",
+      "denumire": "Orizontal superior/divizare Alfa finisaj aluminiu 5,8 m cod 213",
       "um": "buc",
       "activ": 1
     },
@@ -626,7 +626,7 @@
       "finisaj": "SAMPANIE",
       "lmin": null,
       "lmax": null,
-      "denumire": "SINA SUPERIOARA DUBLA SAMPANIE",
+      "denumire": "Sina superioara dubla Confort finisaj sampanie  5,8 m cod 220",
       "um": "buc",
       "activ": 1
     },
@@ -636,7 +636,7 @@
       "finisaj": "SAMPANIE",
       "lmin": null,
       "lmax": null,
-      "denumire": "SINA INFERIOARA DUBLA SAMPANIE",
+      "denumire": "Sina inferioara dubla Confort finisaj sampanie 5,8 m cod 221",
       "um": "buc",
       "activ": 1
     },
@@ -666,7 +666,7 @@
       "finisaj": "SAMPANIE",
       "lmin": null,
       "lmax": null,
-      "denumire": "PROFIL VERTICAL ALFA SAMPANIE",
+      "denumire": "Profil maner Alfa finisaj sampanie 5,5 m cod 230",
       "um": "buc",
       "activ": 1
     },
@@ -676,7 +676,7 @@
       "finisaj": "SAMPANIE",
       "lmin": null,
       "lmax": null,
-      "denumire": "ORIZONTAL INFERIOR ALFA SAMPANIE",
+      "denumire": "Orizontal inferior Alfa finisaj sampanie 5,8 m cod 231",
       "um": "buc",
       "activ": 1
     },
@@ -686,7 +686,7 @@
       "finisaj": "SAMPANIE",
       "lmin": null,
       "lmax": null,
-      "denumire": "DIVIZARI CONFORT ALFA SAMPANIE",
+      "denumire": "Orizontal superior/divizare Alfa finisaj sampanie 5,8 m cod 232",
       "um": "buc",
       "activ": 1
     },
@@ -696,7 +696,7 @@
       "finisaj": "SAMPANIE",
       "lmin": null,
       "lmax": null,
-      "denumire": "ORIZONTAL SUPERIOR ALFA SAMPANIE",
+      "denumire": "Orizontal superior/divizare Alfa finisaj sampanie 5,8 m cod 232",
       "um": "buc",
       "activ": 1
     },
@@ -746,7 +746,7 @@
       "finisaj": "ALUMINIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "DIVIZARE H ALUMINIU",
+      "denumire": "Divizare ''H'' inegal finisaj aluminiu  5,8 m cod 305",
       "um": "bară",
       "activ": 1
     },
@@ -756,7 +756,7 @@
       "finisaj": "SAMPANIE",
       "lmin": null,
       "lmax": null,
-      "denumire": "DIVIZARE H SAMPANIE",
+      "denumire": "Divizare ''H'' finisaj sampanie 5,8 m cod 315",
       "um": "bară",
       "activ": 1
     },
@@ -766,7 +766,7 @@
       "finisaj": "ALB",
       "lmin": null,
       "lmax": null,
-      "denumire": "DIVIZARE H ALB",
+      "denumire": "Divizare ''H'' finisaj alb mat  5,8 m cod 324",
       "um": "bară",
       "activ": 1
     },
@@ -776,7 +776,7 @@
       "finisaj": "NEGRU",
       "lmin": null,
       "lmax": null,
-      "denumire": "DIVIZARE H NEGRU",
+      "denumire": "Divizare ''H'' finisaj negru periat  5,8 m cod 334",
       "um": "bară",
       "activ": 1
     }
@@ -798,7 +798,7 @@
       "finisaj": "ALUMINIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "Divizare aplicata 20x1,4 mm, finisaj aluminiu 3 m cod 105",
+      "denumire": "Divizare aplicata 20x1,4 mm, finisaj aluminiu 3 m cod 105 cod 105",
       "um": "bară",
       "activ": 1
     },
@@ -908,7 +908,7 @@
       "finisaj": "ALUMINIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "SINA SUPERIOARA DUBLA ALUMINIU",
+      "denumire": "Sina superioara dubla Confort/Lux finisaj aluminiu  5,8 m cod 200",
       "um": "buc",
       "activ": 1
     },
@@ -918,7 +918,7 @@
       "finisaj": "ALUMINIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "SINA INFERIOARA DUBLA ALUMINIU",
+      "denumire": "Sina inferioara dubla Confort/Lux finisaj aluminiu 5,8 m cod 201",
       "um": "buc",
       "activ": 1
     },
@@ -1268,7 +1268,7 @@
       "finisaj": "ALUMINIU",
       "lmin": 1301,
       "lmax": 1400,
-      "denumire": "Usa culisanta Atrani Aluminiu 1301-1400mm Cod 202.213",
+      "denumire": "Usa culisanta Atrani aluminiu 1301-1400mm Cod 202.213",
       "um": "buc",
       "activ": 1
     },
@@ -1598,7 +1598,7 @@
       "finisaj": "ALUMINIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "PROFIL VERTICAL ATRANI ALUMINIU",
+      "denumire": "Profil maner Atrani finisaj aluminiu 5,5 m cod 205",
       "um": "buc",
       "activ": 1
     },
@@ -1638,7 +1638,7 @@
       "finisaj": "ALUMINIU",
       "lmin": 801,
       "lmax": 900,
-      "denumire": "Profil orizontal divizare Aluminiu 801-900mm Cod 206.028",
+      "denumire": "Profil orizontal divizare Aluminiu 801-900mm Cod 206.208",
       "um": "buc",
       "activ": 1
     },
@@ -1948,7 +1948,7 @@
       "finisaj": "ALUMINIU",
       "lmin": 1401,
       "lmax": 1500,
-      "denumire": "Profil orizontal divizare Aluminiu 1401-1500mm Cod 206.214",
+      "denumire": "Profil orizontal divizare Aluminiu 1401-1500m Cod 206.214",
       "um": "buc",
       "activ": 1
     },
@@ -1998,7 +1998,7 @@
       "finisaj": "SAMPANIE",
       "lmin": 1301,
       "lmax": 1400,
-      "denumire": "Profil orizontal divizare Sampanie 1300-1400mm Cod 206.313",
+      "denumire": "Profil orizontal divizare Sampanie 1300-1400  Cod 206.313",
       "um": "buc",
       "activ": 1
     },
@@ -2258,7 +2258,7 @@
       "finisaj": "ALUMINIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "ORIZONTAL INFERIOR ALUMINIU",
+      "denumire": "Orizontal inferior Confort finisaj aluminiu 5,8 m cod 207",
       "um": "buc",
       "activ": 1
     },
@@ -2268,7 +2268,7 @@
       "finisaj": "ALUMINIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "DIVIZARI CONFORT ALUMINIU",
+      "denumire": "Orizontal superior/divizare Confort finisaj aluminiu 5,8 m cod 208",
       "um": "buc",
       "activ": 1
     },
@@ -2278,7 +2278,7 @@
       "finisaj": "ALUMINIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "ORIZONTAL SUPERIOR ALUMINIU",
+      "denumire": "Orizontal superior/divizare Confort finisaj aluminiu 5,8 m cod 208",
       "um": "buc",
       "activ": 1
     },
@@ -2288,7 +2288,7 @@
       "finisaj": "SAMPANIE",
       "lmin": null,
       "lmax": null,
-      "denumire": "SINA SUPERIOARA DUBLA SAMPANIE",
+      "denumire": "Sina superioara dubla Confort finisaj sampanie  5,8 m cod 220",
       "um": "buc",
       "activ": 1
     },
@@ -2298,7 +2298,7 @@
       "finisaj": "SAMPANIE",
       "lmin": null,
       "lmax": null,
-      "denumire": "SINA INFERIOARA DUBLA SAMPANIE",
+      "denumire": "Sina inferioara dubla Confort finisaj sampanie 5,8 m cod 221",
       "um": "buc",
       "activ": 1
     },
@@ -2328,7 +2328,7 @@
       "finisaj": "SAMPANIE",
       "lmin": null,
       "lmax": null,
-      "denumire": "PROFIL VERTICAL ATRANI SAMPANIE",
+      "denumire": "Profil maner Atrani finisaj sampanie 5,5 m cod 225",
       "um": "buc",
       "activ": 1
     },
@@ -2338,7 +2338,7 @@
       "finisaj": "SAMPANIE",
       "lmin": null,
       "lmax": null,
-      "denumire": "ORIZONTAL INFERIOR SAMPANIE",
+      "denumire": "Orizontal inferior Confort finisaj sampanie 5,8 m cod 227",
       "um": "buc",
       "activ": 1
     },
@@ -2348,7 +2348,7 @@
       "finisaj": "SAMPANIE",
       "lmin": null,
       "lmax": null,
-      "denumire": "DIVIZARI SAMPANIE",
+      "denumire": "Orizontal superior/divizare Confort finisaj sampanie 5,8 m cod 228",
       "um": "buc",
       "activ": 1
     },
@@ -2358,7 +2358,7 @@
       "finisaj": "SAMPANIE",
       "lmin": null,
       "lmax": null,
-      "denumire": "ORIZONTAL SUPERIOR SAMPANIE",
+      "denumire": "Orizontal superior/divizare Confort finisaj sampanie 5,8 m cod 228",
       "um": "buc",
       "activ": 1
     },
@@ -2368,7 +2368,7 @@
       "finisaj": "ALB",
       "lmin": null,
       "lmax": null,
-      "denumire": "SINA SUPERIOARA DUBLA ALB MAT",
+      "denumire": "Sina superioara dubla Confort/Lux finisaj alb mat  5,8 m cod 240",
       "um": "buc",
       "activ": 1
     },
@@ -2378,7 +2378,7 @@
       "finisaj": "ALB",
       "lmin": null,
       "lmax": null,
-      "denumire": "SINA INFERIOARA DUBLA ALB MAT",
+      "denumire": "Sina inferioara dubla Confort/Lux finisaj alb mat 5,8 m cod 241",
       "um": "buc",
       "activ": 1
     },
@@ -2408,7 +2408,7 @@
       "finisaj": "ALB",
       "lmin": null,
       "lmax": null,
-      "denumire": "PROFIL VERTICAL ATRANI ALB MAT",
+      "denumire": "Profil maner Atrani finisaj alb mat  5,5 m cod 245",
       "um": "buc",
       "activ": 1
     },
@@ -2418,7 +2418,7 @@
       "finisaj": "ALB",
       "lmin": null,
       "lmax": null,
-      "denumire": "ORIZONTAL INFERIOR ALB MAT",
+      "denumire": "Orizontal inferior Confort finisaj alb mat 5,8 m cod 247",
       "um": "buc",
       "activ": 1
     },
@@ -2428,7 +2428,7 @@
       "finisaj": "ALB",
       "lmin": null,
       "lmax": null,
-      "denumire": "DIVIZARE ALB MAT",
+      "denumire": "Orizontal superior/divizare Confort finisaj alb mat 5,8 m cod 248",
       "um": "buc",
       "activ": 1
     },
@@ -2438,7 +2438,7 @@
       "finisaj": "ALB",
       "lmin": null,
       "lmax": null,
-      "denumire": "ORIZONTAL SUPERIOR ALB MAT",
+      "denumire": "Orizontal superior/divizare Confort finisaj alb mat 5,8 m cod 248",
       "um": "buc",
       "activ": 1
     },
@@ -2448,7 +2448,7 @@
       "finisaj": "NEGRU",
       "lmin": null,
       "lmax": null,
-      "denumire": "SINA SUPERIOARA DUBLA NEGRU PERIAT",
+      "denumire": "Sina superioara dubla Confort/Lux finisaj negru periat 5,8 m cod 250",
       "um": "buc",
       "activ": 1
     },
@@ -2458,7 +2458,7 @@
       "finisaj": "NEGRU",
       "lmin": null,
       "lmax": null,
-      "denumire": "SINA INFERIOARA DUBLA NEGRU PERIAT",
+      "denumire": "Sina inferioara dubla Confort/Lux finisaj negru periat 5,8 m cod 251",
       "um": "buc",
       "activ": 1
     },
@@ -2488,7 +2488,7 @@
       "finisaj": "NEGRU",
       "lmin": null,
       "lmax": null,
-      "denumire": "PROFIL VERTICAL ATRANI NEGRU PERIAT",
+      "denumire": "Profil maner Atrani finisaj negru periat 5,5 m cod 255",
       "um": "buc",
       "activ": 1
     },
@@ -2498,7 +2498,7 @@
       "finisaj": "NEGRU",
       "lmin": null,
       "lmax": null,
-      "denumire": "ORIZONTAL INFERIOR NEGRU PERIAT",
+      "denumire": "Orizontal inferior Confort finisaj negru periat 5,8 m cod 257",
       "um": "buc",
       "activ": 1
     },
@@ -2508,7 +2508,7 @@
       "finisaj": "NEGRU",
       "lmin": null,
       "lmax": null,
-      "denumire": "DIVIZARI CONFORT NEGRU PERIAT",
+      "denumire": "Orizontal superior/divizare Confort finisaj negru periat 5,8 m cod 258",
       "um": "buc",
       "activ": 1
     },
@@ -2518,7 +2518,7 @@
       "finisaj": "NEGRU",
       "lmin": null,
       "lmax": null,
-      "denumire": "ORIZONTAL SUPERIOR NEGRU PERIAT",
+      "denumire": "Orizontal superior/divizare Confort finisaj negru periat 5,8 m cod 258",
       "um": "buc",
       "activ": 1
     },
@@ -2528,7 +2528,7 @@
       "finisaj": "AURIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "SINA SUPERIOARA DUBLA AURIU PERIAT",
+      "denumire": "Sina superioara dubla Confort/Lux finisaj auriu periat 5,8 m cod 260",
       "um": "buc",
       "activ": 1
     },
@@ -2538,7 +2538,7 @@
       "finisaj": "AURIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "SINA INFERIOARA DUBLA AURIU PERIAT",
+      "denumire": "Sina inferioara dubla Confort/Lux finisaj auriu periat 5,8 m cod 261",
       "um": "buc",
       "activ": 1
     },
@@ -2548,7 +2548,7 @@
       "finisaj": "AURIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "PROFIL VERTICAL ATRANI AURIU PERIAT",
+      "denumire": "Profil maner Atrani finisaj auriu periat 5,5 m cod 263",
       "um": "buc",
       "activ": 1
     },
@@ -2558,7 +2558,7 @@
       "finisaj": "AURIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "ORIZONTAL INFERIOR AURIU PERIAT",
+      "denumire": "Orizontal inferior Confort finisaj auriu periat 5,8 m cod 265",
       "um": "buc",
       "activ": 1
     },
@@ -2568,7 +2568,7 @@
       "finisaj": "AURIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "DIVIZARE CONFORT AURIU PERIAT",
+      "denumire": "Orizontal superior/divizare Confort finisaj auriu periat 5,8 m cod 266",
       "um": "buc",
       "activ": 1
     },
@@ -2578,7 +2578,7 @@
       "finisaj": "AURIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "ORIZONTAL SUPERIOR AURIU PERIAT",
+      "denumire": "Orizontal superior/divizare Confort finisaj auriu periat 5,8 m cod 266",
       "um": "buc",
       "activ": 1
     },
@@ -2588,7 +2588,7 @@
       "finisaj": "CUPRU",
       "lmin": null,
       "lmax": null,
-      "denumire": "SINA SUPERIOARA DUBLA CUPRU",
+      "denumire": "Sina superioara dubla Confort/Lux finisaj cupru 3.5 m cod 290",
       "um": "buc",
       "activ": 1
     },
@@ -2598,7 +2598,7 @@
       "finisaj": "CUPRU",
       "lmin": null,
       "lmax": null,
-      "denumire": "SINA INFERIOARA DUBLA CUPRU",
+      "denumire": "Sina inferioara dubla Confort/Lux finisaj cupru 3,5 m cod 291",
       "um": "buc",
       "activ": 1
     },
@@ -2608,7 +2608,7 @@
       "finisaj": "CUPRU",
       "lmin": null,
       "lmax": null,
-      "denumire": "PROFIL VERTICAL ATRANI ATRANI CUPRU",
+      "denumire": "Profil maner Atrani finisaj cupru 3 m cod 293",
       "um": "buc",
       "activ": 1
     },
@@ -2618,7 +2618,7 @@
       "finisaj": "CUPRU",
       "lmin": null,
       "lmax": null,
-      "denumire": "ORIZONTAL INFERIOR CUPRU",
+      "denumire": "Orizontal inferior Confort finisaj cupru 3,5 m cod 294",
       "um": "buc",
       "activ": 1
     },
@@ -2628,7 +2628,7 @@
       "finisaj": "CUPRU",
       "lmin": null,
       "lmax": null,
-      "denumire": "DIVIZARE CONFORT CUPRU",
+      "denumire": "Orizontal superior/divizare Confort finisaj cupru 3,5 m cod 295",
       "um": "buc",
       "activ": 1
     },
@@ -2638,7 +2638,7 @@
       "finisaj": "CUPRU",
       "lmin": null,
       "lmax": null,
-      "denumire": "ORIZONTAL SUPERIOR CUPRU",
+      "denumire": "Orizontal superior/divizare Confort finisaj cupru 3,5 m cod 295",
       "um": "buc",
       "activ": 1
     },
@@ -2648,7 +2648,7 @@
       "finisaj": "ALUMINIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "DIVIZARE H ALUMINIU",
+      "denumire": "Divizare ''H'' inegal finisaj aluminiu  5,8 m cod 305",
       "um": "bară",
       "activ": 1
     },
@@ -2658,7 +2658,7 @@
       "finisaj": "SAMPANIE",
       "lmin": null,
       "lmax": null,
-      "denumire": "DIVIZARE H SAMPANIE",
+      "denumire": "Divizare ''H'' finisaj sampanie 5,8 m cod 315",
       "um": "bară",
       "activ": 1
     },
@@ -2668,7 +2668,7 @@
       "finisaj": "ALB",
       "lmin": null,
       "lmax": null,
-      "denumire": "DIVIZARE H ALB",
+      "denumire": "Divizare ''H'' finisaj alb mat  5,8 m cod 324",
       "um": "bară",
       "activ": 1
     },
@@ -2678,7 +2678,7 @@
       "finisaj": "NEGRU",
       "lmin": null,
       "lmax": null,
-      "denumire": "DIVIZARE H NEGRU",
+      "denumire": "Divizare ''H'' finisaj negru periat  5,8 m cod 334",
       "um": "bară",
       "activ": 1
     }
@@ -2700,7 +2700,7 @@
       "finisaj": "ALUMINIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "Divizare aplicata 20x1,4 mm, finisaj aluminiu 3 m cod 105",
+      "denumire": "Divizare aplicata 20x1,4 mm, finisaj aluminiu 3 m cod 105 cod 105",
       "um": "bară",
       "activ": 1
     },
@@ -2810,7 +2810,7 @@
       "finisaj": "ALUMINIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "SINA SUPERIOARA DUBLA ALUMINIU",
+      "denumire": "Sina superioara dubla Confort/Lux finisaj aluminiu  5,8 m cod 200",
       "um": "buc",
       "activ": 1
     },
@@ -2820,7 +2820,7 @@
       "finisaj": "ALUMINIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "SINA INFERIOARA DUBLA ALUMINIU",
+      "denumire": "Sina inferioara dubla Confort/Lux finisaj aluminiu 5,8 m cod 201",
       "um": "buc",
       "activ": 1
     },
@@ -3500,7 +3500,7 @@
       "finisaj": "ALUMINIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "PROFIL VERTICAL GAMMA ALUMINIU",
+      "denumire": "Profil maner Gamma finisaj aluminiu 5,5 m cod 206",
       "um": "buc",
       "activ": 1
     },
@@ -3540,7 +3540,7 @@
       "finisaj": "ALUMINIU",
       "lmin": 801,
       "lmax": 900,
-      "denumire": "Profil orizontal divizare Aluminiu 801-900mm Cod 206.028",
+      "denumire": "Profil orizontal divizare Aluminiu 801-900mm Cod 206.208",
       "um": "buc",
       "activ": 1
     },
@@ -3850,7 +3850,7 @@
       "finisaj": "ALUMINIU",
       "lmin": 1401,
       "lmax": 1500,
-      "denumire": "Profil orizontal divizare Aluminiu 1401-1500mm Cod 206.214",
+      "denumire": "Profil orizontal divizare Aluminiu 1401-1500m Cod 206.214",
       "um": "buc",
       "activ": 1
     },
@@ -3900,7 +3900,7 @@
       "finisaj": "SAMPANIE",
       "lmin": 1301,
       "lmax": 1400,
-      "denumire": "Profil orizontal divizare Sampanie 1300-1400mm Cod 206.313",
+      "denumire": "Profil orizontal divizare Sampanie 1300-1400  Cod 206.313",
       "um": "buc",
       "activ": 1
     },
@@ -4160,7 +4160,7 @@
       "finisaj": "ALUMINIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "ORIZONTAL INFERIOR ALUMINIU",
+      "denumire": "Orizontal inferior Confort finisaj aluminiu 5,8 m cod 207",
       "um": "buc",
       "activ": 1
     },
@@ -4170,7 +4170,7 @@
       "finisaj": "ALUMINIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "DIVIZARE CONFORT ALUMINIU",
+      "denumire": "Orizontal superior/divizare Confort finisaj aluminiu 5,8 m cod 208",
       "um": "buc",
       "activ": 1
     },
@@ -4180,7 +4180,7 @@
       "finisaj": "ALUMINIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "ORIZONTAL SUPERIOR ALUMINIU",
+      "denumire": "Orizontal superior/divizare Confort finisaj aluminiu 5,8 m cod 208",
       "um": "buc",
       "activ": 1
     },
@@ -4190,7 +4190,7 @@
       "finisaj": "SAMPANIE",
       "lmin": null,
       "lmax": null,
-      "denumire": "SINA SUPERIOARA DUBLA SAMPANIE",
+      "denumire": "Sina superioara dubla Confort finisaj sampanie  5,8 m cod 220",
       "um": "buc",
       "activ": 1
     },
@@ -4200,7 +4200,7 @@
       "finisaj": "SAMPANIE",
       "lmin": null,
       "lmax": null,
-      "denumire": "SINA INFERIOARA DUBLA SAMPANIE",
+      "denumire": "Sina inferioara dubla Confort finisaj sampanie 5,8 m cod 221",
       "um": "buc",
       "activ": 1
     },
@@ -4230,7 +4230,7 @@
       "finisaj": "SAMPANIE",
       "lmin": null,
       "lmax": null,
-      "denumire": "PROFIL VERTICAL GAMMA SAMPANIE",
+      "denumire": "Profil maner Gamma finisaj sampanie 5,5 m cod 226",
       "um": "buc",
       "activ": 1
     },
@@ -4240,7 +4240,7 @@
       "finisaj": "SAMPANIE",
       "lmin": null,
       "lmax": null,
-      "denumire": "ORIZONTAL INFERIOR SAMPANIE",
+      "denumire": "Orizontal inferior Confort finisaj sampanie 5,8 m cod 227",
       "um": "buc",
       "activ": 1
     },
@@ -4250,7 +4250,7 @@
       "finisaj": "SAMPANIE",
       "lmin": null,
       "lmax": null,
-      "denumire": "DIVIZARE CONFORT SAMPANIE",
+      "denumire": "Orizontal superior/divizare Confort finisaj sampanie 5,8 m cod 228",
       "um": "buc",
       "activ": 1
     },
@@ -4260,7 +4260,7 @@
       "finisaj": "SAMPANIE",
       "lmin": null,
       "lmax": null,
-      "denumire": "ORIZONTAL SUPERIOR SAMPANIE",
+      "denumire": "Orizontal superior/divizare Confort finisaj sampanie 5,8 m cod 228",
       "um": "buc",
       "activ": 1
     },
@@ -4270,7 +4270,7 @@
       "finisaj": "ALB",
       "lmin": null,
       "lmax": null,
-      "denumire": "SINA SUPERIOARA DUBLA ALB MAT",
+      "denumire": "Sina superioara dubla Confort/Lux finisaj alb mat  5,8 m cod 240",
       "um": "buc",
       "activ": 1
     },
@@ -4280,7 +4280,7 @@
       "finisaj": "ALB",
       "lmin": null,
       "lmax": null,
-      "denumire": "SINA INFERIOARA DUBLA ALB MAT",
+      "denumire": "Sina inferioara dubla Confort/Lux finisaj alb mat 5,8 m cod 241",
       "um": "buc",
       "activ": 1
     },
@@ -4310,7 +4310,7 @@
       "finisaj": "ALB",
       "lmin": null,
       "lmax": null,
-      "denumire": "PROFIL VERTICAL GAMMA ALB MAT",
+      "denumire": "Profil maner Gamma finisaj alb mat 5,5 m cod 246",
       "um": "buc",
       "activ": 1
     },
@@ -4320,7 +4320,7 @@
       "finisaj": "ALB",
       "lmin": null,
       "lmax": null,
-      "denumire": "ORIZONTAL INFERIOR ALB MAT",
+      "denumire": "Orizontal inferior Confort finisaj alb mat 5,8 m cod 247",
       "um": "buc",
       "activ": 1
     },
@@ -4330,7 +4330,7 @@
       "finisaj": "ALB",
       "lmin": null,
       "lmax": null,
-      "denumire": "DIVIZARE CONFORT ALB MAT",
+      "denumire": "Orizontal superior/divizare Confort finisaj alb mat 5,8 m cod 248",
       "um": "buc",
       "activ": 1
     },
@@ -4340,7 +4340,7 @@
       "finisaj": "ALB",
       "lmin": null,
       "lmax": null,
-      "denumire": "ORIZONTAL SUPERIOR ALB MAT",
+      "denumire": "Orizontal superior/divizare Confort finisaj alb mat 5,8 m cod 248",
       "um": "buc",
       "activ": 1
     },
@@ -4350,7 +4350,7 @@
       "finisaj": "NEGRU",
       "lmin": null,
       "lmax": null,
-      "denumire": "SINA SUPERIOARA DUBLA NEGRU PERIAT",
+      "denumire": "Sina superioara dubla Confort/Lux finisaj negru periat 5,8 m cod 250",
       "um": "buc",
       "activ": 1
     },
@@ -4360,7 +4360,7 @@
       "finisaj": "NEGRU",
       "lmin": null,
       "lmax": null,
-      "denumire": "SINA INFERIOARA DUBLA NEGRU PERIAT",
+      "denumire": "Sina inferioara dubla Confort/Lux finisaj negru periat 5,8 m cod 251",
       "um": "buc",
       "activ": 1
     },
@@ -4390,7 +4390,7 @@
       "finisaj": "NEGRU",
       "lmin": null,
       "lmax": null,
-      "denumire": "PROFIL VERTICAL GAMMA NEGRU PERIAT",
+      "denumire": "Profil maner Gamma finisaj negru periat 5,5 m cod 256",
       "um": "buc",
       "activ": 1
     },
@@ -4400,7 +4400,7 @@
       "finisaj": "NEGRU",
       "lmin": null,
       "lmax": null,
-      "denumire": "ORIZONTAL INFERIOR NEGRU PERIAT",
+      "denumire": "Orizontal inferior Confort finisaj negru periat 5,8 m cod 257",
       "um": "buc",
       "activ": 1
     },
@@ -4410,7 +4410,7 @@
       "finisaj": "NEGRU",
       "lmin": null,
       "lmax": null,
-      "denumire": "DIVIZARE NEGRU PERIAT",
+      "denumire": "Orizontal superior/divizare Confort finisaj negru periat 5,8 m cod 258",
       "um": "buc",
       "activ": 1
     },
@@ -4420,7 +4420,7 @@
       "finisaj": "NEGRU",
       "lmin": null,
       "lmax": null,
-      "denumire": "ORIZONTAL SUPERIOR NEGRU PERIAT",
+      "denumire": "Orizontal superior/divizare Confort finisaj negru periat 5,8 m cod 258",
       "um": "buc",
       "activ": 1
     },
@@ -4430,7 +4430,7 @@
       "finisaj": "AURIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "SINA SUPERIOARA DUBLA AURIU PERIAT",
+      "denumire": "Sina superioara dubla Confort/Lux finisaj auriu periat 5,8 m cod 260",
       "um": "buc",
       "activ": 1
     },
@@ -4440,7 +4440,7 @@
       "finisaj": "AURIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "SINA INFERIOARA DUBLA AURIU PERIAT",
+      "denumire": "Sina inferioara dubla Confort/Lux finisaj auriu periat 5,8 m cod 261",
       "um": "buc",
       "activ": 1
     },
@@ -4450,7 +4450,7 @@
       "finisaj": "AURIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "PROFIL VERTICAL GAMMA AURIU PERIAT",
+      "denumire": "Profil maner Gamma finisaj auriu periat 5,5 m cod 264",
       "um": "buc",
       "activ": 1
     },
@@ -4460,7 +4460,7 @@
       "finisaj": "AURIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "ORIZONTAL INFERIOR AURIU PERIAT",
+      "denumire": "Orizontal inferior Confort finisaj auriu periat 5,8 m cod 265",
       "um": "buc",
       "activ": 1
     },
@@ -4470,7 +4470,7 @@
       "finisaj": "AURIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "DIVIZARE AURIU PERIAT",
+      "denumire": "Orizontal superior/divizare Confort finisaj auriu periat 5,8 m cod 266",
       "um": "buc",
       "activ": 1
     },
@@ -4480,7 +4480,7 @@
       "finisaj": "AURIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "ORIZONTAL SUPERIOR AURIU PERIAT",
+      "denumire": "Orizontal superior/divizare Confort finisaj auriu periat 5,8 m cod 266",
       "um": "buc",
       "activ": 1
     },
@@ -4490,7 +4490,7 @@
       "finisaj": "CUPRU",
       "lmin": null,
       "lmax": null,
-      "denumire": "SINA SUPERIOARA DUBLA CUPRU",
+      "denumire": "Sina superioara dubla Confort/Lux finisaj cupru 3.5 m cod 290",
       "um": "buc",
       "activ": 1
     },
@@ -4500,7 +4500,7 @@
       "finisaj": "CUPRU",
       "lmin": null,
       "lmax": null,
-      "denumire": "SINA INFERIOARA DUBLA CUPRU",
+      "denumire": "Sina inferioara dubla Confort/Lux finisaj cupru 3,5 m cod 291",
       "um": "buc",
       "activ": 1
     },
@@ -4510,7 +4510,7 @@
       "finisaj": "CUPRU",
       "lmin": null,
       "lmax": null,
-      "denumire": "PROFIL VERTICAL GAMMA GAMMA CUPRU",
+      "denumire": "Profil maner Gamma finisaj cupru 3 m cod 292",
       "um": "buc",
       "activ": 1
     },
@@ -4520,7 +4520,7 @@
       "finisaj": "CUPRU",
       "lmin": null,
       "lmax": null,
-      "denumire": "ORIZONTAL INFERIOR CUPRU",
+      "denumire": "Orizontal inferior Confort finisaj cupru 3,5 m cod 294",
       "um": "buc",
       "activ": 1
     },
@@ -4530,7 +4530,7 @@
       "finisaj": "CUPRU",
       "lmin": null,
       "lmax": null,
-      "denumire": "DIVIZARE CUPRU",
+      "denumire": "Orizontal superior/divizare Confort finisaj cupru 3,5 m cod 295",
       "um": "buc",
       "activ": 1
     },
@@ -4540,7 +4540,7 @@
       "finisaj": "CUPRU",
       "lmin": null,
       "lmax": null,
-      "denumire": "ORIZONTAL SUPERIOR CUPRU",
+      "denumire": "Orizontal superior/divizare Confort finisaj cupru 3,5 m cod 295",
       "um": "buc",
       "activ": 1
     },
@@ -4550,7 +4550,7 @@
       "finisaj": "ALUMINIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "DIVIZARE H ALUMINIU",
+      "denumire": "Divizare ''H'' inegal finisaj aluminiu  5,8 m cod 305",
       "um": "bară",
       "activ": 1
     },
@@ -4560,7 +4560,7 @@
       "finisaj": "SAMPANIE",
       "lmin": null,
       "lmax": null,
-      "denumire": "DIVIZARE H SAMPANIE",
+      "denumire": "Divizare ''H'' finisaj sampanie 5,8 m cod 315",
       "um": "bară",
       "activ": 1
     },
@@ -4570,7 +4570,7 @@
       "finisaj": "ALB",
       "lmin": null,
       "lmax": null,
-      "denumire": "DIVIZARE H ALB",
+      "denumire": "Divizare ''H'' finisaj alb mat  5,8 m cod 324",
       "um": "bară",
       "activ": 1
     },
@@ -4580,7 +4580,7 @@
       "finisaj": "NEGRU",
       "lmin": null,
       "lmax": null,
-      "denumire": "DIVIZARE H NEGRU",
+      "denumire": "Divizare ''H'' finisaj negru periat  5,8 m cod 334",
       "um": "bară",
       "activ": 1
     }
@@ -4602,7 +4602,7 @@
       "finisaj": "ALUMINIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "Divizare aplicata 20x1,4 mm, finisaj aluminiu 3 m cod 105",
+      "denumire": "Divizare aplicata 20x1,4 mm, finisaj aluminiu 3 m cod 105 cod 105",
       "um": "bară",
       "activ": 1
     },
@@ -4712,7 +4712,7 @@
       "finisaj": "ALUMINIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "SINA SUPERIOARA DUBLA ALUMINIU",
+      "denumire": "Sina superioara dubla Confort/Lux finisaj aluminiu  5,8 m cod 200",
       "um": "buc",
       "activ": 1
     },
@@ -5272,7 +5272,7 @@
       "finisaj": "ALUMINIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "SINA INFERIOARA DUBLA ALUMINIU",
+      "denumire": "Sina inferioara dubla Confort/Lux finisaj aluminiu 5,8 m cod 201",
       "um": "buc",
       "activ": 1
     },
@@ -5302,7 +5302,7 @@
       "finisaj": "ALUMINIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "PROFIL VERTICAL VERONA ALUMINIU",
+      "denumire": "Profil maner Verona finisaj aluminiu 5,5 m cod 204",
       "um": "buc",
       "activ": 1
     },
@@ -5342,7 +5342,7 @@
       "finisaj": "ALUMINIU",
       "lmin": 801,
       "lmax": 900,
-      "denumire": "Profil orizontal divizare Aluminiu 801-900mm Cod 206.028",
+      "denumire": "Profil orizontal divizare Aluminiu 801-900mm Cod 206.208",
       "um": "buc",
       "activ": 1
     },
@@ -5652,7 +5652,7 @@
       "finisaj": "ALUMINIU",
       "lmin": 1401,
       "lmax": 1500,
-      "denumire": "Profil orizontal divizare Aluminiu 1401-1500mm Cod 206.214",
+      "denumire": "Profil orizontal divizare Aluminiu 1401-1500m Cod 206.214",
       "um": "buc",
       "activ": 1
     },
@@ -5702,7 +5702,7 @@
       "finisaj": "SAMPANIE",
       "lmin": 1301,
       "lmax": 1400,
-      "denumire": "Profil orizontal divizare Sampanie 1300-1400mm Cod 206.313",
+      "denumire": "Profil orizontal divizare Sampanie 1300-1400  Cod 206.313",
       "um": "buc",
       "activ": 1
     },
@@ -5962,7 +5962,7 @@
       "finisaj": "ALUMINIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "ORIZONTAL INFERIOR ALUMINIU",
+      "denumire": "Orizontal inferior Confort finisaj aluminiu 5,8 m cod 207",
       "um": "buc",
       "activ": 1
     },
@@ -5972,7 +5972,7 @@
       "finisaj": "ALUMINIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "DIVIZARE CONFORT ALUMINIU",
+      "denumire": "Orizontal superior/divizare Confort finisaj aluminiu 5,8 m cod 208",
       "um": "buc",
       "activ": 1
     },
@@ -5982,7 +5982,7 @@
       "finisaj": "ALUMINIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "ORIZONTAL SUPERIOR ALUMINIU",
+      "denumire": "Orizontal superior/divizare Confort finisaj aluminiu 5,8 m cod 208",
       "um": "buc",
       "activ": 1
     },
@@ -5992,7 +5992,7 @@
       "finisaj": "SAMPANIE",
       "lmin": null,
       "lmax": null,
-      "denumire": "SINA SUPERIOARA DUBLA SAMPANIE",
+      "denumire": "Sina superioara dubla Confort finisaj sampanie  5,8 m cod 220",
       "um": "buc",
       "activ": 1
     },
@@ -6002,7 +6002,7 @@
       "finisaj": "SAMPANIE",
       "lmin": null,
       "lmax": null,
-      "denumire": "SINA INFERIOARA DUBLA SAMPANIE",
+      "denumire": "Sina inferioara dubla Confort finisaj sampanie 5,8 m cod 221",
       "um": "buc",
       "activ": 1
     },
@@ -6032,7 +6032,7 @@
       "finisaj": "SAMPANIE",
       "lmin": null,
       "lmax": null,
-      "denumire": "PROFIL VERTICAL VERONA SAMPANIE",
+      "denumire": "Profil maner Verona finisaj sampanie 5,5 m cod 224",
       "um": "buc",
       "activ": 1
     },
@@ -6042,7 +6042,7 @@
       "finisaj": "SAMPANIE",
       "lmin": null,
       "lmax": null,
-      "denumire": "ORIZONTAL INFERIOR SAMPANIE",
+      "denumire": "Orizontal inferior Confort finisaj sampanie 5,8 m cod 227",
       "um": "buc",
       "activ": 1
     },
@@ -6052,7 +6052,7 @@
       "finisaj": "SAMPANIE",
       "lmin": null,
       "lmax": null,
-      "denumire": "DIVIZARE CONFORT SAMPANIE",
+      "denumire": "Orizontal superior/divizare Confort finisaj sampanie 5,8 m cod 228",
       "um": "buc",
       "activ": 1
     },
@@ -6062,7 +6062,7 @@
       "finisaj": "SAMPANIE",
       "lmin": null,
       "lmax": null,
-      "denumire": "ORIZONTAL SUPERIOR SAMPANIE",
+      "denumire": "Orizontal superior/divizare Confort finisaj sampanie 5,8 m cod 228",
       "um": "buc",
       "activ": 1
     },
@@ -6072,7 +6072,7 @@
       "finisaj": "ALB",
       "lmin": null,
       "lmax": null,
-      "denumire": "SINA SUPERIOARA DUBLA ALB MAT",
+      "denumire": "Sina superioara dubla Confort/Lux finisaj alb mat  5,8 m cod 240",
       "um": "buc",
       "activ": 1
     },
@@ -6082,7 +6082,7 @@
       "finisaj": "ALB",
       "lmin": null,
       "lmax": null,
-      "denumire": "SINA INFERIOARA DUBLA ALB MAT",
+      "denumire": "Sina inferioara dubla Confort/Lux finisaj alb mat 5,8 m cod 241",
       "um": "buc",
       "activ": 1
     },
@@ -6112,7 +6112,7 @@
       "finisaj": "ALB",
       "lmin": null,
       "lmax": null,
-      "denumire": "PROFIL VERTICAL VERONA ALB MAT",
+      "denumire": "Profil maner Verona finisaj alb mat 5,5 m cod 244",
       "um": "buc",
       "activ": 1
     },
@@ -6122,7 +6122,7 @@
       "finisaj": "ALB",
       "lmin": null,
       "lmax": null,
-      "denumire": "ORIZONTAL INFERIOR ALB MAT",
+      "denumire": "Orizontal inferior Confort finisaj alb mat 5,8 m cod 247",
       "um": "buc",
       "activ": 1
     },
@@ -6132,7 +6132,7 @@
       "finisaj": "ALB",
       "lmin": null,
       "lmax": null,
-      "denumire": "DIVIZARE CONFORT ALB MAT",
+      "denumire": "Orizontal superior/divizare Confort finisaj alb mat 5,8 m cod 248",
       "um": "buc",
       "activ": 1
     },
@@ -6142,7 +6142,7 @@
       "finisaj": "ALB",
       "lmin": null,
       "lmax": null,
-      "denumire": "ORIZONTAL SUPERIOR ALB MAT",
+      "denumire": "Orizontal superior/divizare Confort finisaj alb mat 5,8 m cod 248",
       "um": "buc",
       "activ": 1
     },
@@ -6152,7 +6152,7 @@
       "finisaj": "NEGRU",
       "lmin": null,
       "lmax": null,
-      "denumire": "SINA SUPERIOARA DUBLA NEGRU PERIAT",
+      "denumire": "Sina superioara dubla Confort/Lux finisaj negru periat 5,8 m cod 250",
       "um": "buc",
       "activ": 1
     },
@@ -6162,7 +6162,7 @@
       "finisaj": "NEGRU",
       "lmin": null,
       "lmax": null,
-      "denumire": "SINA INFERIOARA DUBLA NEGRU PERIAT",
+      "denumire": "Sina inferioara dubla Confort/Lux finisaj negru periat 5,8 m cod 251",
       "um": "buc",
       "activ": 1
     },
@@ -6192,7 +6192,7 @@
       "finisaj": "NEGRU",
       "lmin": null,
       "lmax": null,
-      "denumire": "PROFIL VERTICAL VERONA NEGRU PERIAT",
+      "denumire": "Profil maner Verona finisaj negru periat 5,5 m cod 254",
       "um": "buc",
       "activ": 1
     },
@@ -6202,7 +6202,7 @@
       "finisaj": "NEGRU",
       "lmin": null,
       "lmax": null,
-      "denumire": "ORIZONTAL INFERIOR NEGRU PERIAT",
+      "denumire": "Orizontal inferior Confort finisaj negru periat 5,8 m cod 257",
       "um": "buc",
       "activ": 1
     },
@@ -6212,7 +6212,7 @@
       "finisaj": "NEGRU",
       "lmin": null,
       "lmax": null,
-      "denumire": "DIVIZARE CONFORT NEGRU PERIAT",
+      "denumire": "Orizontal superior/divizare Confort finisaj negru periat 5,8 m cod 258",
       "um": "buc",
       "activ": 1
     },
@@ -6222,7 +6222,7 @@
       "finisaj": "NEGRU",
       "lmin": null,
       "lmax": null,
-      "denumire": "ORIZONTAL SUPERIOR NEGRU PERIAT",
+      "denumire": "Orizontal superior/divizare Confort finisaj negru periat 5,8 m cod 258",
       "um": "buc",
       "activ": 1
     },
@@ -6232,7 +6232,7 @@
       "finisaj": "AURIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "SINA SUPERIOARA DUBLA AURIU PERIAT",
+      "denumire": "Sina superioara dubla Confort/Lux finisaj auriu periat 5,8 m cod 260",
       "um": "buc",
       "activ": 1
     },
@@ -6242,7 +6242,7 @@
       "finisaj": "AURIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "SINA INFERIOARA DUBLA AURIU PERIAT",
+      "denumire": "Sina inferioara dubla Confort/Lux finisaj auriu periat 5,8 m cod 261",
       "um": "buc",
       "activ": 1
     },
@@ -6252,7 +6252,7 @@
       "finisaj": "AURIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "PROFIL VERTICAL VERONA AURIU PERIAT",
+      "denumire": "Profil maner Verona finisaj auriu periat 5,5 m cod 262",
       "um": "buc",
       "activ": 1
     },
@@ -6262,7 +6262,7 @@
       "finisaj": "AURIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "ORIZONTAL INFERIOR AURIU PERIAT",
+      "denumire": "Orizontal inferior Confort finisaj auriu periat 5,8 m cod 265",
       "um": "buc",
       "activ": 1
     },
@@ -6272,7 +6272,7 @@
       "finisaj": "AURIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "DIVIZARE CONFORT AURIU PERIAT",
+      "denumire": "Orizontal superior/divizare Confort finisaj auriu periat 5,8 m cod 266",
       "um": "buc",
       "activ": 1
     },
@@ -6282,7 +6282,7 @@
       "finisaj": "AURIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "ORIZONTAL SUPERIOR AURIU PERIAT",
+      "denumire": "Orizontal superior/divizare Confort finisaj auriu periat 5,8 m cod 266",
       "um": "buc",
       "activ": 1
     },
@@ -6292,7 +6292,7 @@
       "finisaj": "ALUMINIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "DIVIZARE H ALUMINIU",
+      "denumire": "Divizare ''H'' inegal finisaj aluminiu  5,8 m cod 305",
       "um": "bară",
       "activ": 1
     },
@@ -6302,7 +6302,7 @@
       "finisaj": "SAMPANIE",
       "lmin": null,
       "lmax": null,
-      "denumire": "DIVIZARE H SAMPANIE",
+      "denumire": "Divizare ''H'' finisaj sampanie 5,8 m cod 315",
       "um": "bară",
       "activ": 1
     },
@@ -6312,7 +6312,7 @@
       "finisaj": "ALB",
       "lmin": null,
       "lmax": null,
-      "denumire": "DIVIZARE H ALB",
+      "denumire": "Divizare ''H'' finisaj alb mat  5,8 m cod 324",
       "um": "bară",
       "activ": 1
     },
@@ -6322,7 +6322,7 @@
       "finisaj": "NEGRU",
       "lmin": null,
       "lmax": null,
-      "denumire": "DIVIZARE H NEGRU",
+      "denumire": "Divizare ''H'' finisaj negru periat  5,8 m cod 334",
       "um": "bară",
       "activ": 1
     }
@@ -6344,63 +6344,63 @@
     },
     {
       "cod": "CS001",
-      "denumire": "Geam float 4mm transparent securizat termic CS cod CS001",
+      "denumire": "Geam float 4mm transparent securizat termic CS",
       "grosime": 4,
       "oglinda": 0,
       "activ": 1
     },
     {
       "cod": "CS002",
-      "denumire": "Geam fumuriu bronz 4mm securizat termic CS cod CS002",
+      "denumire": "Geam fumuriu bronz 4mm securizat termic CS",
       "grosime": 4,
       "oglinda": 0,
       "activ": 1
     },
     {
       "cod": "CS003",
-      "denumire": "Geam GRI 4mm slefuit perimetral CS cod CS003",
+      "denumire": "Geam GRI 4mm slefuit perimetral CS",
       "grosime": 4,
       "oglinda": 0,
       "activ": 1
     },
     {
       "cod": "CS004",
-      "denumire": "Geam GRI 4mm securizat termic CS cod CS004",
+      "denumire": "Geam GRI 4mm securizat termic CS",
       "grosime": 4,
       "oglinda": 0,
       "activ": 1
     },
     {
       "cod": "CS005",
-      "denumire": "Geam satinat alb 4mm securizat termic CS cod CS005",
+      "denumire": "Geam satinat alb 4mm securizat termic CS",
       "grosime": 4,
       "oglinda": 0,
       "activ": 1
     },
     {
       "cod": "CS006",
-      "denumire": "Geam satinat maro(fumuriu) 4mm securizat termic CS cod CS006",
+      "denumire": "Geam satinat maro(fumuriu) 4mm securizat termic CS",
       "grosime": 4,
       "oglinda": 0,
       "activ": 1
     },
     {
       "cod": "CS007",
-      "denumire": "Oglinda normala 4mm slefuita perimetral CS cod CS007",
+      "denumire": "Oglinda normala 4mm slefuita perimetral CS",
       "grosime": 4,
       "oglinda": 1,
       "activ": 1
     },
     {
       "cod": "CS008",
-      "denumire": "Oglinda fumurie 4mm slefuita perimetral CS cod CS008",
+      "denumire": "Oglinda fumurie 4mm slefuita perimetral CS",
       "grosime": 4,
       "oglinda": 1,
       "activ": 1
     },
     {
       "cod": "CS009",
-      "denumire": "Geam satinat maro(fumuriu) 4mm CS cod CS009",
+      "denumire": "Geam satinat maro(fumuriu) 4mm CS",
       "grosime": 4,
       "oglinda": 0,
       "activ": 1
@@ -6421,14 +6421,14 @@
     },
     {
       "cod": "CS012",
-      "denumire": "Geam reflexiv maro 4mm,  securizat termic CS cod CS012",
+      "denumire": "Geam reflexiv maro 4mm,  securizat termic CS",
       "grosime": 4,
       "oglinda": 0,
       "activ": 1
     },
     {
       "cod": "CS013",
-      "denumire": "Geam canelat(riglat) 4mm securizat CS cod CS013",
+      "denumire": "Geam canelat(riglat) 4mm securizat CS",
       "grosime": 4,
       "oglinda": 0,
       "activ": 1
@@ -6463,98 +6463,98 @@
     },
     {
       "cod": "CT063",
-      "denumire": "Geam satinat maro 4mm securizat CT cod CT063",
+      "denumire": "Geam satinat maro 4mm securizat CT",
       "grosime": 4,
       "oglinda": 0,
       "activ": 1
     },
     {
       "cod": "GG001",
-      "denumire": "Oglinda 4mm GG cod GG001",
+      "denumire": "Oglinda 4mm GG",
       "grosime": 4,
       "oglinda": 1,
       "activ": 1
     },
     {
       "cod": "GG002",
-      "denumire": "Oglinda fumurie 4mm GG cod GG002",
+      "denumire": "Oglinda fumurie 4mm GG",
       "grosime": 4,
       "oglinda": 1,
       "activ": 1
     },
     {
       "cod": "GG003",
-      "denumire": "Oglinda gri 4mm GG cod GG003",
+      "denumire": "Oglinda gri 4mm GG",
       "grosime": 4,
       "oglinda": 1,
       "activ": 1
     },
     {
       "cod": "GG004",
-      "denumire": "Geam float transparent 4mm GG cod GG004",
+      "denumire": "Geam float transparent 4mm GG",
       "grosime": 4,
       "oglinda": 0,
       "activ": 1
     },
     {
       "cod": "GG005",
-      "denumire": "Geam ultra clear transparent 4mm GG cod GG005",
+      "denumire": "Geam ultra clear transparent 4mm GG",
       "grosime": 4,
       "oglinda": 0,
       "activ": 1
     },
     {
       "cod": "GG006",
-      "denumire": "Geam fumuriu 4mm GG cod GG006",
+      "denumire": "Geam fumuriu 4mm GG",
       "grosime": 4,
       "oglinda": 0,
       "activ": 1
     },
     {
       "cod": "GG007",
-      "denumire": "Geam reflexiv 4mm GG cod GG007",
+      "denumire": "Geam reflexiv 4mm GG",
       "grosime": 4,
       "oglinda": 0,
       "activ": 1
     },
     {
       "cod": "GG008",
-      "denumire": "Geam gri 4mm GG cod GG008",
+      "denumire": "Geam gri 4mm GG",
       "grosime": 4,
       "oglinda": 0,
       "activ": 1
     },
     {
       "cod": "GG009",
-      "denumire": "Geam satinat alb 4mm GG cod GG009",
+      "denumire": "Geam satinat alb 4mm GG",
       "grosime": 4,
       "oglinda": 0,
       "activ": 1
     },
     {
       "cod": "GG010",
-      "denumire": "Geam satinat fumuriu 4mm GG cod GG010",
+      "denumire": "Geam satinat fumuriu 4mm GG",
       "grosime": 4,
       "oglinda": 0,
       "activ": 1
     },
     {
       "cod": "GG011",
-      "denumire": "Geam riglat 4mm GG cod GG011",
+      "denumire": "Geam riglat 4mm GG",
       "grosime": 4,
       "oglinda": 0,
       "activ": 1
     },
     {
       "cod": "GG013",
-      "denumire": "Geam ultra clear alb 4mm GG cod GG013",
+      "denumire": "Geam ultra clear alb 4mm GG",
       "grosime": 4,
       "oglinda": 0,
       "activ": 1
     },
     {
       "cod": "GG014",
-      "denumire": "Geam lacobel negru 4mm GG",
+      "denumire": "Geam lacobel negru 4mm GG cod GG014",
       "grosime": 4,
       "oglinda": 0,
       "activ": 1
@@ -6575,168 +6575,168 @@
     },
     {
       "cod": "HD001",
-      "denumire": "Oglinda 4mm HD cod HD001",
+      "denumire": "Oglinda 4mm HD",
       "grosime": 4,
       "oglinda": 1,
       "activ": 1
     },
     {
       "cod": "HD002",
-      "denumire": "Oglinda 4mm HD slefuita perimetral cod HD002",
+      "denumire": "Oglinda 4mm HD slefuita perimetral",
       "grosime": 4,
       "oglinda": 1,
       "activ": 1
     },
     {
       "cod": "HD003",
-      "denumire": "Oglinda fumurie 4mm HD cod HD003",
+      "denumire": "Oglinda fumurie 4mm HD",
       "grosime": 4,
       "oglinda": 1,
       "activ": 1
     },
     {
       "cod": "HD004",
-      "denumire": "Oglinda fumurie 4mm HD slefuita perimetral cod HD004",
+      "denumire": "Oglinda fumurie 4mm HD slefuita perimetral",
       "grosime": 4,
       "oglinda": 1,
       "activ": 1
     },
     {
       "cod": "HD005",
-      "denumire": "Oglinda gri 4mm HD cod HD005",
+      "denumire": "Oglinda gri 4mm HD",
       "grosime": 4,
       "oglinda": 1,
       "activ": 1
     },
     {
       "cod": "HD006",
-      "denumire": "Oglinda gri 4mm HD slefuita perimetral cod HD006",
+      "denumire": "Oglinda gri 4mm HD slefuita perimetral",
       "grosime": 4,
       "oglinda": 1,
       "activ": 1
     },
     {
       "cod": "HD007",
-      "denumire": "Geam float transparent 4mm HD cod HD007",
+      "denumire": "Geam float transparent 4mm HD",
       "grosime": 4,
       "oglinda": 0,
       "activ": 1
     },
     {
       "cod": "HD008",
-      "denumire": "Geam float transparent 4mm HD slefuit perimetral cod HD008",
+      "denumire": "Geam float transparent 4mm HD slefuit perimetral",
       "grosime": 4,
       "oglinda": 0,
       "activ": 1
     },
     {
       "cod": "HD009",
-      "denumire": "Geam ultra clear 4mm HD transparent cod HD009",
+      "denumire": "Geam ultra clear 4mm HD transparent",
       "grosime": 4,
       "oglinda": 0,
       "activ": 1
     },
     {
       "cod": "HD010",
-      "denumire": "Geam ultra clear 4mm HD transparent slefuit perimetrial cod HD010",
+      "denumire": "Geam ultra clear 4mm HD transparent slefuit perimetrial",
       "grosime": 4,
       "oglinda": 0,
       "activ": 1
     },
     {
       "cod": "HD011",
-      "denumire": "Geam fumuriu bronz 4mm HD cod HD011",
+      "denumire": "Geam fumuriu bronz 4mm HD",
       "grosime": 4,
       "oglinda": 0,
       "activ": 1
     },
     {
       "cod": "HD012",
-      "denumire": "Geam fumuriu bronz 4mm HD slefuit perimetral cod HD012",
+      "denumire": "Geam fumuriu bronz 4mm HD slefuit perimetral",
       "grosime": 4,
       "oglinda": 0,
       "activ": 1
     },
     {
       "cod": "HD013",
-      "denumire": "Geam reflexiv 4mm HD cod HD013",
+      "denumire": "Geam reflexiv 4mm HD",
       "grosime": 4,
       "oglinda": 0,
       "activ": 1
     },
     {
       "cod": "HD014",
-      "denumire": "Geam reflexiv 4mm HD slefuit perimetral cod HD014",
+      "denumire": "Geam reflexiv 4mm HD slefuit perimetral",
       "grosime": 4,
       "oglinda": 0,
       "activ": 1
     },
     {
       "cod": "HD015",
-      "denumire": "Geam satinat alb 4mm HD cod HD015",
+      "denumire": "Geam satinat alb 4mm HD",
       "grosime": 4,
       "oglinda": 0,
       "activ": 1
     },
     {
       "cod": "HD016",
-      "denumire": "Geam satinat alb 4mm HD slefuit perimetral cod HD016",
+      "denumire": "Geam satinat alb 4mm HD slefuit perimetral",
       "grosime": 4,
       "oglinda": 0,
       "activ": 1
     },
     {
       "cod": "HD017",
-      "denumire": "Geam satinat fumuriu 4mm HD slefuit perimetral cod HD017",
+      "denumire": "Geam satinat fumuriu 4mm HD slefuit perimetral",
       "grosime": 4,
       "oglinda": 0,
       "activ": 1
     },
     {
       "cod": "HD018",
-      "denumire": "Geam satinat fumuriu 4mm HD cod HD018",
+      "denumire": "Geam satinat fumuriu 4mm HD",
       "grosime": 4,
       "oglinda": 0,
       "activ": 1
     },
     {
       "cod": "HD019",
-      "denumire": "Geam riglat 4mm HD cod HD019",
+      "denumire": "Geam riglat 4mm HD",
       "grosime": 4,
       "oglinda": 0,
       "activ": 1
     },
     {
       "cod": "HD020",
-      "denumire": "Geam riglat 4mm HD slefuit perimetral cod HD020",
+      "denumire": "Geam riglat 4mm HD slefuit perimetral",
       "grosime": 4,
       "oglinda": 0,
       "activ": 1
     },
     {
       "cod": "HD023",
-      "denumire": "Geam ultra clear alb 4mm HD cod HD023",
+      "denumire": "Geam ultra clear alb 4mm HD",
       "grosime": 4,
       "oglinda": 0,
       "activ": 1
     },
     {
       "cod": "HD024",
-      "denumire": "Geam ultra clear alb 4mm HD slefuit perimetral cod HD024",
+      "denumire": "Geam ultra clear alb 4mm HD slefuit perimetral",
       "grosime": 4,
       "oglinda": 0,
       "activ": 1
     },
     {
       "cod": "HD025",
-      "denumire": "Geam lacobel negru 4mm HD cod HD025",
+      "denumire": "Geam lacobel negru 4mm HD",
       "grosime": 4,
       "oglinda": 0,
       "activ": 1
     },
     {
       "cod": "HD026",
-      "denumire": "Geam lacobel negru 4mm HD slefuit perimetral cod HD026",
+      "denumire": "Geam lacobel negru 4mm HD slefuit perimetral",
       "grosime": 4,
       "oglinda": 0,
       "activ": 1
@@ -6750,14 +6750,14 @@
     },
     {
       "cod": "HD029",
-      "denumire": "Geam gri 4mm HD cod HD029",
+      "denumire": "Geam gri 4mm HD",
       "grosime": 4,
       "oglinda": 0,
       "activ": 1
     },
     {
       "cod": "HD030",
-      "denumire": "Geam gri 4mm HD slefuit perimetral cod HD030",
+      "denumire": "Geam gri 4mm HD slefuit perimetral",
       "grosime": 4,
       "oglinda": 0,
       "activ": 1
@@ -43591,7 +43591,7 @@
       "finisaj": "ALUMINIU",
       "lmin": null,
       "lmax": null,
-      "denumire": "Divizare aplicata 20x1,4 mm, finisaj aluminiu 3 m cod 105",
+      "denumire": "Divizare aplicata 20x1,4 mm, finisaj aluminiu 3 m cod 105 cod 105",
       "um": "bară",
       "activ": 1
     },
@@ -43681,7 +43681,7 @@
       "finisaj": "ALUMINIU",
       "lmin": null,
       "lmax": null,
-      "denumire": null,
+      "denumire": "Profil maner usi suspendate finisaj aluminiu 5,8 m",
       "um": "buc",
       "activ": 1
     },
@@ -43691,7 +43691,7 @@
       "finisaj": "ALUMINIU",
       "lmin": null,
       "lmax": null,
-      "denumire": null,
+      "denumire": "Orizontal superior usi suspendate finisaj aluminiu 5,8 m",
       "um": "buc",
       "activ": 1
     },
@@ -43701,7 +43701,7 @@
       "finisaj": "ALUMINIU",
       "lmin": null,
       "lmax": null,
-      "denumire": null,
+      "denumire": "Orizontal inferior usi suspendate finisaj aluminiu 5,8 m",
       "um": "buc",
       "activ": 1
     },
@@ -43711,7 +43711,7 @@
       "finisaj": "NEGRU MAT",
       "lmin": null,
       "lmax": null,
-      "denumire": null,
+      "denumire": "Profil maner usi suspendate finisaj negru periat  5,8 m",
       "um": "buc",
       "activ": 1
     },
@@ -43721,7 +43721,7 @@
       "finisaj": "NEGRU MAT",
       "lmin": null,
       "lmax": null,
-      "denumire": null,
+      "denumire": "Orizontal superior usi suspendate finisaj negru periat 5,8 m",
       "um": "buc",
       "activ": 1
     },
@@ -43731,7 +43731,7 @@
       "finisaj": "NEGRU MAT",
       "lmin": null,
       "lmax": null,
-      "denumire": null,
+      "denumire": "Orizontal inferior usi suspendate finisaj negru periat 5,8 m",
       "um": "buc",
       "activ": 1
     },
@@ -43741,7 +43741,7 @@
       "finisaj": "SAMPANIE LUCIOS",
       "lmin": null,
       "lmax": null,
-      "denumire": null,
+      "denumire": "Profil maner usi suspendate finisaj sampanie lucios  5,8 m",
       "um": "buc",
       "activ": 1
     },
@@ -43751,7 +43751,7 @@
       "finisaj": "SAMPANIE LUCIOS",
       "lmin": null,
       "lmax": null,
-      "denumire": null,
+      "denumire": "Orizontal superior usi suspendate finisaj sampanie lucios 5,8 m",
       "um": "buc",
       "activ": 1
     },
@@ -43761,7 +43761,7 @@
       "finisaj": "SAMPANIE LUCIOS",
       "lmin": null,
       "lmax": null,
-      "denumire": null,
+      "denumire": "Orizontal inferior usi suspendate finisaj sampanie lucios 5,8 m",
       "um": "buc",
       "activ": 1
     },
@@ -43771,7 +43771,7 @@
       "finisaj": "AURIU PERIAT",
       "lmin": null,
       "lmax": null,
-      "denumire": null,
+      "denumire": "Profil maner usi suspendate finisaj auriu periat 5,5 m",
       "um": "buc",
       "activ": 1
     },
@@ -43781,7 +43781,7 @@
       "finisaj": "AURIU PERIAT",
       "lmin": null,
       "lmax": null,
-      "denumire": null,
+      "denumire": "Orizontal superior usi suspendate finisaj auriu periat 5,8 m",
       "um": "buc",
       "activ": 1
     },
@@ -43791,7 +43791,7 @@
       "finisaj": "AURIU PERIAT",
       "lmin": null,
       "lmax": null,
-      "denumire": null,
+      "denumire": "Orizontal inferior usi suspendate finisaj auriu periat 5,8 m",
       "um": "buc",
       "activ": 1
     },
@@ -43801,7 +43801,7 @@
       "finisaj": "CUPRU",
       "lmin": 1,
       "lmax": 3500,
-      "denumire": "Sina superioara pentru usi suspendate Cupru periat 1-3500mm",
+      "denumire": "Sina superioara usi suspendate finisaj cupru 3,5 m cod 900",
       "um": "buc",
       "activ": 1
     },
@@ -43811,7 +43811,7 @@
       "finisaj": "CUPRU",
       "lmin": 1,
       "lmax": 3500,
-      "denumire": "Profil pentru mascarea sinei Cupru periat 1-3500mm cod M311",
+      "denumire": "Profil mascare sina finisaj cupru 3,5 m cod 901",
       "um": "buc",
       "activ": 1
     },
@@ -43821,7 +43821,7 @@
       "finisaj": "CUPRU",
       "lmin": null,
       "lmax": null,
-      "denumire": null,
+      "denumire": "Profil maner usi suspendate finisaj cupru 3 m cod 902",
       "um": "buc",
       "activ": 1
     },
@@ -43831,7 +43831,7 @@
       "finisaj": "CUPRU",
       "lmin": null,
       "lmax": null,
-      "denumire": null,
+      "denumire": "Orizontal superior usi suspendate finisaj cupru 3,5 m cod 903",
       "um": "buc",
       "activ": 1
     },
@@ -43841,7 +43841,7 @@
       "finisaj": "CUPRU",
       "lmin": null,
       "lmax": null,
-      "denumire": null,
+      "denumire": "Orizontal inferior usi suspendate finisaj cupru 3,5 m cod 904",
       "um": "buc",
       "activ": 1
     },
@@ -43851,7 +43851,7 @@
       "finisaj": "ALUMINIU",
       "lmin": 601,
       "lmax": 700,
-      "denumire": "Profil Diviz. Usa Suspendata Aluminiu 601-700Mm Cod DIV001",
+      "denumire": "Profil Diviz. Usa Suspendata Aluminiu 601-700Mm Cod Div001",
       "um": "buc",
       "activ": 1
     },
@@ -43861,7 +43861,7 @@
       "finisaj": "ALUMINIU",
       "lmin": 701,
       "lmax": 800,
-      "denumire": "Profil Diviz. Usa Suspendata Aluminiu 701-800Mm Cod DIV002",
+      "denumire": "Profil Diviz. Usa Suspendata Aluminiu 701-800Mm Cod Div002",
       "um": "buc",
       "activ": 1
     },
@@ -43871,7 +43871,7 @@
       "finisaj": "ALUMINIU",
       "lmin": 801,
       "lmax": 900,
-      "denumire": "Profil Diviz. Usa Suspendata Aluminiu 801-900Mm Cod  DIV003",
+      "denumire": "Profil Diviz. Usa Suspendata Aluminiu 801-900Mm Cod  Div003",
       "um": "buc",
       "activ": 1
     },
@@ -43881,7 +43881,7 @@
       "finisaj": "ALUMINIU",
       "lmin": 901,
       "lmax": 1000,
-      "denumire": "Profil Diviz. Usa Suspendata Aluminiu 901-1000Mm Cod DIV004",
+      "denumire": "Profil Diviz. Usa Suspendata Aluminiu 901-1000Mm Cod Div004",
       "um": "buc",
       "activ": 1
     },
@@ -43891,7 +43891,7 @@
       "finisaj": "ALUMINIU",
       "lmin": 1001,
       "lmax": 1100,
-      "denumire": "Profil Diviz. Usa Suspendata Aluminiu 1001-1100Mm Cod DIV005",
+      "denumire": "Profil Diviz. Usa Suspendata Aluminiu 1001-1100Mm Cod Div005",
       "um": "buc",
       "activ": 1
     },
@@ -43901,7 +43901,7 @@
       "finisaj": "ALUMINIU",
       "lmin": 1101,
       "lmax": 1200,
-      "denumire": "Profil Diviz. Usa Suspendata Aluminiu 1101-1200Mm Cod DIV006",
+      "denumire": "Profil Diviz. Usa Suspendata Aluminiu 1101-1200Mm Cod Div006",
       "um": "buc",
       "activ": 1
     },
@@ -43911,7 +43911,7 @@
       "finisaj": "ALUMINIU",
       "lmin": 1201,
       "lmax": 1300,
-      "denumire": "Profil Diviz. Usa Suspendata Aluminiu 1201-1300Mm Cod DIV007",
+      "denumire": "Profil Diviz. Usa Suspendata Aluminiu 1201-1300Mm Cod Div007",
       "um": "buc",
       "activ": 1
     },
@@ -43921,7 +43921,7 @@
       "finisaj": "ALUMINIU",
       "lmin": 1301,
       "lmax": 1400,
-      "denumire": "Profil Diviz. Usa Suspendata Aluminiu 1301-1400Mm Cod DIV008",
+      "denumire": "Profil Diviz. Usa Suspendata Aluminiu 1301-1400Mm Cod Div008",
       "um": "buc",
       "activ": 1
     },
@@ -43931,7 +43931,7 @@
       "finisaj": "ALUMINIU",
       "lmin": 1401,
       "lmax": 1500,
-      "denumire": "Profil Diviz. Usa Suspendata Aluminiu 1401-1500Mm Cod DIV009",
+      "denumire": "Profil Diviz. Usa Suspendata Aluminiu 1401-1500Mm Cod Div009",
       "um": "buc",
       "activ": 1
     },
@@ -43941,7 +43941,7 @@
       "finisaj": "ALUMINIU",
       "lmin": 1501,
       "lmax": 2000,
-      "denumire": "Profil Diviz. Usa Suspendata Aluminiu 1501-2000Mm Cod DIV010",
+      "denumire": "Profil Diviz. Usa Suspendata Aluminiu 1501-2000Mm Cod Div010",
       "um": "buc",
       "activ": 1
     },
@@ -43951,7 +43951,7 @@
       "finisaj": "NEGRU MAT",
       "lmin": 601,
       "lmax": 700,
-      "denumire": "Profil Diviz. Usa Suspend. Negru Mat 601-700Mm Cod DIV101",
+      "denumire": "Profil Diviz. Usa Suspend. Negru Mat 601-700Mm Cod Div101",
       "um": "buc",
       "activ": 1
     },
@@ -43961,7 +43961,7 @@
       "finisaj": "NEGRU MAT",
       "lmin": 701,
       "lmax": 800,
-      "denumire": "Profil Diviz. Usa Suspend. Negru Mat 701-800Mm Cod DIV102",
+      "denumire": "Profil Diviz. Usa Suspend. Negru Mat 701-800Mm Cod Div102",
       "um": "buc",
       "activ": 1
     },
@@ -43971,7 +43971,7 @@
       "finisaj": "NEGRU MAT",
       "lmin": 801,
       "lmax": 900,
-      "denumire": "Profil Diviz. Usa Suspend. Negru Mat 801-900Mm Cod DIV103",
+      "denumire": "Profil Diviz. Usa Suspend. Negru Mat 801-900Mm Cod Div103",
       "um": "buc",
       "activ": 1
     },
@@ -43981,7 +43981,7 @@
       "finisaj": "NEGRU MAT",
       "lmin": 901,
       "lmax": 1000,
-      "denumire": "Profil Diviz. Usa Suspend. Negru Mat 901-1000Mm Cod DIV104",
+      "denumire": "Profil Diviz. Usa Suspend. Negru Mat 901-1000Mm Cod Div104",
       "um": "buc",
       "activ": 1
     },
@@ -43991,7 +43991,7 @@
       "finisaj": "NEGRU MAT",
       "lmin": 1001,
       "lmax": 1100,
-      "denumire": "Profil Diviz. Usa Suspen. Negru Mat 1001-1100Mm Cod DIV105",
+      "denumire": "Profil Diviz. Usa Suspen. Negru Mat 1001-1100Mm Cod Div105",
       "um": "buc",
       "activ": 1
     },
@@ -44001,7 +44001,7 @@
       "finisaj": "NEGRU MAT",
       "lmin": 1101,
       "lmax": 1200,
-      "denumire": "Profil Diviz. Usa Suspen. Negru Mat 1101-1200Mm Cod DIV106",
+      "denumire": "Profil Diviz. Usa Suspen. Negru Mat 1101-1200Mm Cod Div106",
       "um": "buc",
       "activ": 1
     },
@@ -44011,7 +44011,7 @@
       "finisaj": "NEGRU MAT",
       "lmin": 1201,
       "lmax": 1300,
-      "denumire": "Profil Diviz. Usa Suspen. Negru Mat 1201-1300Mm Cod DIV107",
+      "denumire": "Profil Diviz. Usa Suspen. Negru Mat 1201-1300Mm Cod Div107",
       "um": "buc",
       "activ": 1
     },
@@ -44021,7 +44021,7 @@
       "finisaj": "NEGRU MAT",
       "lmin": 1301,
       "lmax": 1400,
-      "denumire": "Profil Diviz. Usa Suspen. Negru Mat 1301-1400Mm Cod DIV108",
+      "denumire": "Profil Diviz. Usa Suspen. Negru Mat 1301-1400Mm Cod Div108",
       "um": "buc",
       "activ": 1
     },
@@ -44031,7 +44031,7 @@
       "finisaj": "NEGRU MAT",
       "lmin": 1401,
       "lmax": 1500,
-      "denumire": "Profil Diviz. Usa Suspen. Negru Mat 1401-1500Mm Cod DIV109",
+      "denumire": "Profil Diviz. Usa Suspen. Negru Mat 1401-1500Mm Cod Div109",
       "um": "buc",
       "activ": 1
     },
@@ -44041,7 +44041,7 @@
       "finisaj": "NEGRU MAT",
       "lmin": 1501,
       "lmax": 2000,
-      "denumire": "Profil Diviz. Usa Suspen. Negru Mat 1500-2000Mm Cod DIV110",
+      "denumire": "Profil Diviz. Usa Suspen. Negru Mat 1500-2000Mm Cod Div110",
       "um": "buc",
       "activ": 1
     },
@@ -44051,7 +44051,7 @@
       "finisaj": "SAMPANIE LUCIOS",
       "lmin": 601,
       "lmax": 700,
-      "denumire": "Profil Diviz. Usa Suspendata Sampanie Lucios 601-700Mm Cod DIV201",
+      "denumire": "Profil Diviz. Usa Suspendata Sampanie Lucios 601-700Mm Cod Div201",
       "um": "buc",
       "activ": 1
     },
@@ -44061,7 +44061,7 @@
       "finisaj": "SAMPANIE LUCIOS",
       "lmin": 701,
       "lmax": 800,
-      "denumire": "Profil Diviz. Usa Suspendata Sampanie Lucios 701-800Mm Cod DIV202",
+      "denumire": "Profil Diviz. Usa Suspendata Sampanie Lucios 701-800Mm Cod Div202",
       "um": "buc",
       "activ": 1
     },
@@ -44071,7 +44071,7 @@
       "finisaj": "SAMPANIE LUCIOS",
       "lmin": 801,
       "lmax": 900,
-      "denumire": "Profil Diviz. Usa Suspendata Sampanie Lucios 801-900Mm Cod DIV203",
+      "denumire": "Profil Diviz. Usa Suspendata Sampanie Lucios 801-900Mm Cod Div203",
       "um": "buc",
       "activ": 1
     },
@@ -44081,7 +44081,7 @@
       "finisaj": "SAMPANIE LUCIOS",
       "lmin": 901,
       "lmax": 1000,
-      "denumire": "Profil Diviz. Usa Suspendata Sampanie Lucios 901-1000Mm Cod DIV204",
+      "denumire": "Profil Diviz. Usa Suspendata Sampanie Lucios 901-1000Mm Cod Div204",
       "um": "buc",
       "activ": 1
     },
@@ -44091,7 +44091,7 @@
       "finisaj": "SAMPANIE LUCIOS",
       "lmin": 1001,
       "lmax": 1100,
-      "denumire": "Profil Diviz. Usa Suspen. Sampanie Lucios 1001-1100Mm Cod DIV205",
+      "denumire": "Profil Diviz. Usa Suspen. Sampanie Lucios 1001-1100Mm Cod Div205",
       "um": "buc",
       "activ": 1
     },
@@ -44101,7 +44101,7 @@
       "finisaj": "SAMPANIE LUCIOS",
       "lmin": 1101,
       "lmax": 1200,
-      "denumire": "Profil Diviz. Usa Suspen. Sanpanie Lucios 1101-1200Mm Cod DIV206",
+      "denumire": "Profil Diviz. Usa Suspen. Sanpanie Lucios 1101-1200Mm Cod Div206",
       "um": "buc",
       "activ": 1
     },
@@ -44111,7 +44111,7 @@
       "finisaj": "SAMPANIE LUCIOS",
       "lmin": 1201,
       "lmax": 1300,
-      "denumire": "Profil Diviz. Usa Suspen. Sampanie Lucios1201-1300Mm Cod DIV207",
+      "denumire": "Profil Diviz. Usa Suspen. Sampanie Lucios1201-1300Mm Cod Div207",
       "um": "buc",
       "activ": 1
     },
@@ -44121,7 +44121,7 @@
       "finisaj": "SAMPANIE LUCIOS",
       "lmin": 1301,
       "lmax": 1400,
-      "denumire": "Profil Diviz. Usa Suspen. Sampanie Lucios 1301-1400Mm Cod DIV208",
+      "denumire": "Profil Diviz. Usa Suspen. Sampanie Lucios 1301-1400Mm Cod Div208",
       "um": "buc",
       "activ": 1
     },
@@ -44131,7 +44131,7 @@
       "finisaj": "SAMPANIE LUCIOS",
       "lmin": 1401,
       "lmax": 1500,
-      "denumire": "Profil Diviz. Usa Suspen. Sampanie Lucios 1401-1500Mm Cod DIV209",
+      "denumire": "Profil Diviz. Usa Suspen. Sampanie Lucios 1401-1500Mm Cod Div209",
       "um": "buc",
       "activ": 1
     },
@@ -44332,16 +44332,6 @@
       "lmin": 1401,
       "lmax": 1500,
       "denumire": "Profil pentru divizarea usilor suspendate Cupru 1401-1500mm cod DIV409",
-      "um": "buc",
-      "activ": 1
-    },
-    {
-      "cod": "DIV410",
-      "tip": "divizare",
-      "finisaj": "CUPRU",
-      "lmin": 1501,
-      "lmax": 2000,
-      "denumire": "Profil pentru divizarea usilor suspendate Cupru 1501-2000mm cod DIV410",
       "um": "buc",
       "activ": 1
     },
@@ -44831,7 +44821,7 @@
       "finisaj": "ALUMINIU",
       "lmin": 3001,
       "lmax": 4000,
-      "denumire": "Sina Superioara Usi Suspendate Aluminiu 3001-4000Mm Cod S009",
+      "denumire": "Sina Super. Usi Suspendate Aluminiu 3001-4000Mm Cod S009",
       "um": "buc",
       "activ": 1
     },
@@ -44851,7 +44841,7 @@
       "finisaj": "NEGRU MAT",
       "lmin": 1201,
       "lmax": 1400,
-      "denumire": "Sina Super. Usa Suspendata Negru Mat 1201-1400Mm Cod S101",
+      "denumire": "Sina Super. Usi Suspendate Negru Mat 1201-1400Mm Cod S101",
       "um": "buc",
       "activ": 1
     },
@@ -45151,7 +45141,7 @@
       "finisaj": "ALUMINIU",
       "lmin": 601,
       "lmax": 700,
-      "denumire": "Usa Culisanta Suspendata Aluminiu 601-700Mm Cod USA001",
+      "denumire": "Usa Culisanta Suspendata Aluminiu 601-700Mm Cod Usa001",
       "um": "buc",
       "activ": 1
     },
@@ -45161,7 +45151,7 @@
       "finisaj": "ALUMINIU",
       "lmin": 701,
       "lmax": 800,
-      "denumire": "Usa Culisanta Suspendata Aluminiu 701-800Mm Cod USA002",
+      "denumire": "Usa Culisanta Suspendata Aluminiu 701-800Mm Cod Usa002",
       "um": "buc",
       "activ": 1
     },
@@ -45171,7 +45161,7 @@
       "finisaj": "ALUMINIU",
       "lmin": 801,
       "lmax": 900,
-      "denumire": "Usa Culisanta Suspendata Aluminiu 801-900Mm Cod USA003",
+      "denumire": "Usa Culisanta Suspendata Aluminiu 801-900Mm Cod Usa003",
       "um": "buc",
       "activ": 1
     },
@@ -45181,7 +45171,7 @@
       "finisaj": "ALUMINIU",
       "lmin": 901,
       "lmax": 1000,
-      "denumire": "Usa Culisanta Suspendata Aluminiu 901-1000Mm Cod USA004",
+      "denumire": "Usa Culisanta Suspendata Aluminiu 901-1000Mm Cod Usa004",
       "um": "buc",
       "activ": 1
     },
@@ -45191,7 +45181,7 @@
       "finisaj": "ALUMINIU",
       "lmin": 1001,
       "lmax": 1100,
-      "denumire": "Usa Culisanta Suspendata Aluminiu 1001-1100Mm Cod USA005",
+      "denumire": "Usa Culisanta Suspendata Aluminiu 1001-1100Mm Cod Usa005",
       "um": "buc",
       "activ": 1
     },
@@ -45201,7 +45191,7 @@
       "finisaj": "ALUMINIU",
       "lmin": 1101,
       "lmax": 1200,
-      "denumire": "Usa Culisanta Suspendata Aluminiu 1101-1200Mm Cod USA006",
+      "denumire": "Usa Culisanta Suspendata Aluminiu 1101-1200Mm Cod Usa006",
       "um": "buc",
       "activ": 1
     },
@@ -45211,7 +45201,7 @@
       "finisaj": "ALUMINIU",
       "lmin": 1201,
       "lmax": 1300,
-      "denumire": "Usa Culisanta Suspendata Aluminiu 1201-1300Mm Cod USA007",
+      "denumire": "Usa Culisanta Suspendata Aluminiu 1201-1300Mm Cod Usa007",
       "um": "buc",
       "activ": 1
     },
@@ -45221,7 +45211,7 @@
       "finisaj": "ALUMINIU",
       "lmin": 1301,
       "lmax": 1400,
-      "denumire": "Usa Culisanta Suspendata Aluminiu 1301-1400Mm Cod USA008",
+      "denumire": "Usa Culisanta Suspendata Aluminiu 1301-1400Mm Cod Usa008",
       "um": "buc",
       "activ": 1
     },
@@ -45231,7 +45221,7 @@
       "finisaj": "ALUMINIU",
       "lmin": 1401,
       "lmax": 1500,
-      "denumire": "Usa Culisanta Suspendata Aluminiu 1401-1500Mm Cod USA009",
+      "denumire": "Usa Culisanta Suspendata Aluminiu 1401-1500Mm Cod Usa009",
       "um": "buc",
       "activ": 1
     },
@@ -45241,7 +45231,7 @@
       "finisaj": "ALUMINIU",
       "lmin": 1501,
       "lmax": 2000,
-      "denumire": "Usa Culisanta Suspendata Aluminiu 1501-2000Mm Cod USA010",
+      "denumire": "Usa Culisanta Suspendata Aluminiu 1501-2000Mm Cod Usa010",
       "um": "buc",
       "activ": 1
     },
@@ -45251,7 +45241,7 @@
       "finisaj": "NEGRU MAT",
       "lmin": 601,
       "lmax": 700,
-      "denumire": "Usa Culisanta Suspendata Negru Mat 601-700Mm  Cod USA101",
+      "denumire": "Usa Culisanta Suspendata Negru Mat 601-700Mm  Cod Usa101",
       "um": "buc",
       "activ": 1
     },
@@ -45271,7 +45261,7 @@
       "finisaj": "NEGRU MAT",
       "lmin": 801,
       "lmax": 900,
-      "denumire": "Usa Culisanta Suspendata Negru Mat 801-900Mm Cod USA103",
+      "denumire": "Usa Culisanta Suspendata Negru Mat 801-900Mm Cod Usa103",
       "um": "buc",
       "activ": 1
     },
@@ -45281,7 +45271,7 @@
       "finisaj": "NEGRU MAT",
       "lmin": 901,
       "lmax": 1000,
-      "denumire": "Usa Culisanta Suspendata Negru Mat 901-1000Mm Cod USA104",
+      "denumire": "Usa Culisanta Suspendata Negru Mat 901-1000Mm Cod Usa104",
       "um": "buc",
       "activ": 1
     },
@@ -45291,7 +45281,7 @@
       "finisaj": "NEGRU MAT",
       "lmin": 1001,
       "lmax": 1100,
-      "denumire": "Usa Culisanta Suspendata Negru Mat 1001-1100Mm Cod USA105",
+      "denumire": "Usa Culisanta Suspendata Negru Mat 1001-1100Mm Cod Usa105",
       "um": "buc",
       "activ": 1
     },
@@ -45301,7 +45291,7 @@
       "finisaj": "NEGRU MAT",
       "lmin": 1101,
       "lmax": 1200,
-      "denumire": "Usa Culisanta Suspendata Negru Mat 1101-1200Mm Cod USA106",
+      "denumire": "Usa Culisanta Suspendata Negru Mat 1101-1200Mm Cod Usa106",
       "um": "buc",
       "activ": 1
     },
@@ -45311,7 +45301,7 @@
       "finisaj": "NEGRU MAT",
       "lmin": 1201,
       "lmax": 1300,
-      "denumire": "Usa Culisanta Suspendata Negru Mat 1201-1300Mm Cod USA107",
+      "denumire": "Usa Culisanta Suspendata Negru Mat 1201-1300Mm Cod Usa107",
       "um": "buc",
       "activ": 1
     },
@@ -45321,7 +45311,7 @@
       "finisaj": "NEGRU MAT",
       "lmin": 1301,
       "lmax": 1400,
-      "denumire": "Usa Culisanta Suspendata Negru Mat 1301-1400Mm Cod USA108",
+      "denumire": "Usa Culisanta Suspendata Negru Mat 1301-1400Mm Cod Usa108",
       "um": "buc",
       "activ": 1
     },
@@ -45331,7 +45321,7 @@
       "finisaj": "NEGRU MAT",
       "lmin": 1401,
       "lmax": 1500,
-      "denumire": "Usa Culisanta Suspendata Negru Mat 1401-1500Mm Cod USA109",
+      "denumire": "Usa Culisanta Suspendata Negru Mat 1401-1500Mm Cod Usa109",
       "um": "buc",
       "activ": 1
     },
@@ -45341,7 +45331,7 @@
       "finisaj": "NEGRU MAT",
       "lmin": 1501,
       "lmax": 2000,
-      "denumire": "Usa Culisanta Suspendata Negru Mat 1501-2000Mm Cod USA110",
+      "denumire": "Usa Culisanta Suspendata Negru Mat 1501-2000Mm Cod Usa110",
       "um": "buc",
       "activ": 1
     },
@@ -45351,7 +45341,7 @@
       "finisaj": "SAMPANIE LUCIOS",
       "lmin": 601,
       "lmax": 700,
-      "denumire": "Usa Culisanta Suspendata Samp.Lucios 601-700Mm Cod USA201",
+      "denumire": "Usa Culisanta Suspendata Samp.Lucios 601-700Mm Cod Usa201",
       "um": "buc",
       "activ": 1
     },
@@ -45361,7 +45351,7 @@
       "finisaj": "SAMPANIE LUCIOS",
       "lmin": 701,
       "lmax": 800,
-      "denumire": "Usa Culisanta Suspendata Samp.Lucios 701-800Mm Cod USA202",
+      "denumire": "Usa Culisanta Suspendata Samp.Lucios 701-800Mm Cod Usa202",
       "um": "buc",
       "activ": 1
     },
@@ -45371,7 +45361,7 @@
       "finisaj": "SAMPANIE LUCIOS",
       "lmin": 801,
       "lmax": 900,
-      "denumire": "Usa culisanta Suspendata Samp.Lucios 801-900mm Cod USA203",
+      "denumire": "Usa culisanta Suspendata Samp.Lucios 801-900mm Cod Usa203",
       "um": "buc",
       "activ": 1
     },
@@ -45381,7 +45371,7 @@
       "finisaj": "SAMPANIE LUCIOS",
       "lmin": 901,
       "lmax": 1000,
-      "denumire": "Usa Culisanta Suspendata Samp.Lucios  901-1000Mm Cod USA204",
+      "denumire": "Usa Culisanta Suspendata Samp.Lucios  901-1000Mm Cod Usa204",
       "um": "buc",
       "activ": 1
     },
@@ -45391,7 +45381,7 @@
       "finisaj": "SAMPANIE LUCIOS",
       "lmin": 1001,
       "lmax": 1100,
-      "denumire": "Usa Culisanta Suspendata Samp.Lucios 1001-1100Mm Cod USA205",
+      "denumire": "Usa Culisanta Suspendata Samp.Lucios 1001-1100Mm Cod Usa205",
       "um": "buc",
       "activ": 1
     },
@@ -45401,7 +45391,7 @@
       "finisaj": "SAMPANIE LUCIOS",
       "lmin": 1101,
       "lmax": 1200,
-      "denumire": "Usa Culisanta Suspendata Samp.Lucios 1101-1200Mm Cod USA206",
+      "denumire": "Usa Culisanta Suspendata Samp.Lucios 1101-1200Mm Cod Usa206",
       "um": "buc",
       "activ": 1
     },
@@ -45411,7 +45401,7 @@
       "finisaj": "SAMPANIE LUCIOS",
       "lmin": 1201,
       "lmax": 1300,
-      "denumire": "Usa Culisanta Suspendata Samp. Lucios 1201-1300Mm Cod USA207",
+      "denumire": "Usa Culisanta Suspendata Samp. Lucios 1201-1300Mm Cod Usa207",
       "um": "buc",
       "activ": 1
     },
@@ -45421,7 +45411,7 @@
       "finisaj": "SAMPANIE LUCIOS",
       "lmin": 1301,
       "lmax": 1400,
-      "denumire": "Usa Culisanta Suspendata Samp.Lucios 1300-1401Mm Cod USA208",
+      "denumire": "Usa Culisanta Suspendata Samp.Lucios 1300-1401Mm Cod Usa208",
       "um": "buc",
       "activ": 1
     },
@@ -45431,7 +45421,7 @@
       "finisaj": "SAMPANIE LUCIOS",
       "lmin": 1401,
       "lmax": 1500,
-      "denumire": "Usa Culisanta Suspendata Samp.Lucios 1401-1500Mm Cod USA209",
+      "denumire": "Usa Culisanta Suspendata Samp.Lucios 1401-1500Mm Cod Usa209",
       "um": "buc",
       "activ": 1
     },
@@ -45441,7 +45431,7 @@
       "finisaj": "SAMPANIE LUCIOS",
       "lmin": 1501,
       "lmax": 2000,
-      "denumire": "Usa Culisanta Suspendata Samp.Lucios 1501-2000Mm Cod USA210",
+      "denumire": "Usa Culisanta Suspendata Samp.Lucios 1501-2000Mm Cod Usa210",
       "um": "buc",
       "activ": 1
     },
@@ -45634,14 +45624,416 @@
       "denumire": "Usa culisanta suspendata Cupru 1401-1500mm cod USA409",
       "um": "buc",
       "activ": 1
+    }
+  ],
+  "util": [
+    {
+      "cod": "104",
+      "tip": "divizare aplicata 10",
+      "finisaj": "ALUMINIU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Divizare aplicata  10x1,4 mm, finisaj aluminiu 3 m cod 104",
+      "um": "buc",
+      "activ": 1
     },
     {
-      "cod": "USA410",
-      "tip": "usa",
-      "finisaj": "CUPRU",
-      "lmin": 1501,
-      "lmax": 2000,
-      "denumire": "Usa culisanta suspendata Cupru periat 1501-2000mm cod USA410",
+      "cod": "105",
+      "tip": "divizare aplicata 20",
+      "finisaj": "ALUMINIU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Divizare aplicata 20x1,4 mm, finisaj aluminiu 3 m cod 105 cod 105",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "118",
+      "tip": "divizare aplicata 10",
+      "finisaj": "SAMPANIE",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Divizare aplicata 10x1,4 mm, finisaj sampanie luciosa 3 m cod 118",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "119",
+      "tip": "divizare aplicata 20",
+      "finisaj": "SAMPANIE",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Divizare aplicata 20x1,4 mm, finisaj sampanie lucioasa 3 m cod 119",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "138",
+      "tip": "divizare aplicata 10",
+      "finisaj": "ALB MAT",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Divizare aplicata 10x1,4 mm, finisaj alb mat 3 m cod 138",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "139",
+      "tip": "divizare aplicata 20",
+      "finisaj": "ALB MAT",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Divizare aplicata 20x1,4 mm, alb mat 3 m cod 139",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "149",
+      "tip": "divizare aplicata 10",
+      "finisaj": "NEGRU MAT",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Divizare aplicata 10x1,4 mm, finisaj negru mat 3 m cod 149",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "150",
+      "tip": "divizare aplicata 20",
+      "finisaj": "NEGRU MAT",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Divizare aplicata 20x1,4 mm, finisaj negru mat 3 m cod 150",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "300",
+      "tip": "sina superioara",
+      "finisaj": "ALUMINIU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Sina superioara dubla Util finisaj aluminiu  5,8 m cod 300",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "301",
+      "tip": "sina inferioara",
+      "finisaj": "ALUMINIU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Sina inferioara dubla Util finisaj aluminiu 5,8 m cod 301",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "302",
+      "tip": "maner vertical ATENA",
+      "finisaj": "ALUMINIU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Profil maner Atena finisaj aluminiu 5,5 m cod 302",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "303",
+      "tip": "maner vertical ROMA",
+      "finisaj": "ALUMINIU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Profil maner Roma finisaj aluminiu 5,5 m cod 303",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "304",
+      "tip": "maner vertical SOFT",
+      "finisaj": "ALUMINIU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Profil maner Soft finisaj aluminiu 5,5 m cod 304",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "305",
+      "tip": "divizare H",
+      "finisaj": "ALUMINIU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Divizare ''H'' inegal finisaj aluminiu  5,8 m cod 305",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "306",
+      "tip": "orizontal U",
+      "finisaj": "ALUMINIU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Orizontal sus/jos ''U'' finisaj aluminiu 5,8m cod 306",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "310",
+      "tip": "sina superioara",
+      "finisaj": "SAMPANIE",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Sina superioara dubla Util finisaj sampanie  5,8 m cod 310",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "311",
+      "tip": "sina inferioara",
+      "finisaj": "SAMPANIE",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Sina inferioara dubla Util finisaj sampanie 5,8 m cod 311",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "312",
+      "tip": "maner vertical ATENA",
+      "finisaj": "SAMPANIE",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Profil maner Atena  finisaj sampanie 5,5 m cod 312",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "313",
+      "tip": "maner vertical ROMA",
+      "finisaj": "SAMPANIE",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Profil maner Roma finisaj sampanie 5,5 m cod 313",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "314",
+      "tip": "maner vertical SOFT",
+      "finisaj": "SAMPANIE",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Profil maner Soft finisaj sampanie 5,5 m cod 314",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "315",
+      "tip": "divizare H",
+      "finisaj": "SAMPANIE",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Divizare ''H'' finisaj sampanie 5,8 m cod 315",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "316",
+      "tip": "orizontal U",
+      "finisaj": "SAMPANIE",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Orizontal sus/jos ''U'' finisaj sampanie 5,8m cod 316",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "320",
+      "tip": "sina superioara",
+      "finisaj": "ALB MAT",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Sina superioara dubla Util finisaj alb mat 5,8 m cod 320",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "321",
+      "tip": "sina inferioara",
+      "finisaj": "ALB MAT",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Sina inferioara dubla Util finisaj alb mat 5,8 m cod 321",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "322",
+      "tip": "maner vertical ATENA",
+      "finisaj": "ALB MAT",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Profil maner Atena  finisaj alb mat 5,5 m cod 322",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "323",
+      "tip": "maner vertical ROMA",
+      "finisaj": "ALB MAT",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Profil maner Roma finisaj alb mat 5,5 m cod 323",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "324",
+      "tip": "divizare H",
+      "finisaj": "ALB MAT",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Divizare ''H'' finisaj alb mat  5,8 m cod 324",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "325",
+      "tip": "orizontal U",
+      "finisaj": "ALB MAT",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Orizontal sus/jos ''U'' finisaj alb mat  5,8m cod 325",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "330",
+      "tip": "sina superioara",
+      "finisaj": "NEGRU MAT",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Sina superioara dubla Util finisaj negru periat 5,8m cod 330",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "331",
+      "tip": "sina inferioara",
+      "finisaj": "NEGRU MAT",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Sina inferioara dubla Util finisaj negru periat 5,8 m cod 331",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "332",
+      "tip": "maner vertical ATENA",
+      "finisaj": "NEGRU MAT",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Profil maner Atena finisaj negru periat 5,5 m cod 332",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "333",
+      "tip": "maner vertical ROMA",
+      "finisaj": "NEGRU MAT",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Profil maner Roma finisaj negru periat 5,5 m cod 333",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "334",
+      "tip": "divizare H",
+      "finisaj": "NEGRU MAT",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Divizare ''H'' finisaj negru periat  5,8 m cod 334",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "335",
+      "tip": "orizontal U",
+      "finisaj": "NEGRU MAT",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Orizontal sus/jos ''U'' finisaj negru periat 5,8m cod 335",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "340",
+      "tip": "opritor",
+      "finisaj": null,
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Opritor in sina inferioara cod 340",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "341",
+      "tip": "amortizare",
+      "finisaj": null,
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Amortizare pentru 35 kg la set pentru gama Util cod 341",
+      "um": "set",
+      "activ": 1
+    },
+    {
+      "cod": "342",
+      "tip": "perie laterala",
+      "finisaj": null,
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Perie laterala 9x5 mm cod 342",
+      "um": "ml",
+      "activ": 1
+    },
+    {
+      "cod": "343",
+      "tip": "perie spate",
+      "finisaj": null,
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Perie spate antipraf 7x10 mm cod 343",
+      "um": "ml",
+      "activ": 1
+    },
+    {
+      "cod": "344",
+      "tip": "rotile inferioare",
+      "finisaj": null,
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Rotila inferioara  K12 cod 344",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "345",
+      "tip": "rotile superioare",
+      "finisaj": null,
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Rotila superioara  K11 cod 345",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "Manopera 1",
+      "tip": "manopera",
+      "finisaj": null,
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Manopera 1",
       "um": "buc",
       "activ": 1
     }
