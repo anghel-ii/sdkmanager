@@ -58,4 +58,6 @@ export const state = {
   panels:    [['sticla']],
   amortizare: [{ left: 'fara', right: 'fara' }],
   divAplicate: [{ latime: 'fara', parte: 'fata', verticale: 0, orizontale: 0 }],
+  // detaliile comenzii — la toate gamele (js/lib/comun/comanda.js)
+  comanda: { livrare: null, agent: null, facturare: null },
 };

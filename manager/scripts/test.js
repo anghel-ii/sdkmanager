@@ -1,4 +1,4 @@
-const fs   = require('node:fs');
+ const fs   = require('node:fs');
 const path = require('node:path');
 const os   = require('node:os');
 const http = require('node:http');
@@ -238,7 +238,8 @@ async function main() {
   });
 
   const oferta = await cer('POST', '/api/comenzi', {
-    client: { nume: 'Client Test', telefon: '0700000000' },
+    client: { nume: 'Client Test', telefon: '0700000000', adresa: '  Str. Fabricii 12, Cluj  ' },
+    detalii: { livrare: 'Curier ramburs', agent: 'Birou', facturare: 'Factura fiscala' },
     observatii: 'test',
     pozitii: [pozitie('confortVerona', 'Confort Verona', 5, 3000)],
   });
@@ -256,6 +257,10 @@ async function main() {
   verifica('detaliul are codul comenzii', usi.length === 1 && usi[0] === oferta.date.comanda.coduri[0].cod_bare, usi.join(' '));
   verifica('cod de bare = an + număr (ex. 260001)', /^\d{2}0001$/.test(usi[0]), usi[0]);
   verifica('config_json se întoarce parsat', det.date.pozitii[0].config.system === 'confortVerona');
+  verifica('adresa şi detaliile comenzii se salvează (telefon separat de adresă)',
+    det.date.comanda.client_telefon === '0700000000' && det.date.comanda.client_adresa === 'Str. Fabricii 12, Cluj' &&
+    det.date.comanda.livrare === 'Curier ramburs' && det.date.comanda.agent === 'Birou' && det.date.comanda.tip_facturare === 'Factura fiscala',
+    JSON.stringify(det.date.comanda));
   verifica('cele 3 liste păstrate',
     ['facturare', 'necesar', 'client'].every(l => det.date.pozitii[0].linii[l].length === 1));
   verifica('lista client n-are cod', det.date.pozitii[0].linii.client[0].cod === null);
@@ -331,7 +336,7 @@ async function main() {
   // `cer` parsează singur răspunsurile application/json — game.json vine cu
   // content-type corect, deci `.date` e deja obiect.
   const gj = (await cer('GET', '/configurator/game.json')).date;
-  verifica('game.json se serveşte din dist', gj.game?.length === 3 && gj.game.some(g => g.id === 'rame'), typeof gj);
+  verifica('game.json se serveşte din dist', gj.game?.length === 4 && gj.game.some(g => g.id === 'util'), typeof gj);
   verifica('gamele au sistem implicit',
     gj.game?.every(g => g.implicit && g.modele?.length), JSON.stringify(gj.game?.map(g => g.id)));
 
@@ -444,7 +449,7 @@ async function main() {
     const idVechi = Number(db2().prepare("INSERT INTO utilizator (nume, user, parola_hash, parola_salt, rol) VALUES ('Vechi', 'vechi', 'x', 'x', 'operator')").run().lastInsertRowid);
     require('../server/db.js').roluriNoi(db2());
     verifica('migraţie: operator → birou', db2().prepare('SELECT rol FROM utilizator WHERE id = ?').get(idVechi).rol === 'birou');
-    verifica('schema la versiunea 9', db2().prepare('PRAGMA user_version').get().user_version === 9);
+    verifica('schema la versiunea 10', db2().prepare('PRAGMA user_version').get().user_version === 10);
   }
 
   console.log('\nFixare şi sortare — per utilizator');

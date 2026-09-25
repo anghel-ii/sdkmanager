@@ -115,10 +115,16 @@ function scriePozitia(d, comandaId, p) {
   return pozitieId;
 }
 
-const campuriClient = client => [
+// text liber de la client (câmpuri din configurator): tăiat şi limitat
+const text = (v, max = 200) => (v == null || String(v).trim() === '' ? null : String(v).trim().slice(0, max));
+const campuriClient = (client, detalii = {}) => [
   String(client.nume).trim(),
-  client.telefon ? String(client.telefon).trim() : null,
-  client.email   ? String(client.email).trim()   : null,
+  text(client.telefon),
+  text(client.email),
+  text(client.adresa, 300),
+  text(detalii?.livrare, 60),
+  text(detalii?.agent, 60),
+  text(detalii?.facturare, 60),
 ];
 
 // ── Creare ───────────────────────────────────────────────────────────────────
@@ -136,11 +142,11 @@ async function creeaza(ctx) {
     const numar = urmatorulNumar(d, an);
 
     const comandaId = Number(d.prepare(`
-      INSERT INTO comanda (numar, client_nume, client_telefon, client_email, observatii, creat_de)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO comanda (numar, client_nume, client_telefon, client_email, client_adresa, livrare, agent, tip_facturare, observatii, creat_de)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       `OF-${an}-${numar}`,
-      ...campuriClient(corp.client),
+      ...campuriClient(corp.client, corp.detalii),
       corp.observatii ? String(corp.observatii).trim() : null,
       utilizator.id,
     ).lastInsertRowid);
@@ -173,8 +179,9 @@ async function modifica(ctx) {
   if (v.gresit) return eroare(ctx.res, 400, v.gresit);
 
   const rezultat = tranzactie(d => {
-    d.prepare('UPDATE comanda SET client_nume = ?, client_telefon = ?, client_email = ? WHERE id = ?')
-      .run(...campuriClient(corp.client), id);
+    d.prepare(`UPDATE comanda SET client_nume = ?, client_telefon = ?, client_email = ?, client_adresa = ?,
+                 livrare = ?, agent = ?, tip_facturare = ? WHERE id = ?`)
+      .run(...campuriClient(corp.client, corp.detalii), id);
 
     const vechi = d.prepare('SELECT id FROM pozitie WHERE comanda_id = ?').all(id);
     const cod = d.prepare(`SELECT a.cod_bare FROM usa a JOIN pozitie p ON p.id = a.pozitie_id

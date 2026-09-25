@@ -1,5 +1,6 @@
 import { state } from './state.js';
 import { systems } from './systems/registry.js';
+import { finishesOf } from './familii.js';
 import { currentSpec, currentBom, currentClientPanels, currentBilling, currentSticla } from './builder.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -58,7 +59,8 @@ export function pozitieCurenta() {
     pozitie: {
       sistem:   sys.meta.id,
       eticheta: sys.meta.label,
-      finisaj:  state.finish,
+      // numele culorii, ca în configurator şi NeoManager (nu id-ul intern)
+      finisaj:  finishesOf(sys.meta).find(f => f.id === state.finish)?.label ?? state.finish,
       // rame: n-au gol — cea mai mare ramă din comandă (spec.opening)
       latime:   sys.meta.rame ? spec.opening.w : state.width,
       inaltime: sys.meta.rame ? spec.opening.h : state.height,
@@ -100,7 +102,7 @@ export async function incarcaOferta(id) {
 
 // `id` = oferta deschisă pt. modificare (PUT, acelaşi număr şi cod de bare);
 // fără id → ofertă nouă (POST).
-export async function confirma({ nume, telefon, email, observatii, id = null }) {
+export async function confirma({ nume, telefon, adresa, email, observatii, detalii, id = null }) {
   if (!String(nume || '').trim()) return { eroare: 'Completează numele clientului.' };
 
   const p = pozitieCurenta();
@@ -112,8 +114,9 @@ export async function confirma({ nume, telefon, email, observatii, id = null }) 
       method:  id ? 'PUT' : 'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({
-        client: { nume, telefon, email },
+        client: { nume, telefon, adresa, email },
         observatii,
+        detalii,   // livrare / agent / facturare (coloanele comenzii)
         pozitii: [p.pozitie],
       }),
     });

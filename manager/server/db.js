@@ -106,6 +106,12 @@ const MIGRATII = [
     d.exec('ALTER TABLE comanda ADD COLUMN facturat_de  INTEGER REFERENCES utilizator(id)');
     d.exec('ALTER TABLE comanda ADD COLUMN finalizat_de INTEGER REFERENCES utilizator(id)');
   },
+  // v9 → v10 (2026-09-25): adresa clientului separat de telefon, şi detaliile
+  // comenzii din configurator (toate gamele): mod de livrare, agent, tipul de
+  // facturare (BF / factură fiscală / ofertă). Comenzile de dinainte: NULL.
+  d => {
+    for (const col of ['client_adresa', 'livrare', 'agent', 'tip_facturare']) d.exec(`ALTER TABLE comanda ADD COLUMN ${col} TEXT`);
+  },
 ];
 
 // Exportată pt. test.

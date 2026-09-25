@@ -2,6 +2,7 @@ import { state }        from './state.js';
 import { systems }       from './systems/registry.js';
 import { clearGroup }    from './lib/comun/geo.js';
 import { familia }       from './familii.js';
+import { liniaTransport } from './lib/comun/comanda.js';
 
 // Culorile oferite pt. un sistem (filtrate după catalog) — expuse aici ca
 // testele să nu depindă de unde stau bibliotecile familiilor.
@@ -65,7 +66,10 @@ export function currentSticla() {
 export function currentBilling() {
   const sys = systems[state.system];
   if (!(sys && _spec && familia(sys))) return { lines: [], errors: [], mode: null };
-  const f = familia(sys).billingLines(sys, state, _spec);
+  let f = familia(sys).billingLines(sys, state, _spec);
+  // transportul — al comenzii, la toate gamele (doar dacă există ce factura)
+  const transport = liniaTransport(state);
+  if (transport && f.lines.length) f = { ...f, lines: [...f.lines, { ...transport }] };
   const panouri = (_spec.glass?.panels ?? [])
     .map((p, i) => p.eroare && `uşa ${i + 1}: ${p.eroare}`).filter(Boolean);
   return panouri.length ? { ...f, errors: [...f.errors, ...panouri] } : f;
