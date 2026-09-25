@@ -2,18 +2,20 @@ import { state } from './state.js';
 import { systems } from './systems/registry.js';
 import { currentSpec } from './builder.js';
 import {
-  MODELE_RAME, ASAMBLARE, GAURIRE_820, GAURIRE_831, LIVRARE, AGENTI, FACTURARE,
-  BALAMALE, PLACUTE, MANERE, FARA_BALAMALE, FARA_PLACUTE, FARA_MANER,
-  stareRameGoala, randGol,
+  MODELE_RAME, ASAMBLARE, GAURIRE_820, GAURIRE_831,
+  BALAMALE, PLACUTE, FARA_BALAMALE, FARA_PLACUTE, FARA_GAURIRE, DOUA_GAURI, BARA_MANER_MM, MODELE_MANER, codManer,
+  stareRameGoala, randGol, randManerGol,
 } from './lib/rame/rame.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  UI RAME — panoul din bara laterală pt. gama „rame" (în locul cotelor de gol,
-//  nr. de uşi şi cardurilor de uşă). Aceleaşi câmpuri ca formularul Excel:
-//  rânduri H × L × buc (× găuri la 820/822/824), cine asamblează, geam,
-//  cote de găurire, balama/plăcuţă sau manşon, profil mâner, vopsire RAL,
-//  livrare, agent, facturare. Selectările pornesc pe „Alege…" — facturarea
-//  rămâne blocată până sunt toate alese (ca macro-ul Valideaza).
+//  nr. de uşi şi cardurilor de uşă). În ordinea în care se completează (userul,
+//  2026-09-25): cine asamblează, geam/oglindă, cote de găurire → rândurile de
+//  rame (H × L × buc × găuri) → mânerul (modelul, în culoarea ramei, + rânduri
+//  lungime × buc) → balama/plăcuţă sau manşon, vopsire. Rândurile noi apar
+//  singure când începi să-l completezi pe ultimul. Livrarea, agentul şi
+//  facturarea sunt ale comenzii — lângă datele clientului, la toate gamele.
+//  Selectările pornesc pe „Alege…" — facturarea rămâne blocată până sunt alese.
 // ═══════════════════════════════════════════════════════════════════════════
 
 const esc = t => String(t ?? '').replace(/[&<>"]/g, c =>
@@ -39,6 +41,9 @@ export function syncRame() {
     if (rd.h != null) rd.h = limiteaza(rd.h, maxCota(m, 'h'));
     if (rd.l != null) rd.l = limiteaza(rd.l, maxCota(m, 'l'));
   }
+  // ofertele vechi: mânerul era un cod (`profil`), fără model
+  x.maner ??= { model: null, randuri: [randManerGol()] };
+  if (!x.maner.randuri?.length) x.maner.randuri = [randManerGol()];
 }
 
 // Limitele cotelor = cea mai mare mărime din codurile modelului (userul,
@@ -53,85 +58,131 @@ const optiuni = (lista, ales, alege) =>
 const camp = (eticheta, html) => `
   <div class="rame-camp"><span class="rame-et">${eticheta}</span>${html}</div>`;
 
+// ── Rânduri care cresc singure (rame şi mânere) ─────────────────────────────
+// `lista` = array-ul de rânduri din stare, `coloane` = [câmp, max] pe rând.
+// Un rând nou gol se adaugă la `input` în ultimul rând — fără re-randarea
+// tabelului, ca să nu se piardă cursorul.
+const golDeTot = (rd, coloane) => coloane.every(([c]) => rd[c] == null || rd[c] === '');
+
+// coloană `[câmp, max, mic]` = câmp numeric; `[câmp, { variante }]` = butoane
+// (variante = [[valoare, text, activ]], ex. modelul mânerului)
+function celula(rd, [c, max, mic]) {
+  if (max?.variante) return `<td><div class="segmented mini rame-seg-rand" data-c="${c}">${max.variante.map(([v, t, activ]) =>
+    `<button type="button" data-v="${v}"${rd[c] === v ? ' class="active"' : ''}${activ ? '' : ' disabled title="Nu există în culoarea aleasă"'}>${t}</button>`).join('')}</div></td>`;
+  return `<td><input type="number" class="rame-in${mic ? ' mic' : ''}" data-c="${c}" min="0"${
+    max && Number.isFinite(max) ? ` max="${max}"` : ''} step="1" value="${rd[c] ?? ''}"></td>`;
+}
+
+function randHtml(rd, i, coloane, idCod) {
+  return `<tr data-i="${i}">
+    <td class="rame-nr">${i + 1}</td>
+    ${coloane.map(col => celula(rd, col)).join('')}
+    ${idCod ? `<td class="rame-cod" id="${idCod}${i}"></td>` : ''}
+    <td><button class="rame-sterge" title="Şterge rândul">✕</button></td>
+  </tr>`;
+}
+
+function tabelCrescator(tbody, { lista, coloane, gol, idCod, laSchimbare, redeseneaza }) {
+  const randNou = i => {   // ai început ultimul rând → încă unul gol dedesubt
+    if (i !== lista.length - 1) return;
+    lista.push(gol());
+    tbody.insertAdjacentHTML('beforeend', randHtml(lista.at(-1), lista.length - 1, coloane, idCod));
+    leaga(tbody.lastElementChild);
+  };
+  const leaga = tr => {
+    const i = +tr.dataset.i;
+    tr.querySelectorAll('.rame-seg-rand button').forEach(b => b.addEventListener('click', () => {
+      lista[i][b.parentElement.dataset.c] = b.dataset.v;
+      b.parentElement.querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b));
+      randNou(i);
+      laSchimbare();
+    }));
+    tr.querySelectorAll('input.rame-in').forEach(inp => {
+      inp.addEventListener('change', () => {
+        const [, max] = coloane.find(([c]) => c === inp.dataset.c) ?? [];
+        lista[i][inp.dataset.c] = limiteaza(parseInt(inp.value, 10), max ?? Infinity);
+        inp.value = lista[i][inp.dataset.c] ?? '';
+        laSchimbare();
+      });
+      inp.addEventListener('input', () => { if (inp.value !== '') randNou(i); });
+    });
+    tr.querySelector('.rame-sterge').addEventListener('click', () => {
+      if (lista.length === 1) lista[0] = gol(); else lista.splice(i, 1);
+      redeseneaza();
+    });
+  };
+  tbody.querySelectorAll('tr').forEach(leaga);
+}
+
+// ── Panoul ───────────────────────────────────────────────────────────────────
 export function renderRame(box, { rebuild, geamOptionsHtml }) {
   const meta = systems[state.system]?.meta;
   if (!box || !meta?.rame) return;
   const model = meta.rame, m = MODELE_RAME[model], x = r();
   const cu820 = m.grup === '820';
   const gaurire = cu820 ? GAURIRE_820 : GAURIRE_831;
+  syncRame();
+  // la coadă, mereu un rând gol (se completează ca să apară următorul)
+  const faraGaurire = x.gaurire === FARA_GAURIRE;
+  const cuBalama = cu820 && !faraGaurire;                        // balama / plăcuţă
+  const cuGauri  = cuBalama && x.gaurire !== DOUA_GAURI;          // coloana „Găuri" (la sus/jos: mereu 2)
+  const COL_RAME = [['h', m.H.at(-1)], ['l', m.L.at(-1)], ['buc', Infinity, true], ...(cuGauri ? [['gauri', Infinity, true]] : [])];
+  // toate modelele de mâner la vedere; cele fără cod în culoarea aleasă — gri
+  const existaInCuloare = v => !state.finish || !!codManer(v, state.finish);
+  const COL_MANER = [['model', { variante: MODELE_MANER.map(([v, t]) => [v, t, existaInCuloare(v)]) }],
+                     ['lungime', Infinity], ['buc', Infinity, true]];
+  if (!golDeTot(x.randuri.at(-1) ?? { h: 1 }, [['h'], ['l']])) x.randuri.push(randGol());
+  // ofertele vechi: modelul era pe toată secţiunea → trece pe fiecare rând
+  if (x.maner.model) { x.maner.randuri.forEach(rd => { rd.model ??= x.maner.model; }); delete x.maner.model; }
+  if (!golDeTot(x.maner.randuri.at(-1) ?? { lungime: 1 }, [['lungime'], ['model']])) x.maner.randuri.push(randManerGol());
 
-  const randuri = x.randuri.map((rd, i) => `
-    <tr>
-      <td class="rame-nr">${i + 1}</td>
-      <td><input type="number" class="rame-in" data-i="${i}" data-c="h" min="0" max="${m.H.at(-1)}" step="1" value="${rd.h ?? ''}" placeholder="H"></td>
-      <td><input type="number" class="rame-in" data-i="${i}" data-c="l" min="0" max="${m.L.at(-1)}" step="1" value="${rd.l ?? ''}" placeholder="L"></td>
-      <td><input type="number" class="rame-in mic" data-i="${i}" data-c="buc" min="0" step="1" value="${rd.buc ?? ''}"></td>
-      ${cu820 ? `<td><input type="number" class="rame-in mic" data-i="${i}" data-c="gauri" min="0" step="1" value="${rd.gauri ?? 0}"></td>` : ''}
-      <td class="rame-cod" id="rame-cod-${i}"></td>
-      <td><button class="rame-sterge" data-i="${i}" title="Şterge rândul"${x.randuri.length === 1 ? ' disabled' : ''}>✕</button></td>
-    </tr>`).join('');
-
-  const maner = x.maner;
-  const manerHtml = !cu820 ? '' : `
-    ${camp('Profil mâner', `<select class="rame-sel" data-c="manerProfil">${
-      optiuni([[FARA_MANER, FARA_MANER], ...MANERE.map(([c, d]) => [c, d])], maner.profil, 'Alege')}</select>`)}
-    ${maner.profil !== FARA_MANER ? `
-    <table class="rame-tabel rame-maner">
-      <thead><tr><th>#</th><th>Lungime (mm)</th><th>Buc</th><th></th></tr></thead>
-      <tbody>${maner.randuri.map((mr, i) => `
-        <tr><td class="rame-nr">${i + 1}</td>
-          <td><input type="number" class="rame-maner-in" data-i="${i}" data-c="lungime" min="1" value="${mr.lungime ?? ''}"></td>
-          <td><input type="number" class="rame-maner-in mic" data-i="${i}" data-c="buc" min="0" value="${mr.buc ?? ''}"></td>
-          <td><button class="rame-maner-sterge" data-i="${i}"${maner.randuri.length === 1 ? ' disabled' : ''}>✕</button></td></tr>`).join('')}
-      </tbody>
-    </table>
-    <button class="rame-adauga" id="rameManerAdauga" type="button">+ Rând mâner</button>
-    <div class="rame-nota" id="rameManerBare"></div>` : ''}`;
+  // culoarea nouă nu are modelul ales → se goleşte şi se recalculează (după
+  // randare, ca facturarea să nu rămână cu modelul vechi)
+  let golite = false;
+  for (const rd of x.maner.randuri) if (rd.model && !existaInCuloare(rd.model)) { rd.model = null; golite = true; }
+  if (golite) queueMicrotask(rebuild);
 
   box.innerHTML = `
-    <div class="rame-nota">Ramă ${model} · profil ${m.profil} · H max ${m.H.at(-1)} mm · L max ${m.L.at(-1)} mm
-      (se rotunjesc în sus la mărimea standard)</div>
-    <table class="rame-tabel">
-      <thead><tr><th>#</th><th>H (mm)</th><th>L (mm)</th><th>Buc</th>${cu820 ? '<th>Găuri</th>' : ''}<th>Cod ramă</th><th></th></tr></thead>
-      <tbody>${randuri}</tbody>
-    </table>
-    <button class="rame-adauga" id="rameAdauga" type="button">+ Adaugă rând</button>
-
     ${camp('Asamblare', `<div class="segmented mini rame-seg" data-c="asamblare">${
       ASAMBLARE.map(([v, t]) => `<button data-v="${v}"${x.asamblare === v ? ' class="active"' : ''}>${t}</button>`).join('')}</div>`)}
-    ${x.asamblare === 'noi' ? camp('Geam / oglindă', `<select class="rame-sel" data-c="geam">${geamOptionsHtml(x.geam)}</select>`) : ''}
+    ${x.asamblare === 'noi' ? camp('Geam / oglindă', `<select class="rame-sel" data-c="geam">${geamOptionsHtml(x.geam)}</select>`)
+      : x.asamblare === 'client' ? camp('Geam / oglindă', `<input type="text" class="rame-text" value="Asamblează clientul · sticlă 4 mm" readonly>`) : ''}
     ${camp(cu820 ? 'Cote găurire balamale' : 'Găurire', `<select class="rame-sel" data-c="gaurire">${
       optiuni(gaurire.map(g => [g, g]), x.gaurire, 'Alege')}</select>`)}
+
+    <div class="rame-nota">Ramă ${model} · profil ${m.profil} · înălţime max ${m.H.at(-1)} mm · lăţime max ${m.L.at(-1)} mm
+      (se rotunjesc în sus la mărimea standard)</div>
+    <table class="rame-tabel">
+      <thead><tr><th>#</th><th>Înălţime (mm)</th><th>Lăţime (mm)</th><th>Bucăţi</th>${cuGauri ? '<th>Găuri</th>' : ''}<th>Cod ramă</th><th></th></tr></thead>
+      <tbody id="rameRanduri">${x.randuri.map((rd, i) => randHtml(rd, i, COL_RAME, 'rame-cod-')).join('')}</tbody>
+    </table>
+
     ${cu820 ? `
-    ${camp('Balama', `<select class="rame-sel" data-c="balama">${
+    <div class="rame-et rame-titlu-maner">Profil mâner</div>
+    <table class="rame-tabel rame-maner">
+      <thead><tr><th>#</th><th>Model</th><th>Lungime (mm)</th><th>Bucăţi</th><th></th></tr></thead>
+      <tbody id="rameManer">${x.maner.randuri.map((rd, i) => randHtml(rd, i, COL_MANER, null)).join('')}</tbody>
+    </table>
+    <div class="rame-nota" id="rameManerBare"></div>
+
+    ${faraGaurire ? '' : `${camp('Balama', `<select class="rame-sel" data-c="balama">${
       optiuni([[FARA_BALAMALE, FARA_BALAMALE], ...BALAMALE[model]], x.balama, 'Alege balama')}</select>`)}
     ${camp('Plăcuţă', `<select class="rame-sel" data-c="placuta">${
-      optiuni([[FARA_PLACUTE, FARA_PLACUTE], ...PLACUTE[model]], x.placuta, 'Alege placuta')}</select>`)}` : `
+      optiuni([[FARA_PLACUTE, FARA_PLACUTE], ...PLACUTE[model]], x.placuta, 'Alege placuta')}</select>`)}`}` : `
     ${x.gaurire === 'Gaurire Standard' ? camp('Manşon', `<div class="segmented mini rame-seg" data-c="manson">
       <button data-v="1"${x.manson ? ' class="active"' : ''}>Cu manşon</button>
       <button data-v="0"${!x.manson ? ' class="active"' : ''}>Fara manson</button></div>`) : ''}`}
-    ${manerHtml}
 
     ${camp('Vopsire cod RAL', `<input type="text" class="rame-text" data-c="ral" value="${esc(x.ral)}" placeholder="ex. 9005">`)}
-    ${camp('Manoperă vopsit (cant.)', `<input type="number" class="rame-text mic" data-c="vopsitCant" min="0" step="1" value="${x.vopsitCant || ''}" placeholder="0">`)}
-    ${camp('Mod de livrare', `<select class="rame-sel" data-c="livrare">${optiuni(LIVRARE.map(v => [v, v]), x.livrare, 'Alege')}</select>`)}
-    ${camp('Agent', `<select class="rame-sel" data-c="agent">${optiuni(AGENTI.map(v => [v, v]), x.agent, 'Alege')}</select>`)}
-    ${camp('Facturare', `<select class="rame-sel" data-c="facturare">${optiuni(FACTURARE.map(v => [v, v]), x.facturare, 'Alege')}</select>`)}`;
+    ${camp('Manoperă vopsit (cantitate)', `<input type="number" class="rame-text mic" data-c="vopsitCant" min="0" step="1" value="${x.vopsitCant || ''}" placeholder="0">`)}`;
 
   const redeseneaza = () => { renderRame(box, { rebuild, geamOptionsHtml }); rebuild(); refreshRame(); };
+  const laSchimbare = () => { rebuild(); refreshRame(); };
 
-  // Cotele: la 'change' se actualizează doar starea + coloana de coduri,
-  // fără re-randarea panoului (altfel s-ar pierde focusul la Tab).
-  box.querySelectorAll('input.rame-in').forEach(inp => inp.addEventListener('change', () => {
-    const v = limiteaza(parseInt(inp.value, 10), maxCota(m, inp.dataset.c));
-    x.randuri[+inp.dataset.i][inp.dataset.c] = v;
-    inp.value = v ?? '';
-    rebuild(); refreshRame();
-  }));
-  box.querySelectorAll('.rame-sterge').forEach(b => b.addEventListener('click', () => {
-    x.randuri.splice(+b.dataset.i, 1); redeseneaza();
-  }));
-  box.querySelector('#rameAdauga')?.addEventListener('click', () => { x.randuri.push(randGol()); redeseneaza(); });
+  tabelCrescator(box.querySelector('#rameRanduri'),
+    { lista: x.randuri, coloane: COL_RAME, gol: randGol, idCod: 'rame-cod-', laSchimbare, redeseneaza });
+  const tm = box.querySelector('#rameManer');
+  if (tm) tabelCrescator(tm, { lista: x.maner.randuri, coloane: COL_MANER, gol: randManerGol, idCod: null, laSchimbare, redeseneaza });
 
   box.querySelectorAll('.rame-seg').forEach(seg => seg.querySelectorAll('button').forEach(btn =>
     btn.addEventListener('click', () => {
@@ -139,7 +190,7 @@ export function renderRame(box, { rebuild, geamOptionsHtml }) {
       redeseneaza();
     })));
   box.querySelectorAll('select.rame-sel').forEach(sel => sel.addEventListener('change', () => {
-    if (sel.dataset.c === 'manerProfil') maner.profil = sel.value; else x[sel.dataset.c] = sel.value;
+    x[sel.dataset.c] = sel.value;
     redeseneaza();
   }));
   box.querySelectorAll('input.rame-text').forEach(inp => inp.addEventListener('change', () => {
@@ -147,25 +198,21 @@ export function renderRame(box, { rebuild, geamOptionsHtml }) {
     rebuild();
   }));
 
-  box.querySelectorAll('input.rame-maner-in').forEach(inp => inp.addEventListener('change', () => {
-    const v = parseInt(inp.value, 10);
-    maner.randuri[+inp.dataset.i][inp.dataset.c] = Number.isFinite(v) && v >= 0 ? v : null;
-    rebuild(); refreshRame();
-  }));
-  box.querySelectorAll('.rame-maner-sterge').forEach(b => b.addEventListener('click', () => {
-    maner.randuri.splice(+b.dataset.i, 1); redeseneaza();
-  }));
-  box.querySelector('#rameManerAdauga')?.addEventListener('click', () => {
-    maner.randuri.push({ lungime: null, buc: 1 }); redeseneaza();
-  });
-
+  culoareRandata = state.finish;
+  ultimaRandare = { box, rebuild, geamOptionsHtml };
   refreshRame();
 }
 
-// Coloana „Cod ramă" + nr. de bare de mâner, din spec-ul curent.
+// Coloana „Cod ramă" + nr. de bare de mâner, din spec-ul curent. Dacă s-a
+// schimbat culoarea, alte modele de mâner sunt disponibile → panoul se refece.
+let culoareRandata = null, ultimaRandare = null;
 export function refreshRame() {
   const s = currentSpec();
   if (!s?.randuri) return;
+  if (culoareRandata !== state.finish && ultimaRandare?.box.isConnected) {
+    renderRame(ultimaRandare.box, ultimaRandare);   // îşi cheamă singur refreshRame la final
+    return;
+  }
   s.randuri.forEach(rd => {
     const el = document.getElementById(`rame-cod-${rd.i}`);
     if (!el) return;
@@ -174,5 +221,6 @@ export function refreshRame() {
     el.title = rd.eroare ?? (rd.gol ? '' : `rotunjit la ${rd.hR}×${rd.lR} · geam ${rd.geamH}×${rd.geamL}`);
   });
   const bare = document.getElementById('rameManerBare');
-  if (bare) bare.textContent = s.bareManer ? `${s.bareManer} bare de 2500 mm` : '';
+  const nr = (s.manere ?? []).reduce((a, e) => a + e.bare, 0);
+  if (bare) bare.textContent = nr ? `${nr} ${nr === 1 ? 'bară' : 'bare'} de ${BARA_MANER_MM} mm` : '';
 }

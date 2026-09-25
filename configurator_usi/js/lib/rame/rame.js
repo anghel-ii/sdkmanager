@@ -1,6 +1,7 @@
 import catalog from '../../catalog/catalog.generated.json';
 import { line } from './bom.js';
 import { findGeam, FOLIE_COD, folieCantitate } from './geam.js';
+import { detaliiComanda } from '../comun/comanda.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  RAME — rame de aluminiu pt. uşi de mobilier (cu balamale), gama „rame".
@@ -63,74 +64,75 @@ export const finisajeModel = model => finisaje(MODELE_RAME[model].culori);
 
 // ── Opţiuni din formular (liste de validare) ────────────────────────────────
 export const ASAMBLARE = [['noi', 'NOI ASAMBLAM'], ['client', 'CLIENTUL ASAMBLEAZA']];
-export const GAURIRE_820 = ['100 mm de margini sus/jos', '100 mm sus/jos si la mijloc',
+export const FARA_GAURIRE = 'Fara gaurire';   // la toate modelele (userul, 2026-09-25)
+// găuri doar sus şi jos, la 100 mm de margini = mereu 2 pe ramă (userul, 2026-09-25):
+// nr. de găuri nu se mai scrie pe rând
+export const DOUA_GAURI = '100 mm de margini sus/jos';
+export const GAURIRE_820 = [FARA_GAURIRE, DOUA_GAURI, '100 mm sus/jos si la mijloc',
                             '100 mm sus/jos si impartite egal', 'vezi schita pe spate'];
 export const GAURIRE_831 = ['Fara gaurire', 'Gaurire Standard'];
-export const LIVRARE = ['Ridicare personala', 'Curier ramburs', 'Curier op avans', 'Curier op la termen', 'Cu masina noastra'];
-export const AGENTI = ['Birou', 'Site', 'Serban Dragos', 'Bondrea Oliver', 'Coroma Ciprian',
-                       'Cucolas Catalin', 'Moise Razvan', 'Tanvuia Adrian'];
-export const FACTURARE = ['BF', 'Factura fiscala', 'Oferta'];
-const LIVRARE_COD = 'CHLTTRMANIP';
+// livrare / agent / facturare: acum ale comenzii, la toate gamele (lib/comun/comanda.js)
+export { LIVRARE, AGENTI, FACTURARE } from '../comun/comanda.js';
 
 // ── Accesorii grup 820 (820 / 822 / 824) ────────────────────────────────────
 // Balamale şi plăcuţe: lista diferă între 820 şi 822/824 (Sheet3!I120:K170).
 export const BALAMALE = {
   820: [
-    ['71B3550 NICHEL', '820 BALAMA APLICATA CU AMORTIZARE INCORPORATA FINISAJ NICHEL DESCHIDERE 110 GRADE COD 71B3550 NICHEL'],
-    ['70T3550.TL NICHEL', '820 BALAMA APLICATA FARA ARC FINISAJ NICHEL DESCHIDERE 110 GRADE COD 70T3550.TL NICHEL'],
-    ['71B3650 NICHEL', '820 BALAMA SEMIAPLICATA CU AMORTIZARE FINISAJ NICHEL DESCHIDERE 110 GRADE COD 71B3650 NICHEL'],
-    ['70T3650.TL NICHEL', '820 BALAMA SEMIAPLICATA FARA ARC FINISAJ NICHEL DESCHIDERE 110 GRADE COD 71B3650 NICHEL COD 70T3650.TL NICHEL'],
-    ['71B3750 NICHEL', '820 BALAMA INCADRATA CU AMORTIZARE FINISAJ NICHEL DESCHIDERE 110 GRADE COD 71B3750 NICHEL'],
-    ['70T3750.TL NICHEL', '820 BALAMA INCADRATA FARA ARC FINISAJ NICHEL DESCHIDERE 110 GRADE COD 70T3750.TL NICHEL'],
-    ['71B3550 ONYX', '820 BALAMA APLICATA CU AMORTIZARE INCORPORATA FINISAJ NEGRU DESCHIDERE 110 GRADE COD 71B3550 ONYX'],
-    ['71B7550 ONYX', '820 BALAMA APLICATA CU AMORTIZARE CU PATRUNDERE 0 DESCHIDERE 155 GRADE FINISAJ NEGRU COD 71B7550 ONYX'],
-    ['70T3550.TL ONYX', '820 BALAMA APLICATA FARA ARC FINISAJ NEGRU DESCHIDERE 110 GRADE COD 70T3550.TL ONYX'],
-    ['71B3650 ONYX', '820 BALAMA SEMIAPLICATA CU AMORTIZARE FINISAJ NEGRU DESCHIDERE 110 GRADE COD 71B3650 ONYX'],
-    ['70T3650.TL ONYX', '820 BALAMA SEMIAPLICATA FARA ARC FINISAJ NEGRU DESCHIDERE 110 GRADE COD 70T3650.TL ONYX'],
-    ['71B3750 ONYX', '820 BALAMA INCADRATA CU AMORTIZARE FINISAJ NEGRU DESCHIDERE 110 GRADE COD 71B3750 ONYX'],
-    ['70T3750.TL ONYX', '820 BALAMA INCADRATA FARA ARC FINISAJ NEGRU DESCHIDERE 110 GRADE COD 70T3750.TL ONYX'],
+    ['71B3550 NICHEL', 'Balama CLIP TOP usa aplicata BLUMOTION incorporat deschidere 110 grade,nichel(fara placuta) cod 71B3550 NICHEL'],
+    ['70T3550.TL NICHEL', 'Balama BLUM CLIP top, 110°, aplicata, fara arc, suruburi rama 820 cod 70T3550.TL NICHEL'],
+    ['71B3650 NICHEL', 'Balama BLUM CLIP top BLUMOTION, 110°, 9,5mm, semiaplicata, cu arc, suruburi cod 71B3650 NICHEL'],
+    ['70T3650.TL NICHEL', 'Balama BLUM CLIP top, 110°, 9,5mm, semiaplicata, fara arc, suruburi cod 70T3650.TL NICHEL'],
+    ['71B3750 NICHEL', 'Balama BLUM CLIP top BLUMOTION, 110°, 18mm, incadrata, cu arc, suruburi cod 71B3750 NICHEL'],
+    ['70T3750.TL NICHEL', 'Balama BLUM CLIP top, 110°, 18mm, incadrata, fara arc, suruburi cod 70T3750.TL NICHEL'],
+    ['71B3550 ONYX', 'Balama CLIP top BLUMOTION 110°, usa aplicata, suruburi, Onyx negru cod 71B3550 ONYX'],
+    ['71B7550 ONYX', 'Balama BLUM CLIP top BLUMOTION ONYX155° aplicata patrundere 0 cu arc suruburi cod 71B7550 ONYX'],
+    ['70T3550.TL ONYX', 'Balama BLUM CLIP top, 110°, aplicata, fara arc, suruburi cod 70T3550.TL ONYX'],
+    ['71B3650 ONYX', 'Balama BLUM CLIP top BLUMOTION ONYX, 110, semiaplicata, cu arc,suruburi cod 71B3650 ONYX'],
+    ['70T3650.TL ONYX', 'Balama BLUM CLIP top ONYX 110, semiaplicata,(faraplacute)  fara arc cod 70T3650.TL ONYX'],
+    ['71B3750 ONYX', 'Balama BLUM CLIP top BLUMOTION ONYX, 110°, 18mm, incadrata, cu arc, suruburi cod 71B3750 ONYX'],
+    ['70T3750.TL ONYX', 'Balama BLUM CLIP top ONYX, 110°, 18mm, incadrata, fara arc, suruburi , cod 70T3750.TL ONYX'],
   ],
   822: [
-    ['9072524', '822/824 BALAMA APLICATA CU AMORTIZARE FINISAJ NICHEL COD 9072524'],
-    ['9072527', '822/824 BALAMA APLICATA CU ARC FINISAJ NICHEL COD 9072527'],
-    ['9072530', '822/824 BALAMA APLICATA FARA ARC FINISAJ NICHEL COD 9072530'],
-    ['9072525', '822/824 BALAMA SEMIAPLICATA CU AMORTIZARE FINISAJ NICHEL COD 9072525'],
-    ['9072528', '822/824 BALAMA SEMIAPLICATA CU ARC FINISAJ NICHEL COD 9072528'],
-    ['9072531', '822/824 BALAMA SEMIAPLICATA FARA ARC FINISAJ NICHEL COD 9072531'],
-    ['9072526', '822/824 BALAMA INCADRATA CU AMORTIZARE FINISAJ NICHEL COD 9072526'],
-    ['9072529', '822/824 BALAMA INCADRATA CU ARC FINISAJ NICHEL COD 9072529'],
-    ['9072532', '822/824 BALAMA INCADRATA FARA ARC FINISAJ NICHEL COD 9072532'],
-    ['9091744', '822/824 BALAMA APLICATA CU AMORTIZARE FINISAJ NEGRU COD 9091744'],
-    ['9350389', '822/824 BALAMA APLICATA FARA ARC FINISAJ NEGRU COD 9350389'],
-    ['9350390', '822/824 BALAMA SEMIAPLICATA FARA ARC FINISAJ NEGRU COD 9350390'],
-    ['9091992', '822/824 BALAMA SEMIAPLICATA CU AMORTIZARE FINISAJ NEGRU COD 9091992'],
-    ['9350421', '822/824 BALAMA INCADRATA FARA ARC FINISAJ NEGRU COD 9350421'],
-    ['9091993', '822/824 BALAMA INCADRATA CU AMORTIZARE FINISAJ NEGRU COD 9091993'],
-    ['BSV001', '822/824 Balama SV aplicata cu amortizare, finisaj nichel pt rama 822 si 824 cu placuta in cruce inclusa cod BSV001'],
-    ['BSV002', '822/824 Balama SV aplicata cu amortizare, finisaj negru pt rama 822 si 824 cu placuta in cruce inclusa cod BSV002'],
-    ['SDK32D221A0', '822/824 Balama SDK aplicata 3D pentru rama ingusta 822/824 , nichel , placuta cu excentric inclusa cod SDK32D221A0'],
-    ['SDK32D221B0', '822/824 Balama SDK aplicata 3D pentru rama ingusta 822/824 , negru , placuta cu excentric inclusa cod SDK32D221B0'],
+    ['9072524', 'Balama Sensys 8638i, pentru rama de aluminiu, deschidere 95°, cu Silent System, APLICATA cu amortizare cod 9072524'],
+    ['9072527', 'Balama Sensys 8638, pentru rama de aluminiu, deschidere 95°, fara Silent System, APLICATA cod 9072527'],
+    ['9072530', 'Balama Sensys 8638, pentru rama de aluminiu, deschidere 95°, fara arc, APLICATA cod 9072530'],
+    ['9072525', 'Balama Sensys 8638i, pentru rama de aluminiu, deschidere 95°, cu Silent System, SEMIAPLICATA  cod 9072525'],
+    ['9072528', 'Balama Sensys 8638, pentru rama de aluminiu, deschidere 95°, fara Silent System,SEMIAPLICATA cod 9072528'],
+    ['9072531', 'Balama Sensys 8638, pentru rama de aluminiu, deschidere 95, fara arc, SEMIAPLICATA cod 9072531'],
+    ['9072526', 'Balama Sensys 8638i, pentru rama de aluminiu, deschidere 95°, cu Silent System, INCADRATA cod 9072526'],
+    ['9072529', 'Balama Sensys 8638, pentru rama de aluminiu, deschidere 95°, fara Silent System, INCADRATA cod 9072529'],
+    ['9072532', 'Balama Sensys 8638, pentru rama de aluminiu, deschidere 95°, fara arc, INCADRATA cod 9072532'],
+    ['9091744', 'Balama Sensys 8638i negru aplicata cu amortizare, pentru rama de aluminiu, deschidere 95°, cu Silent System cod 9091744'],
+    ['9350389', 'Balama Sensys pentru rama din aluminiu, 95°, fara arc, negru, aplicata, montare prin insurubare cod 9350389'],
+    ['9350390', 'Balama Sensys pentru rama din aluminiu 95°, fara arc, negru, semiaplicata, montare prin insurubare cod 9350390'],
+    ['9091992', 'Balama Sensys, pentru rama de aluminiu, cu amortizare, negru, semiaplicata, 95°, montare prin insurubare cod 9091992'],
+    ['9350421', 'Balama Sensys pentru rama din aluminiu 95°, fara arc, negru, incadrata, montare prin insurubare cod 9350421'],
+    ['9091993', 'Balama Sensys, pentru rama de aluminiu, cu amortizare, negru, incadrata, 95°, montare prin insurubare cod 9091993'],
+    ['BSV001', 'Balama SV aplicata cu amortizare, finisaj nichel pt rama 822 si 824 cu placuta in cruce inclusa cod BSV001'],
+    ['BSV002', 'Balama SV aplicata cu amortizare, finisaj negru pt rama 822 si 824 cu placuta in cruce inclusa cod BSV002'],
+    ['SDK32D221A0', 'Balama SDK aplicata 3D pentru rama ingusta 822/824 , nichel , placuta cu excentric inclusa cod SDK32D221A0'],
+    ['SDK32D221B0', 'Balama SDK aplicata 3D pentru rama ingusta 822/824 , negru , placuta cu excentric inclusa cod SDK32D221B0'],
   ],
 };
 BALAMALE[824] = BALAMALE[822];
 
 export const PLACUTE = {
   820: [
-    ['173H7100 NICHEL', '820 PLACUTA IN CRUCE REGLAJ CU EXCENTRIC FINISAJ NICHEL COD 173H7100 NICHEL'],
-    ['175H3100 NICHEL', '820 PLACUTA IN LINIE REGLAJ CU EXCENTRIC FINISAJ NICHEL COD 175H3100 NICHEL'],
-    ['173H7100 ONYX', '820 PLACUTA IN CRUCE REGLAJ CU EXCENTRIC FINISAJ NEGRU COD 173H7100 ONYX'],
-    ['175H3100 ONYX', '820 PLACUTA IN LINIE REGLAJ CU EXCENTRIC FINISAJ NEGRU COD 175H3100 ONYX'],
+    ['173H7100 NICHEL', 'Placuta fixare balama CLIP TOP reglaj din excentric,montare cu surub, nichel cod 173H7100 NICHEL'],
+    ['175H3100 NICHEL', 'Placuta de montaj in linie BLUM CLIP, otel, excentric, surub, dist 0mm cod 175H3100 NICHEL'],
+    ['173H7100 ONYX', 'Placuta de montaj in cruce BLUM CLIP ONYX surub lemn regl inalt excentric dist 0mm cod 173H7100 ONYX'],
+    ['175H3100 ONYX', 'Placuta de montaj in linie BLUM CLIP ONYX, excentric, surub, dist 0mm cod 175H3100 ONYX'],
   ],
   822: [
-    ['9071576', '822/824 PLACUTA IN CRUCE 1.5MM REGLAJ SIMPLU FINISAJ NICHEL COD 9071576'],
-    ['9071671', '822/824 PLACUTA IN CRUCE 1.5 MM REGLAJ CU EXCENTRIC FINISAJ NICHEL COD 9071671'],
-    ['9117341', '822/824 PLACUTA IN LINIE 1.5 MM REGLAJ CU EXCENTRIC FINISAJ NICHEL COD 9117341'],
-    ['9091800', '822/824 PLACUTA IN CRUCE 1.5MM REGLAJ SIMPLU FINISAJ NEGRU COD 9091800'],
-    ['9359652', '822/824 PLACUTA IN CRUCE 1.5 MM REGLAJ CU EXCENTRIC FINISAJ NEGRU COD 9359652'],
-    ['9117471', '822/824 PLACUTA IN LINIE 1.5 MM REGLAJ CU EXCENTRIC FINISAJ NEGRU COD 9117471'],
-    ['9075087', '822/824 PLACUTA IN CRUCE 3 MM REGLAJ CU EXCENTRIC,FINISAJ NICHEL, DOAR PT BALAMA INCADRATA COD 9075087'],
-    ['9075007', '822/824 PLACUTA IN CRUCE 3MM REGLAJ FARA EXCENTRIC, FINISAJ NICHEL DOAR PT BALAMA INCADRATA COD 9075007'],
-    ['9091805', '822/824 PLACUTA IN CRUCE 3 MM REGLAJ CU EXCENTRIC,FINISAJ NEGRU, DOAR PT BALAMA INCADRATA COD 9091805'],
+    ['9071576', 'Placuta Sensys/ Intermat (nichel) H1.5, cruce, eco cod 9071576'],
+    ['9071671', 'Placuta de montare balama Sensys si Intermat 1,5 mm, excentric, prindere cu suruburi premontate cod 9071671'],
+    ['9117341', 'Placuta Sensys/ Intermat (nichel) H1.5, in linie, excentric cod 9117341'],
+    ['9091800', 'Placuta Sensys (negru) H1.5,cruce, eco cod 9091800'],
+    ['9359652', 'Placuta de montare in cruce D=1.5 negru, excentric, prindere cu suruburi PAL premontate'],
+    ['9117471', 'Placuta Sensys (negru) H1.5, linie, excentric cod 9117471'],
+    ['9075087', 'Placuta de montare balama Sensys si Intermat 3,0 mm, excentric(numai pt balamale incadrate) cod 9075087'],
+    ['9075007', 'Placuta de montare balama Sensys si Intermat 3,0 mm, prindere cu surub(numai pt balamale incadrate 822) cod 9075007'],
+    ['9091805', 'Placuta Sensys (negru) H3, cruce, excentric,prindere cu eurosuruburi,premontate ,cod:9091805'],
   ],
 };
 PLACUTE[824] = PLACUTE[822];
@@ -144,18 +146,18 @@ const COLTAR_820 = {
 };
 const SURUB_RAMA = {
   negru: ['829', 'Surub cu cap inecat imbus 4x10 negru cod 829'],
-  alb:   ['828', 'Surub cu cap inecat imbus 4x10 zincat alb  cod 828'],
+  alb:   ['828', 'Surub cu cap inecat imbus 4x10 zincat alb cod 828'],
 };
 // Şuruburile pt. balamale: la 820 se facturează (830); la 822/824 vin în cutia
 // cu balamale — apar doar la „de pregătit", cu mesajul din formular.
 const SURUB_BALAMA = {
-  820: ['830', 'Pentru rama model 820 - Surub autoforant cu cap inecat otel zincat 3.5x13mm DIN 7504P pt prinderea balamalelor cod 830'],
+  820: ['830', 'Surub autoforant cu cap inecat otel zincat 3.5x13mm DIN 7504P pt prinderea balamalelor cod 830'],
   822: [null, 'Pentru rama model 822 sau 824 - Surub autoforant pentru balamale la ramele inguste(in cutia cu balamele) Nu facturam'],
   824: [null, 'Pentru rama model 822 sau 824 - Surub autoforant pentru balamale la ramele inguste(in cutia cu balamele) Nu facturam'],
 };
 
-// Profil mâner (doar grupul 820) — bare, bucăţile se aşază pe bare de 2500mm
-// (macro-ul CalculeazaNrBare din formular).
+// Profil mâner (doar grupul 820) — bare de 3000 mm (userul, 2026-09-25: ca în denumire;
+// macro-ul CalculeazaNrBare din formular folosea 2500), bucăţile se aşază pe bare.
 export const MANERE = [
   ['771', 'Profil maner L 32 mm, finisaj alb mat 3 m cod 771'],
   ['770', 'Profil maner L 32 mm, finisaj aluminiu 3 m cod 770'],
@@ -166,14 +168,28 @@ export const MANERE = [
   ['782', 'Profil maner L 40 mm, finisaj auriu periat 3 m cod 782'],
   ['784', 'Profil maner L 40 mm, finisaj cupru 3m cod 784'],
   ['781', 'Profil maner L 40 mm, finisaj negru mat 3 m cod 781'],
-  ['779', 'Profil maner L 40 mm, finisaj aluminiu 3m cod 779'],
+  ['779', 'Profil maner L 40 mm, finisaj aluminiu 3 m cod 779'],
   ['778', 'Profil maner Neo 40x18x3 m, finisaj auriu periat cod 778'],
   ['776', 'Profil maner Neo 42x18x3 m, finisaj alb cod 776'],
   ['775', 'Profil maner Neo 42x18x3 m, finisaj aluminiu cod 775'],
   ['777', 'Profil maner Neo 42x18x3 m, finisaj negru periat cod 777'],
 ];
 export const FARA_MANER = 'Fara profil maner';
-const BARA_MANER_MM = 2500;
+export const BARA_MANER_MM = 3000;
+
+// Mânerul (secţiunea lui, cu rânduri lungime × buc): se alege doar MODELUL —
+// codul vine în culoarea ramei. L 40 negru există doar negru MAT (781): merge şi
+// la rama negru periat (userul). Un model fără cod în culoarea ramei nu se oferă.
+export const MODELE_MANER = [['L32', 'L 32'], ['L40', 'L 40'], ['Neo', 'Neo']];
+const COD_MANER = {
+  L32: { 'ALB MAT': '771', 'ALUMINIU': '770', 'AURIU PERIAT': '774', 'NEGRU PERIAT': '772' },
+  L40: { 'ALB MAT': '780', 'ALUMINIU': '779', 'AURIU PERIAT': '782', 'NEGRU PERIAT': '781', 'CUPRU PERIAT': '784' },
+  Neo: { 'ALB MAT': '776', 'ALUMINIU': '775', 'AURIU PERIAT': '778', 'NEGRU PERIAT': '777' },
+};
+export const codManer = (model, culoare) => COD_MANER[model]?.[culoare] ?? null;
+export const manereInCuloare = culoare => MODELE_MANER.filter(([m]) => codManer(m, culoare));
+// ofertele salvate cu vechiul `maner.profil` (un cod) → modelul lui
+const modelDinCod = cod => Object.keys(COD_MANER).find(m => Object.values(COD_MANER[m]).includes(cod)) ?? null;
 
 // ── Accesorii grup 831 (831 / 841 / 842) ───────────────────────────────────
 const INVISIO = {
@@ -192,11 +208,12 @@ INVISIO[842] = INVISIO[841];
 
 // ── Stare implicită (state.rame) ────────────────────────────────────────────
 export const randGol = () => ({ h: null, l: null, buc: 1, gauri: 0 });
+export const randManerGol = () => ({ model: null, lungime: null, buc: 1 });
 export const stareRameGoala = () => ({
   randuri: [randGol()],
   asamblare: null, geam: null, gaurire: null,
   balama: null, placuta: null, manson: true,
-  maner: { profil: FARA_MANER, randuri: [{ lungime: null, buc: 1 }] },
+  maner: { randuri: [randManerGol()] },
   ral: '', vopsitCant: 0,
   livrare: null, agent: null, facturare: null,
 });
@@ -227,10 +244,13 @@ export function specRame(model, state) {
   const fin = FINISAJE_RAME[state.finish];
   const erori = [];
   if (!fin) erori.push('alege culoarea');
+  // fără găurire: nicio gaură, deci nici balamale / plăcuţe / şuruburi de balama
+  const faraGaurire = r.gaurire === FARA_GAURIRE;
+  const douaGauri  = r.gaurire === DOUA_GAURI;
 
   const randuri = (r.randuri ?? []).map((x, i) => {
     const h = +x.h || 0, l = +x.l || 0, buc = Math.max(0, Math.round(+x.buc || 0));
-    const gauri = m.grup === '820' ? Math.max(0, Math.round(+x.gauri || 0)) : 0;
+    const gauri = m.grup !== '820' || faraGaurire ? 0 : douaGauri ? 2 : Math.max(0, Math.round(+x.gauri || 0));
     if (!h || !l || !buc) return { i, gol: true, h, l, buc, gauri };
     const hR = rotunjeste(h, m.H), lR = rotunjeste(l, m.L);
     let cod = null, eroare = null;
@@ -251,13 +271,29 @@ export function specRame(model, state) {
   const nrGauri = pline.reduce((s, x) => s + x.buc * x.gauri, 0);
   const ariaGeam = pline.reduce((s, x) => s + x.buc * Math.max(0, x.geamH) * Math.max(0, x.geamL) / 1e6, 0);
 
-  // mâner (grupul 820)
-  let bareManer = 0;
+  // mânerele (grupul 820): fiecare rând are modelul lui, codul vine în culoarea
+  // ramei; pe fiecare cod bucăţile (lungime × buc) se aşază pe bare de BARA_MANER_MM.
+  // Ofertele vechi aveau modelul (sau codul, `profil`) pe toată secţiunea.
+  const manere = [];
   const maner = r.maner ?? {};
-  if (m.grup === '820' && maner.profil && maner.profil !== FARA_MANER) {
-    const bucati = (maner.randuri ?? []).flatMap(x => Array(Math.max(0, Math.round(+x.buc || 0))).fill(+x.lungime || 0)).filter(L => L > 0);
-    const b = bareNecesare(bucati, BARA_MANER_MM);
-    if (b.eroare) erori.push(b.eroare); else bareManer = b.nr;
+  const modelSectiune = maner.model ?? (maner.profil && maner.profil !== FARA_MANER ? modelDinCod(maner.profil) : null);
+  if (m.grup === '820') {
+    const peCod = new Map();
+    (maner.randuri ?? []).forEach((x, i) => {
+      const L = +x.lungime || 0, buc = Math.max(0, Math.round(+x.buc || 0));
+      if (!L || !buc) return;                                   // rând gol
+      const model = x.model ?? modelSectiune;
+      if (!model) { erori.push(`mânerul de pe rândul ${i + 1}: alege modelul`); return; }
+      const cod = codManer(model, state.finish);
+      if (!cod) { if (fin) erori.push(`mânerul ${model} (rândul ${i + 1}) nu există în culoarea ${fin.label}`); return; }
+      const e = peCod.get(cod) ?? { cod, bucati: [] };
+      e.bucati.push(...Array(buc).fill(L));
+      peCod.set(cod, e);
+    });
+    for (const e of peCod.values()) {
+      const b = bareNecesare(e.bucati, BARA_MANER_MM);
+      if (b.eroare) erori.push(b.eroare); else manere.push({ ...e, bare: b.nr });
+    }
   }
 
   // validări (ca macro-ul Valideaza — câmpurile „Alege" blochează salvarea)
@@ -265,15 +301,16 @@ export function specRame(model, state) {
   if (!r.asamblare) erori.push('alege cine asamblează');
   if (r.asamblare === 'noi' && !r.geam) erori.push('alege geamul/oglinda (asamblăm noi)');
   if (!r.gaurire) erori.push('alege cotele de găurire');
-  if (m.grup === '820' && !r.balama) erori.push('alege balamaua');
-  if (m.grup === '820' && !r.placuta) erori.push('alege plăcuţa');
-  if (!r.livrare) erori.push('alege modul de livrare');
-  if (!r.agent) erori.push('alege agentul');
-  if (!r.facturare) erori.push('alege tipul de facturare');
+  if (m.grup === '820' && !faraGaurire && !r.balama) erori.push('alege balamaua');
+  if (m.grup === '820' && !faraGaurire && !r.placuta) erori.push('alege plăcuţa');
+  const det = detaliiComanda(state);
+  if (!det.livrare) erori.push('alege modul de livrare');
+  if (!det.agent) erori.push('alege agentul');
+  if (!det.facturare) erori.push('alege tipul de facturare');
 
   const maxH = Math.max(0, ...pline.map(x => x.h)), maxL = Math.max(0, ...pline.map(x => x.l));
   return {
-    model, m, randuri, pline, nrRame, nrGauri, ariaGeam, bareManer, erori,
+    model, m, randuri, pline, nrRame, nrGauri, ariaGeam, manere, erori,
     // compatibilitate cu restul aplicaţiei (ofertă, cameră): „uşile" sunt ramele
     opening: { w: maxL, h: maxH },
     door:    { w: maxL, h: maxH, count: nrRame },
@@ -312,11 +349,18 @@ export function bomRame(state, s) {
     }
   } else if (s.nrRame) {
     const inv = INVISIO[s.model];
-    const gaurire = r.gaurire && r.gaurire !== 'Fara gaurire';
+    const gaurire = r.gaurire && r.gaurire !== FARA_GAURIRE;
     if (gaurire) rows.push(line(...inv.balama, s.nrRame, 'set'));
     if (gaurire && r.manson) rows.push(line(...inv.manson, s.nrRame, 'set'));
     rows.push(line(...inv.coltar, s.nrRame, 'set'));
     rows.push(line(...SURUB_RAMA[esteNegru(state.finish) ? 'negru' : 'alb'], 16 * s.nrRame, 'buc'));
+  }
+  // mânerele: bare de BARA_MANER_MM, bucăţile de tăiat alături
+  for (const e of s.manere) {
+    const peL = new Map();
+    for (const L of e.bucati) peL.set(L, (peL.get(L) ?? 0) + 1);
+    rows.push(line(e.cod, MANERE.find(x => x[0] === e.cod)?.[1] ?? 'Profil mâner', e.bare, 'bară',
+      [...peL].sort((a, b) => b[0] - a[0]).map(([L, n]) => `${n} × ${L} mm`).join(', ')));
   }
   // COMANDA STICLA / OGLINDA (asamblăm noi) — cotele de debitare ale
   // geamului ales. Când asamblează clientul, cotele merg în necesarul
@@ -347,9 +391,21 @@ export function sticlaRame(state, s) {
 }
 
 // Cotele de geam/oglindă pt. CLIENT (CLIENTUL ASAMBLEAZA) — şi le procură singur.
+// Necesarul clientului când asamblează el: sticla de 4 mm (userul, 2026-09-25),
+// grupată pe cotă, plus totalul (bucăţi şi mp) — tot ce are de comandat.
+export const STICLA_CLIENT = 'Sticlă 4 mm';
 export function clientPanelsRame(state, s) {
   if ((state.rame ?? {}).asamblare !== 'client') return [];
-  return s.pline.map(x => ({ label: 'Geam / oglindă', qty: x.buc, unit: 'buc', cut: `${x.geamH} × ${x.geamL} mm` }));
+  const peCota = new Map();
+  for (const x of s.pline) {
+    if (!(x.geamH > 0 && x.geamL > 0)) continue;
+    const cut = `${x.geamH} × ${x.geamL} mm`;
+    peCota.set(cut, (peCota.get(cut) ?? 0) + x.buc);
+  }
+  const randuri = [...peCota].map(([cut, qty]) => ({ label: STICLA_CLIENT, qty, unit: 'buc', cut }));
+  const buc = randuri.reduce((a, r) => a + r.qty, 0);
+  if (buc) randuri.push({ label: `Total ${STICLA_CLIENT.toLowerCase()}`, qty: buc, unit: 'buc', cut: `${String(ceil2(s.ariaGeam)).replace('.', ',')} mp` });
+  return randuri;
 }
 
 // Facturare („De facturat" din formular). Întoarce direct liniile finale.
@@ -372,7 +428,7 @@ export function facturareRame(state, s) {
     if (bal && codSurub) add(codSurub, denSurub, 2 * s.nrGauri);
   } else {
     const inv = INVISIO[s.model];
-    const gaurire = r.gaurire && r.gaurire !== 'Fara gaurire';
+    const gaurire = r.gaurire && r.gaurire !== FARA_GAURIRE;
     if (gaurire) add(inv.balama[0], inv.balama[1], s.nrRame, 'set');
     if (gaurire && r.manson) add(inv.manson[0], inv.manson[1], s.nrRame, 'set');
   }
@@ -381,7 +437,7 @@ export function facturareRame(state, s) {
     const geam = findGeam(r.geam);
     if (geam) {
       add(geam.cod, geam.denumire, s.ariaGeam, 'mp');
-      if (geam.oglinda) add(FOLIE_COD, 'Folie securizare', folieCantitate(s.ariaGeam));
+      if (geam.oglinda) add(FOLIE_COD, 'Folie pentru securizare 1 rola 50x05ml cod 283', folieCantitate(s.ariaGeam));
     }
     // manopera: la 820 după H rotunjit (> 1200), la 831 după H real (≥ 1200)
     const peste = x => (s.m.manopera === 'rotunjit' ? x.hR > 1200 : x.h >= 1200);
@@ -389,14 +445,10 @@ export function facturareRame(state, s) {
     add('Manop <H1200', 'Manopera asamblare rama <H1200', s.pline.filter(x => !peste(x)).reduce((a, x) => a + x.buc, 0));
   }
 
-  const maner = r.maner ?? {};
-  if (s.m.grup === '820' && s.bareManer) {
-    const p = MANERE.find(x => x[0] === maner.profil);
-    if (p) add(p[0], p[1], s.bareManer);
-  }
+  for (const e of s.manere) add(e.cod, MANERE.find(x => x[0] === e.cod)?.[1], e.bare);
   // cantitatea o trece omul manual (ca în formular); codul RAL apare pe fişă
-  if (+r.vopsitCant > 0) add('Manop vopsit', 'Manopera pentru vopsit (daca este cazul)', +r.vopsitCant);
-  if (r.livrare && r.livrare !== 'Ridicare personala') add(LIVRARE_COD, `Mod de livrare-${r.livrare}`, 1);
+  if (+r.vopsitCant > 0) add('Manop vopsit', 'Manopera pentru vopsit', +r.vopsitCant);
+  // transportul (CHLTTRMANIP) îl adaugă builder.js, la toate gamele — lib/comun/comanda.js
 
   return { lines, errors: s.erori };
 }
@@ -416,16 +468,75 @@ export function pozitiiGauri(h, n, regula) {
   return Array.from({ length: n }, (_, k) => jos + (sus - jos) * k / (n - 1));
 }
 
+// ── Secţiunile profilelor (pt. 3D) ─────────────────────────────────────────
+// 831, 841, 842: după desenele cotate din „schite rame"; 820, 822, 824: după
+// pictograme, la cotele din denumire. APROXIMATIVE, doar pt. desen (userul,
+// 2026-09-24). Coordonate în mm: u = de la muchia exterioară a ramei spre
+// interior (faţa), z = adâncime de la FAŢĂ (0) spre spate. geamZ = mijlocul
+// geamului (în falţul din spate). Pe fiecare latură profilul se extrudează şi
+// se taie la 45° la colţuri.
+//   820/824/841: corp + buză la muchia exterioară, pe spate, care ţine geamul
+//     (geamul ajunge la 2,5–3 mm de muchie = scăderea 5 / 6 din formular)
+//   822: falţ în L spre interior-spate (geamul la 14,5 mm = scăderea 29)
+//   831: corp cu canal pt. balamaua INVISIO şi degajare rotunjită
+//   842: 841 cu mâner (buză curbă de 10 mm, la muchie); doar pe o verticală
+//   intors: la 841/842 partea cu buza (şi cu mânerul la 842) e FAŢA ramei (userul,
+//     2026-09-24) — secţiunile sunt desenate invers, de-aia se întorc la randare.
+const SECTIUNI_RAME = {
+  820: { geamZ: 17.5, puncte: [[0, 0], [45, 0], [45, 15], [3, 15], [3, 19.5], [7, 19.5], [7, 21.5], [0, 21.5]] },
+  822: { geamZ: 15.5, puncte: [[0, 0], [19, 0], [19, 11], [12, 11], [12, 20], [0, 20]] },
+  824: { geamZ: 15.5, puncte: [[0, 0], [19, 0], [19, 12.5], [3, 12.5], [3, 18], [8, 18], [8, 20], [0, 20]] },
+  841: { geamZ: 22, intors: true, puncte: [[0, 0], [22.3, 0], [22.3, 17], [2.2, 17], [2.2, 27.3], [7.2, 27.3], [7.2, 29.5], [0, 29.5]] },
+  831: { geamZ: 13, desen: S => {   // desenul e rotit: orizontala = adâncimea, verticala = faţa (sus = muchia)
+    const P = (x, y) => [19.5 - y, x];
+    S.moveTo(...P(0, 0)); [[24.7, 0], [24.7, 1.8], [23.6, 1.8], [23.6, 6.6], [24.7, 6.6], [24.7, 8.4], [20.6, 8.4], [20.6, 10.8]]
+      .forEach(p => S.lineTo(...P(...p)));
+    for (let k = 1; k <= 8; k++) { const a = Math.PI - (Math.PI / 2) * k / 8; S.lineTo(...P(26.2 + 5.6 * Math.cos(a), 10.8 + 5.6 * Math.sin(a))); }
+    [[26.2, 18.7], [25.4, 19.5], [0, 19.5]].forEach(p => S.lineTo(...P(...p)));
+  } },
+  // 842: desenul e TRANSPUS faţă de ramă (userul: „oglindit şi rotit 90 de grade",
+  // apoi „încă o dată oglindit" = faţă ↔ spate): orizontala (40, cu mânerul) =
+  // adâncimea, verticala (22,3) = faţa, jos = muchia. Corpul (x 17,7…40) stă în
+  // planul celorlalte laturi, cu faţa la x = 40; mânerul iese 17,7 mm în SPATE.
+  842: { geamZ: 22, intors: true, desen: S => {
+    const P = (x, y) => [y, 40 - x];
+    [[0, 0], [40, 0], [40, 22.3], [17.7, 22.3], [17.7, 1.6], [10.4, 1.6], [10.4, 5.7], [9.2, 5.7], [9.2, 1.6], [7, 1.6]]
+      .forEach((p, i) => (i ? S.lineTo(...P(...p)) : S.moveTo(...P(...p))));
+    S.quadraticCurveTo(...P(1.6, 1.6), ...P(1.6, 10)); S.lineTo(...P(0.6, 10.6)); S.lineTo(...P(0, 10));
+  } },
+};
+
+// O latură de ramă de lungime L (cota exterioară), ca verticala din STÂNGA:
+// x = u, y = de-a lungul laturii (centrat), z = adâncimea (faţa spre privitor).
+// Tăietura la 45°: la adâncimea u de la muchie, latura are L − 2u.
+function laturaRama(THREE, mm, model, L, d) {
+  const sec = SECTIUNI_RAME[model];
+  const S = new THREE.Shape();
+  if (sec.desen) sec.desen(S); else sec.puncte.forEach((p, i) => (i ? S.lineTo(...p) : S.moveTo(...p)));
+  const g = new THREE.ExtrudeGeometry(S, { depth: 1, bevelEnabled: false, curveSegments: 8 });
+  const p = g.attributes.position;
+  for (let i = 0; i < p.count; i++) {
+    const u = p.getX(i), z = p.getY(i), e = p.getZ(i);
+    p.setXYZ(i, mm(u), mm((e - 0.5) * (L - 2 * Math.max(0, u))), mm(sec.intors ? z - d / 2 : d / 2 - z));
+  }
+  g.computeVertexNormals();
+  return g;
+}
+
 export function buildRame(group, state, s, { THREE, box, mm, aluColor }) {
   const r = state.rame ?? {};
   const fata = s.m.fata, adanc = +s.m.profil.split('x')[1];
-  const alu = new THREE.MeshStandardMaterial({ color: aluColor, metalness: 0.65, roughness: 0.35 });
+  // DoubleSide: laturile se obţin prin rotire, dar vârfurile sunt mutate de mână
+  const alu = new THREE.MeshStandardMaterial({ color: aluColor, metalness: 0.65, roughness: 0.35, side: THREE.DoubleSide });
   const geam = r.asamblare === 'noi' ? findGeam(r.geam) : null;
   const sticla = geam?.oglinda
     // fără hartă de mediu, un metal „perfect" iese negru — oglindă mată, luminată
     ? new THREE.MeshStandardMaterial({ color: 0xc3ced6, metalness: 0.25, roughness: 0.15, emissive: 0x20282e })
     : new THREE.MeshPhysicalMaterial({ color: 0xbfd6e0, transparent: true, opacity: 0.28, roughness: 0.05, side: THREE.DoubleSide });
   const gaura = new THREE.MeshStandardMaterial({ color: 0x3a3d42, metalness: 0.4, roughness: 0.5 });
+  const e842 = s.model === '842';
+  const prof = e842 ? '841' : s.model;               // 842: celelalte 3 laturi sunt din 841
+  const d = SECTIUNI_RAME[prof] ? Math.max(...(SECTIUNI_RAME[prof].puncte ?? [[0, adanc]]).map(p => p[1])) : adanc;
 
   // toate exemplarele, cât încap; peste MAX_RAME_3D câte una din fiecare rând
   let rame = s.pline.flatMap(x => Array(x.buc).fill(x));
@@ -434,19 +545,28 @@ export function buildRame(group, state, s, { THREE, box, mm, aluColor }) {
   let x0 = -total / 2;
 
   for (const x of rame) {
-    const W = mm(x.l), H = mm(x.h), f = mm(fata), d = mm(adanc);
+    const W = mm(x.l), H = mm(x.h), f = mm(fata), D = mm(d);
     const cx = mm(x0 + x.l / 2);
     const add = (m, px, py, pz = 0) => { m.position.set(cx + px, py, pz); group.add(m); };
-    add(box(f, H, d, alu), -W / 2 + f / 2, H / 2);            // stânga
-    add(box(f, H, d, alu),  W / 2 - f / 2, H / 2);            // dreapta
-    add(box(W - 2 * f, f, d, alu), 0, H - f / 2);             // sus
-    add(box(W - 2 * f, f, d, alu), 0, f / 2);                 // jos
-    add(box(W - 2 * f + mm(4), H - 2 * f + mm(4), mm(4), sticla), 0, H / 2);
+    // laturile: aceeaşi geometrie „stânga", rotită în planul ramei
+    const latura = (L, rot, px, py, model = prof) => {
+      const m = new THREE.Mesh(laturaRama(THREE, mm, model, L, d), alu);
+      m.rotation.z = rot;
+      add(m, px, py);
+    };
+    latura(x.h, 0, -W / 2, H / 2);                                  // stânga
+    if (e842) latura(x.h, Math.PI, W / 2, H / 2, '842');          // dreapta = profilul cu mâner
+    else latura(x.h, Math.PI, W / 2, H / 2);                        // dreapta
+    latura(x.l, -Math.PI / 2, 0, H);                                // sus
+    latura(x.l, Math.PI / 2, 0, 0);                                 // jos
+    // geamul la cota lui reală, în falţul din spate
+    const gz = mm(SECTIUNI_RAME[prof]?.geamZ ?? d / 2);
+    add(box(mm(x.geamL), mm(x.geamH), mm(4), sticla), 0, H / 2, SECTIUNI_RAME[prof]?.intors ? gz - D / 2 : D / 2 - gz);
     if (s.m.grup === '820') {
       for (const y of pozitiiGauri(x.h, x.gauri, r.gaurire)) {
         const c = new THREE.Mesh(new THREE.CylinderGeometry(mm(17.5), mm(17.5), mm(2), 24), gaura);
         c.rotation.x = Math.PI / 2;
-        add(c, -W / 2 + f / 2, mm(y), -d / 2 - mm(1));
+        add(c, -W / 2 + f / 2, mm(y), -D / 2 - mm(1));
       }
     }
     x0 += x.l + GOL_INTRE_RAME_MM;
