@@ -20,6 +20,10 @@ manager/certs/
 node_modules/
 configurator_usi/dist/
 configurator_usi/dist_pages/
+
+# ── Varianta statică pt. Cloudflare Pages — doar un test, rămâne local ──────
+configurator_usi/build_pages.js
+configurator_usi/pages/
 # cataloagele binare se reconstruiesc din *.seed.sql (sursa, care intră în git)
 configurator_usi/js/catalog/*.sqlite
 
@@ -34,8 +38,12 @@ configurator_usi/js/catalog/*.sqlite
 /schite/
 /schite rame/
 *.tar.gz
-# manualul exportat pt. tipar (sursa e documentul din Claude Docs)
-/Manual*.pdf
+# PDF-uri exportate pt. tipar / şef (sursa e documentul din Claude Docs)
+*.pdf
+
+# ── Prototipuri vechi, înlocuite de manager/web/scan (păstrate doar local) ──
+/scanare/
+/test_scanare/
 
 # ── Unelte / editor / sistem ────────────────────────────────────────────────
 .idea/
@@ -47,3 +55,5 @@ graphify-out/
 .directory
 .DS_Store
 *.log
+# Superdesign — schiţele de interfaţă, unealtă de lucru, nu parte din aplicaţie
+.superdesign/
