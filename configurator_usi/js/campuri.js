@@ -93,8 +93,17 @@ function faCautabil(sel) {
     randeaza();
   };
   const pozitioneaza = () => {
+    // în jos, sau în sus când dedesubt nu e loc (ex. agentul, în bara de jos);
+    // înălţimea se strânge la spaţiul rămas, ca lista să nu iasă din ecran
     const r = inp.getBoundingClientRect();
-    Object.assign(lista.style, { left: `${r.left}px`, top: `${r.bottom + 2}px`, minWidth: `${r.width}px` });
+    const MAX = 280, jos = innerHeight - r.bottom - 8, sus = r.top - 8;
+    const inSus = jos < Math.min(MAX, lista.scrollHeight || MAX) && sus > jos;
+    Object.assign(lista.style, {
+      left: `${r.left}px`, minWidth: `${r.width}px`,
+      top:    inSus ? 'auto' : `${r.bottom + 2}px`,
+      bottom: inSus ? `${innerHeight - r.top + 2}px` : 'auto',
+      maxHeight: `${Math.min(MAX, inSus ? sus : jos)}px`,
+    });
   };
   const deschide = () => {
     if (!lista.hidden || inp.disabled) return;

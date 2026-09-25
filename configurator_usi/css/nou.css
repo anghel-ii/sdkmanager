@@ -1,0 +1,196 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   INTERFAŢA NOUĂ (js/ui_nou.js) — totul e sub body.ui-nou, deci interfaţa
+   clasică (main.css) nu e atinsă. Aceleaşi culori şi fonturi; se schimbă doar
+   aşezarea:
+     • ecran întreg (≥1100px): paşii în stânga (680px), 3D-ul în dreapta
+     • jumătate de ecran (<1100px): 3D-ul sus (260px, se poate ascunde),
+       paşii dedesubt, pe o singură coloană
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+
+/* ── aşezarea ── */
+body.ui-nou #app {
+  display: grid;
+  grid-template-columns: 680px minmax(0, 1fr);
+  grid-template-rows: 44px minmax(0, 1fr);
+}
+body.ui-nou #nouBara { grid-column: 1 / -1; grid-row: 1; }
+body.ui-nou #sidebar {
+  grid-column: 1; grid-row: 2;
+  width: auto !important; min-width: 0 !important;
+  background: var(--bg);
+  padding: 12px 16px 0;
+}
+body.ui-nou #stage { grid-column: 2; grid-row: 2; min-height: 0; }
+body.ui-nou .brand { display: none; }
+
+@media (max-width: 1099px) {
+  body.ui-nou #app { grid-template-columns: minmax(0, 1fr); grid-template-rows: 44px 260px minmax(0, 1fr); }
+  body.ui-nou.nou-3d-ascuns #app { grid-template-rows: 44px 40px minmax(0, 1fr); }
+  body.ui-nou #stage { grid-column: 1; grid-row: 2; border-bottom: 1px solid var(--line); }
+  body.ui-nou #sidebar { grid-column: 1; grid-row: 3; border-right: none; }
+  body.ui-nou #nouPasi, body.ui-nou #groupClient > * { max-width: 900px; margin-left: auto; margin-right: auto; }
+  body.ui-nou .hint { display: none; }
+}
+@media (min-width: 1100px) { body.ui-nou #nouAscunde { display: none; } }
+
+/* ── bara de sus ── */
+#nouBara {
+  display: flex; align-items: center; gap: 12px; padding: 0 16px;
+  background: var(--panel); border-bottom: 1px solid var(--line); min-width: 0;
+}
+#nouBara .acasa { margin: 0; font-size: 13px; color: var(--accent); text-decoration: none; white-space: nowrap; }
+#nouBara .acasa:hover { text-decoration: underline; }
+.nou-cale { font-size: 13px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.nou-cale i { font-style: normal; margin: 0 5px; }
+.nou-cale b { color: var(--text); font-weight: 500; }
+.nou-stare {
+  font: inherit; font-size: 12px; font-weight: 500; white-space: nowrap; cursor: pointer;
+  border: 1px solid var(--line); border-radius: 999px; padding: 3px 11px; background: var(--panel-2); color: var(--text-dim);
+}
+.nou-stare.ok     { color: var(--ok);     border-color: rgba(107, 155, 122, .45); background: rgba(107, 155, 122, .10); }
+.nou-stare.eroare { color: var(--danger); border-color: rgba(185, 106, 91, .6);   background: rgba(185, 106, 91, .10); }
+.nou-stare.ok::before     { content: '✓ '; }
+.nou-stare.eroare::before { content: '⚠ '; }
+/* cardul cu starea + CLEAR PAGE — primul în bara din stânga, lipit sus la scroll */
+#nouActiuni {
+  position: sticky; top: 0; z-index: 5;
+  display: flex; align-items: center; gap: 10px;
+  margin: 0 0 8px; padding: 10px 12px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+  /* prima umbră = fundalul barei, acoperă fâşia de 12px de deasupra cardului lipit */
+  box-shadow: 0 -12px 0 0 var(--bg), 0 6px 12px -6px rgba(0, 0, 0, .5);
+}
+#nouActiuni .nou-stare { flex: 1; text-align: left; font-size: 13px; padding: 6px 12px; }
+#nouActiuni .nou-stare[hidden] { display: block; visibility: hidden; }
+@media (max-width: 1099px) { body.ui-nou #nouActiuni { max-width: 900px; width: 100%; margin-left: auto; margin-right: auto; } }
+body.ui-nou #nouActiuni .btn-clear {
+  display: inline-block; margin: 0; width: auto; padding: 4px 10px;
+  font-size: 12px; font-weight: 600; border-radius: 6px; white-space: nowrap;
+  border: 1px solid var(--danger); background: transparent; color: var(--danger); cursor: pointer;
+}
+
+/* ── 3D: cotele + „Ascunde 3D" ── */
+#nouCote {
+  position: absolute; top: 12px; left: 16px; z-index: 2;
+  font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text);
+  background: rgba(27, 30, 36, .9); border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px;
+}
+#nouAscunde {
+  position: absolute; top: 12px; right: 16px; z-index: 2; cursor: pointer;
+  font: inherit; font-size: 11px; color: var(--text);
+  background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px;
+}
+body.ui-nou.nou-3d-ascuns #nouCote { top: 6px; }
+body.ui-nou.nou-3d-ascuns #nouAscunde { top: 5px; }
+
+/* ── paşii ── */
+#nouPasi { display: flex; flex-direction: column; gap: 8px; padding-bottom: 12px; }
+.pas { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+.pas[hidden] { display: none; }
+.pas.curent { border-color: var(--accent-dim); }
+.pas-cap {
+  width: 100%; display: flex; align-items: center; gap: 12px; padding: 10px 12px;
+  color: var(--text);
+}
+.pas-nr {
+  width: 24px; height: 24px; flex: none; border-radius: 50%; display: grid; place-items: center;
+  font-size: 12px; font-weight: 600; border: 1px solid var(--line); color: var(--text-dim);
+}
+.pas.gata .pas-nr   { background: rgba(107, 155, 122, .2); color: var(--ok); border-color: transparent; }
+.pas.curent .pas-nr { background: var(--accent-dim); color: #fff; border-color: transparent; }
+.pas-titlu { font-size: 13px; font-weight: 600; width: 96px; flex: none; }
+.pas-rez {
+  flex: 1; min-width: 0; font-size: 13px; color: var(--text-dim);
+  display: flex; align-items: center; gap: 8px; overflow: hidden; white-space: nowrap;
+}
+.pas-rez img { height: 26px; border-radius: 4px; background: #fff; border: 1px solid var(--line); }
+.pas-rez .pastila { width: 14px; height: 14px; border-radius: 50%; flex: none; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .22); }
+.pas-rez .nume { color: var(--text); }
+.pas:not([data-pas="oferta"]) .pas-rez { visibility: hidden; }
+.pas-corp { padding: 4px 12px 12px; }
+.pas-corp .group { margin-bottom: 12px; }
+.pas-corp .group:last-child { margin-bottom: 0; }
+
+/* pasul 3: cotele, nr. de uşi şi suprapunerile pe acelaşi rând (se rup la nevoie) */
+.pas[data-pas="dim"] .pas-corp { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+.pas[data-pas="dim"] .pas-corp > .group { margin-bottom: 0; }
+body.ui-nou #sidebar.cote-compact #groupHeight, body.ui-nou #sidebar.cote-compact #groupWidth { margin-bottom: 0; flex: 1 1 220px; }
+body.ui-nou #groupRame, body.ui-nou #groupUtil { flex-basis: 100%; }
+
+/* pasul 5: rezultatele pe taburi */
+.nou-taburi { margin-bottom: 12px; }
+.nou-taburi button[hidden] { display: none; }
+body.ui-nou .nou-panou { margin-bottom: 0; }
+
+/* ── bara clientului, lipită jos (mereu la vedere) ── */
+body.ui-nou #groupClient {
+  position: sticky; bottom: 0; z-index: 5;
+  margin: 0 -16px; padding: 10px 16px;
+  background: var(--panel); border-top: 1px solid var(--line);
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 8px; row-gap: 6px; align-items: center;
+}
+body.ui-nou #groupClient > .group-label { display: none; }
+body.ui-nou #groupClient .oferta-client { flex-direction: row; margin: 0; grid-column: 1; }
+body.ui-nou #groupClient .oferta-client input:first-child { flex: 0 1 210px; }
+body.ui-nou #groupClient .oferta-client input:last-child  { flex: 1 1 auto; }
+body.ui-nou #groupClient .client-butoane { flex-direction: row-reverse; grid-column: 2; }
+body.ui-nou #groupClient .client-butoane button { width: auto; margin: 0; padding: 9px 14px; white-space: nowrap; }
+body.ui-nou #btnConfirma { font-weight: 600; color: #fff; }
+body.ui-nou #ofertaUI, body.ui-nou #ofertaMesaj { grid-column: 1 / -1; }
+body.ui-nou #ofertaUI .oferta-sumar, body.ui-nou #ofertaUI .oferta-cine { display: none; }
+body.ui-nou #ofertaUI:empty, body.ui-nou #ofertaMesaj:empty { display: none; }
+body.ui-nou #ofertaUI .oferta-msg, body.ui-nou #ofertaMesaj .oferta-msg { margin: 0; }
+
+/* titlul grupului repetă titlul pasului (UŞI, FINISAJ) */
+body.ui-nou #groupUsi > .group-label, body.ui-nou .pas[data-pas="culoare"] .group > .group-label { display: none; }
+body.ui-nou #groupClient .client-butoane button { font-size: 13px; }
+body.ui-nou .door-row-label { width: 64px; }
+
+/* ── câmpuri numerice în loc de steppere, cote pe rânduri separate, fără texte rupte ── */
+body.ui-nou .stepper[data-nou] { display: none; }
+.nou-nr {
+  width: 72px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px;
+  color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 13px; padding: 5px 8px;
+  -moz-appearance: textfield;
+}
+.nou-nr::-webkit-inner-spin-button, .nou-nr::-webkit-outer-spin-button { -webkit-appearance: none; }
+.nou-nr:focus { outline: none; border-color: var(--accent); }
+.door-row .nou-nr, .av-rand .nou-nr { width: 60px; font-size: 12px; padding: 3px 7px; }
+
+/* pasul 3: înălţimea, lăţimea şi uşile, fiecare pe rândul lui */
+.pas[data-pas="dim"] .pas-corp { flex-direction: column; align-items: stretch; gap: 8px; }
+body.ui-nou #sidebar.cote-compact #groupHeight, body.ui-nou #sidebar.cote-compact #groupWidth { flex: none; }
+body.ui-nou #sidebar.cote-compact #groupHeight .group-label, body.ui-nou #sidebar.cote-compact #groupWidth .group-label,
+body.ui-nou #sidebar.cote-compact .subgroup .group-label { width: 150px; }
+body.ui-nou #groupDoorsTracks { display: flex; flex-wrap: wrap; gap: 8px 24px; }
+body.ui-nou #groupDoorsTracks .subgroup { display: flex; align-items: center; gap: 10px; }
+
+/* etichetele pe un singur rând */
+body.ui-nou .group-label, body.ui-nou .door-row-label, body.ui-nou .rame-et, body.ui-nou .amortizare-parte-label,
+body.ui-nou .av-eticheta, body.ui-nou .pas-titlu, body.ui-nou .bom-title { white-space: nowrap; }
+body.ui-nou .door-row-label { width: 80px; }
+body.ui-nou .rame-camp { grid-template-columns: 210px 1fr; }
+body.ui-nou .pas-titlu { width: auto; min-width: 96px; }
+
+/* fără săgeţile ▲▼ la NICIUN câmp numeric (Firefox le desena la rame: acolo lipsea
+   regula -moz; Chrome/Edge le ascundeau deja) — valorile se scriu, nu se „apasă" */
+body.ui-nou input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+body.ui-nou input[type="number"]::-webkit-inner-spin-button,
+body.ui-nou input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+/* bara clientului pe două rânduri: nume / telefon / adresă, apoi livrare / facturare / agent;
+   butoanele în dreapta, pe ambele rânduri */
+body.ui-nou #groupClient .oferta-client { grid-column: 1; }
+body.ui-nou #groupClient .oferta-client:not(.comanda-detalii) { grid-row: 1; }
+body.ui-nou #groupClient .comanda-detalii { grid-row: 2; }
+body.ui-nou #groupClient .client-butoane { grid-column: 2; grid-row: 1 / span 2; flex-direction: column; justify-content: center; }
+body.ui-nou #groupClient .oferta-client input, body.ui-nou #groupClient .oferta-client select { flex: 1 1 0; min-width: 0; }
+body.ui-nou #groupClient .oferta-client input:first-child { flex: 1.3 1 0; }
+/* lăţimile câmpurilor clientului (înlocuiesc regulile de când erau doar 2 câmpuri) */
+body.ui-nou #groupClient .oferta-client > * { flex: 1 1 0 !important; min-width: 0; width: auto; }
+body.ui-nou #groupClient .oferta-client:not(.comanda-detalii) > :last-child { flex-grow: 1.5 !important; }
+
+/* paşii au mereu aceeaşi lăţime (până la 900px) — în bara laterală (flex pe
+   coloană) marginile auto îi făceau cât conţinutul, deci se schimbau la taburi */
+body.ui-nou #nouPasi { width: 100%; box-sizing: border-box; }

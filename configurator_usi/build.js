@@ -78,7 +78,8 @@ async function build() {
   );
   fs.writeFileSync('dist/index.html', html);
 
-  fs.copyFileSync('css/main.css', 'dist/css/main.css');
+  // toate foile de stil (main.css = interfaţa clasică, nou.css = cea nouă, sub body.ui-nou)
+  fs.readdirSync('css').forEach(f => fs.copyFileSync(`css/${f}`, `dist/css/${f}`));
 
   // Gamele — acelaşi fişier pe care îl împachetează şi bundle-ul. Copiat în
   // dist/ ca pagina principală a managerului să-l poată citi prin HTTP

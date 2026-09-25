@@ -46,15 +46,6 @@ body {
 
 .sep { border: none; border-top: 1px solid var(--line); margin: 6px 0 22px; }
 
-/* mânerul de redimensionare al barei (js/bara.js) */
-#sidebarResize {
-  flex: 0 0 6px; margin-left: -3px; margin-right: -3px; z-index: 5;
-  cursor: col-resize; background: transparent; transition: background .15s;
-  touch-action: none;
-}
-#sidebarResize:hover, #sidebarResize:focus-visible, body.redimensionare #sidebarResize { background: var(--accent-dim); outline: none; }
-body.redimensionare { cursor: col-resize; user-select: none; }
-body.redimensionare #stage { pointer-events: none; }   /* 3D-ul nu „fură" tragerea */
 
 #stage    { flex: 1; position: relative; min-width: 0; }
 #canvas-holder { position: absolute; inset: 0; }
@@ -713,3 +704,27 @@ input[type="range"]::-moz-range-thumb {
 .cautabil-lista li.activ, .cautabil-lista li:hover { background: var(--accent-dim); color: #fff; }
 .cautabil-lista li.activ small, .cautabil-lista li:hover small { color: #dbe8fb; }
 .cautabil-lista li.nimic { color: var(--text-dim); cursor: default; background: none; }
+
+/* ── Rame: mânerul rândului, pe un singur rând sub cote (Mâner · modele · lungime) ── */
+.rame-maner-rand td { padding-top: 0; padding-bottom: 6px; }
+.rame-maner-linie { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.rame-maner-linie .rame-et { width: auto; }
+.rame-maner-seg { flex: 0 0 auto; }
+.rame-maner-seg button { flex: 0 0 auto; padding: 4px 12px; }
+.rame-maner-l { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-dim); white-space: nowrap; }
+.rame-maner-l input { width: 72px; }
+tbody.rame-rand.gol .rame-maner-rand { display: none; }   /* rândul gol de la coadă: fără mâner până îl începi */
+tbody.rame-rand + tbody.rame-rand tr:first-child td { border-top: 1px solid var(--line); padding-top: 6px; }
+
+/* ── detaliile comenzii (livrare / facturare / agent), sub datele clientului ── */
+.oferta-client select {
+  width: 100%; padding: 8px 10px; font: inherit; font-size: .86rem;
+  border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--text);
+}
+.oferta-client select:invalid, .oferta-client select option[value=""] { color: var(--text-dim); }
+.oferta-client select:focus { outline: none; border-color: var(--accent); }
+.rame-seg-maner button:disabled { opacity: .35; cursor: not-allowed; }
+.rame-titlu-maner { margin: 10px 0 4px; }
+.rame-seg-rand { display: inline-flex; }
+.rame-seg-rand button { flex: 0 0 auto; padding: 4px 10px; }
+.rame-seg-rand button:disabled { opacity: .35; cursor: not-allowed; }

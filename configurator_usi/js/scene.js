@@ -62,7 +62,7 @@ export function initScene(holderEl) {
     camera.updateProjectionMatrix();
     renderer.setSize(w, h);
   }
-  // la fereastră ŞI la bara laterală trasă mai lată / mai îngustă (js/bara.js)
+  // la fereastră ŞI la schimbarea aşezării (3D sus / în dreapta, Ascunde 3D)
   new ResizeObserver(onResize).observe(holderEl);
   onResize();
 

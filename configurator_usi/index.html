@@ -6,6 +6,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/main.css">
+  <!-- interfaţa nouă — totul e sub body.ui-nou, deci nu atinge interfaţa clasică -->
+  <link rel="stylesheet" href="css/nou.css">
 </head>
 <body>
 <div id="app">
@@ -99,6 +101,13 @@
       <div id="rameUI"></div>
     </div>
 
+    <!-- UTIL — doar la gama „util": nr. de orizontale U, divizări H şi
+         amortizări, trecute de mână ca în Excel (js/ui_util.js). -->
+    <div class="group" id="groupUtil" style="display:none">
+      <div class="group-label">PROFILE</div>
+      <div id="utilUI"></div>
+    </div>
+
     <!-- 4. UŞI — per uşă: montaj, divizări (+ tip), panouri (sticlă/PAL),
          tipul de sticlă, role (simplă/amortizor). La Confort rămâne ascuns
          până alegi model + culoare + cote + nr. de uşi (vezi renderWheels,
@@ -127,7 +136,14 @@
       <div class="group-label">CLIENT</div>
       <div class="oferta-client">
         <input type="text" id="clientNume"    placeholder="Nume client" autocomplete="off">
-        <input type="text" id="clientContact" placeholder="Adresă sau nr. telefon" autocomplete="off">
+        <input type="tel"  id="clientTelefon" placeholder="Telefon" autocomplete="off">
+        <input type="text" id="clientAdresa"  placeholder="Adresă" autocomplete="off">
+      </div>
+      <!-- detaliile comenzii, la toate gamele (js/lib/comun/comanda.js) -->
+      <div class="oferta-client comanda-detalii">
+        <select id="comandaLivrare" data-c="livrare" aria-label="Mod de livrare"></select>
+        <select id="comandaFacturare" data-c="facturare" aria-label="Facturare"></select>
+        <select id="comandaAgent" data-c="agent" aria-label="Agent"></select>
       </div>
       <div id="ofertaUI"></div>
       <div class="client-butoane">
@@ -139,9 +155,6 @@
 
   </div>
 
-  <!-- mânerul barei laterale: trage = lăţime, dublu-click = implicit (js/bara.js) -->
-  <div id="sidebarResize" role="separator" aria-orientation="vertical" aria-label="Lăţimea barei laterale"
-       aria-valuemin="380" tabindex="0" title="Trage ca să lăţeşti sau să îngustezi bara · dublu-click = lăţimea implicită"></div>
   <div id="stage">
     <div id="canvas-holder"></div>
     <div class="hint">Click + drag pentru rotire · scroll pentru zoom</div>

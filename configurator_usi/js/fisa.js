@@ -1,10 +1,11 @@
 import { state } from './state.js';
 import { systems } from './systems/registry.js';
-import { currentSpec, currentBom, currentBilling } from './builder.js';
+import { currentSpec, currentBom, currentBilling, currentClientPanels } from './builder.js';
 import { finishesOf, familia } from './familii.js';
 import { findGeam } from './lib/comun/geam.js';
 import { suprapuneriEfective, PROFIL_H_3D } from './lib/confort/index.js';
 import { ASAMBLARE } from './lib/rame/rame.js';
+import { detaliiComanda } from './lib/comun/comanda.js';
 import JsBarcode from 'jsbarcode';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -208,7 +209,7 @@ function debitareRame(spec) {
   // deasupra: ramele comenzii, câte una pe rând, cu cotele sticlei alături
   const rame = `
     <table class="deb-rame">
-      <thead><tr><th>Rândul</th><th>Ramă H × L</th><th>Buc</th>${cuGauri ? '<th>Găuri</th>' : ''}<th>Sticlă H × L</th><th>✓</th></tr></thead>
+      <thead><tr><th>Rândul</th><th>Ramă H × L</th><th>Bucăţi</th>${cuGauri ? '<th>Găuri</th>' : ''}<th>Sticlă H × L</th><th>✓</th></tr></thead>
       <tbody>${spec.pline.map(x => `<tr><td>${x.i + 1}</td><td class="deb-mm">${x.h} × ${x.l} mm</td>
         <td class="deb-buc">${x.buc} buc</td>${cuGauri ? `<td class="deb-buc">${x.gauri}</td>` : ''}
         <td class="deb-mm">${x.geamH} × ${x.geamL} mm</td><td class="bifa"></td></tr>`).join('')}</tbody>
@@ -328,6 +329,9 @@ export function deschideFisa(client, oferta = null, salvate = null) {
   if (!sys || !spec) { alert('Configuraţia nu e gata.'); return; }
 
   const bom     = salvate?.bom ?? currentBom();
+  // telefonul şi adresa: din câmpurile clientului (fişa din manager le primeşte completate)
+  const telefon = document.getElementById('clientTelefon')?.value.trim() ?? '';
+  const adresa  = document.getElementById('clientAdresa')?.value.trim() ?? '';
   const factura = salvate?.factura ?? currentBilling();
   // cale absolută — fereastra nouă porneşte de la about:blank, o cale
   // relativă la sketch (ex. 'assets/verona.jpeg') nu s-ar rezolva acolo
@@ -345,7 +349,19 @@ export function deschideFisa(client, oferta = null, salvate = null) {
   // Capul de pagină — stânga: model/cote/necesar sticlă-PAL; dreapta:
   // schiţă/client-dată/montaj Noi-Client. Cam o treime din pagină.
   const rame = sys.meta.rame ? (state.rame ?? {}) : null;
-  const cote = rame ? tabelMic([
+  // UTIL: profile vândute la bucată, panourile le pune clientul — fără desene
+  // de uşă şi fără cote de panouri pe spate; cotele panoului stau sus, ca în Excel.
+  const util = sys.meta.family === 'util';
+  const cote = util ? tabelMic([
+    ['H gol',                `${spec.opening.h} mm`],
+    ['L gol',                `${spec.opening.w} mm`],
+    ['Nr. uşi',               spec.n],
+    ['Nr. suprapuneri',       spec.supr],
+    ['Înălţime uşă',         `${spec.doorH} mm`],
+    ['Lăţime uşă',           `${Math.round(spec.doorW)} mm`],
+    ['Orizontal U',          { fara: 'fără', sus: 'sus', jos: 'jos', ambele: 'sus şi jos' }[state.util?.orizontale] ?? '—'],
+    ['PAL 18 (fără div.)',   `${Math.round(spec.panouH)} × ${Math.round(spec.panouL)} mm`],
+  ], 'cote') : rame ? tabelMic([
     ['Nr. rame',          spec.nrRame],
     ['Asamblare',         ASAMBLARE.find(a => a[0] === rame.asamblare)?.[1] ?? '—'],
     ['Geam / oglindă',    rame.asamblare === 'noi' ? (findGeam(rame.geam)?.denumire ?? '—') : 'al clientului'],
@@ -360,7 +376,7 @@ export function deschideFisa(client, oferta = null, salvate = null) {
     ['Lăţime finală uşă',    `${spec.door.w} mm`],
   ], 'cote');
 
-  const necesarSP = rame
+  const necesarSP = util ? '' : rame
     ? tabel(['Geam / oglindă', 'Dimensiuni', 'Cant.', 'Cine'], spec.pline.map(x =>
         `<tr><td>${rame.asamblare === 'noi' ? esc(findGeam(rame.geam)?.cod ?? '—') : 'Client'}</td><td>${x.geamH} × ${x.geamL} mm</td>
          <td class="num">${x.buc} buc</td><td>${rame.asamblare === 'noi' ? 'Noi' : 'Client'}</td></tr>`))
@@ -370,11 +386,16 @@ export function deschideFisa(client, oferta = null, salvate = null) {
 
   const nrNoi    = (state.assembly ?? []).filter(a => a === 'noi').length;
   const nrClient = (state.assembly ?? []).filter(a => a === 'client').length;
-  const montaj = rame ? tabelMic([
-    ['Mod de livrare', rame.livrare ?? '—'],
-    ['Agent',          rame.agent ?? '—'],
-    ['Facturare',      rame.facturare ?? '—'],
-  ]) : tabelMic([
+  // detaliile comenzii (toate gamele) — livrare / facturare / agent
+  const det = detaliiComanda(state);
+  const detalii = tabelMic([['Mod de livrare', det.livrare ?? '—'], ['Facturare', det.facturare ?? '—'], ['Agent', det.agent ?? '—']]);
+  const montaj = util ? tabelMic([
+    ['Asamblăm noi',        `${nrNoi} uşi`],
+    ['Asamblează clientul', `${nrClient} uşi`],
+    ['Orizontale U', `${spec.nrU} buc`],
+    ['Divizări H',   `${spec.nrH} buc`],
+    ['Amortizări',   `${spec.nrAmort} buc`],
+  ]) : rame ? '' : tabelMic([
     ['Asamblăm noi',        `${nrNoi} uşi`],
     ['Asamblează clientul', `${nrClient} uşi`],
   ]);
@@ -592,12 +613,16 @@ export function deschideFisa(client, oferta = null, salvate = null) {
       <div class="client-linie">
         <span class="eticheta">Client</span>${esc(client || '—')}
       </div>
+      ${telefon || adresa ? `<div class="data-mica">${[telefon && `Tel. ${esc(telefon)}`, adresa && esc(adresa)].filter(Boolean).join(' · ')}</div>` : ''}
       <div class="data-mica">Data: ${acum()}</div>
+      ${detalii}
       ${montaj}
     </div>
   </div>
 
-  ${rame ? debitareRame(spec) : blocDesene(sys, spec)}
+  ${util ? tabel(['PAL (clientul)', 'Dimensiuni', 'Cant.'], currentClientPanels().map(r =>
+        `<tr><td>${esc(r.label)}</td><td>${esc(r.cut)}</td><td class="num">${r.qty} buc</td></tr>`))
+    : rame ? debitareRame(spec) : blocDesene(sys, spec)}
 
   <div class="jos">${necesarHtml}${eRame ? '' : campuriAtelier}</div>
 
@@ -608,7 +633,7 @@ export function deschideFisa(client, oferta = null, salvate = null) {
       ${client ? ` · ${esc(client)}` : ''} · ${acum()}</div>
 
     ${rame ? observatiiRame : ''}
-    ${rame ? '' : tabelDimensiuniPanouri(spec)}
+    ${rame || util ? '' : tabelDimensiuniPanouri(spec)}
 
     ${tabel(['Cod', 'Denumire', 'Cant.'],
         factura.lines.map(l => `<tr><td>${esc(l.cod)}</td><td>${esc(l.denumire ?? '—')}</td>

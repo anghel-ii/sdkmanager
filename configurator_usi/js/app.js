@@ -1,11 +1,17 @@
 import { initScene }   from './scene.js';
 import { initBuilder }  from './builder.js';
 import { initUI }       from './ui.js';
-import { initBara }     from './bara.js';
+import { initNou }      from './ui_nou.js';
 
-const holder = document.getElementById('canvas-holder');
-const { controls, doorGroup } = initScene(holder);
+(async () => {
+  // interfaţa e cea pe paşi (js/ui_nou.js, css/nou.css) — clasa înainte de scenă,
+  // ca 3D-ul să pornească direct în locul lui
+  document.body.classList.add('ui-nou');
 
-initBuilder(doorGroup, controls);
-initUI();   // face şi primul buildConfig() + readout
-initBara(); // bara laterală redimensionabilă
+  const holder = document.getElementById('canvas-holder');
+  const { controls, doorGroup } = initScene(holder);
+
+  initBuilder(doorGroup, controls);
+  await initUI();   // face şi primul buildConfig() + readout
+  initNou();        // aşază grupurile randate de ui.js pe paşi
+})();

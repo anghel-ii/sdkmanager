@@ -12,7 +12,10 @@ import { suprapuneriConfort, areCodH, areSinaSimpla } from './lib/confort/index.
 import gameJson from './systems/game.json';
 import { renderRame, syncRame, refreshRame } from './ui_rame.js';
 import { activeazaCampuri } from './campuri.js';
+import { LIVRARE, AGENTI, FACTURARE, detaliiComanda } from './lib/comun/comanda.js';
 import { stareRameGoala } from './lib/rame/rame.js';
+import { renderUtil } from './ui_util.js';
+import { stareUtilGoala } from './lib/util/util.js';
 
 // Toate accesele la DOM sunt tolerante la elemente lipsă (HTML din cache vechi).
 const $ = id => document.getElementById(id);
@@ -193,6 +196,7 @@ function renderFinishes() {
     sw.addEventListener('click', () => {
       state.finish = f.id;
       renderFinishes();
+      syncDoors();     // culoarea poate strânge nr. de uşi (Cupru la Standard)
       applyLimits();   // unele finisaje au limite proprii (ex. CUPRU la Confort)
       renderDoorsUI(); // AURIU/CUPRU n-au şină simplă → poate forţa 2 uşi / şină dublă
       renderWheels();  // la Confort, culoarea e una din condiţiile care arată cardurile de uşă
@@ -269,8 +273,9 @@ function syncDoors() {
   // — NU se clampează spre minimul din doorsRange, altfel stepperul ar sări
   // singur pe 1 la orice schimbare de model (exact bug-ul raportat de user,
   // 2026-09-17). La restul familiilor (nr. de uşi fix pe model) neschimbat.
-  const n = meta?.doorsRange
-    ? (state.doors > 0 ? clamp(state.doors, meta.doorsRange[0], meta.doorsRange[1]) : 0)
+  const range = doorsRangeOf(meta);
+  const n = range
+    ? (state.doors > 0 ? clamp(state.doors, range[0], range[1]) : 0)
     : (meta ? (meta.doors ?? 1) : 0);   // fără model ales (ecran gol Confort): 0 uşi, nu 1
   state.doors = n;
 
@@ -280,7 +285,8 @@ function syncDoors() {
   state.wheels = wheels;
 
   const assembly = state.assembly ?? [];
-  while (assembly.length < n) assembly.push('noi');
+  // UTIL: panourile sunt ale clientului — implicit asamblează clientul (userul)
+  while (assembly.length < n) assembly.push(meta?.family === 'util' ? 'client' : 'noi');
   assembly.length = n;
   state.assembly = assembly;
 
@@ -348,12 +354,13 @@ function avansatHtml(i) {
   const panes = mats.length;
   const rows  = [];
   // Divizarea H nu există la toate culorile (ex. AURIU) — atunci nu o oferim.
-  const hDisponibil = areCodH(systems[state.system]?.meta.catalog, state.finish);
+  const util = systems[state.system]?.meta.family === 'util';   // divizările sunt deja H
+  const hDisponibil = !util && areCodH(systems[state.system]?.meta.catalog, state.finish);
   for (let k = panes - 1; panes > 1 && k >= 0; k--) {
     const fix = state.hPanouri[i]?.[k];
     rows.push(`
       <div class="av-rand av-panou">
-        <span class="av-eticheta">Panou ${panes - k} · ${mats[k] === 'pal' ? 'PAL' : 'Sticlă'}</span>
+        <span class="av-eticheta">Panou ${panes - k}${util ? '' : ` · ${mats[k] === 'pal' ? 'PAL' : 'Sticlă'}`}</span>
         <input type="number" class="av-inaltime" id="av-h-${i}-${k}" data-door="${i}" data-panou="${k}"
                step="1" min="1" value="${Number.isFinite(fix) ? fix : ''}" placeholder="auto">
         <span class="av-unit">mm</span>
@@ -397,7 +404,7 @@ function avansatHtml(i) {
       <div class="av-dreapta">
         <div class="av-nota">Divizări aplicate</div>
         ${seg('latime', [['fara', 'Fără'], ['10', '10mm'], ['20', '20mm']])}
-        ${seg('parte', [['fata', 'Faţă'], ['spate', 'Spate'], ['ambele', 'Faţă şi spate']])}
+        ${util ? '' : seg('parte', [['fata', 'Faţă'], ['spate', 'Spate'], ['ambele', 'Faţă şi spate']])}
         ${stepper('verticale', 'Verticale')}
         ${stepper('orizontale', 'Orizontale')}
       </div>
@@ -435,14 +442,18 @@ function renderWheels() {
     return;
   }
   const isConfort = meta?.family === 'confort';
+  // UTIL: panourile sunt ale clientului — cardul are doar divizări (profil H) şi
+  // opţiunile avansate (înălţimi de panou, divizări aplicate), ca la Confort.
+  const isUtil    = meta?.family === 'util';
   const hasPal    = !!meta?.pal;
+  // UTIL are o singură amortizare (35 kg, cod 341); Confort 35 şi 60 kg
+  const claseAmortizare = isUtil ? ['fara', '35kg'] : ['fara', '35kg', '60kg'];
 
   // Niciun card de uşă „implicit" — rămân ascunse cât timp nu s-au ales TOATE
   // din: model, culoare, cote (H+L, vezi latimeAtinsa/inaltimeAtinsa) şi — doar
   // la sistemele cu nr. de uşi ales (Confort) — nr. de uşi. `!meta` = ecranul
   // iniţial gol (niciun model ales). Confort 2026-09-17, suspendate 2026-09-21.
-  const carduriGata = !!meta && !!state.finish && latimeAtinsa && inaltimeAtinsa &&
-    (!meta.doorsRange || state.doors > 0);
+  const carduriGata = configuratieCompleta();
   if (!carduriGata) {
     box.innerHTML = '';
     if (groupUsi) groupUsi.style.display = 'none';
@@ -479,16 +490,16 @@ function renderWheels() {
           </div>
         </div>
 
-        <div class="door-row">
+        ${isUtil ? '' : `<div class="door-row">
           <span class="door-row-label">Sticlă</span>
           <select class="geam-select" data-door="${i}" data-client="${client ? 1 : 0}"${hasGlass ? '' : ' disabled'}>${
             !hasGlass ? '<option>Fără geam — numai PAL</option>'
               : client ? grosimeOptionsHtml(state.geamClient[i])
                        : geamOptionsHtml(state.geam[i])
           }</select>
-        </div>
+        </div>`}
 
-        ${!isConfort ? `
+        ${!isConfort && !isUtil ? `
         <div class="door-row door-row-role">
           <span class="door-row-label">Role</span>
           <!-- ca amortizările de la Confort: Stânga/Dreapta deasupra, butoane
@@ -505,14 +516,14 @@ function renderWheels() {
           </div>
         </div>` : ''}
 
-        ${isConfort ? `
+        ${isConfort || isUtil ? `
         <div class="door-row door-row-amortizare">
           <span class="door-row-label">Amortizări</span>
           <div class="amortizare-grup">
             <div class="amortizare-parte">
               <span class="amortizare-parte-label">Stânga</span>
               <div class="segmented mini" data-door="${i}" data-amortizare="left">
-                ${['fara', '35kg', '60kg'].map(v => `<button data-v="${v}"${
+                ${claseAmortizare.map(v => `<button data-v="${v}"${
                   (state.amortizare[i]?.left ?? 'fara') === v ? ' class="active"' : ''
                 }>${v === 'fara' ? 'Fără' : v}</button>`).join('')}
               </div>
@@ -520,7 +531,7 @@ function renderWheels() {
             <div class="amortizare-parte">
               <span class="amortizare-parte-label">Dreapta</span>
               <div class="segmented mini" data-door="${i}" data-amortizare="right">
-                ${['fara', '35kg', '60kg'].map(v => `<button data-v="${v}"${
+                ${claseAmortizare.map(v => `<button data-v="${v}"${
                   (state.amortizare[i]?.right ?? 'fara') === v ? ' class="active"' : ''
                 }>${v === 'fara' ? 'Fără' : v}</button>`).join('')}
               </div>
@@ -701,6 +712,14 @@ function renderDoorsUI() {
   // se trece automat pe 2 uşi (setDoors re-randează tot).
   if (faraSinaSimpla() && state.doors === 1) { setDoors(2); return; }
 
+  // Gamele cu suprapuneri fixe pe nr. de uşi (UTIL): mereu şină dublă, valoarea
+  // doar afişată (— cât timp nu e ales nr. de uşi).
+  if (meta.suprapuneri) {
+    state.tracks = 2;
+    tracksBox.innerHTML = `<button class="active" disabled>${meta.suprapuneri(state.doors) ?? '—'}</button>`;
+    return;
+  }
+
   const dublu = suprapuneriConfort(state.doors);
 
   if (state.doors === 2 && !faraSinaSimpla()) {
@@ -736,13 +755,17 @@ const faraSinaSimpla = () => {
 };
 
 function setDoors(n) {
-  const [lo, hi] = systems[state.system]?.meta.doorsRange ?? [1, 7];
+  const [lo, hi] = doorsRangeOf(systems[state.system]?.meta) ?? [1, 7];
   state.doors = clamp(n, faraSinaSimpla() ? Math.max(lo, 2) : lo, hi);
   syncDoors();
+  applyLimits();   // lăţimea max poate depinde de nr. de uşi (limitsFinisaj.widthUsi)
   renderDoorsUI();
   renderWheels();
   rebuild();
 }
+
+// Nr. de uşi permis — o culoare îl poate strânge (limitsFinisaj.doors, ex. Cupru la Standard).
+const doorsRangeOf = meta => meta?.limitsFinisaj?.[state.finish]?.doors ?? meta?.doorsRange;
 
 // ── Limite de gol (per model) ───────────────────────────────────────────────
 
@@ -755,7 +778,7 @@ function applyLimits() {
   // lăţime max 3500 în loc de 5800) — meta.limitsFinisaj suprascrie doar ce
   // diferă, restul vine din meta.limits.
   const suprascriere = meta.limitsFinisaj?.[state.finish];
-  const [wMin, wMax] = suprascriere?.width  ?? lim.width;
+  const [wMin, wMax] = suprascriere?.widthUsi?.[state.doors] ?? suprascriere?.width ?? lim.width;
   const [hMin, hMax] = suprascriere?.height ?? lim.height;
 
   state.width  = clamp(state.width,  wMin, wMax);
@@ -772,7 +795,10 @@ function applyLimits() {
 
 // ── Rebuild ─────────────────────────────────────────────────────────────────
 
-function rebuild() { buildConfig(); refreshAvansat(); refreshRame(); renderReadout(); renderOferta(); }
+function rebuild() {
+  buildConfig(); refreshAvansat(); refreshRame(); renderReadout(); renderOferta();
+  document.dispatchEvent(new Event('configurator:rebuild'));   // interfaţa nouă (ui_nou.js) îşi actualizează paşii
+}
 
 // Gama rame: în locul cotelor de gol / nr. de uşi / cardurilor de uşă apare
 // panoul de rânduri (js/ui_rame.js) — după ce s-a ales modelul.
@@ -783,6 +809,28 @@ function aplicaGama() {
   const areModel = !!systems[state.system]?.meta.rame;
   if (grup) grup.style.display = eRame && areModel ? '' : 'none';
   if (eRame && areModel) { syncRame(); renderRame($('rameUI'), { rebuild, geamOptionsHtml }); }
+
+  const eUtil = systems[state.system]?.meta.family === 'util';
+  const grupUtil = $('groupUtil');
+  if (grupUtil) grupUtil.style.display = eUtil ? '' : 'none';
+  if (eUtil) renderUtil($('utilUI'), { rebuild });
+}
+
+// ── Detaliile comenzii (livrare / facturare / agent) — la toate gamele ─────
+// Pornesc pe „Alege…"; la rame sunt obligatorii (blochează facturarea, ca în
+// formularul Excel), la celelalte game doar se trec pe ofertă şi pe fişă.
+function initDetaliiComanda() {
+  const det = detaliiComanda(state);   // ofertele vechi de rame le aveau în state.rame
+  state.comanda = { ...det };
+  for (const [id, lista, alege] of [['comandaLivrare', LIVRARE, 'Mod de livrare'],
+                                    ['comandaFacturare', FACTURARE, 'Facturare'], ['comandaAgent', AGENTI, 'Agent']]) {
+    const sel = $(id);
+    if (!sel) continue;
+    const ales = state.comanda[sel.dataset.c];
+    sel.innerHTML = `<option value=""${ales ? '' : ' selected'} disabled>${alege}</option>` +
+      lista.map(v => `<option${v === ales ? ' selected' : ''}>${esc(v)}</option>`).join('');
+    sel.addEventListener('change', () => { state.comanda[sel.dataset.c] = sel.value; rebuild(); });
+  }
 }
 
 // ── Ofertă (coş + confirmare) ───────────────────────────────────────────────
@@ -836,7 +884,7 @@ function renderOferta() {
                : `${p.pozitie.nrUsi} ${p.pozitie.nrUsi === 1 ? 'uşă' : 'uşi'}`}</div>
          </div>`}`;
   btn.style.display = '';
-  btn.disabled = !!p.eroare;
+  btn.disabled = !!p.eroare || !configuratieCompleta();
 }
 
 function mesajOferta(html, fel) {
@@ -854,7 +902,9 @@ async function trimiteOferta() {
   const r = await oferta.confirma({
     id:         ofertaEditata,
     nume:       $('clientNume').value,
-    telefon:    $('clientContact').value,
+    telefon:    $('clientTelefon').value,
+    adresa:     $('clientAdresa').value,
+    detalii:    detaliiComanda(state),
     email:      '',
     observatii: '',
   });
@@ -912,6 +962,18 @@ let gamaActiva = null;
 // iniţial), ca Suspendată să nu se atingă deloc (acolo rămân mereu `true`,
 // comportament identic ca înainte). Schimbarea modelului NU le resetează.
 let latimeAtinsa = true, inaltimeAtinsa = true;
+
+// Configuraţia e completă când s-au ales TOATE: model, culoare, cotele (H+L
+// scrise de user, nu valorile implicite din state) şi — la gamele cu nr. de uşi
+// ales — nr. de uşi. Ramele n-au cote de gol: acolo contează primul rând
+// completat (H, L, buc); restul îl verifică facturarea (specRame.erori). Aceeaşi regulă pt. cardurile uşilor,
+// butonul de salvare şi starea din interfaţă.
+export function configuratieCompleta() {
+  const meta = systems[state.system]?.meta;
+  if (!meta || !state.finish) return false;
+  if (meta.rame) return (currentSpec()?.nrRame ?? 0) > 0;
+  return latimeAtinsa && inaltimeAtinsa && (!meta.doorsRange || state.doors > 0);
+}
 
 const currentGama = () => systems[state.system]?.meta.family ?? gamaActiva;
 
@@ -981,7 +1043,7 @@ function renderModelList() {
 
 export async function initUI() {
   activeazaCampuri();   // Enter = câmpul următor; meniuri lungi căutabile
-  // Pagina principală a managerului trimite `?gama=suspendata|confort|rame`;
+  // Pagina principală a managerului trimite `?gama=suspendata|confort|rame|util`;
   // „Modifică oferta" din manager trimite `?oferta=<id>`.
   const params = new URLSearchParams(location.search);
   const gama = gamaDupaId(params.get('gama'));
@@ -1002,7 +1064,8 @@ export async function initUI() {
       ofertaSalvata = { comanda: { id: o.comanda.id, numar: o.comanda.numar,
         coduri: (o.coduri ?? []).map(cod_bare => ({ cod_bare })) }, stare: null };
       $('clientNume').value    = o.comanda.client_nume ?? '';
-      $('clientContact').value = o.comanda.client_telefon ?? '';
+      $('clientTelefon').value = o.comanda.client_telefon ?? '';
+      $('clientAdresa').value  = o.comanda.client_adresa ?? '';
       const btn = $('btnConfirma');
       if (btn) btn.textContent = 'Salvează modificările';
     }
@@ -1018,7 +1081,8 @@ export async function initUI() {
       Object.assign(state, structuredClone(poz.config));
       gamaActiva = systems[state.system]?.meta.family ?? null;
       $('clientNume').value    = o.comanda.client_nume ?? '';
-      $('clientContact').value = o.comanda.client_telefon ?? '';
+      $('clientTelefon').value = o.comanda.client_telefon ?? '';
+      $('clientAdresa').value  = o.comanda.client_adresa ?? '';
       modFisa = {
         numar:  o.comanda.numar_comanda || o.comanda.numar,
         client: o.comanda.client_nume ?? '',
@@ -1041,6 +1105,7 @@ export async function initUI() {
     inaltimeAtinsa = false;
   }
   if (gama?.id === 'rame') state.rame = stareRameGoala();
+  if (gama?.id === 'util') state.util = stareUtilGoala();
 
   renderModelList();
 
@@ -1054,6 +1119,7 @@ export async function initUI() {
     const lim = systems[state.system]?.meta.limits?.height;
     const val = parseInt(e.target.value, 10);
     state.height = lim ? clamp(val || lim[0], lim[0], lim[1]) : (Number.isFinite(val) ? val : state.height);
+    applyLimits();   // şi limitele culorii (meta.limitsFinisaj, ex. Cupru)
     inaltimeAtinsa = true;
     e.target.value = state.height;
     renderWheels();   // la Confort, cota e una din condiţiile care arată cardurile de uşă
@@ -1063,6 +1129,7 @@ export async function initUI() {
     const lim = systems[state.system]?.meta.limits?.width;
     const val = parseInt(e.target.value, 10);
     state.width = lim ? clamp(val || lim[0], lim[0], lim[1]) : (Number.isFinite(val) ? val : state.width);
+    applyLimits();   // şi limitele culorii (meta.limitsFinisaj, ex. Cupru)
     latimeAtinsa = true;
     e.target.value = state.width;
     renderWheels();
@@ -1073,6 +1140,7 @@ export async function initUI() {
     ? deschideFisa(modFisa.client, { numar: modFisa.numar }, modFisa)
     : deschideFisa($('clientNume')?.value, ofertaPtFisa()));
   $('btnConfirma')?.addEventListener('click', trimiteOferta);
+  initDetaliiComanda();
   // CLEAR PAGE — configuraţie nouă de la zero: reîncărcarea paginii (cu acelaşi
   // ?gama=) readuce exact ecranul iniţial gol, fără stare rămasă pe undeva.
   $('btnClear')?.addEventListener('click', () => location.reload());
