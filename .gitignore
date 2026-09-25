@@ -59,3 +59,6 @@ graphify-out/
 *.log
 # Superdesign — schiţele de interfaţă, unealtă de lucru, nu parte din aplicaţie
 .superdesign/
+
+# ── Demo static pe Cloudflare (manager + configurator în browser) — doar local ──
+/demo_cloudflare/
