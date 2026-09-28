@@ -1085,9 +1085,12 @@ export async function initUI() {
       $('clientAdresa').value  = o.comanda.client_adresa ?? '';
       modFisa = {
         numar:  o.comanda.numar_comanda || o.comanda.numar,
+        coduri: (o.coduri ?? []).map(cod_bare => ({ cod_bare })),
         client: o.comanda.client_nume ?? '',
         bom: (poz.linii?.necesar ?? []).map(l =>
           ({ code: l.cod, label: l.denumire, qty: l.cantitate, unit: l.um, cut: l.debitare })),
+        panouriClient: (poz.linii?.client ?? []).map(l =>
+          ({ label: l.denumire, qty: l.cantitate, unit: l.um, cut: l.debitare })),
         factura: { mode: null, errors: [], lines: (poz.linii?.facturare ?? []).map(l =>
           ({ cod: l.cod, denumire: l.denumire, um: l.um, cantitate: l.cantitate })) },
       };
@@ -1097,15 +1100,15 @@ export async function initUI() {
   // Ecran gol la ORICE gamă cerută (suspendate din 2026-09-21): niciun model,
   // nicio culoare, cotele goale. Fără ?gama= (dist/ deschis direct) rămâne
   // comportamentul vechi — modelul implicit din state.js.
-  if (gama) {
+  if (gama && !params.get('oferta') && !params.get('fisa')) {
     state.system = null;
     state.finish = null;
     state.doors  = 0;
     latimeAtinsa = false;
     inaltimeAtinsa = false;
+    if (gama.id === 'rame') state.rame = stareRameGoala();
+    if (gama.id === 'util') state.util = stareUtilGoala();
   }
-  if (gama?.id === 'rame') state.rame = stareRameGoala();
-  if (gama?.id === 'util') state.util = stareUtilGoala();
 
   renderModelList();
 
@@ -1137,7 +1140,7 @@ export async function initUI() {
   });
 
   $('btnFisa')?.addEventListener('click', () => modFisa
-    ? deschideFisa(modFisa.client, { numar: modFisa.numar }, modFisa)
+    ? deschideFisa(modFisa.client, modFisa, modFisa)
     : deschideFisa($('clientNume')?.value, ofertaPtFisa()));
   $('btnConfirma')?.addEventListener('click', trimiteOferta);
   initDetaliiComanda();
@@ -1170,7 +1173,7 @@ export async function initUI() {
   if (eroareIncarcare) mesajOferta(esc(eroareIncarcare), 'eroare');
   if (modFisa) {
     mesajOferta(`Fişa comenzii <strong>${esc(modFisa.numar)}</strong> — deschisă doar pentru printare; de aici nu se salvează nimic.`, 'ok');
-    deschideFisa(modFisa.client, { numar: modFisa.numar }, modFisa);
+    deschideFisa(modFisa.client, modFisa, modFisa);
   }
   // Managerul încarcă pagina asta într-un cadru ascuns (butonul „Fişă") şi
   // aşteaptă răspunsul: fişa e gata (dialogul de print porneşte singur) sau eroare.

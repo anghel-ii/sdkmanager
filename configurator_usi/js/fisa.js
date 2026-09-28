@@ -328,7 +328,8 @@ export function deschideFisa(client, oferta = null, salvate = null) {
   const spec = currentSpec();
   if (!sys || !spec) { alert('Configuraţia nu e gata.'); return; }
 
-  const bom     = salvate?.bom ?? currentBom();
+  const bom           = salvate?.bom ?? currentBom();
+  const panouriClient = salvate?.panouriClient ?? currentClientPanels();
   // telefonul şi adresa: din câmpurile clientului (fişa din manager le primeşte completate)
   const telefon = document.getElementById('clientTelefon')?.value.trim() ?? '';
   const adresa  = document.getElementById('clientAdresa')?.value.trim() ?? '';
@@ -371,7 +372,7 @@ export function deschideFisa(client, oferta = null, salvate = null) {
     ['H gol',                `${spec.opening.h} mm`],
     ['L gol',                `${spec.opening.w} mm`],
     ['Nr. uşi',               spec.door.count],
-    ['Nr. suprapuneri',      sys.meta.doorsRange ? suprapuneriEfective(state.doors, state.tracks) : null],
+    ['Nr. suprapuneri',      sys.meta.doorsRange ? suprapuneriEfective(state.doors, sys.meta.suprapuneriObligatorii ? 2 : state.tracks) : null],
     ['Înălţime finală uşă',  `${spec.door.h} mm`],
     ['Lăţime finală uşă',    `${spec.door.w} mm`],
   ], 'cote');
@@ -406,7 +407,7 @@ export function deschideFisa(client, oferta = null, salvate = null) {
   // nu mai apar ramele şi geamul (sunt sus); fără câmpurile de atelier (2026-09-21).
   const eRame = !!rame;
   // (+ la 842 nici geamul: cotele lui sunt în tabelul ramelor de sus)
-  const coduriRame = new Set(eRame ? [...spec.pline.map(x => x.cod), findGeam(rame.geam)?.cod ?? '⚠ ALEGE GEAM'] : []);
+  const coduriRame = new Set(eRame ? [...spec.pline.map(x => x.cod ?? '⚠ LIPSĂ COD'), findGeam(rame.geam)?.cod ?? '⚠ ALEGE GEAM'] : []);
   const necesarHtml = tabel(['Cod', 'Reper', 'Debitare', 'Cant.', '✓'],
       bom.filter(r => !coduriRame.has(r.code)).map(r => `<tr><td>${esc(r.code)}</td><td>${esc(r.label)}</td>
         <td>${esc(r.cut ?? '—')}</td><td class="num">${r.qty} ${esc(r.unit)}</td>
@@ -631,7 +632,7 @@ export function deschideFisa(client, oferta = null, salvate = null) {
     </div>
   </div>
 
-  ${util ? tabel(['PAL (clientul)', 'Dimensiuni', 'Cant.'], currentClientPanels().map(r =>
+  ${util ? tabel(['PAL (clientul)', 'Dimensiuni', 'Cant.'], panouriClient.map(r =>
         `<tr><td>${esc(r.label)}</td><td>${esc(r.cut)}</td><td class="num">${r.qty} buc</td></tr>`))
     : rame ? debitareRame(spec) : blocDesene(sys, spec)}
 
@@ -688,7 +689,9 @@ export function deschideFisa(client, oferta = null, salvate = null) {
       // se porneşte de la înălţimea DESENATĂ (poate fi deja mai mică decât hmax,
       // când lăţimea coloanei e cea care limitează), nu de la hmax
       for (var k = 0; k < 6 && desene.offsetHeight > lim; k++) {
-        var svgH = desene.querySelector('svg').getBoundingClientRect().height / PX;
+        var svgEl = desene.querySelector('svg');
+        if (!svgEl) break;
+        var svgH = svgEl.getBoundingClientRect().height / PX;
         setH(svgH - (desene.offsetHeight - lim) / PX);
       }
     }
