@@ -138,6 +138,10 @@ canvas    { display: block; }
 
 .door-row { display: flex; align-items: center; gap: 8px; }
 .door-row-wrap { flex-wrap: wrap; }
+/* „Cine asamblează toate uşile" — deasupra cardurilor de uşă */
+.toate-usi { padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel-2); }
+.toate-usi-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; white-space: nowrap; }
+.toate-usi .segmented { width: 160px; }
 
 /* ── Opţiuni avansate (toate cardurile de uşă) — panoul se aşază pe toată
    lăţimea cardului, sub cele două coloane. */

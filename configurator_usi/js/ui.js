@@ -285,8 +285,8 @@ function syncDoors() {
   state.wheels = wheels;
 
   const assembly = state.assembly ?? [];
-  // UTIL: panourile sunt ale clientului — implicit asamblează clientul (userul)
-  while (assembly.length < n) assembly.push(meta?.family === 'util' ? 'client' : 'noi');
+  // implicit asamblează clientul, la toate gamele (userul, 2026-09-28; UTIL era deja aşa)
+  while (assembly.length < n) assembly.push('client');
   assembly.length = n;
   state.assembly = assembly;
 
@@ -461,7 +461,19 @@ function renderWheels() {
   }
   if (groupUsi) groupUsi.style.display = '';
 
-  box.innerHTML = state.wheels.map((w, i) => {
+  // „Cine asamblează toate uşile" — doar la mai multe uşi; butonul e activ când
+  // toate uşile au aceeaşi alegere (la alegeri amestecate, niciunul)
+  const toti = state.assembly.every(a => a === state.assembly[0]) ? state.assembly[0] : null;
+  const toateUsile = state.wheels.length > 1 ? `
+    <div class="door-row toate-usi">
+      <span class="toate-usi-label">Cine asamblează toate uşile</span>
+      <div class="segmented mini" data-toate-assembly="1">
+        <button data-v="noi"${toti === 'noi' ? ' class="active"' : ''}>Noi</button>
+        <button data-v="client"${toti === 'client' ? ' class="active"' : ''}>Client</button>
+      </div>
+    </div>` : '';
+
+  box.innerHTML = toateUsile + state.wheels.map((w, i) => {
     const panels   = state.panels[i];
     const hasGlass = panels.some(mat => mat !== 'pal');
     const client   = state.assembly[i] === 'client';
@@ -658,6 +670,14 @@ function renderWheels() {
         renderWheels();
         rebuild();
       });
+    });
+  });
+
+  box.querySelectorAll('[data-toate-assembly] button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.assembly = state.assembly.map(() => btn.dataset.v);
+      renderWheels();
+      rebuild();
     });
   });
 

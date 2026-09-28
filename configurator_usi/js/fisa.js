@@ -131,7 +131,7 @@ function blocDesene(sys, spec) {
   const margH = (spec.glass?.panels ?? []).some(p => p.profil?.includes('H')) ? 110 : 0;
   const coloane = Array.from({ length: n }, (_, i) => {
     const { svg, raport } = desenUsa(sys, spec, i, margH);
-    const cine = state.assembly?.[i] === 'client' ? 'CLIENTUL' : 'NOI';
+    const cine = state.assembly?.[i] === 'client' ? 'CLIENTUL ASAMBLEAZĂ' : 'NOI ASAMBLĂM';
     return `
       <div class="usa-col" style="--r:${raport.toFixed(4)}">
         <div class="usa-cap"><span class="usa-nr">Uşa ${i + 1}</span> <span class="usa-cine">${cine}</span></div>
@@ -408,12 +408,18 @@ export function deschideFisa(client, oferta = null, salvate = null) {
   const eRame = !!rame;
   // (+ la 842 nici geamul: cotele lui sunt în tabelul ramelor de sus)
   const coduriRame = new Set(eRame ? [...spec.pline.map(x => x.cod ?? '⚠ LIPSĂ COD'), findGeam(rame.geam)?.cod ?? '⚠ ALEGE GEAM'] : []);
+  // Confort / suspendate / UTIL: la Reper fără „cod 200" / „Cod 203.212" — codul
+  // e deja în prima coloană (userul, 2026-09-28). Doar tokenuri cu cifre:
+  // „fără cod pentru…" rămâne. Ramele rămân neschimbate.
+  const reper = !rame
+    ? t => String(t ?? '').replace(/\s*\bcod\s+(?=\S*\d)[\w.\-\/]+/gi, '').trim()
+    : t => t;
   const necesarHtml = tabel(['Cod', 'Reper', 'Debitare', 'Cant.', '✓'],
-      bom.filter(r => !coduriRame.has(r.code)).map(r => `<tr><td>${esc(r.code)}</td><td>${esc(r.label)}</td>
+      bom.filter(r => !coduriRame.has(r.code)).map(r => `<tr><td>${esc(r.code)}</td><td>${esc(reper(r.label))}</td>
         <td>${esc(r.cut ?? '—')}</td><td class="num">${r.qty} ${esc(r.unit)}</td>
         <td class="bifa"></td></tr>`),
       'necesar-materiale' + (rame ? ' rame' : '') + (eRame ? ' plin' : '')
-        + (sys.meta.family === 'confort' ? ' confort' : ''));
+        + (rame ? '' : ' mare'));
   // În loc de „Observaţii", 4 câmpuri mari pt. etapele din atelier,
   // cât mai înalte (se întind până la baza foii) — cerute de user.
   const campuriAtelier = `
@@ -509,7 +515,7 @@ export function deschideFisa(client, oferta = null, salvate = null) {
                  margin: 0 auto; font-family: Arial, sans-serif; }
   .usa-cap { text-align: center; margin-bottom: 2px; line-height: 1.15; }
   .usa-nr { display: block; font-size: 10px; color: #555; }
-  .usa-cine { display: block; font-size: 15px; font-weight: 700; letter-spacing: .02em; white-space: nowrap; }
+  .usa-cine { display: block; font-size: 15px; font-weight: 700; letter-spacing: .02em; line-height: 1.1; }
   .usa-sub { font-size: 10.5px; line-height: 1.3; margin-top: 3px; overflow-wrap: break-word; }
   .sub-et { color: #555; }
   body.nivel-1 .usa-sub { font-size: 9px; line-height: 1.15; margin-top: 1px; }
@@ -560,16 +566,19 @@ export function deschideFisa(client, oferta = null, salvate = null) {
   table.necesar-materiale.fix20 th:nth-child(3) { width: 15%; }
   table.necesar-materiale.fix20 th:nth-child(4) { width: 13%; }
   table.necesar-materiale.fix20 th:nth-child(5) { width: 6%; }
-  /* Confort: cotele de debitare mari, să se vadă din atelier — necesarul ia
-     85% din lăţime, câmpurile de atelier se îngustează la 15% (userul, 2026-09-28) */
-  .jos table.necesar-materiale.confort { flex-basis: calc(85% - 1.5mm); width: calc(85% - 1.5mm); }
-  .jos table.necesar-materiale.confort + .observatii.campuri { flex-basis: calc(15% - 1.5mm); }
-  .jos table.necesar-materiale.confort + .observatii.campuri .obs-et { font-size: 12px; letter-spacing: 0; }
-  table.necesar-materiale.fix20.confort th:nth-child(1) { width: 10%; }
-  table.necesar-materiale.fix20.confort th:nth-child(3) { width: 24%; }
-  table.necesar-materiale.fix20.confort th:nth-child(4) { width: 11%; }
-  table.necesar-materiale.fix20.confort th:nth-child(5) { width: 5%; }
-  table.necesar-materiale.fix20.confort td:nth-child(3) { font-size: calc(var(--font) * 1.35); font-weight: 700; }
+  /* Confort / suspendate / UTIL (clasa „mare"): reper, cote şi cantităţi mari, să
+     se vadă din atelier — necesarul ia 85% din lăţime, câmpurile de atelier se
+     îngustează la 15% (userul, 2026-09-28) */
+  .jos table.necesar-materiale.mare { flex-basis: calc(85% - 1.5mm); width: calc(85% - 1.5mm); }
+  .jos table.necesar-materiale.mare + .observatii.campuri { flex-basis: calc(15% - 1.5mm); }
+  .jos table.necesar-materiale.mare + .observatii.campuri .obs-et { font-size: 12px; letter-spacing: 0; }
+  table.necesar-materiale.fix20.mare th:nth-child(1) { width: 7%; }
+  table.necesar-materiale.fix20.mare th:nth-child(3) { width: 19%; }
+  table.necesar-materiale.fix20.mare th:nth-child(4) { width: 12%; }
+  table.necesar-materiale.fix20.mare th:nth-child(5) { width: 4%; }
+  table.necesar-materiale.fix20.mare td:nth-child(3) { font-size: calc(var(--font) * 1.35); font-weight: 700; }
+  table.necesar-materiale.fix20.mare td:nth-child(2) { font-size: calc(var(--font) * 1.25); }
+  table.necesar-materiale.fix20.mare td:nth-child(4) { font-size: calc(var(--font) * 1.35); font-weight: 700; }
   /* rame: denumirile accesoriilor sunt lungi (verbatim din formular) — se
      împachetează pe rânduri în loc să se micşoreze până nu se mai citesc */
   table.necesar-materiale.fix20.rame td:nth-child(1), table.necesar-materiale.fix20.rame td:nth-child(2) {

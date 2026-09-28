@@ -50,7 +50,7 @@ export const state = {
   doors:    2,       // relevant doar la sisteme cu meta.doorsRange (Confort)
   tracks:    2,       // relevant doar la sisteme cu meta.doorsRange (Confort)
   wheels:    [{ left: 'simpla', right: 'simpla' }],
-  assembly:  ['noi'],
+  assembly:  ['client'],   // implicit asamblează clientul (userul, 2026-09-28)
   geam:       ['GG004'],  // Geam float transparent 4mm GG — doar la assembly 'noi'
   geamClient: [4],        // mm — doar la assembly 'client' (4 sau 8)
   hPanouri:  [[null]],
