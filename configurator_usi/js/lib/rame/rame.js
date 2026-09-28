@@ -72,7 +72,7 @@ export const GAURIRE_820 = [FARA_GAURIRE, DOUA_GAURI, '100 mm sus/jos si la mijl
                             '100 mm sus/jos si impartite egal', 'vezi schita pe spate'];
 export const GAURIRE_831 = ['Fara gaurire', 'Gaurire Standard'];
 // livrare / agent / facturare: acum ale comenzii, la toate gamele (lib/comun/comanda.js)
-export { LIVRARE, AGENTI, FACTURARE } from '../comun/comanda.js';
+export { LIVRARE, AGENTI, PLATI } from '../comun/comanda.js';
 
 // ── Accesorii grup 820 (820 / 822 / 824) ────────────────────────────────────
 // Balamale şi plăcuţe: lista diferă între 820 şi 822/824 (Sheet3!I120:K170).
@@ -215,7 +215,7 @@ export const stareRameGoala = () => ({
   balama: null, placuta: null, manson: true,
   maner: { randuri: [randManerGol()] },
   ral: '', vopsitCant: 0,
-  livrare: null, agent: null, facturare: null,
+  livrare: null, agent: null, plata: null,
 });
 
 // ── Calcule ─────────────────────────────────────────────────────────────────
@@ -306,7 +306,7 @@ export function specRame(model, state) {
   const det = detaliiComanda(state);
   if (!det.livrare) erori.push('alege modul de livrare');
   if (!det.agent) erori.push('alege agentul');
-  if (!det.facturare) erori.push('alege tipul de facturare');
+  if (!det.plata) erori.push('alege metoda de plată');
 
   const maxH = Math.max(0, ...pline.map(x => x.h)), maxL = Math.max(0, ...pline.map(x => x.l));
   return {

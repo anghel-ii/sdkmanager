@@ -18,7 +18,7 @@ import { state } from '../js/state.js';
 import { systems } from '../js/systems/registry.js';
 import { initBuilder, buildConfig, finishesOf } from '../js/builder.js';
 import { pozitieCurenta } from '../js/oferta.js';
-import { stareRameGoala, MODELE_RAME, ASAMBLARE, GAURIRE_820, GAURIRE_831, LIVRARE, AGENTI, FACTURARE,
+import { stareRameGoala, MODELE_RAME, ASAMBLARE, GAURIRE_820, GAURIRE_831, LIVRARE, AGENTI, PLATI,
          BALAMALE, PLACUTE } from '../js/lib/rame/rame.js';
 
 initBuilder(new THREE.Group(), { target: { set() {} } });
@@ -48,7 +48,7 @@ function completeaza(cfg) {
     if (grup820 && !r.placuta) r.placuta = pune('rame.placuta', PLACUTE[m.rame][0][0]);
     if (!r.livrare) r.livrare = pune('rame.livrare', LIVRARE[0]);
     if (!r.agent) r.agent = pune('rame.agent', AGENTI[0]);
-    if (!r.facturare) r.facturare = pune('rame.facturare', FACTURARE[0]);
+    if (!r.plata) r.plata = pune('rame.plata', PLATI[0][0]);
     return completat;
   }
 

@@ -612,9 +612,15 @@ async function main() {
   console.log('\nAşteaptă plata + nr. de ofertă scris de mână');
   {
     const o = await cer('POST', '/api/comenzi', { client: { nume: 'Client Plata' }, ofertaNr: ' NM-77 ',
-      pozitii: [pozitie('confortGamma', 'Confort Gamma', 2, 2000)] });
+      detalii: { plata: 'proforma_amanunt' }, pozitii: [pozitie('confortGamma', 'Confort Gamma', 2, 2000)] });
     const pid = o.date.comanda.id;
     verifica('nr. de ofertă se salvează (tăiat)', db2().prepare('SELECT oferta_nr FROM comanda WHERE id = ?').get(pid).oferta_nr === 'NM-77');
+    verifica('metoda de plată din configurator se salvează pe ofertă',
+      db2().prepare('SELECT plata FROM comanda WHERE id = ?').get(pid).plata === 'proforma_amanunt');
+    const oc = await cer('POST', '/api/comenzi', { client: { nume: 'Plata ciudata' }, detalii: { plata: 'card' },
+      pozitii: [pozitie('confortGamma', 'Confort Gamma', 1, 1200)] });
+    verifica('metodă de plată necunoscută → ignorată (NULL)',
+      db2().prepare('SELECT plata FROM comanda WHERE id = ?').get(oc.date.comanda.id).plata === null);
     const sumarInainte = (await cer('GET', '/api/sumar')).date;
     verifica('ofertă → aşteaptă plata → 200', (await cer('POST', `/api/comenzi/${pid}/asteapta-plata`)).stare === 200);
     verifica('a doua oară → 409', (await cer('POST', `/api/comenzi/${pid}/asteapta-plata`)).stare === 409);

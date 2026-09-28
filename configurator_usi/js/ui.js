@@ -12,7 +12,7 @@ import { suprapuneriConfort, areCodH, areSinaSimpla } from './lib/confort/index.
 import gameJson from './systems/game.json';
 import { renderRame, syncRame, refreshRame } from './ui_rame.js';
 import { activeazaCampuri } from './campuri.js';
-import { LIVRARE, AGENTI, FACTURARE, detaliiComanda } from './lib/comun/comanda.js';
+import { LIVRARE, AGENTI, PLATI, detaliiComanda } from './lib/comun/comanda.js';
 import { stareRameGoala } from './lib/rame/rame.js';
 import { renderUtil } from './ui_util.js';
 import { stareUtilGoala } from './lib/util/util.js';
@@ -836,19 +836,21 @@ function aplicaGama() {
   if (eUtil) renderUtil($('utilUI'), { rebuild });
 }
 
-// ── Detaliile comenzii (livrare / facturare / agent) — la toate gamele ─────
+// ── Detaliile comenzii (livrare / metodă de plată / agent) — la toate gamele ─
 // Pornesc pe „Alege…"; la rame sunt obligatorii (blochează facturarea, ca în
 // formularul Excel), la celelalte game doar se trec pe ofertă şi pe fişă.
 function initDetaliiComanda() {
   const det = detaliiComanda(state);   // ofertele vechi de rame le aveau în state.rame
   state.comanda = { ...det };
+  // lista: valori simple sau perechi [cod, text] (metodele de plată)
   for (const [id, lista, alege] of [['comandaLivrare', LIVRARE, 'Mod de livrare'],
-                                    ['comandaFacturare', FACTURARE, 'Facturare'], ['comandaAgent', AGENTI, 'Agent']]) {
+                                    ['comandaPlata', PLATI, 'Metodă de plată'], ['comandaAgent', AGENTI, 'Agent']]) {
     const sel = $(id);
     if (!sel) continue;
     const ales = state.comanda[sel.dataset.c];
     sel.innerHTML = `<option value=""${ales ? '' : ' selected'} disabled>${alege}</option>` +
-      lista.map(v => `<option${v === ales ? ' selected' : ''}>${esc(v)}</option>`).join('');
+      lista.map(v => { const [cod, text] = Array.isArray(v) ? v : [v, v];
+        return `<option value="${esc(cod)}"${cod === ales ? ' selected' : ''}>${esc(text)}</option>`; }).join('');
     sel.addEventListener('change', () => { state.comanda[sel.dataset.c] = sel.value; rebuild(); });
   }
 }
@@ -918,6 +920,7 @@ function mesajOferta(html, fel) {
 function cerePlata() {
   const dlg = $('dialogPlata');
   $('formPlata').reset();
+  $('plataMod').value = state.comanda?.plata ?? '';   // metoda aleasă în bara clientului
   return new Promise(gata => {
     $('plataRenunta').onclick = () => dlg.close();
     $('formPlata').onsubmit = e => { e.preventDefault(); dlg.close('ok'); };

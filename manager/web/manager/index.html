@@ -585,9 +585,10 @@ async function renderDetaliu(id) {
           ${c.client_adresa ? `<dt>Adresă</dt><dd>${esc(c.client_adresa)}</dd>` : ''}
           ${c.client_email ? `<dt>E-mail</dt><dd>${esc(c.client_email)}</dd>` : ''}
         </dl>
-        ${c.livrare || c.agent || c.tip_facturare ? `<dl class="perechi info-detalii">
+        ${c.livrare || c.agent || c.tip_facturare || c.plata ? `<dl class="perechi info-detalii">
           <dt>Livrare</dt><dd>${esc(c.livrare ?? '—')}</dd>
-          <dt>Tip factură</dt><dd>${esc(c.tip_facturare ?? '—')}</dd>
+          <dt>Metodă de plată</dt><dd>${esc(PLATI[c.plata] ?? '—')}</dd>
+          ${c.tip_facturare ? `<dt>Tip factură</dt><dd>${esc(c.tip_facturare)}</dd>` : ''}
           <dt>Agent</dt><dd>${esc(c.agent ?? '—')}</dd></dl>` : ''}
         ${c.observatii ? `<div class="info-obs"><span class="dim">Observaţii:</span> ${esc(c.observatii)}</div>` : ''}
       </div>
@@ -648,6 +649,8 @@ async function renderDetaliu(id) {
     const dlg = $('dialogAccepta');
     $('formAccepta').reset();
     $('titluAccepta').textContent = $('accOk').textContent = ePlata ? 'Plată primită' : 'Acceptă oferta';
+    // metoda aleasă deja în configurator (dacă e una din cele actuale)
+    if (c.plata && $('accPlata').querySelector(`option[value="${c.plata}"]`)) $('accPlata').value = c.plata;
     $('accOk').disabled = false;
     $('accRenunta').onclick = () => dlg.close();
     $('formAccepta').onsubmit = async e => {

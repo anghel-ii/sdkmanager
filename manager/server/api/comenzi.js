@@ -120,6 +120,11 @@ function scriePozitia(d, comandaId, p) {
 
 // text liber de la client (câmpuri din configurator): tăiat şi limitat
 const text = (v, max = 200) => (v == null || String(v).trim() === '' ? null : String(v).trim().slice(0, max));
+// Metodele de plată (userul, 2026-09-28) — vin din configurator (bara clientului,
+// pe ofertă) şi / sau la acceptare. Comenzile mai vechi pot avea 'op' / 'factura'
+// — rămân în DB şi se afişează, dar nu se mai pot alege.
+const PLATI = ['proforma', 'proforma_amanunt', 'fiscala', 'bon', 'avans'];
+
 const campuriClient = (client, detalii = {}, ofertaNr) => [
   String(client.nume).trim(),
   text(client.telefon),
@@ -127,8 +132,9 @@ const campuriClient = (client, detalii = {}, ofertaNr) => [
   text(client.adresa, 300),
   text(detalii?.livrare, 60),
   text(detalii?.agent, 60),
-  text(detalii?.facturare, 60),
+  text(detalii?.facturare, 60),   // tip_facturare — doar ofertele vechi îl mai trimit
   text(ofertaNr, 40),
+  PLATI.includes(detalii?.plata) ? detalii.plata : null,
 ];
 
 // ── Creare ───────────────────────────────────────────────────────────────────
@@ -146,8 +152,8 @@ async function creeaza(ctx) {
     const numar = urmatorulNumar(d, an);
 
     const comandaId = Number(d.prepare(`
-      INSERT INTO comanda (numar, client_nume, client_telefon, client_email, client_adresa, livrare, agent, tip_facturare, oferta_nr, observatii, creat_de)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO comanda (numar, client_nume, client_telefon, client_email, client_adresa, livrare, agent, tip_facturare, oferta_nr, plata, observatii, creat_de)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       `OF-${an}-${numar}`,
       ...campuriClient(corp.client, corp.detalii, corp.ofertaNr),
@@ -184,7 +190,7 @@ async function modifica(ctx) {
 
   const rezultat = tranzactie(d => {
     d.prepare(`UPDATE comanda SET client_nume = ?, client_telefon = ?, client_email = ?, client_adresa = ?,
-                 livrare = ?, agent = ?, tip_facturare = ?, oferta_nr = ? WHERE id = ?`)
+                 livrare = ?, agent = ?, tip_facturare = ?, oferta_nr = ?, plata = ? WHERE id = ?`)
       .run(...campuriClient(corp.client, corp.detalii, corp.ofertaNr), id);
 
     const vechi = d.prepare('SELECT id FROM pozitie WHERE comanda_id = ?').all(id);
@@ -309,10 +315,6 @@ function detaliu(ctx) {
   });
 }
 
-// Modalităţile de plată alese la acceptare (userul, 2026-09-23).
-// 2026-09-28: lista nouă (userul); comenzile mai vechi pot avea 'op' / 'factura' —
-// rămân în DB şi se afişează, dar nu se mai pot alege.
-const PLATI = ['proforma', 'proforma_amanunt', 'fiscala', 'bon', 'avans'];
 
 // Oferta trece în „aşteaptă plata" — încă nu e comandă (fără CMD-, fără sticlă
 // de comandat, fără facturare); iese de acolo cu „Plată primită" = accepta.

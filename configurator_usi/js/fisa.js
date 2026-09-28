@@ -5,7 +5,7 @@ import { finishesOf, familia } from './familii.js';
 import { findGeam } from './lib/comun/geam.js';
 import { suprapuneriEfective, PROFIL_H_3D } from './lib/confort/index.js';
 import { ASAMBLARE } from './lib/rame/rame.js';
-import { detaliiComanda } from './lib/comun/comanda.js';
+import { detaliiComanda, plataText } from './lib/comun/comanda.js';
 import JsBarcode from 'jsbarcode';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -387,9 +387,9 @@ export function deschideFisa(client, oferta = null, salvate = null) {
 
   const nrNoi    = (state.assembly ?? []).filter(a => a === 'noi').length;
   const nrClient = (state.assembly ?? []).filter(a => a === 'client').length;
-  // detaliile comenzii (toate gamele) — livrare / facturare / agent
+  // detaliile comenzii (toate gamele) — livrare / metodă de plată / agent
   const det = detaliiComanda(state);
-  const detalii = tabelMic([['Mod de livrare', det.livrare ?? '—'], ['Facturare', det.facturare ?? '—'], ['Agent', det.agent ?? '—']]);
+  const detalii = tabelMic([['Mod de livrare', det.livrare ?? '—'], ['Metodă de plată', plataText(det.plata) ?? '—'], ['Agent', det.agent ?? '—']]);
   const montaj = util ? tabelMic([
     ['Asamblăm noi',        `${nrNoi} uşi`],
     ['Asamblează clientul', `${nrClient} uşi`],

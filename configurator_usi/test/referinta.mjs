@@ -107,7 +107,7 @@ function stareRame(sys, { finish, varianta, randuri }) {
     manson: varianta !== 'client',
     ral: '', vopsitCant: varianta === 'oglinda' ? 2 : 0,
     livrare: varianta === 'client' ? 'Ridicare personala' : 'Curier ramburs',
-    agent: 'Birou', facturare: 'Factura fiscala',
+    agent: 'Birou', plata: 'fiscala',
   };
 }
 
@@ -308,7 +308,7 @@ for (const [id, W, H, doors, tracks] of [['confortVerona', 1800, 2100, 2, 2], ['
   const finish = finishesOf(sys.meta)[0].id;
   const cheie = `${id} | ${finish} | ${W}x${H} | ${doors}u/${tracks}s | A | curier`;
   stareUsi(sys, { W, H, finish, doors, tracks, varianta: 'A' });
-  state.comanda = { livrare: 'Curier ramburs', agent: 'Birou', facturare: 'Factura fiscala' };
+  state.comanda = { livrare: 'Curier ramburs', agent: 'Birou', plata: 'fiscala' };
   rezultate[cheie] = rezultat();
   integritate(cheie, sys);
   nrCazuri++;
