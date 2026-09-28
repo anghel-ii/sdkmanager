@@ -431,7 +431,7 @@ function randeazaTabel() {
     <div class="card gol">
       <h2>${{ oferta: 'Nicio ofertă încă', comanda: 'Nicio comandă în lucru', finalizata: 'Nicio comandă finalizată' }[tabCurent]}</h2>
       <p class="dim" style="margin-top:8px">${{
-        oferta: 'Ofertele salvate în <a href="/configurator/">configurator</a> apar aici.',
+        oferta: 'Ofertele salvate în <a href="/configurator/" class="deschide-gama">configurator</a> apar aici.',
         comanda: 'O ofertă acceptată trece în tabul ăsta.',
         finalizata: 'O comandă ajunge aici cu „Marchează finalizată".' }[tabCurent]}</p>
     </div>`;
@@ -669,6 +669,10 @@ async function deschideAlegereGama() {
 }
 const inchideAlegereGama = () => { $('alegeGama').hidden = true; };
 $('ofertaNoua').addEventListener('click', deschideAlegereGama);
+// linkul din lista goală de oferte deschide tot alegerea gamei (fără el, configuratorul pornea pe suspendate)
+document.addEventListener('click', e => {
+  if (e.target.closest('a.deschide-gama')) { e.preventDefault(); deschideAlegereGama(); }
+});
 $('inchideGama').addEventListener('click', inchideAlegereGama);
 $('alegeGama').addEventListener('click', e => { if (e.target === $('alegeGama')) inchideAlegereGama(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') inchideAlegereGama(); });

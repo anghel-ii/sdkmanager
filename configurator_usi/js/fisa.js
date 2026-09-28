@@ -411,7 +411,8 @@ export function deschideFisa(client, oferta = null, salvate = null) {
       bom.filter(r => !coduriRame.has(r.code)).map(r => `<tr><td>${esc(r.code)}</td><td>${esc(r.label)}</td>
         <td>${esc(r.cut ?? '—')}</td><td class="num">${r.qty} ${esc(r.unit)}</td>
         <td class="bifa"></td></tr>`),
-      'necesar-materiale' + (rame ? ' rame' : '') + (eRame ? ' plin' : ''));
+      'necesar-materiale' + (rame ? ' rame' : '') + (eRame ? ' plin' : '')
+        + (sys.meta.family === 'confort' ? ' confort' : ''));
   // În loc de „Observaţii", 4 câmpuri mari pt. etapele din atelier,
   // cât mai înalte (se întind până la baza foii) — cerute de user.
   const campuriAtelier = `
@@ -558,6 +559,16 @@ export function deschideFisa(client, oferta = null, salvate = null) {
   table.necesar-materiale.fix20 th:nth-child(3) { width: 15%; }
   table.necesar-materiale.fix20 th:nth-child(4) { width: 13%; }
   table.necesar-materiale.fix20 th:nth-child(5) { width: 6%; }
+  /* Confort: cotele de debitare mari, să se vadă din atelier — necesarul ia
+     85% din lăţime, câmpurile de atelier se îngustează la 15% (userul, 2026-09-28) */
+  .jos table.necesar-materiale.confort { flex-basis: calc(85% - 1.5mm); width: calc(85% - 1.5mm); }
+  .jos table.necesar-materiale.confort + .observatii.campuri { flex-basis: calc(15% - 1.5mm); }
+  .jos table.necesar-materiale.confort + .observatii.campuri .obs-et { font-size: 12px; letter-spacing: 0; }
+  table.necesar-materiale.fix20.confort th:nth-child(1) { width: 10%; }
+  table.necesar-materiale.fix20.confort th:nth-child(3) { width: 24%; }
+  table.necesar-materiale.fix20.confort th:nth-child(4) { width: 11%; }
+  table.necesar-materiale.fix20.confort th:nth-child(5) { width: 5%; }
+  table.necesar-materiale.fix20.confort td:nth-child(3) { font-size: calc(var(--font) * 1.35); font-weight: 700; }
   /* rame: denumirile accesoriilor sunt lungi (verbatim din formular) — se
      împachetează pe rânduri în loc să se micşoreze până nu se mai citesc */
   table.necesar-materiale.fix20.rame td:nth-child(1), table.necesar-materiale.fix20.rame td:nth-child(2) {
@@ -712,7 +723,7 @@ export function deschideFisa(client, oferta = null, salvate = null) {
         tab.style.setProperty('--font', (rand * 0.62).toFixed(1) + 'px');
       }
       tab.querySelectorAll('td, th').forEach(function (c) {
-        var f = rand * 0.62;
+        var f = parseFloat(getComputedStyle(c).fontSize);
         while (c.scrollWidth > c.clientWidth + 1 && f > 7) { f -= 0.5; c.style.fontSize = f + 'px'; }
       });
     }
