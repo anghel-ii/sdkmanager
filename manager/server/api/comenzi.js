@@ -16,6 +16,9 @@ const { anunta, anuntaUtilizator } = require('../evenimente.js');
 //  rămân (un rând fiecare), ca să nu rescriem schema.
 //
 //  Stări:  oferta → (acceptare) → comanda în lucru → (finalizare) → finalizată
+//          oferta → aşteaptă plata (tip 'plata') → (plată primită = acceptare) → în lucru
+//  Din configurator se poate sări direct în „aşteaptă plata" sau „în lucru"
+//  (oferta se salvează, apoi se cheamă ruta de trecere).
 //  Finalizarea: automat la scanarea „Coletare" (vezi scanare.js) sau manual.
 //
 //  Numerotarea: un singur contor pe an. Oferta OF-2026-0042 devine, la
@@ -117,7 +120,7 @@ function scriePozitia(d, comandaId, p) {
 
 // text liber de la client (câmpuri din configurator): tăiat şi limitat
 const text = (v, max = 200) => (v == null || String(v).trim() === '' ? null : String(v).trim().slice(0, max));
-const campuriClient = (client, detalii = {}) => [
+const campuriClient = (client, detalii = {}, ofertaNr) => [
   String(client.nume).trim(),
   text(client.telefon),
   text(client.email),
@@ -125,6 +128,7 @@ const campuriClient = (client, detalii = {}) => [
   text(detalii?.livrare, 60),
   text(detalii?.agent, 60),
   text(detalii?.facturare, 60),
+  text(ofertaNr, 40),
 ];
 
 // ── Creare ───────────────────────────────────────────────────────────────────
@@ -142,11 +146,11 @@ async function creeaza(ctx) {
     const numar = urmatorulNumar(d, an);
 
     const comandaId = Number(d.prepare(`
-      INSERT INTO comanda (numar, client_nume, client_telefon, client_email, client_adresa, livrare, agent, tip_facturare, observatii, creat_de)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO comanda (numar, client_nume, client_telefon, client_email, client_adresa, livrare, agent, tip_facturare, oferta_nr, observatii, creat_de)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       `OF-${an}-${numar}`,
-      ...campuriClient(corp.client, corp.detalii),
+      ...campuriClient(corp.client, corp.detalii, corp.ofertaNr),
       corp.observatii ? String(corp.observatii).trim() : null,
       utilizator.id,
     ).lastInsertRowid);
@@ -180,8 +184,8 @@ async function modifica(ctx) {
 
   const rezultat = tranzactie(d => {
     d.prepare(`UPDATE comanda SET client_nume = ?, client_telefon = ?, client_email = ?, client_adresa = ?,
-                 livrare = ?, agent = ?, tip_facturare = ? WHERE id = ?`)
-      .run(...campuriClient(corp.client, corp.detalii), id);
+                 livrare = ?, agent = ?, tip_facturare = ?, oferta_nr = ? WHERE id = ?`)
+      .run(...campuriClient(corp.client, corp.detalii, corp.ofertaNr), id);
 
     const vechi = d.prepare('SELECT id FROM pozitie WHERE comanda_id = ?').all(id);
     const cod = d.prepare(`SELECT a.cod_bare FROM usa a JOIN pozitie p ON p.id = a.pozitie_id
@@ -203,9 +207,10 @@ async function modifica(ctx) {
 
 // ── Citire ───────────────────────────────────────────────────────────────────
 
-// tab: 'oferta' | 'comanda' (în lucru) | 'finalizata'
+// tab: 'oferta' | 'plata' (aşteaptă plata) | 'comanda' (în lucru) | 'finalizata'
 const FILTRE = {
   oferta:     "c.tip = 'oferta'",
+  plata:      "c.tip = 'plata'",
   comanda:    "c.tip = 'comanda' AND c.finalizat_la IS NULL",
   finalizata: "c.tip = 'comanda' AND c.finalizat_la IS NOT NULL",
 };
@@ -240,7 +245,7 @@ function listeaza(ctx) {
   const filtru = FILTRE[tab] ?? FILTRE.oferta;
 
   const randuri = db().prepare(`
-    SELECT c.id, c.numar, c.numar_comanda, c.tip, c.client_nume, c.creat_la, c.confirmat_la, c.finalizat_la,
+    SELECT c.id, c.numar, c.numar_comanda, c.oferta_nr, c.tip, c.client_nume, c.creat_la, c.confirmat_la, c.finalizat_la,
            c.factura_nr, c.facturat_la, c.plata, c.avans,
            u.nume AS creat_de_nume,
            (SELECT p.eticheta FROM pozitie p WHERE p.comanda_id = c.id ORDER BY p.idx LIMIT 1) AS sistem,
@@ -305,9 +310,24 @@ function detaliu(ctx) {
 }
 
 // Modalităţile de plată alese la acceptare (userul, 2026-09-23).
-const PLATI = ['op', 'bon', 'factura'];   // OP (ordin de plată) | bon fiscal | factură
+// 2026-09-28: lista nouă (userul); comenzile mai vechi pot avea 'op' / 'factura' —
+// rămân în DB şi se afişează, dar nu se mai pot alege.
+const PLATI = ['proforma', 'proforma_amanunt', 'fiscala', 'bon', 'avans'];
 
-// Acceptarea unei oferte: acelaşi rând, alt tip, plus numărul de comandă cu
+// Oferta trece în „aşteaptă plata" — încă nu e comandă (fără CMD-, fără sticlă
+// de comandat, fără facturare); iese de acolo cu „Plată primită" = accepta.
+function asteaptaPlata(ctx) {
+  const id = Number(ctx.params.id);
+  const c = db().prepare('SELECT * FROM comanda WHERE id = ?').get(id);
+  if (!c)                 return eroare(ctx.res, 404, 'Comandă inexistentă.');
+  if (c.anulat)           return eroare(ctx.res, 400, 'Oferta e anulată.');
+  if (c.tip !== 'oferta') return eroare(ctx.res, 409, c.tip === 'plata' ? 'Comanda aşteaptă deja plata.' : `Oferta e deja comandă (${c.numar_comanda}).`);
+  db().prepare("UPDATE comanda SET tip = 'plata' WHERE id = ?").run(id);
+  anunta({ comanda: id });
+  json(ctx.res, 200, { comanda: db().prepare('SELECT * FROM comanda WHERE id = ?').get(id) });
+}
+
+// Acceptarea unei oferte (sau „Plată primită" din aşteaptă plata): acelaşi rând, alt tip, plus numărul de comandă cu
 // ACELEAŞI cifre — ca etichetele deja tipărite să rămână valabile. Cere
 // obligatoriu modalitatea de plată; avansul (lei) e opţional, implicit 0.
 async function accepta(ctx) {
@@ -319,7 +339,7 @@ async function accepta(ctx) {
   if (c.anulat)            return eroare(ctx.res, 400, 'Oferta e anulată.');
   if (c.tip === 'comanda') return eroare(ctx.res, 409, `Oferta e deja comandă (${c.numar_comanda}).`);
 
-  if (!PLATI.includes(corp.plata)) return eroare(ctx.res, 400, 'Alege modalitatea de plată: OP, bon fiscal sau factură.');
+  if (!PLATI.includes(corp.plata)) return eroare(ctx.res, 400, 'Alege modalitatea de plată: factură proformă, proformă cu amănuntul, factură fiscală, bon fiscal sau factură de avans.');
   const avans = corp.avans == null || String(corp.avans).trim() === '' ? 0 : Number(String(corp.avans).replace(',', '.'));
   if (!Number.isFinite(avans) || avans < 0) return eroare(ctx.res, 400, 'Avansul trebuie să fie un număr (0 = fără avans).');
 
@@ -421,6 +441,7 @@ async function salveazaPreferinte(ctx) {
 const sumar = ctx => json(ctx.res, 200, {
   ...db().prepare(`
   SELECT SUM(tip = 'oferta')                              AS oferte,
+         SUM(tip = 'plata')                               AS plata,
          SUM(tip = 'comanda' AND finalizat_la IS NULL)     AS comenzi,
          SUM(tip = 'comanda' AND finalizat_la IS NOT NULL) AS finalizate
     FROM comanda WHERE anulat = 0
@@ -436,6 +457,7 @@ module.exports = {
     ['GET',  '/api/comenzi/:id',             { handler: detaliu }],
     ['PUT',  '/api/comenzi/:id',             { handler: modifica }],
     ['POST', '/api/comenzi/:id/accepta',     { handler: accepta }],
+    ['POST', '/api/comenzi/:id/asteapta-plata', { handler: asteaptaPlata }],
     ['POST', '/api/comenzi/:id/finalizeaza', { handler: schimbaFinalizare(true) }],
     ['POST', '/api/comenzi/:id/redeschide',  { handler: schimbaFinalizare(false) }],
     ['POST', '/api/comenzi/:id/factura',     { handler: factura }],

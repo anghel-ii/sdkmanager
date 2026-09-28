@@ -582,6 +582,15 @@ input[type="range"]::-moz-range-thumb {
 .oferta-confirma:hover:not(:disabled) { background: #2f82e6; }
 .oferta-confirma:disabled { opacity: .5; cursor: not-allowed; }
 
+/* dialogul „Salvează comanda" (plata + avans) */
+.dialog-plata { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 16px; width: min(380px, calc(100% - 32px)); }
+.dialog-plata::backdrop { background: rgba(0, 0, 0, .55); }
+.dialog-plata h3 { margin: 0 0 12px; font-size: 1rem; }
+.dialog-plata label { display: flex; flex-direction: column; gap: 4px; font-size: .82rem; color: var(--text-dim); margin-bottom: 10px; }
+.dialog-plata select, .dialog-plata input { padding: 8px 10px; font: inherit; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--text); }
+.dialog-plata .dialog-butoane { display: flex; gap: 8px; justify-content: flex-end; }
+.dialog-plata .dialog-butoane button { width: auto; padding: 8px 14px; }
+
 /* Ce anume se trimite — rezumatul configuraţiei, deasupra formularului. */
 .oferta-sumar {
   padding: 10px 12px;

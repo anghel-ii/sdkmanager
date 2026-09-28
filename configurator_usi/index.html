@@ -144,14 +144,42 @@
         <select id="comandaLivrare" data-c="livrare" aria-label="Mod de livrare"></select>
         <select id="comandaFacturare" data-c="facturare" aria-label="Facturare"></select>
         <select id="comandaAgent" data-c="agent" aria-label="Agent"></select>
+        <!-- nr. de ofertă scris de mână (ex. din NeoManager) — obligatoriu la „Salvează oferta" -->
+        <input type="text" id="ofertaNr" placeholder="Nr. ofertă" autocomplete="off" style="display:none">
       </div>
       <div id="ofertaUI"></div>
       <div class="client-butoane">
         <button id="btnConfirma" class="oferta-confirma" type="button" style="display:none">Salvează oferta</button>
+        <button id="btnComanda" class="oferta-confirma" type="button" style="display:none">Salvează comanda</button>
+        <button id="btnPlata" class="oferta-confirma" type="button" style="display:none">Aşteaptă plata</button>
         <button id="btnFisa" class="fisa-print" type="button">🖶 Printează fişa</button>
       </div>
       <div id="ofertaMesaj"></div>
     </div>
+
+    <!-- „Salvează comanda" — ca la Acceptă din manager: plata obligatorie, avansul opţional -->
+    <dialog id="dialogPlata" class="dialog-plata">
+      <form method="dialog" id="formPlata">
+        <h3>Salvează comanda</h3>
+        <label>Modalitate de plată
+          <select id="plataMod" required>
+            <option value="" selected disabled>Alege…</option>
+<option value="proforma">Factură proformă</option>
+            <option value="proforma_amanunt">Factură proformă cu amănuntul</option>
+            <option value="fiscala">Factură fiscală</option>
+            <option value="bon">Bon fiscal</option>
+            <option value="avans">Factură de avans</option>
+          </select>
+        </label>
+        <label>Avans încasat (lei) — 0 dacă nu se încasează avans
+          <input id="plataAvans" type="number" min="0" step="0.01" value="0" inputmode="decimal" required>
+        </label>
+        <div class="dialog-butoane">
+          <button type="button" id="plataRenunta" class="fisa-print">Renunţă</button>
+          <button type="submit" class="oferta-confirma">Salvează comanda</button>
+        </div>
+      </form>
+    </dialog>
 
   </div>
 

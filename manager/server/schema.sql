@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS comanda (
   id              INTEGER PRIMARY KEY,
   numar           TEXT    NOT NULL UNIQUE,           -- OF-2026-0001
   numar_comanda   TEXT             UNIQUE,           -- CMD-2026-0001, NULL cât e ofertă
-  tip             TEXT    NOT NULL DEFAULT 'oferta', -- 'oferta' | 'comanda'
+  tip             TEXT    NOT NULL DEFAULT 'oferta', -- 'oferta' | 'plata' (aşteaptă plata) | 'comanda'
   client_nume     TEXT    NOT NULL,
   client_telefon  TEXT,
   client_email    TEXT,

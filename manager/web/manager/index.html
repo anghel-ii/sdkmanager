@@ -58,6 +58,10 @@
   .game a .titlu { display: block; font-weight: 600; font-size: 1.05rem; margin-bottom: 4px; }
   .game a .sub { display: block; font-size: .8rem; color: var(--text-dim); }
   #continut { padding: 24px; max-width: 1320px; margin: 0 auto; }
+  #taburiSus { position: sticky; top: var(--inaltime-bara, 60px); z-index: 9; background: var(--bg);
+               max-width: 1320px; margin: 0 auto; padding: 16px 24px 12px; }
+  #taburiSus:empty { display: none; }
+  #taburiSus + #continut { padding-top: 8px; }
   table.lista td.mono, table.lista td.data { white-space: nowrap; }
 
   .taburi { display: flex; gap: 8px; }
@@ -147,9 +151,11 @@
     <label class="camp">Modalitate de plată
       <select id="accPlata" required>
         <option value="" selected disabled>Alege…</option>
-        <option value="op">OP (ordin de plată)</option>
+<option value="proforma">Factură proformă</option>
+        <option value="proforma_amanunt">Factură proformă cu amănuntul</option>
+        <option value="fiscala">Factură fiscală</option>
         <option value="bon">Bon fiscal</option>
-        <option value="factura">Factură</option>
+        <option value="avans">Factură de avans</option>
       </select>
     </label>
     <label class="camp">Avans încasat (lei) — 0 dacă nu se încasează avans
@@ -162,6 +168,8 @@
   </form>
 </dialog>
 
+<!-- taburile (Oferte / Aşteaptă plata / …) — lipite sus, şi pe pagina unei comenzi -->
+<div id="taburiSus"></div>
 <div id="continut">Se încarcă…</div>
 
 <script>
@@ -204,7 +212,7 @@ function leagaCopiere(el, randuri) {
 
 // ── Lista ────────────────────────────────────────────────────────────────────
 
-const HASH_TAB = { oferta: '#oferte', comanda: '#comenzi', finalizata: '#finalizate' };
+const HASH_TAB = { oferta: '#oferte', plata: '#plata', comanda: '#comenzi', finalizata: '#finalizate' };
 
 // Coloana „Status" = ultima operaţie scanată în atelier
 // Facturare: nr. facturii sau „nefacturat". Câmpul pt. număr + „Marchează
@@ -295,8 +303,10 @@ function leagaSticla(linii, dupa) {
 // de dinainte de 23.09.2026 numele nu se ştie → doar data).
 const deCine = (nume, cand) => (nume ? `${esc(nume)} · ` : '') + dataOra(cand);
 
-const PLATI = { op: 'OP (ordin de plată)', bon: 'Bon fiscal', factura: 'Factură' };
-const PLATI_SCURT = { op: 'OP', bon: 'Bon fiscal', factura: 'Factură' };   // în coloana din listă
+// (op / factura = modalităţi vechi, doar pt. comenzile de dinainte de 2026-09-28)
+const PLATI = { proforma: 'Factură proformă', proforma_amanunt: 'Factură proformă cu amănuntul', fiscala: 'Factură fiscală',
+                bon: 'Bon fiscal', avans: 'Factură de avans', op: 'OP (ordin de plată)', factura: 'Factură' };
+const PLATI_SCURT = { ...PLATI, proforma_amanunt: 'Proformă amănunt', op: 'OP' };   // în coloana din listă
 const virgulaLei = n => Number(n).toLocaleString('ro-RO', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 
 // Fişa comenzii, printată FĂRĂ să plece din pagina asta: configuratorul (modul
@@ -337,18 +347,41 @@ let lista = [], cautare = '', sortare = 'data';
 let eu = null;
 const poateAnulaFactura = () => eu?.rol === 'admin' || eu?.rol === 'conducere';
 
-const TABURI = [['oferta', 'Oferte'], ['comanda', 'Comenzi în lucru'], ['finalizata', 'Comenzi finalizate']];
+const TABURI = [['oferta', 'Oferte'], ['plata', 'Aşteaptă plata'], ['comanda', 'Comenzi în lucru'], ['finalizata', 'Comenzi finalizate']];
 
 // fără diacritice şi litere mari: „şerban" găseşte „Serban"
 const normal = t => String(t ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
-// Bara de sus (taburi + căutare + sortare) se construieşte o singură dată —
-// actualizarea live refoloseşte-o, ca să nu piardă ce scrii în căutare.
+// Taburile — construite o singură dată, în afara conţinutului, ca să rămână
+// sus (sticky) şi pe listă, şi pe pagina unei comenzi (userul, 2026-09-28).
+function asiguraTaburi() {
+  if (!$('taburiSus').children.length) {
+    $('taburiSus').innerHTML = `<div class="taburi">${TABURI.map(([t, n]) =>
+      `<button data-tab="${t}"><span class="tab-nume">${n}</span><span class="tab-cate" data-cate="${t}"></span></button>`).join('')}</div>`;
+    document.querySelectorAll('#taburiSus .taburi button').forEach(b =>
+      b.addEventListener('click', () => {
+        tabCurent = b.dataset.tab;
+        // de pe pagina unei comenzi: înapoi la listă prin hash (ruteaza)
+        if (location.hash.startsWith('#comanda/')) { location.hash = HASH_TAB[tabCurent]; return; }
+        // pe listă: înlocuim hash-ul fără să declanşăm hashchange
+        history.replaceState(null, '', HASH_TAB[tabCurent]);
+        renderLista();
+      }));
+    // bara de sus poate trece pe două rânduri (ecran îngust) — taburile se lipesc sub ea
+    const pune = () => document.documentElement.style.setProperty('--inaltime-bara', $('bara').offsetHeight + 'px');
+    pune(); window.addEventListener('resize', pune);
+  }
+  document.querySelectorAll('#taburiSus .taburi button').forEach(b => b.classList.toggle('activ', b.dataset.tab === tabCurent));
+  puneCate();
+}
+
+// Căutarea + sortarea se construiesc o singură dată —
+// actualizarea live le refoloseşte, ca să nu piardă ce scrii în căutare.
 function asiguraBaraLista() {
+  asiguraTaburi();
   if (!$('tabelLista')) {
     $('continut').innerHTML = `
       <div class="bara-lista">
-        <div class="taburi">${TABURI.map(([t, n]) => `<button data-tab="${t}"><span class="tab-nume">${n}</span><span class="tab-cate" data-cate="${t}"></span></button>`).join('')}</div>
         <span class="spatiu"></span>
         <input id="cauta" type="search" placeholder="Caută client, sistem, nr. factură…" autocomplete="off">
         <button id="sortare" class="mic" title="Sortarea ta (se păstrează pe contul tău)"></button>
@@ -356,21 +389,12 @@ function asiguraBaraLista() {
       <div id="tabelLista"></div>`;
     $('cauta').value = cautare;
     $('cauta').addEventListener('input', () => { cautare = $('cauta').value; randeazaTabel(); });
-    document.querySelectorAll('.taburi button').forEach(b =>
-      b.addEventListener('click', () => {
-        tabCurent = b.dataset.tab;
-        // înlocuim hash-ul fără să declanşăm hashchange
-        history.replaceState(null, '', HASH_TAB[tabCurent]);
-        renderLista();
-      }));
     $('sortare').addEventListener('click', async () => {
       sortare = sortare === 'facturare' ? 'data' : 'facturare';
       randeazaTabel();
       await api('/api/preferinte', { method: 'PUT', body: JSON.stringify({ sortare }) });
     });
   }
-  document.querySelectorAll('.taburi button').forEach(b => b.classList.toggle('activ', b.dataset.tab === tabCurent));
-  puneCate();
 }
 
 async function renderLista() {
@@ -384,7 +408,7 @@ async function renderLista() {
 
 function randeazaTabel() {
   const eOferte = tabCurent === 'oferta';
-  const cuFacturare = !eOferte;
+  const cuFacturare = !eOferte && tabCurent !== 'plata';
   // sticla doar la comenzile în lucru — la o comandă finalizată e evident comandată
   const cuSticla = tabCurent === 'comanda';
   const btnSort = $('sortare');
@@ -395,7 +419,7 @@ function randeazaTabel() {
   const q = normal(cautare.trim());
   const dataRand = c => (tabCurent === 'finalizata' ? c.finalizat_la : c.creat_la) || c.creat_la;
   const randuri = lista
-    .filter(c => !q || [c.client_nume, c.sistem, c.factura_nr, c.numar, c.numar_comanda].some(v => normal(v).includes(q)))
+    .filter(c => !q || [c.client_nume, c.sistem, c.factura_nr, c.numar, c.numar_comanda, c.oferta_nr].some(v => normal(v).includes(q)))
     .sort((a, b) =>
       (b.fixat - a.fixat) ||                                                        // fixate sus (ale tale)
       (cuFacturare && sortare === 'facturare' ? (!!a.factura_nr) - (!!b.factura_nr) : 0) ||   // nefacturate întâi
@@ -414,7 +438,7 @@ function randeazaTabel() {
         <tr data-id="${c.id}"${c.fixat ? ' class="fixat"' : ''}>
           <td class="pin" data-c="pin"><button class="btn-pin${c.fixat ? ' activ' : ''}" data-id="${c.id}"
                 title="${c.fixat ? 'Scoate de sus' : 'Fixează sus (doar pentru tine)'}">📌</button></td>
-          <td data-c="client">${esc(c.client_nume)}<div class="nr-mic mono">${esc(c.numar_comanda || c.numar)}</div></td>
+          <td data-c="client">${esc(c.client_nume)}<div class="nr-mic mono">${esc(c.numar_comanda || c.numar)}${c.oferta_nr ? ` · nr. ofertă ${esc(c.oferta_nr)}` : ''}</div></td>
           <td data-c="sistem">${esc(c.sistem ?? '—')}</td>
           ${cuStatus ? `<td data-c="status">${statusHtml(c.status)}</td>` : ''}
           ${cuSticla ? `<td class="facturare" data-c="sticla">${sticlaHtml(c.sticla)}</td>` : ''}
@@ -429,9 +453,10 @@ function randeazaTabel() {
     </table>` : lista.length ? `
     <div class="card gol"><h2>Nimic nu se potriveşte cu „${esc(cautare.trim())}"</h2></div>` : `
     <div class="card gol">
-      <h2>${{ oferta: 'Nicio ofertă încă', comanda: 'Nicio comandă în lucru', finalizata: 'Nicio comandă finalizată' }[tabCurent]}</h2>
+      <h2>${{ oferta: 'Nicio ofertă încă', plata: 'Nicio comandă nu aşteaptă plata', comanda: 'Nicio comandă în lucru', finalizata: 'Nicio comandă finalizată' }[tabCurent]}</h2>
       <p class="dim" style="margin-top:8px">${{
         oferta: 'Ofertele salvate în <a href="/configurator/" class="deschide-gama">configurator</a> apar aici.',
+        plata: 'Comenzile trimise din configurator cu „Aşteaptă plata" apar aici; „Plată primită" le trece în lucru.',
         comanda: 'O ofertă acceptată trece în tabul ăsta.',
         finalizata: 'O comandă ajunge aici cu „Marchează finalizată".' }[tabCurent]}</p>
     </div>`;
@@ -528,6 +553,8 @@ async function renderDetaliu(id) {
   const p = pozitii[0];   // o comandă = un singur sistem
   const total = facturareTotala(pozitii);
   const eOferta = c.tip === 'oferta';
+  const ePlata  = c.tip === 'plata';     // aşteaptă plata — încă nu e comandă în lucru
+  const eComanda = c.tip === 'comanda';
 
   $('continut').innerHTML = `
     <button class="inapoi" id="inapoi">← Înapoi la listă</button>
@@ -536,13 +563,15 @@ async function renderDetaliu(id) {
       <div>
         <h1>${esc(c.client_nume)}</h1>
         <div class="mono nr-comanda">${esc(c.numar_comanda || c.numar)}</div>
-        <div class="dim mic">${eOferta ? 'Ofertă' : `Comandă${c.finalizat_la ? ' finalizată' : ''} · din oferta ${esc(c.numar)}`}</div>
+        ${c.oferta_nr ? `<div class="dim mic">Nr. ofertă: <strong>${esc(c.oferta_nr)}</strong></div>` : ''}
+        <div class="dim mic">${eOferta ? 'Ofertă' : ePlata ? 'Aşteaptă plata' : `Comandă${c.finalizat_la ? ' finalizată' : ''} · din oferta ${esc(c.numar)}`}</div>
       </div>
       <div class="spatiu"></div>
       <button id="fisaDetaliu" title="Deschide fişa comenzii pentru printare">🖶 Printează fişa</button>
       ${eOferta ? `<button id="modifica">Modifică oferta</button>
                    <button class="primar" id="accepta">Acceptă oferta</button>` : ''}
-      ${!eOferta && !c.finalizat_la ? '<button id="finalizeaza">Marchează finalizată</button>' : ''}
+      ${ePlata ? '<button class="primar" id="accepta">Plată primită</button>' : ''}
+      ${eComanda && !c.finalizat_la ? '<button id="finalizeaza">Marchează finalizată</button>' : ''}
       ${c.finalizat_la ? '<button id="redeschide">Redeschide</button>' : ''}
     </div>
 
@@ -566,13 +595,13 @@ async function renderDetaliu(id) {
         <dt>Ofertat</dt><dd>${deCine(c.creat_de_nume, c.creat_la)}</dd>
         ${c.confirmat_la ? `<dt>Acceptat</dt><dd>${deCine(c.confirmat_de_nume, c.confirmat_la)}
           <div class="dim mic">${esc(PLATI[c.plata] ?? 'plată nealeasă')} · ${c.avans > 0 ? `avans <strong>${virgulaLei(c.avans)} lei</strong>` : 'fără avans'}</div></dd>` : ''}
-        ${!eOferta ? `<dt>Facturat</dt><dd class="facturare">${c.factura_nr
+        ${eComanda ? `<dt>Facturat</dt><dd class="facturare">${c.factura_nr
           ? `<strong class="mono">${esc(c.factura_nr)}</strong> · ${deCine(c.facturat_de_nume, c.facturat_la)}${poateAnulaFactura() ? ' <button class="mic" id="anuleazaFactura">Anulează</button>' : ''}`
           : `<span class="factura-form" data-id="${c.id}">
                <input class="factura-nr" placeholder="nr. factură" autocomplete="off">
                <button class="mic factura-ok" disabled>Marchează facturat</button>
              </span>`}</dd>` : ''}
-        ${!eOferta ? `<dt>Sticlă</dt><dd>${sticlaLinii.length ? blocSticla(sticlaLinii) : '<span class="dim">— fără sticlă de comandat</span>'}</dd>` : ''}
+        ${eComanda ? `<dt>Sticlă</dt><dd>${sticlaLinii.length ? blocSticla(sticlaLinii) : '<span class="dim">— fără sticlă de comandat</span>'}</dd>` : ''}
         ${c.finalizat_la ? `<dt>Finalizat</dt><dd>${deCine(c.finalizat_de_nume, c.finalizat_la)}</dd>` : ''}
       </dl>
     </div>
@@ -592,7 +621,8 @@ async function renderDetaliu(id) {
     document.querySelectorAll('.taburi-detaliu button').forEach(x => x.classList.toggle('active', x === b));
     document.querySelectorAll('.panou-detaliu').forEach(x => { x.hidden = x.dataset.panou !== tabDetaliu; });
   }));
-  tabCurent = eOferta ? 'oferta' : c.finalizat_la ? 'finalizata' : 'comanda';
+  tabCurent = eOferta ? 'oferta' : ePlata ? 'plata' : c.finalizat_la ? 'finalizata' : 'comanda';
+  asiguraTaburi();   // taburile rămân sus şi aici, cu tabul comenzii marcat
   $('modifica')?.addEventListener('click', () => { location.href = '/configurator/?oferta=' + id; });
   leagaFacturare($('continut'), () => renderDetaliu(id));
   leagaSticla(sticlaLinii, () => renderDetaliu(id));
@@ -617,6 +647,7 @@ async function renderDetaliu(id) {
   $('accepta')?.addEventListener('click', () => {
     const dlg = $('dialogAccepta');
     $('formAccepta').reset();
+    $('titluAccepta').textContent = $('accOk').textContent = ePlata ? 'Plată primită' : 'Acceptă oferta';
     $('accOk').disabled = false;
     $('accRenunta').onclick = () => dlg.close();
     $('formAccepta').onsubmit = async e => {
@@ -648,6 +679,7 @@ function ruteaza() {
   if (m) return renderDetaliu(m[1]);
   if (location.hash === '#comenzi') tabCurent = 'comanda';
   else if (location.hash === '#finalizate') tabCurent = 'finalizata';
+  else if (location.hash === '#plata') tabCurent = 'plata';
   else if (location.hash === '#oferte') tabCurent = 'oferta';
   return renderLista();
 }
@@ -681,7 +713,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') inchideAlege
 let sumar = null;
 function puneCate() {
   if (!sumar) return;
-  for (const [t, n] of [['oferta', sumar.oferte], ['comanda', sumar.comenzi], ['finalizata', sumar.finalizate]]) {
+  for (const [t, n] of [['oferta', sumar.oferte], ['plata', sumar.plata], ['comanda', sumar.comenzi], ['finalizata', sumar.finalizate]]) {
     const el = document.querySelector(`[data-cate="${t}"]`);
     if (el) el.textContent = n ?? 0;
   }

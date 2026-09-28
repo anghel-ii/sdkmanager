@@ -112,6 +112,10 @@ const MIGRATII = [
   d => {
     for (const col of ['client_adresa', 'livrare', 'agent', 'tip_facturare']) d.exec(`ALTER TABLE comanda ADD COLUMN ${col} TEXT`);
   },
+  // v10 → v11 (2026-09-28): nr. de ofertă scris de mână în configurator (ex.
+  // cel din NeoManager), lângă numărul automat OF-. Starea nouă tip = 'plata'
+  // („aşteaptă plata") nu cere coloană — `tip` e text.
+  d => d.exec('ALTER TABLE comanda ADD COLUMN oferta_nr TEXT'),
 ];
 
 // Exportată pt. test.

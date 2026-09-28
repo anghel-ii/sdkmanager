@@ -307,25 +307,25 @@ async function main() {
   verifica('oferta apare în tabul Oferte', (await cer('GET', '/api/comenzi')).date.comenzi.length === 2);
   // modalitatea de plată e obligatorie; avansul e opţional (0 = fără avans)
   for (const [corp, ce] of [
-    [undefined, 'fără modalitate de plată'], [{ plata: 'card' }, 'modalitate necunoscută'],
-    [{ plata: 'op', avans: -5 }, 'avans negativ'], [{ plata: 'op', avans: 'mult' }, 'avans nenumeric'],
+    [undefined, 'fără modalitate de plată'], [{ plata: 'card' }, 'modalitate necunoscută'], [{ plata: 'op' }, 'modalitate veche (OP)'],
+    [{ plata: 'bon', avans: -5 }, 'avans negativ'], [{ plata: 'bon', avans: 'mult' }, 'avans nenumeric'],
   ]) verifica(`acceptare respinsă: ${ce} → 400`, (await cer('POST', `/api/comenzi/${id}/accepta`, corp)).stare === 400);
   verifica('… şi oferta a rămas ofertă', db2().prepare('SELECT tip FROM comanda WHERE id = ?').get(id).tip === 'oferta');
 
-  const acc = await cer('POST', `/api/comenzi/${id}/accepta`, { plata: 'factura', avans: '1500.5' });
+  const acc = await cer('POST', `/api/comenzi/${id}/accepta`, { plata: 'fiscala', avans: '1500.5' });
   verifica('acceptare → 200', acc.stare === 200);
-  verifica('se salvează plata şi avansul', acc.date.comanda?.plata === 'factura' && acc.date.comanda?.avans === 1500.5,
+  verifica('se salvează plata şi avansul', acc.date.comanda?.plata === 'fiscala' && acc.date.comanda?.avans === 1500.5,
     JSON.stringify({ plata: acc.date.comanda?.plata, avans: acc.date.comanda?.avans }));
   verifica('acelaşi număr, alt prefix',
     acc.date.comanda?.numar_comanda === oferta.date.comanda.numar.replace('OF-', 'CMD-'),
     acc.date.comanda?.numar_comanda);
-  verifica('acceptată de două ori → 409', (await cer('POST', `/api/comenzi/${id}/accepta`, { plata: 'op' })).stare === 409);
+  verifica('acceptată de două ori → 409', (await cer('POST', `/api/comenzi/${id}/accepta`, { plata: 'bon' })).stare === 409);
   verifica('a trecut în tabul Comenzi',
     (await cer('GET', '/api/comenzi?tip=comanda')).date.comenzi.length === 1);
   verifica('nu mai e în Oferte', (await cer('GET', '/api/comenzi')).date.comenzi.length === 1);
   {
     const rand = (await cer('GET', '/api/comenzi?tip=comanda')).date.comenzi.find(c => c.id === id);
-    verifica('lista Comenzi are plata şi avansul', rand?.plata === 'factura' && rand?.avans === 1500.5,
+    verifica('lista Comenzi are plata şi avansul', rand?.plata === 'fiscala' && rand?.avans === 1500.5,
       JSON.stringify({ plata: rand?.plata, avans: rand?.avans }));
   }
 
@@ -449,7 +449,7 @@ async function main() {
     const idVechi = Number(db2().prepare("INSERT INTO utilizator (nume, user, parola_hash, parola_salt, rol) VALUES ('Vechi', 'vechi', 'x', 'x', 'operator')").run().lastInsertRowid);
     require('../server/db.js').roluriNoi(db2());
     verifica('migraţie: operator → birou', db2().prepare('SELECT rol FROM utilizator WHERE id = ?').get(idVechi).rol === 'birou');
-    verifica('schema la versiunea 10', db2().prepare('PRAGMA user_version').get().user_version === 10);
+    verifica('schema la versiunea 11', db2().prepare('PRAGMA user_version').get().user_version === 11);
   }
 
   console.log('\nFixare şi sortare — per utilizator');
@@ -607,6 +607,27 @@ async function main() {
       verifica(`pagina ${pagina} foloseşte data.js, fără toLocaleString propriu`,
         html.includes('<script src="/data.js">') && !/toLocaleDateString\(|toLocaleTimeString\(|day: '2-digit'/.test(html));
     }
+  }
+
+  console.log('\nAşteaptă plata + nr. de ofertă scris de mână');
+  {
+    const o = await cer('POST', '/api/comenzi', { client: { nume: 'Client Plata' }, ofertaNr: ' NM-77 ',
+      pozitii: [pozitie('confortGamma', 'Confort Gamma', 2, 2000)] });
+    const pid = o.date.comanda.id;
+    verifica('nr. de ofertă se salvează (tăiat)', db2().prepare('SELECT oferta_nr FROM comanda WHERE id = ?').get(pid).oferta_nr === 'NM-77');
+    const sumarInainte = (await cer('GET', '/api/sumar')).date;
+    verifica('ofertă → aşteaptă plata → 200', (await cer('POST', `/api/comenzi/${pid}/asteapta-plata`)).stare === 200);
+    verifica('a doua oară → 409', (await cer('POST', `/api/comenzi/${pid}/asteapta-plata`)).stare === 409);
+    const tab = (await cer('GET', '/api/comenzi?tip=plata')).date.comenzi;
+    verifica('apare în tabul Aşteaptă plata, cu nr. de ofertă', tab.length === 1 && tab[0].oferta_nr === 'NM-77', JSON.stringify(tab));
+    const sumarDupa = (await cer('GET', '/api/sumar')).date;
+    verifica('sumar: plata +1, oferte −1', sumarDupa.plata === 1 && sumarDupa.oferte === sumarInainte.oferte - 1, JSON.stringify(sumarDupa));
+    verifica('nu se modifică din configurator', (await cer('PUT', `/api/comenzi/${pid}`, {
+      client: { nume: 'Y' }, pozitii: [pozitie('confortGamma', 'G', 1, 1200)] })).stare === 409);
+    verifica('nu se facturează cât aşteaptă plata', (await cer('POST', `/api/comenzi/${pid}/factura`, { numar: 'F1' })).stare === 409);
+    const pl = await cer('POST', `/api/comenzi/${pid}/accepta`, { plata: 'proforma', avans: 0 });
+    verifica('plată primită → comandă în lucru', pl.stare === 200 && pl.date.comanda.tip === 'comanda' && /^CMD-/.test(pl.date.comanda.numar_comanda));
+    verifica('… şi a ieşit din Aşteaptă plata', !(await cer('GET', '/api/comenzi?tip=plata')).date.comenzi.length);
   }
 
   console.log('\nBackup');

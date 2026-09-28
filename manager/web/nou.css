@@ -26,6 +26,8 @@ body.ui-nou .taburi button.activ .tab-nume { color: var(--text); }
 body.ui-nou .tab-cate { display: block; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 1.4rem; font-weight: 600; color: var(--text); }
 body.ui-nou .bara-lista .spatiu { display: none; }
 body.ui-nou .bara-lista { position: relative; }
+body.ui-nou #taburiSus { padding: 16px 16px 12px; }
+@media (min-width: 1100px) { body.ui-nou #taburiSus { padding: 24px 24px 12px; } }
 body.ui-nou #cauta { width: auto; max-width: 420px; }
 body.ui-nou .bara-lista > #cauta, body.ui-nou .bara-lista > #sortare { align-self: flex-start; }
 @media (min-width: 700px) {

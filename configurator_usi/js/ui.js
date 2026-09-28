@@ -861,10 +861,12 @@ function renderOferta() {
   // Câmpurile clientului şi „Printează fişa" sunt statice (index.html) şi merg
   // mereu; aici se decide doar ce ţine de ofertă: butonul de salvare şi
   // rezumatul de deasupra lui.
-  if (!servit || modFisa) { box.innerHTML = ''; btn.style.display = 'none'; return; }
+  const butoane = [btn, $('btnComanda'), $('btnPlata')].filter(Boolean);
+  const arata = da => { for (const b of butoane) b.style.display = da ? '' : 'none'; $('ofertaNr').style.display = da ? '' : 'none'; };
+  if (!servit || modFisa) { box.innerHTML = ''; arata(false); return; }
 
   if (stare === 'nelogat') {
-    btn.style.display = 'none';
+    arata(false);
     box.innerHTML = `<div class="oferta-hint">Autentifică-te ca să poţi salva oferte.
       <a href="/login?redirect=${encodeURIComponent(location.pathname + location.search)}">Intră în cont</a></div>`;
     return;
@@ -883,8 +885,8 @@ function renderOferta() {
                ? `${currentSpec()?.nrRame ?? 0} rame`
                : `${p.pozitie.nrUsi} ${p.pozitie.nrUsi === 1 ? 'uşă' : 'uşi'}`}</div>
          </div>`}`;
-  btn.style.display = '';
-  btn.disabled = !!p.eroare || !configuratieCompleta();
+  arata(true);
+  for (const b of butoane) b.disabled = !!p.eroare || !configuratieCompleta();
 }
 
 function mesajOferta(html, fel) {
@@ -892,14 +894,45 @@ function mesajOferta(html, fel) {
   if (el) el.innerHTML = `<div class="oferta-msg ${fel}">${html}</div>`;
 }
 
-async function trimiteOferta() {
-  const btn = $('btnConfirma');
-  btn.disabled = true;
-  btn.textContent = 'Se salvează…';
+// Plata + avansul pt. „Salvează comanda" — null dacă s-a renunţat.
+function cerePlata() {
+  const dlg = $('dialogPlata');
+  $('formPlata').reset();
+  return new Promise(gata => {
+    $('plataRenunta').onclick = () => dlg.close();
+    $('formPlata').onsubmit = e => { e.preventDefault(); dlg.close('ok'); };
+    dlg.onclose = () => gata(dlg.returnValue === 'ok' ? { plata: $('plataMod').value, avans: $('plataAvans').value } : null);
+    dlg.returnValue = '';
+    dlg.showModal();
+  });
+}
+
+const TEXT_BUTON = { oferta: 'Salvează oferta', comanda: 'Salvează comanda', plata: 'Aşteaptă plata' };
+const textButoane = () => {
+  $('btnConfirma').textContent = ofertaEditata ? 'Salvează modificările' : TEXT_BUTON.oferta;
+  $('btnComanda').textContent = TEXT_BUTON.comanda;
+  $('btnPlata').textContent   = TEXT_BUTON.plata;
+};
+
+// unde: 'oferta' (rămâne ofertă) | 'comanda' (în lucru) | 'plata' (aşteaptă plata).
+// Oferta se salvează întâi (POST / PUT), apoi, la comandă / plată, trece mai departe.
+async function trimiteOferta(unde = 'oferta') {
+  const ofertaNr = $('ofertaNr').value.trim();
+  if (unde === 'oferta' && !ofertaNr) {
+    $('ofertaNr').focus();
+    return mesajOferta('Completează nr. de ofertă.', 'eroare');
+  }
+  const plata = unde === 'comanda' ? await cerePlata() : null;
+  if (unde === 'comanda' && !plata) return;
+
+  const butoane = ['btnConfirma', 'btnComanda', 'btnPlata'].map($);
+  for (const b of butoane) b.disabled = true;
+  $(unde === 'oferta' ? 'btnConfirma' : unde === 'comanda' ? 'btnComanda' : 'btnPlata').textContent = 'Se salvează…';
 
   // Un singur câmp de contact (adresă SAU telefon) — merge în coloana de
   // telefon a comenzii; managerul îl afişează ca „Telefon / adresă".
   const r = await oferta.confirma({
+    ofertaNr,
     id:         ofertaEditata,
     nume:       $('clientNume').value,
     telefon:    $('clientTelefon').value,
@@ -909,17 +942,26 @@ async function trimiteOferta() {
     observatii: '',
   });
 
-  btn.disabled = false;
-  btn.textContent = ofertaEditata ? 'Salvează modificările' : 'Salvează oferta';
-
-  if (r.eroare) return mesajOferta(esc(r.eroare), 'eroare');
+  const gata = () => { for (const b of butoane) b.disabled = false; textButoane(); };
+  if (r.eroare) { gata(); return mesajOferta(esc(r.eroare), 'eroare'); }
 
   // Câmpurile NU se mai golesc: aceleaşi date servesc şi la fişa de atelier,
   // care se printează de obicei imediat după. CLEAR PAGE resetează tot.
-  ofertaSalvata = { comanda: r.comanda, stare: JSON.stringify(state) };
-  // butonul duce la lista de oferte din manager (acolo apare oferta, sus)
-  mesajOferta(`${ofertaEditata ? 'Ofertă actualizată' : 'Ofertă salvată'}: <strong>${esc(r.comanda.numar)}</strong>
-    <a class="oferta-link" href="/#oferte">Vezi lista de oferte →</a>`, 'ok');
+  // dacă trecerea mai departe (comandă / aşteaptă plata) eşuează, rămâi aici şi
+  // butoanele lucrează pe ACEEAŞI ofertă — o nouă apăsare n-o dublează
+  ofertaEditata = r.comanda.id;
+
+  // după salvare: direct pe pagina comenzii din manager (userul, 2026-09-28)
+  const laComanda = () => { location.href = '/#comanda/' + r.comanda.id; };
+  if (unde === 'oferta') return laComanda();
+
+  const t = await oferta.treceIn(r.comanda.id, unde, plata ?? {});
+  if (t.eroare) {
+    gata();
+    return mesajOferta(`Oferta <strong>${esc(r.comanda.numar)}</strong> s-a salvat, dar ${unde === 'comanda'
+      ? 'nu a devenit comandă' : 'nu a trecut la „Aşteaptă plata"'}: ${esc(t.eroare)}`, 'eroare');
+  }
+  laComanda();
 }
 
 // Ultima ofertă salvată + configuraţia de atunci. Fişa primeşte codurile de
@@ -1066,6 +1108,7 @@ export async function initUI() {
       $('clientNume').value    = o.comanda.client_nume ?? '';
       $('clientTelefon').value = o.comanda.client_telefon ?? '';
       $('clientAdresa').value  = o.comanda.client_adresa ?? '';
+      $('ofertaNr').value      = o.comanda.oferta_nr ?? '';
       const btn = $('btnConfirma');
       if (btn) btn.textContent = 'Salvează modificările';
     }
@@ -1142,7 +1185,9 @@ export async function initUI() {
   $('btnFisa')?.addEventListener('click', () => modFisa
     ? deschideFisa(modFisa.client, modFisa, modFisa)
     : deschideFisa($('clientNume')?.value, ofertaPtFisa()));
-  $('btnConfirma')?.addEventListener('click', trimiteOferta);
+  $('btnConfirma')?.addEventListener('click', () => trimiteOferta('oferta'));
+  $('btnComanda')?.addEventListener('click', () => trimiteOferta('comanda'));
+  $('btnPlata')?.addEventListener('click', () => trimiteOferta('plata'));
   initDetaliiComanda();
   // CLEAR PAGE — configuraţie nouă de la zero: reîncărcarea paginii (cu acelaşi
   // ?gama=) readuce exact ecranul iniţial gol, fără stare rămasă pe undeva.

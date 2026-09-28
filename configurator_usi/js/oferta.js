@@ -102,7 +102,7 @@ export async function incarcaOferta(id) {
 
 // `id` = oferta deschisă pt. modificare (PUT, acelaşi număr şi cod de bare);
 // fără id → ofertă nouă (POST).
-export async function confirma({ nume, telefon, adresa, email, observatii, detalii, id = null }) {
+export async function confirma({ nume, telefon, adresa, email, observatii, detalii, ofertaNr, id = null }) {
   if (!String(nume || '').trim()) return { eroare: 'Completează numele clientului.' };
 
   const p = pozitieCurenta();
@@ -117,6 +117,7 @@ export async function confirma({ nume, telefon, adresa, email, observatii, detal
         client: { nume, telefon, adresa, email },
         observatii,
         detalii,   // livrare / agent / facturare (coloanele comenzii)
+        ofertaNr,  // nr. de ofertă scris de mână
         pozitii: [p.pozitie],
       }),
     });
@@ -133,4 +134,19 @@ export async function confirma({ nume, telefon, adresa, email, observatii, detal
   if (!r.ok) return { eroare: date.eroare || `Trimiterea a eşuat (${r.status}).` };
 
   return { ok: true, comanda: date.comanda };
+}
+
+// După salvare, oferta trece mai departe: 'comanda' (în lucru — cere plata +
+// avansul, ca Acceptă din manager) sau 'plata' (tabul „Aşteaptă plata").
+export async function treceIn(id, unde, plata = {}) {
+  let r;
+  try {
+    r = await fetch(`/api/comenzi/${id}/${unde === 'comanda' ? 'accepta' : 'asteapta-plata'}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(plata),
+    });
+  } catch {
+    return { eroare: 'Serverul nu răspunde. Verifică legătura la reţea.' };
+  }
+  const date = await r.json().catch(() => ({}));
+  return r.ok ? { ok: true, comanda: date.comanda } : { eroare: date.eroare || `Operaţia a eşuat (${r.status}).` };
 }
