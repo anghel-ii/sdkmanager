@@ -17,7 +17,7 @@ export async function onRequestGet({ request, env }) {
   const agent = await agentLogat(request, env);
   if (!agent) return raspuns(401, { eroare: 'Nu eşti logat.' });
   const { results } = await env.DB.prepare('SELECT * FROM client WHERE agent = ? ORDER BY nume COLLATE NOCASE').bind(agent.nume).all();
-  return raspuns(200, { agent: agent.nume, clienti: results });
+  return raspuns(200, { agent: agent.nume, admin: !!agent.admin, clienti: results });
 }
 
 export async function onRequestPost({ request, env }) {

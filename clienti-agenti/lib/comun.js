@@ -62,24 +62,46 @@ export function parolaNoua() {
 
 // ── Sesiuni: cookie HttpOnly cu un token aleator; în DB stă doar SHA-256 lui ──
 const COOKIE = 's';
-const ZILE = 90;   // agentul se loghează o dată pe telefon
+const ZILE = 90;          // agentul se loghează o dată pe telefon
+const ORE_ADMIN = 8;      // adminul intrat în contul unui agent (din /admin-ul managerului)
 
-export async function creeazaSesiune(env, agentId) {
-  const token = b64(crypto.getRandomValues(new Uint8Array(32))).replace(/[+/=]/g, c => ({ '+': '-', '/': '_', '=': '' }[c]));
-  await env.DB.prepare(`INSERT INTO sesiune (token_hash, agent_id, expira_la) VALUES (?, ?, datetime('now', '+${ZILE} days'))`)
-    .bind(await sha256(token), agentId).run();
-  return `${COOKIE}=${token}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${ZILE * 86400}`;
+const tokenNou = () => b64(crypto.getRandomValues(new Uint8Array(32))).replace(/[+/=]/g, c => ({ '+': '-', '/': '_', '=': '' }[c]));
+
+export async function creeazaSesiune(env, agentId, admin = false) {
+  const token = tokenNou(), durata = admin ? ORE_ADMIN * 3600 : ZILE * 86400;
+  await env.DB.prepare(`INSERT INTO sesiune (token_hash, agent_id, expira_la, admin) VALUES (?, ?, datetime('now', '+${durata} seconds'), ?)`)
+    .bind(await sha256(token), agentId, admin ? 1 : 0).run();
+  return `${COOKIE}=${token}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${durata}`;
+}
+
+// Bilet de intrare pt. „Intră ca acest agent" din /admin: o singură folosire, 60 s.
+// Doar hash-ul lui stă în DB; biletul în sine călătoreşte o dată, în link.
+export async function creeazaBilet(env, agentId) {
+  const bilet = tokenNou();
+  await env.DB.batch([
+    env.DB.prepare("DELETE FROM bilet WHERE expira_la <= datetime('now')"),
+    env.DB.prepare("INSERT INTO bilet (token_hash, agent_id, expira_la) VALUES (?, ?, datetime('now', '+60 seconds'))")
+      .bind(await sha256(bilet), agentId),
+  ]);
+  return bilet;
+}
+
+// biletul → agent_id (şi biletul e consumat), sau null
+export async function folosesteBilet(env, bilet) {
+  const r = await env.DB.prepare(`DELETE FROM bilet WHERE token_hash = ? AND expira_la > datetime('now') RETURNING agent_id`)
+    .bind(await sha256(bilet || '')).first();
+  return r?.agent_id ?? null;
 }
 
 export const stergeCookie = `${COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0`;
 
 const tokenDin = request => request.headers.get('Cookie')?.match(new RegExp(`(?:^|;\\s*)${COOKIE}=([^;]+)`))?.[1];
 
-// agentul logat ({ id, nume }) sau null
+// agentul logat ({ id, nume, admin }) sau null — admin = 1 dacă e adminul intrat în contul lui
 export async function agentLogat(request, env) {
   const token = tokenDin(request);
   if (!token) return null;
-  return env.DB.prepare(`SELECT a.id, a.nume FROM sesiune s JOIN agent a ON a.id = s.agent_id
+  return env.DB.prepare(`SELECT a.id, a.nume, s.admin FROM sesiune s JOIN agent a ON a.id = s.agent_id
     WHERE s.token_hash = ? AND s.expira_la > datetime('now') AND a.activ = 1`).bind(await sha256(token)).first();
 }
 

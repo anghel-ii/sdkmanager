@@ -1,4 +1,4 @@
-import { raspuns, text, eManager, hashParola, parolaNoua } from '../../lib/comun.js';
+import { raspuns, text, eManager, hashParola, parolaNoua } from '../../../lib/comun.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  Conturile agenţilor — DOAR managerul (Bearer CHEIE_MANAGER): pagina /admin
@@ -17,7 +17,7 @@ export async function onRequestGet({ request, env }) {
   const [agenti, faraCont] = await env.DB.batch([
     env.DB.prepare(`SELECT a.user, a.nume, a.activ,
         (SELECT COUNT(*) FROM client c WHERE c.agent = a.nume) AS clienti,
-        (SELECT COUNT(*) FROM sesiune s WHERE s.agent_id = a.id AND s.expira_la > datetime('now')) AS sesiuni
+        (SELECT COUNT(*) FROM sesiune s WHERE s.agent_id = a.id AND s.expira_la > datetime('now') AND s.admin = 0) AS sesiuni
       FROM agent a ORDER BY a.activ DESC, a.nume`),
     env.DB.prepare(`SELECT agent AS nume, COUNT(*) AS clienti FROM client
       WHERE agent IS NOT NULL AND agent NOT IN (SELECT nume FROM agent) GROUP BY agent ORDER BY clienti DESC`),

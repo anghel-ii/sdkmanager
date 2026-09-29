@@ -223,6 +223,7 @@ async function incarcaAgenti() {
         <td>${a.clienti}</td>
         <td>${a.sesiuni ? `da${a.sesiuni > 1 ? `, pe ${a.sesiuni} dispozitive` : ''}` : '<span class="dim">nu</span>'}</td>
         <td class="actiuni">
+          ${a.activ ? '<button class="mic intra" title="Deschide site-ul agenţilor în contul lui, fără să-i schimbi parola">Intră ca agent</button>' : ''}
           <button class="mic parola-noua">Parolă nouă</button>
           <button class="mic activ">${a.activ ? 'Dezactivează' : 'Reactivează'}</button>
         </td>
@@ -272,7 +273,14 @@ $('formAgent').addEventListener('submit', async e => {
 $('agenti').addEventListener('click', async e => {
   const a = agenti[e.target.closest('tr')?.dataset.i];
   if (!a) return;
-  if (e.target.classList.contains('parola-noua')) {
+  if (e.target.classList.contains('intra')) {
+    // fereastra se deschide ACUM (la click), altfel browserul o blochează ca pop-up
+    const w = window.open('about:blank', '_blank');
+    const r = await api('/api/agenti/intra', { method: 'POST', body: JSON.stringify({ nume: a.nume }) });
+    if (!r?.ok) { w?.close(); if (r) alerta(await eroareDin(r)); return; }
+    const { url } = await r.json();
+    if (w) w.location = url; else location.href = url;
+  } else if (e.target.classList.contains('parola-noua')) {
     if (await confirma(`Parolă nouă pentru ${a.nume}?\n\nCea veche nu mai merge şi agentul e delogat de pe toate telefoanele.`, 'Parolă nouă'))
       parolaAgent(a.nume);
   } else if (e.target.classList.contains('activ')) {

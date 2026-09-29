@@ -651,6 +651,7 @@ async function main() {
     schimba({ id: 3, agent: 'Maria', nume: 'Vlad', telefon_delegat: '0733' });
     const fals = http.createServer((q, r) => {
       if (q.headers.authorization !== 'Bearer cheie-test') { r.writeHead(401); return r.end('{}'); }
+      if (q.url === '/api/agenti/intra') return r.end(JSON.stringify({ url: 'https://agenti.test/api/intra?t=bilet' }));
       if (q.url === '/api/agenti') {
         if (q.method === 'GET') return r.end(JSON.stringify({ agenti: [{ user: 'ion', nume: 'Ion', activ: 1, clienti: 2, sesiuni: 1 }], faraCont: [] }));
         let corp = ''; q.on('data', b => corp += b);
@@ -695,6 +696,8 @@ async function main() {
       && primitAgent?.metoda === 'POST' && primitAgent.nume === 'Maria', JSON.stringify(creat));
     verifica('admin: dezactivare ajunge la Cloudflare', (await cer('PATCH', '/api/agenti', { nume: 'Ion', activ: false })).stare === 200
       && primitAgent.metoda === 'PATCH' && primitAgent.activ === false);
+    const intra = await cer('POST', '/api/agenti/intra', { nume: 'Ion' });
+    verifica('admin: „Intră ca agent" → linkul de intrare', intra.stare === 200 && intra.date.url.includes('/api/intra?t='), JSON.stringify(intra.date));
     fals.close();
     verifica('Cloudflare căzut → 502 cu mesaj', (await cer('GET', '/api/agenti')).stare === 502);
     config.clientiUrl = config.clientiCheie = '';

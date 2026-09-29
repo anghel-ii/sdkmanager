@@ -70,22 +70,25 @@ async function preiaAcum({ res }) {
 // Conturile agenţilor stau pe Cloudflare (clienti-agenti/functions/api/agenti.js);
 // pagina /admin le vede şi le administrează prin serverul ăsta, cu cheia
 // managerului. Nimic nu se ţine aici — parola nouă trece doar în răspuns.
-async function agenti({ req, res }) {
+const laCloudflare = cale => async function ({ req, res }) {
   if (!activ()) return req.method === 'GET' ? json(res, 200, { activ: false, agenti: [], faraCont: [] })
     : eroare(res, 409, 'Legătura cu Cloudflare nu e configurată.');
   const corp = req.method === 'GET' ? undefined : JSON.stringify(await corpJson(req));
   let r;
   try {
-    r = await fetch(`${config.clientiUrl}/api/agenti`, { method: req.method, body: corp,
+    r = await fetch(`${config.clientiUrl}${cale}`, { method: req.method, body: corp,
       headers: { Authorization: `Bearer ${cheie()}`, 'Content-Type': 'application/json' },
       signal: AbortSignal.timeout(15000) });
   } catch (e) {
     return eroare(res, 502, `Cloudflare nu răspunde: ${e.message}`);
   }
   const date = await r.json().catch(() => ({}));
-  if (r.status === 401) return eroare(res, 502, 'Cloudflare a refuzat cheia managerului (MANAGER_CLIENTI_CHEIE).');
+  if (r.status === 401) return eroare(res, 502, 'Cloudflare a refuzat cheia managerului.');
   json(res, r.status, r.ok && req.method === 'GET' ? { activ: true, ...date } : date);
-}
+};
+const agenti = laCloudflare('/api/agenti');
+// „Intră ca acest agent": link de o folosinţă (60 s) spre site-ul agenţilor
+const intraCaAgent = laCloudflare('/api/agenti/intra');
 
 // /admin: lipeşte cheia — se încearcă întâi pe Cloudflare, se salvează doar dacă merge;
 // nu se trimite niciodată înapoi spre browser
@@ -116,5 +119,6 @@ module.exports = {
     ['GET',   '/api/agenti',       { handler: agenti, rol: 'admin' }],
     ['POST',  '/api/agenti',       { handler: agenti, rol: 'admin' }],
     ['PATCH', '/api/agenti',       { handler: agenti, rol: 'admin' }],
+    ['POST',  '/api/agenti/intra', { handler: intraCaAgent, rol: 'admin' }],
   ],
 };

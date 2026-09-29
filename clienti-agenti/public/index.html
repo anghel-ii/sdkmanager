@@ -34,6 +34,7 @@
   #mesaj.ok { background: #1c3a2a; color: var(--ok); }
   #mesaj.eroare { background: #3d1f1f; color: var(--danger); }
   #cauta { margin-bottom: 12px; }
+  #banda { background: #4a3a12; color: #f0c65a; padding: 10px 12px; border-radius: 8px; margin-bottom: 14px; font-size: .9rem; }
   ul { list-style: none; padding: 0; display: grid; gap: 8px; }
   li button { width: 100%; text-align: left; font-weight: 400; padding: 12px; }
   li b { display: block; font-weight: 600; }
@@ -41,6 +42,8 @@
 </head>
 <body>
 <main>
+  <!-- adminul intrat în contul agentului din /admin-ul managerului -->
+  <div id="banda" hidden></div>
   <div id="mesaj" role="status"></div>
 
   <!-- 1. Login -->
@@ -125,6 +128,8 @@ async function incarca() {
   const j = await api('/api/clienti');
   clienti = j.clienti;
   $('agent').textContent = j.agent;
+  $('banda').hidden = !j.admin;
+  $('banda').textContent = `Eşti în contul lui ${j.agent}, intrat din manager (admin). Ce modifici aici se vede la agent.`;
   randeaza();
   arata('ecranLista');
 }
@@ -162,6 +167,7 @@ $('fLogin').addEventListener('submit', async e => {
 
 $('iesire').addEventListener('click', async () => {
   await api('/api/logout', { method: 'POST' }).catch(() => {});
+  $('banda').hidden = true;
   arata('ecranLogin');
 });
 
