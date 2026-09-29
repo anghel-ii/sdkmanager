@@ -92,6 +92,18 @@
        serverul le citeşte şi le modifică acolo, cu cheia managerului. -->
   <div class="panou">
     <h2>Conturi agenţi de vânzări</h2>
+    <!-- cheia managerului pt. Cloudflare: se lipeşte o dată; serverul o încearcă
+         înainte s-o salveze şi n-o mai trimite niciodată înapoi spre browser -->
+    <details id="blocCheie" style="margin-bottom:14px">
+      <summary class="mic">Cheia de legătură cu Cloudflare</summary>
+      <form class="agent-nou" id="formCheie" autocomplete="off" style="margin-top:10px">
+        <label>Cheie (o găseşti pe laptop: <span class="mono">clienti-agenti/.dev.vars</span>)
+          <input id="cheieNoua" type="password" spellcheck="false" required>
+        </label>
+        <button type="submit" class="primar">Salvează</button>
+      </form>
+    </details>
+    <div id="mesajCheie" style="margin-bottom:14px"></div>
     <form class="agent-nou" id="formAgent" autocomplete="off">
       <label>Cont nou pentru agentul
         <input id="agentNume" list="numeAgenti" placeholder="numele, exact ca în coloana Agent" required>
@@ -192,9 +204,10 @@ async function incarcaAgenti() {
   if (!r) return;
   if (!r.ok) { $('agenti').innerHTML = `<div class="mesaj eroare">${esc(await eroareDin(r))}</div>`; return; }
   const date = await r.json();
+  $('blocCheie').open = !date.activ;
+  $('formAgent').hidden = !date.activ;
   if (!date.activ) {
-    $('formAgent').hidden = true;
-    $('agenti').textContent = 'Legătura cu Cloudflare nu e configurată (MANAGER_CLIENTI_URL / MANAGER_CLIENTI_CHEIE).';
+    $('agenti').textContent = 'Lipeşte mai sus cheia de legătură cu Cloudflare — o singură dată; apoi apar aici conturile, iar la „Clienţi" baza de clienţi.';
     return;
   }
   agenti = date.agenti;
@@ -236,6 +249,17 @@ async function parolaAgent(nume) {
   });
   incarcaAgenti();
 }
+
+$('formCheie').addEventListener('submit', async e => {
+  e.preventDefault();
+  $('mesajCheie').innerHTML = '<div class="mesaj">Verific cheia pe Cloudflare…</div>';
+  const r = await api('/api/clienti/cheie', { method: 'PUT', body: JSON.stringify({ cheie: $('cheieNoua').value }) });
+  if (!r) return;
+  if (!r.ok) { $('mesajCheie').innerHTML = `<div class="mesaj eroare">${esc(await eroareDin(r))}</div>`; return; }
+  $('formCheie').reset();
+  $('mesajCheie').innerHTML = '<div class="mesaj ok">✓ Cheia merge şi e salvată. Clienţii se preiau acum (pagina „Clienţi").</div>';
+  incarcaAgenti();
+});
 
 $('formAgent').addEventListener('submit', async e => {
   e.preventDefault();

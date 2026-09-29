@@ -62,16 +62,12 @@ Dacă testele sau pornirea pică, **revine singur la versiunea de dinainte**. To
 
 Originalul bazei de clienţi e pe https://clienti-agenti.pages.dev (vezi `clienti-agenti/` în repo, pe laptop):
 agenţii intră cu user + parolă, îşi modifică clienţii şi adaugă alţii. Managerul ţine o copie şi preia singur
-schimbările la 5 minute (pagina „Clienţi"). Pe server, adaugă în `C:\Aplicatii\SDK\setari.cmd`
-(o reinstalare rescrie fişierul — pune-le la loc):
+schimbările la 5 minute (pagina „Clienţi").
 
-```
-set "MANAGER_CLIENTI_URL=https://clienti-agenti.pages.dev"
-set "MANAGER_CLIENTI_CHEIE=<cheia de manager>"
-```
-
-apoi reporneşte sarcina „SDK Manager". La prima pornire preia toţi clienţii (~5300). Serverul doar TRAGE date
-(ieşire HTTPS) — nimic nu intră din internet.
+**O singură dată, după instalare / primul update:** în `/admin` → „Conturi agenţi de vânzări" → „Cheia de
+legătură cu Cloudflare", lipeşti cheia (pe laptop: `clienti-agenti/.dev.vars`, ce e după `CHEIE_MANAGER=`).
+Serverul o încearcă înainte s-o salveze şi o ţine în baza lui (nu în git, nu în `setari.cmd`). Serverul doar
+TRAGE date (ieşire HTTPS) — nimic nu intră din internet.
 
 ## Utile
 

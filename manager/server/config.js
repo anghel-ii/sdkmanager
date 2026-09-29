@@ -13,9 +13,10 @@ const fs   = require('node:fs');
 //   MANAGER_BACKUP     folderul de backup zilnic
 //   MANAGER_SCANARE    1 = porneşte scanarea din atelier (coduri de bare);
 //                      implicit OPRITĂ — vezi mai jos
-//   MANAGER_CLIENTI_URL    adresa formularului agenţilor (Cloudflare), ex.
-//   MANAGER_CLIENTI_CHEIE  https://clienti-agenti.pages.dev + cheia de acolo;
-//                          fără ele preluarea clienţilor e oprită
+//   MANAGER_CLIENTI_URL    baza de clienţi de pe Cloudflare (implicit
+//                          https://clienti-agenti.pages.dev)
+//   MANAGER_CLIENTI_CHEIE  cheia managerului de acolo — de obicei NU se pune
+//                          aici: se lipeşte o dată în /admin (tabelul `setare`)
 
 const RADACINA = path.resolve(__dirname, '..');
 
@@ -48,7 +49,7 @@ const config = {
   scanare: process.env.MANAGER_SCANARE === '1',
 
   // Clienţii de la agenţii de vânzări — vezi server/clienti.js
-  clientiUrl:   (process.env.MANAGER_CLIENTI_URL || '').replace(/\/$/, ''),
+  clientiUrl:   (process.env.MANAGER_CLIENTI_URL ?? 'https://clienti-agenti.pages.dev').replace(/\/$/, ''),
   clientiCheie: process.env.MANAGER_CLIENTI_CHEIE || '',
 
   // Cât ţine o sesiune fără activitate. 30 de zile: omul din atelier se

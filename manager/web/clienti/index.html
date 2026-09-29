@@ -75,7 +75,7 @@ async function incarca() {
 
 function randeaza() {
   const u = date.ultimaPreluare;
-  $('stare').textContent = !date.activ ? 'Preluarea nu e configurată pe server.'
+  $('stare').textContent = !date.activ ? 'Legătura cu Cloudflare nu e configurată — administratorul lipeşte cheia în pagina Utilizatori.'
     : !u ? '' : u.eroare ? `⚠ Ultima preluare a eşuat (${dataOra(new Date(u.la))}): ${u.eroare}` : `Preluat ultima dată: ${dataOra(new Date(u.la))}`;
   $('preia').hidden = !date.activ;
 

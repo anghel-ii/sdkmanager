@@ -451,7 +451,7 @@ async function main() {
     const idVechi = Number(db2().prepare("INSERT INTO utilizator (nume, user, parola_hash, parola_salt, rol) VALUES ('Vechi', 'vechi', 'x', 'x', 'operator')").run().lastInsertRowid);
     require('../server/db.js').roluriNoi(db2());
     verifica('migraţie: operator → birou', db2().prepare('SELECT rol FROM utilizator WHERE id = ?').get(idVechi).rol === 'birou');
-    verifica('schema la versiunea 12', db2().prepare('PRAGMA user_version').get().user_version === 12);
+    verifica('schema la versiunea 13', db2().prepare('PRAGMA user_version').get().user_version === 13);
   }
 
   console.log('\nFixare şi sortare — per utilizator');
@@ -667,7 +667,15 @@ async function main() {
     config.clientiCheie = 'gresita';
     verifica('cheie greşită → 502, nimic salvat', (await cer('POST', '/api/clienti/preia')).stare === 502
       && !db2().prepare('SELECT COUNT(*) AS n FROM client').get().n);
-    config.clientiCheie = 'cheie-test';
+    config.clientiCheie = '';
+    verifica('/admin: cheie greşită → 400, nesalvată', (await cer('PUT', '/api/clienti/cheie', { cheie: 'gresita' })).stare === 400
+      && !db2().prepare('SELECT 1 FROM setare').get());
+    const pusa = await cer('PUT', '/api/clienti/cheie', { cheie: ' cheie-test ' });
+    verifica('/admin: cheia bună se salvează în bază şi porneşte legătura', pusa.stare === 200 && pusa.date.activ === true
+      && db2().prepare("SELECT valoare FROM setare WHERE cheie = 'clienti_cheie'").get()?.valoare === 'cheie-test');
+    verifica('… şi nu se trimite înapoi spre browser', !JSON.stringify((await cer('GET', '/api/agenti')).date).includes('cheie-test'));
+    await new Promise(r => setTimeout(r, 200));   // prima preluare, pornită de salvarea cheii
+    db2().exec('DELETE FROM client');
     verifica('preia toţi 3, pe mai multe pagini', (await cer('POST', '/api/clienti/preia')).date.noi === 3
       && db2().prepare('SELECT COUNT(*) AS n FROM client').get().n === 3);
     verifica('a doua oară: nimic nou', (await cer('POST', '/api/clienti/preia')).date.noi === 0);

@@ -63,7 +63,7 @@ graphify-out/
 # ── Demo static pe Cloudflare (manager + configurator în browser) — doar local ──
 /demo_cloudflare/
 
-# baza de clienţi a firmei (date personale) — se importă cu manager/scripts/importa-clienti.js, NU intră în git
+# baza de clienţi a firmei (date personale) — importată pe Cloudflare cu clienti-agenti/importa.mjs, NU intră în git
 /Livrare_MASINA*.xlsx
 # fişierul de test al cititorului de Excel are doar date inventate
 !clienti-agenti/test/test-clienti.xlsx

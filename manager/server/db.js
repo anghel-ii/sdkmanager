@@ -141,6 +141,10 @@ const MIGRATII = [
       modificat_la          TEXT,
       versiune              INTEGER NOT NULL
     )`),
+  // v12 → v13 (2026-09-29): setări globale ale serverului, puse din /admin — ca
+  // să nu se umble pe server prin Remote Desktop. Prima: cheia bazei de clienţi
+  // de pe Cloudflare (`clienti_cheie`); nu intră în git, stă doar în bază.
+  d => d.exec('CREATE TABLE setare (cheie TEXT PRIMARY KEY, valoare TEXT)'),
 ];
 
 // Exportată pt. test.
