@@ -451,7 +451,7 @@ async function main() {
     const idVechi = Number(db2().prepare("INSERT INTO utilizator (nume, user, parola_hash, parola_salt, rol) VALUES ('Vechi', 'vechi', 'x', 'x', 'operator')").run().lastInsertRowid);
     require('../server/db.js').roluriNoi(db2());
     verifica('migraţie: operator → birou', db2().prepare('SELECT rol FROM utilizator WHERE id = ?').get(idVechi).rol === 'birou');
-    verifica('schema la versiunea 11', db2().prepare('PRAGMA user_version').get().user_version === 11);
+    verifica('schema la versiunea 12', db2().prepare('PRAGMA user_version').get().user_version === 12);
   }
 
   console.log('\nFixare şi sortare — per utilizator');
@@ -636,6 +636,60 @@ async function main() {
     const pl = await cer('POST', `/api/comenzi/${pid}/accepta`, { plata: 'proforma', avans: 0 });
     verifica('plată primită → comandă în lucru', pl.stare === 200 && pl.date.comanda.tip === 'comanda' && /^CMD-/.test(pl.date.comanda.numar_comanda));
     verifica('… şi a ieşit din Aşteaptă plata', !(await cer('GET', '/api/comenzi?tip=plata')).date.comenzi.length);
+  }
+
+  console.log('\nClienţi — copia bazei de pe Cloudflare');
+  {
+    verifica('fără configurare → preluarea e oprită (409)', (await cer('POST', '/api/clienti/preia')).stare === 409);
+    // un „Cloudflare" fals, cu aceeaşi interfaţă ca clienti-agenti/functions/api/clienti/index.js:
+    // GET ?dupa=<versiune> → ce s-a schimbat după ea, în ordinea versiunii, câte `pagina`
+    let versiune = 0, pagina = 2, primitAgent = null;
+    const externi = new Map();
+    const schimba = c => externi.set(c.id, { ...externi.get(c.id), ...c, versiune: ++versiune });
+    schimba({ id: 1, agent: 'Ion', nume: 'Ana SRL', cui: 'RO1', telefon_administrator: '0722' });
+    schimba({ id: 2, agent: 'Ion', nume: 'Dan', email: 'd@x.ro', judet: 'IASI', delegat: 'Vio' });
+    schimba({ id: 3, agent: 'Maria', nume: 'Vlad', telefon_delegat: '0733' });
+    const fals = http.createServer((q, r) => {
+      if (q.headers.authorization !== 'Bearer cheie-test') { r.writeHead(401); return r.end('{}'); }
+      if (q.url === '/api/agenti') {
+        if (q.method === 'GET') return r.end(JSON.stringify({ agenti: [{ user: 'ion', nume: 'Ion', activ: 1, clienti: 2, sesiuni: 1 }], faraCont: [] }));
+        let corp = ''; q.on('data', b => corp += b);
+        return q.on('end', () => { primitAgent = { metoda: q.method, ...JSON.parse(corp) };
+          r.end(JSON.stringify(q.method === 'POST' ? { user: 'maria', nume: primitAgent.nume, parola: 'p4r0la', clienti: 2, nou: true } : {})); });
+      }
+      const dupa = +new URL(q.url, 'http://x').searchParams.get('dupa');
+      r.end(JSON.stringify({ clienti: [...externi.values()].filter(c => c.versiune > dupa)
+        .sort((a, b) => a.versiune - b.versiune).slice(0, pagina) }));
+    });
+    await new Promise(r => fals.listen(0, r));
+    const { config } = require('../server/config.js');
+    config.clientiUrl = `http://localhost:${fals.address().port}`;
+    config.clientiCheie = 'gresita';
+    verifica('cheie greşită → 502, nimic salvat', (await cer('POST', '/api/clienti/preia')).stare === 502
+      && !db2().prepare('SELECT COUNT(*) AS n FROM client').get().n);
+    config.clientiCheie = 'cheie-test';
+    verifica('preia toţi 3, pe mai multe pagini', (await cer('POST', '/api/clienti/preia')).date.noi === 3
+      && db2().prepare('SELECT COUNT(*) AS n FROM client').get().n === 3);
+    verifica('a doua oară: nimic nou', (await cer('POST', '/api/clienti/preia')).date.noi === 0);
+    schimba({ id: 2, localitate: 'Paşcani', modificat_la: '2026-09-29 12:00:00' });
+    schimba({ id: 4, agent: 'Maria', nume: 'Nou', email: 'n@x.ro', creat_la: '2026-09-29 12:05:00', modificat_la: '2026-09-29 12:05:00' });
+    verifica('agentul a modificat unul şi a adăugat unul → 2', (await cer('POST', '/api/clienti/preia')).date.noi === 2);
+    const dan = db2().prepare('SELECT * FROM client WHERE extern_id = 2').get();
+    verifica('modificarea suprascrie copia (fără dublură)', dan.localitate === 'Paşcani' && dan.delegat === 'Vio'
+      && db2().prepare('SELECT COUNT(*) AS n FROM client').get().n === 4, JSON.stringify(dan));
+    const l = (await cer('GET', '/api/clienti')).date;
+    verifica('lista: cei modificaţi de agenţi primii', l.clienti[0].nume === 'Nou' && l.clienti[1].nume === 'Dan', l.clienti.map(c => c.nume).join());
+    verifica('pagina /clienti se serveşte', (await cer('GET', '/clienti')).stare === 200);
+    const ag = await cer('GET', '/api/agenti');
+    verifica('admin vede conturile agenţilor (de pe Cloudflare)', ag.stare === 200 && ag.date.agenti[0]?.user === 'ion', JSON.stringify(ag.date));
+    const creat = await cer('POST', '/api/agenti', { nume: 'Maria' });
+    verifica('admin: cont de agent → parola trece prin server', creat.stare === 200 && creat.date.parola === 'p4r0la'
+      && primitAgent?.metoda === 'POST' && primitAgent.nume === 'Maria', JSON.stringify(creat));
+    verifica('admin: dezactivare ajunge la Cloudflare', (await cer('PATCH', '/api/agenti', { nume: 'Ion', activ: false })).stare === 200
+      && primitAgent.metoda === 'PATCH' && primitAgent.activ === false);
+    fals.close();
+    verifica('Cloudflare căzut → 502 cu mesaj', (await cer('GET', '/api/agenti')).stare === 502);
+    config.clientiUrl = config.clientiCheie = '';
   }
 
   console.log('\nBackup');

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clienţi</title>
+<link rel="stylesheet" href="/comun.css">
+<script src="/dialog.js"></script>
+<script src="/data.js"></script>
+<script src="/live.js"></script>
+<style>
+  #bara {
+    display: flex; align-items: center; gap: 16px;
+    padding: 14px 24px;
+    background: var(--panel); border-bottom: 1px solid var(--line);
+    position: sticky; top: 0; z-index: 10;
+  }
+  #bara .nume { font-weight: 600; }
+  #bara .spatiu { flex: 1; }
+  #continut { padding: 24px; max-width: 1320px; margin: 0 auto; }
+  .bara-lista { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+  .bara-lista .spatiu { flex: 1; }
+  #cauta { width: 280px; max-width: 100%; }
+  table.clienti { width: 100%; border-collapse: collapse; font-size: .88rem; }
+  table.clienti th { text-align: left; font-size: .72rem; font-weight: 600; letter-spacing: .05em;
+                     text-transform: uppercase; color: var(--text-dim); padding: 6px 8px; border-bottom: 1px solid var(--line); }
+  table.clienti td { padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  table.clienti td.data { white-space: nowrap; }
+  .gol { text-align: center; padding: 40px; color: var(--text-dim); }
+</style>
+</head>
+<body>
+
+<div id="bara">
+  <a href="/" class="nume" style="color:inherit; text-decoration:none">← Manager comenzi</a>
+  <span class="spatiu"></span>
+  <span class="dim mic" id="cine"></span>
+  <button id="iesire">Ieşi</button>
+</div>
+
+<div id="continut">
+  <div class="bara-lista">
+    <input id="cauta" type="search" placeholder="Caută nume, CUI, telefon, judeţ, agent…">
+    <span class="spatiu"></span>
+    <span class="dim mic" id="stare"></span>
+    <button id="preia">Preia acum</button>
+  </div>
+  <div id="lista">Se încarcă…</div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+//  Copia bazei de clienţi — originalul e pe Cloudflare (clienti-agenti/), unde
+//  agenţii îi modifică şi adaugă alţii; serverul preia singur schimbările la
+//  5 minute (server/clienti.js). Cei modificaţi de agenţi apar primii.
+// ═══════════════════════════════════════════════════════════════════════════
+const $ = id => document.getElementById(id);
+const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const normal = t => String(t ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
+async function api(cale, optiuni = {}) {
+  const r = await fetch(cale, { headers: { 'Content-Type': 'application/json' }, ...optiuni });
+  if (r.status === 401) { location.href = '/login?redirect=' + encodeURIComponent(location.pathname); return null; }
+  return r;
+}
+
+let date = { clienti: [] };
+
+async function incarca() {
+  const r = await api('/api/clienti');
+  if (!r) return;
+  date = await r.json();
+  randeaza();
+}
+
+function randeaza() {
+  const u = date.ultimaPreluare;
+  $('stare').textContent = !date.activ ? 'Preluarea nu e configurată pe server.'
+    : !u ? '' : u.eroare ? `⚠ Ultima preluare a eşuat (${dataOra(new Date(u.la))}): ${u.eroare}` : `Preluat ultima dată: ${dataOra(new Date(u.la))}`;
+  $('preia').hidden = !date.activ;
+
+  const q = normal($('cauta').value.trim());
+  const cl = !q ? date.clienti : date.clienti.filter(c => normal(Object.values(c).join(' ')).includes(q));
+  if (!cl.length) {
+    $('lista').innerHTML = `<div class="gol">${q ? 'Niciun client găsit.' : 'Niciun client încă.'}</div>`;
+    return;
+  }
+  // ponytail: primele 200 — cu 5000+ clienţi, tabelul întreg îngreunează pagina; căutarea ajunge la oricare
+  const arata = cl.slice(0, 200);
+  const tel = t => t ? `<a href="tel:${esc(t)}">${esc(t)}</a>` : '';
+  const doua = (a, b) => [a, b].filter(Boolean).join('<br>');
+  $('lista').innerHTML = `<p class="dim mic" style="margin-bottom:10px">${cl.length} clienţi${cl.length > arata.length ? ` — se văd primii ${arata.length}, caută ca să-l găseşti pe cel dorit` : ''}</p>
+    <table class="clienti">
+    <thead><tr><th>Client</th><th>Agent</th><th>Judeţ / localitate</th><th>Sediu / livrare</th><th>Administrator</th><th>E-mail</th><th>Delegat</th><th>Discounturi</th></tr></thead>
+    <tbody>${arata.map(c => `<tr>
+      <td><b>${esc(c.nume)}</b><br><span class="dim mic">${esc(c.cui)}</span></td>
+      <td>${esc(c.agent)}${c.modificat_la ? `<br><span class="dim mic" title="ultima modificare de la agent">${dataOra(c.modificat_la)}</span>` : ''}</td>
+      <td>${doua(esc(c.judet), esc(c.localitate))}</td>
+      <td>${doua(esc(c.adresa_sediu), c.adresa_livrare ? 'Livrare: ' + esc(c.adresa_livrare) : '')}</td>
+      <td>${doua(esc(c.administrator), tel(c.telefon_administrator))}</td>
+      <td>${c.email ? `<a href="mailto:${esc(c.email)}">${esc(c.email)}</a>` : ''}</td>
+      <td>${doua(esc(c.delegat), tel(c.telefon_delegat))}</td>
+      <td class="mic">${esc(c.discounturi)}</td>
+    </tr>`).join('')}</tbody></table>`;
+}
+
+$('cauta').addEventListener('input', randeaza);
+
+$('preia').addEventListener('click', async () => {
+  $('preia').disabled = true;
+  const r = await api('/api/clienti/preia', { method: 'POST' });
+  $('preia').disabled = false;
+  if (r && !r.ok) alerta((await r.json().catch(() => ({}))).eroare || 'Preluarea a eşuat.');
+  incarca();
+});
+
+(async () => {
+  const r = await api('/api/eu');
+  if (!r) return;
+  $('cine').textContent = (await r.json()).utilizator.nume;
+  await incarca();
+  urmareste(incarca);
+})();
+
+$('iesire').addEventListener('click', async () => {
+  await fetch('/api/logout', { method: 'POST' });
+  location.href = '/login';
+});
+</script>
+</body>
+</html>

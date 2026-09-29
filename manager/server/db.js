@@ -116,6 +116,31 @@ const MIGRATII = [
   // cel din NeoManager), lângă numărul automat OF-. Starea nouă tip = 'plata'
   // („aşteaptă plata") nu cere coloană — `tip` e text.
   d => d.exec('ALTER TABLE comanda ADD COLUMN oferta_nr TEXT'),
+  // v11 → v12 (2026-09-29): COPIA bazei de clienţi. Originalul e pe Cloudflare
+  // (clienti-agenti/, D1): acolo agenţii de vânzări îşi modifică clienţii şi
+  // adaugă alţii. server/clienti.js trage tot ce s-a schimbat după `versiune`
+  // şi suprascrie rândul după extern_id (= id-ul de acolo).
+  d => d.exec(`
+    CREATE TABLE client (
+      id                    INTEGER PRIMARY KEY,
+      extern_id             INTEGER NOT NULL UNIQUE,
+      agent                 TEXT,
+      nume                  TEXT NOT NULL,
+      cui                   TEXT,
+      judet                 TEXT,
+      localitate            TEXT,
+      adresa_sediu          TEXT,
+      adresa_livrare        TEXT,
+      administrator         TEXT,
+      telefon_administrator TEXT,
+      email                 TEXT,
+      delegat               TEXT,
+      telefon_delegat       TEXT,
+      discounturi           TEXT,
+      creat_la              TEXT,
+      modificat_la          TEXT,
+      versiune              INTEGER NOT NULL
+    )`),
 ];
 
 // Exportată pt. test.

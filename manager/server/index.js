@@ -14,6 +14,7 @@ const scanare     = config.scanare ? require('./scanare.js') : null;
 const evenimente  = require('./evenimente.js');
 const sticla      = require('./sticla.js');
 const actualizare = require('./actualizare.js');
+const clienti     = require('./clienti.js');
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  Serverul managerului de comenzi
@@ -34,7 +35,7 @@ const actualizare = require('./actualizare.js');
 //   { }                — orice utilizator logat
 //   { rol: 'admin' }   — doar administratorii
 
-const MODULE = [utilizatori, comenzi, scanare, evenimente, sticla, actualizare].filter(Boolean);
+const MODULE = [utilizatori, comenzi, scanare, evenimente, sticla, actualizare, clienti].filter(Boolean);
 
 const rute = MODULE.flatMap(m => m.rute).map(([metoda, cale, spec]) => [metoda, cale, spec]);
 const potriveste = router(rute);
@@ -84,6 +85,7 @@ async function trateaza(req, res) {
     '/':            'manager',   // pagina principală = listele (oferte / în lucru / finalizate)
     '/comenzi':     'manager',   // (adresa veche — linkurile existente merg în continuare)
     '/sticla':      'sticla',    // comanda de sticlă la furnizori
+    '/clienti':     'clienti',   // clienţii adăugaţi de agenţii de vânzări
     '/login':       'login',
     '/admin':       'admin',     // conturile (API-ul e doar pt. admin; pagina se autoverifică)
     ...(config.scanare ? { '/scan': 'scan', '/test-camera': 'test-camera' } : {}),
@@ -154,6 +156,7 @@ function porneste() {
   };
   zilnic();
   setInterval(zilnic, 24 * 3600 * 1000).unref();
+  clienti.porneste();
 
   // Ctrl+C / systemctl stop. server.close() singur aştepta ca TOATE conexiunile
   // să se închidă — dar fiecare tab al managerului ţine una live (WebSocket), iar

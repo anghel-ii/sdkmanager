@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="/comun.css">
 <script src="/dialog.js"></script>
 <script src="/data.js"></script>
+<script src="/copiaza.js"></script>
 <style>
   #bara {
     display: flex; align-items: center; gap: 16px;
@@ -37,7 +38,10 @@
   .stare-activ { color: var(--ok); }
   .stare-asteapta { color: #d4a24c; }
   .stare-dezactivat { color: var(--danger); }
-  #mesajNou .mesaj { margin-top: 12px; }   /* .mesaj ok / eroare vin din comun.css */
+  #mesajNou .mesaj, #mesajAgent .mesaj { margin-top: 12px; }
+  .agent-nou { display: flex; gap: 10px; align-items: end; flex-wrap: wrap; margin-bottom: 14px; }
+  .agent-nou label { margin: 0; flex: 1; min-width: 220px; }
+  .parola { font-size: 1.1rem; letter-spacing: .05em; }   /* .mesaj ok / eroare vin din comun.css */
   #jurnal { max-height: 320px; overflow: auto; font-size: .78rem; white-space: pre-wrap;
             background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 10px; margin-top: 12px; }
 </style>
@@ -82,6 +86,23 @@
   <div class="panou">
     <h2>Conturi</h2>
     <div id="lista">Se încarcă…</div>
+  </div>
+
+  <!-- Conturile agenţilor de vânzări — stau pe Cloudflare (clienti-agenti/);
+       serverul le citeşte şi le modifică acolo, cu cheia managerului. -->
+  <div class="panou">
+    <h2>Conturi agenţi de vânzări</h2>
+    <form class="agent-nou" id="formAgent" autocomplete="off">
+      <label>Cont nou pentru agentul
+        <input id="agentNume" list="numeAgenti" placeholder="numele, exact ca în coloana Agent" required>
+        <datalist id="numeAgenti"></datalist>
+      </label>
+      <button type="submit" class="primar">Creează</button>
+    </form>
+    <div id="mesajAgent"></div>
+    <div id="agenti">Se încarcă…</div>
+    <div class="dim mic" style="margin-top:10px">Agenţii intră pe <span class="mono">clienti-agenti.pages.dev</span> şi
+      văd doar clienţii cu numele lor în coloana Agent. Parola se vede o singură dată, aici — trimite-o agentului.</div>
   </div>
 
   <!-- Update din GitHub fără drepturi de administrator pe Windows: serverul
@@ -164,6 +185,81 @@ async function incarca() {
   });
 }
 
+let agenti = [];
+
+async function incarcaAgenti() {
+  const r = await api('/api/agenti');
+  if (!r) return;
+  if (!r.ok) { $('agenti').innerHTML = `<div class="mesaj eroare">${esc(await eroareDin(r))}</div>`; return; }
+  const date = await r.json();
+  if (!date.activ) {
+    $('formAgent').hidden = true;
+    $('agenti').textContent = 'Legătura cu Cloudflare nu e configurată (MANAGER_CLIENTI_URL / MANAGER_CLIENTI_CHEIE).';
+    return;
+  }
+  agenti = date.agenti;
+  // numele din coloana Agent care n-au încă un cont — de ales la „Cont nou"
+  $('numeAgenti').innerHTML = date.faraCont.map(a => `<option value="${esc(a.nume)}">${a.clienti} clienţi</option>`).join('');
+  $('agenti').innerHTML = !agenti.length ? 'Niciun cont de agent.' : `
+    <table class="conturi">
+      <thead><tr><th>Nume</th><th>Utilizator</th><th>Stare</th><th>Clienţi</th><th>Logat acum</th><th></th></tr></thead>
+      <tbody>${agenti.map((a, i) => `<tr data-i="${i}">
+        <td>${esc(a.nume)}</td>
+        <td class="mono">${esc(a.user)}</td>
+        <td>${a.activ ? '<span class="stare-activ">activ</span>' : '<span class="stare-dezactivat">dezactivat</span>'}</td>
+        <td>${a.clienti}</td>
+        <td>${a.sesiuni ? `da${a.sesiuni > 1 ? `, pe ${a.sesiuni} dispozitive` : ''}` : '<span class="dim">nu</span>'}</td>
+        <td class="actiuni">
+          <button class="mic parola-noua">Parolă nouă</button>
+          <button class="mic activ">${a.activ ? 'Dezactivează' : 'Reactivează'}</button>
+        </td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+}
+
+// cont nou sau parolă nouă → parola se arată o singură dată, cu buton de copiere
+async function parolaAgent(nume) {
+  const r = await api('/api/agenti', { method: 'POST', body: JSON.stringify({ nume }) });
+  if (!r) return;
+  if (!r.ok) { $('mesajAgent').innerHTML = `<div class="mesaj eroare">${esc(await eroareDin(r))}</div>`; return; }
+  const a = await r.json();
+  const text = `https://clienti-agenti.pages.dev\nUser: ${a.user}\nParolă: ${a.parola}`;
+  $('mesajAgent').innerHTML = `<div class="mesaj ok">
+    ${a.nou ? 'Cont creat' : 'Parolă nouă (agentul a fost delogat de peste tot)'} pentru <strong>${esc(a.nume)}</strong>:<br>
+    user <strong class="mono">${esc(a.user)}</strong> · parolă <strong class="mono parola">${esc(a.parola)}</strong>
+    <button class="mic" id="copiazaAgent" type="button">Copiază pentru agent</button>
+    ${a.clienti ? `<div class="mic" style="margin-top:6px">Vede ${a.clienti} clienţi.</div>`
+      : `<div class="mic" style="margin-top:6px">⚠ Niciun client pe numele „${esc(a.nume)}" — verifică să fie scris exact ca în coloana Agent.</div>`}
+  </div>`;
+  $('copiazaAgent').addEventListener('click', async e => {
+    e.target.textContent = await copiazaText(text) ? '✓ Copiat' : 'Nu s-a putut copia';
+  });
+  incarcaAgenti();
+}
+
+$('formAgent').addEventListener('submit', async e => {
+  e.preventDefault();
+  const nume = $('agentNume').value.trim();
+  if (agenti.some(a => a.nume === nume)) return alerta(`${nume} are deja cont — foloseşte „Parolă nouă" din tabel.`);
+  await parolaAgent(nume);
+  $('formAgent').reset();
+});
+
+$('agenti').addEventListener('click', async e => {
+  const a = agenti[e.target.closest('tr')?.dataset.i];
+  if (!a) return;
+  if (e.target.classList.contains('parola-noua')) {
+    if (await confirma(`Parolă nouă pentru ${a.nume}?\n\nCea veche nu mai merge şi agentul e delogat de pe toate telefoanele.`, 'Parolă nouă'))
+      parolaAgent(a.nume);
+  } else if (e.target.classList.contains('activ')) {
+    const text = a.activ ? `Dezactivezi contul lui ${a.nume}? Nu mai poate intra, e delogat imediat.` : `Reactivezi contul lui ${a.nume}?`;
+    if (!await confirma(text, a.activ ? 'Dezactivează' : 'Reactivează')) return;
+    const r = await api('/api/agenti', { method: 'PATCH', body: JSON.stringify({ nume: a.nume, activ: !a.activ }) });
+    if (r && !r.ok) await alerta(await eroareDin(r));
+    incarcaAgenti();
+  }
+});
+
 $('formNou').addEventListener('submit', async e => {
   e.preventDefault();
   const user = $('nouUser').value.trim().toLowerCase();
@@ -227,6 +323,7 @@ $('iesire').addEventListener('click', async () => {
     return;
   }
   incarca();
+  incarcaAgenti();
   stareActualizare();
 })();
 </script>

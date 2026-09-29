@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Clienţii mei</title>
+<style>
+  :root { --bg: #14171c; --panel: #1d2127; --line: #2e343d; --text: #e6e8eb; --dim: #9aa3ad;
+          --accent: #4da3ff; --accent-dim: #1f6fd1; --ok: #4caf7d; --danger: #e5605a; }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--bg); color: var(--text); font: 16px/1.4 system-ui, sans-serif; padding: 16px; }
+  main { max-width: 560px; margin: 0 auto; }
+  [hidden] { display: none !important; }
+  h1 { font-size: 1.3rem; }
+  .dim { color: var(--dim); font-size: .9rem; }
+  .cap { display: flex; align-items: center; gap: 10px; margin: 4px 0 16px; }
+  .cap .spatiu { flex: 1; }
+  form { display: grid; gap: 14px; }
+  label { display: grid; gap: 6px; font-size: .9rem; color: var(--dim); }
+  label.rand { display: flex; align-items: center; gap: 10px; color: var(--text); margin-top: -6px; }
+  label.rand input { width: auto; }
+  input, textarea, select { font: inherit; padding: 12px; border-radius: 8px; border: 1px solid var(--line);
+                            background: var(--panel); color: var(--text); width: 100%; }
+  input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); border-color: transparent; }
+  button { font: inherit; font-weight: 600; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--line);
+           background: var(--panel); color: var(--text); cursor: pointer; }
+  button.primar { background: var(--accent-dim); border-color: var(--accent-dim); color: #fff; }
+  button:disabled { opacity: .6; }
+  .butoane { display: flex; gap: 10px; }
+  .butoane button { flex: 1; }
+  #mesaj { padding: 12px; border-radius: 8px; margin-bottom: 14px; }
+  #mesaj:empty { display: none; }
+  #mesaj.ok { background: #1c3a2a; color: var(--ok); }
+  #mesaj.eroare { background: #3d1f1f; color: var(--danger); }
+  #cauta { margin-bottom: 12px; }
+  ul { list-style: none; padding: 0; display: grid; gap: 8px; }
+  li button { width: 100%; text-align: left; font-weight: 400; padding: 12px; }
+  li b { display: block; font-weight: 600; }
+</style>
+</head>
+<body>
+<main>
+  <div id="mesaj" role="status"></div>
+
+  <!-- 1. Login -->
+  <section id="ecranLogin" hidden>
+    <h1 style="margin-bottom:16px">Clienţi — agenţi de vânzări</h1>
+    <form id="fLogin">
+      <label>User<input name="user" autocomplete="username" autocapitalize="none" required></label>
+      <label>Parolă<input name="parola" type="password" autocomplete="current-password" required></label>
+      <button class="primar">Intră</button>
+    </form>
+  </section>
+
+  <!-- 2. Lista clienţilor agentului -->
+  <section id="ecranLista" hidden>
+    <div class="cap">
+      <div><h1>Clienţii mei</h1><span class="dim" id="agent"></span></div>
+      <span class="spatiu"></span>
+      <button id="iesire">Ieşi</button>
+    </div>
+    <button class="primar" id="nou" style="width:100%; margin-bottom:12px">+ Client nou</button>
+    <input id="cauta" type="search" placeholder="Caută nume, CUI, localitate, telefon…">
+    <p class="dim" id="numar" style="margin-bottom:8px"></p>
+    <ul id="lista"></ul>
+  </section>
+
+  <!-- 3. Fişa unui client (nou sau de modificat) -->
+  <section id="ecranClient" hidden>
+    <div class="cap"><h1 id="titluClient"></h1></div>
+    <form id="f" autocomplete="off">
+      <label>Nume client / firmă *<input name="nume" required maxlength="120"></label>
+      <label>CUI<input name="cui" maxlength="20"></label>
+      <label class="rand"><input type="checkbox" id="pf"> Persoană fizică (fără CUI)</label>
+      <label>Judeţ<select name="judet"><option value="">—</option><option>ALBA</option><option>ARAD</option><option>ARGES</option><option>BACAU</option><option>BIHOR</option><option>BISTRITA-NASAUD</option><option>BOTOSANI</option><option>BRAILA</option><option>BRASOV</option><option>BUCURESTI</option><option>BUZAU</option><option>CALARASI</option><option>CARAS-SEVERIN</option><option>CLUJ</option><option>CONSTANTA</option><option>COVASNA</option><option>DAMBOVITA</option><option>DOLJ</option><option>GALATI</option><option>GIURGIU</option><option>GORJ</option><option>HARGHITA</option><option>HUNEDOARA</option><option>IALOMITA</option><option>IASI</option><option>ILFOV</option><option>MARAMURES</option><option>MEHEDINTI</option><option>MURES</option><option>NEAMT</option><option>OLT</option><option>PRAHOVA</option><option>SALAJ</option><option>SATU MARE</option><option>SIBIU</option><option>SUCEAVA</option><option>TELEORMAN</option><option>TIMIS</option><option>TULCEA</option><option>VALCEA</option><option>VASLUI</option><option>VRANCEA</option></select></label>
+      <label>Localitatea<input name="localitate" maxlength="80"></label>
+      <label>Adresa sediului social<input name="adresa_sediu" maxlength="300"></label>
+      <label>Adresa de livrare (stradă, nr.)<input name="adresa_livrare" maxlength="300"></label>
+      <label>Nume administrator<input name="administrator" maxlength="120"></label>
+      <label>Telefon administrator<input name="telefon_administrator" type="tel" maxlength="40"></label>
+      <label>E-mail<input name="email" type="email" maxlength="120"></label>
+      <label>Delegat (cine preia marfa)<input name="delegat" maxlength="120"></label>
+      <label>Telefon delegat<input name="telefon_delegat" type="tel" maxlength="40"></label>
+      <label>Discounturi<textarea name="discounturi" rows="2" maxlength="500"></textarea></label>
+      <div class="butoane">
+        <button type="button" id="inapoi">Înapoi</button>
+        <button class="primar" id="salveaza">Salvează</button>
+      </div>
+    </form>
+  </section>
+</main>
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+//  Agentul intră cu user + parolă (cookie de sesiune, 90 de zile), îşi vede
+//  clienţii (cei cu numele lui în coloana AGENT), îi modifică şi adaugă alţii.
+//  API: functions/api/{login,logout,clienti}.
+// ═══════════════════════════════════════════════════════════════════════════
+const $ = id => document.getElementById(id);
+const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const normal = t => String(t ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
+let clienti = [];
+let curent = null;   // clientul deschis în fişă; null = client nou
+
+// fetch aruncă TypeError fără internet (textul diferă: Chrome/Safari/Firefox)
+const textEroare = err => err instanceof TypeError ? 'Fără internet — încearcă din nou.' : err.message;
+
+function mesaj(t, tip) { $('mesaj').textContent = t; $('mesaj').className = tip; if (t) scrollTo(0, 0); }
+
+function arata(ecran) {
+  for (const e of ['ecranLogin', 'ecranLista', 'ecranClient']) $(e).hidden = e !== ecran;
+  scrollTo(0, 0);
+}
+
+async function api(cale, optiuni = {}) {
+  const r = await fetch(cale, { headers: { 'Content-Type': 'application/json' }, ...optiuni });
+  const j = await r.json().catch(() => ({}));
+  if (r.status === 401 && cale !== '/api/login') { arata('ecranLogin'); throw new Error(j.eroare); }
+  if (!r.ok) throw new Error(j.eroare || 'Eroare — încearcă din nou.');
+  return j;
+}
+
+async function incarca() {
+  const j = await api('/api/clienti');
+  clienti = j.clienti;
+  $('agent').textContent = j.agent;
+  randeaza();
+  arata('ecranLista');
+}
+
+function randeaza() {
+  const q = normal($('cauta').value.trim());
+  const gasiti = !q ? clienti : clienti.filter(c => normal(Object.values(c).join(' ')).includes(q));
+  $('numar').textContent = `${gasiti.length} ${gasiti.length === 1 ? 'client' : 'clienţi'}`;
+  $('lista').innerHTML = gasiti.map(c => `<li><button data-id="${c.id}">
+    <b>${esc(c.nume)}</b>
+    <span class="dim">${esc([c.localitate, c.judet].filter(Boolean).join(', ') || c.cui || '')}</span>
+  </button></li>`).join('');
+}
+
+function deschide(c) {
+  curent = c;
+  $('titluClient').textContent = c ? c.nume : 'Client nou';
+  $('f').reset();
+  for (const el of $('f').elements) if (el.name) el.value = c?.[el.name] ?? '';
+  $('pf').checked = c?.cui === 'Persoana Fizica';
+  $('f').elements.cui.readOnly = $('pf').checked;
+  mesaj('');
+  arata('ecranClient');
+}
+
+$('fLogin').addEventListener('submit', async e => {
+  e.preventDefault();
+  try {
+    await api('/api/login', { method: 'POST', body: JSON.stringify(Object.fromEntries(new FormData($('fLogin')))) });
+    $('fLogin').reset();
+    mesaj('');
+    await incarca();
+  } catch (err) { mesaj(textEroare(err), 'eroare'); }
+});
+
+$('iesire').addEventListener('click', async () => {
+  await api('/api/logout', { method: 'POST' }).catch(() => {});
+  arata('ecranLogin');
+});
+
+$('cauta').addEventListener('input', randeaza);
+$('lista').addEventListener('click', e => {
+  const b = e.target.closest('button[data-id]');
+  if (b) deschide(clienti.find(c => c.id === +b.dataset.id));
+});
+$('nou').addEventListener('click', () => deschide(null));
+$('inapoi').addEventListener('click', () => { mesaj(''); arata('ecranLista'); });
+
+// Persoană fizică → CUI = „Persoana Fizica", exact ca în Excel-ul de clienţi
+$('pf').addEventListener('change', e => {
+  const cui = $('f').elements.cui;
+  cui.value = e.target.checked ? 'Persoana Fizica' : '';
+  cui.readOnly = e.target.checked;
+});
+
+$('f').addEventListener('submit', async e => {
+  e.preventDefault();
+  const date = Object.fromEntries(new FormData($('f')));
+  if (!curent && ![date.telefon_administrator, date.telefon_delegat, date.email].some(t => t.trim())) {
+    return mesaj('Completează cel puţin un telefon sau e-mailul.', 'eroare');
+  }
+  $('salveaza').disabled = true;
+  try {
+    const { client } = await api(curent ? `/api/clienti/${curent.id}` : '/api/clienti',
+      { method: curent ? 'PUT' : 'POST', body: JSON.stringify(date) });
+    clienti = [...clienti.filter(c => c.id !== client.id), client]
+      .sort((a, b) => a.nume.localeCompare(b.nume, 'ro', { sensitivity: 'base' }));
+    randeaza();
+    arata('ecranLista');
+    mesaj(`✓ ${client.nume} — salvat.`, 'ok');
+  } catch (err) {
+    mesaj(textEroare(err), 'eroare');
+  } finally {
+    $('salveaza').disabled = false;
+  }
+});
+
+// fără sesiune → ecranul de login (îl arată api() la 401)
+incarca().catch(err => { if (!$('ecranLogin').hidden) return; arata('ecranLogin'); mesaj(textEroare(err), 'eroare'); });
+</script>
+</body>
+</html>
