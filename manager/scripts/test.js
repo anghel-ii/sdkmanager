@@ -643,7 +643,10 @@ async function main() {
   verifica('backup scris pe disc', fs.existsSync(dest) && fs.statSync(dest).size > 0);
 
   server.close();
-  fs.rmSync(TEMP, { recursive: true, force: true });
+  // Windows nu şterge un fişier deschis: întâi închidem baza. Ştergerea folderului
+  // temporar nu e un test, deci un eşec aici nu trebuie să pice rularea.
+  require('../server/db.js').inchide();
+  try { fs.rmSync(TEMP, { recursive: true, force: true }); } catch (e) { console.warn(`(nu am putut şterge ${TEMP}: ${e.code})`); }
 
   console.log(`\n${treceri} trecute, ${caderi} căzute\n`);
   process.exit(caderi ? 1 : 0);

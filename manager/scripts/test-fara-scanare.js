@@ -70,7 +70,10 @@ const verifica = (nume, ok, detaliu = '') => {
   verifica('codul de bare există totuşi în DB (pt. repornire)', /^\d{6}$/.test(cod ?? ''), cod);
 
   server.close();
-  fs.rmSync(TEMP, { recursive: true, force: true });
+  // Windows nu şterge un fişier deschis: întâi închidem baza. Ştergerea folderului
+  // temporar nu e un test, deci un eşec aici nu trebuie să pice rularea.
+  require('../server/db.js').inchide();
+  try { fs.rmSync(TEMP, { recursive: true, force: true }); } catch (e) { console.warn(`(nu am putut şterge ${TEMP}: ${e.code})`); }
   console.log(caderi ? `\n${caderi} căzute\n` : '\ntoate trecute\n');
   process.exit(caderi ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(1); });
