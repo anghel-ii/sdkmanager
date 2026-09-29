@@ -13,6 +13,7 @@ const comenzi     = require('./api/comenzi.js');
 const scanare     = config.scanare ? require('./scanare.js') : null;
 const evenimente  = require('./evenimente.js');
 const sticla      = require('./sticla.js');
+const actualizare = require('./actualizare.js');
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  Serverul managerului de comenzi
@@ -33,7 +34,7 @@ const sticla      = require('./sticla.js');
 //   { }                — orice utilizator logat
 //   { rol: 'admin' }   — doar administratorii
 
-const MODULE = [utilizatori, comenzi, scanare, evenimente, sticla].filter(Boolean);
+const MODULE = [utilizatori, comenzi, scanare, evenimente, sticla, actualizare].filter(Boolean);
 
 const rute = MODULE.flatMap(m => m.rute).map(([metoda, cale, spec]) => [metoda, cale, spec]);
 const potriveste = router(rute);

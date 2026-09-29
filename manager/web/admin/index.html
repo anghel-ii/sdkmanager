@@ -38,6 +38,8 @@
   .stare-asteapta { color: #d4a24c; }
   .stare-dezactivat { color: var(--danger); }
   #mesajNou .mesaj { margin-top: 12px; }   /* .mesaj ok / eroare vin din comun.css */
+  #jurnal { max-height: 320px; overflow: auto; font-size: .78rem; white-space: pre-wrap;
+            background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 10px; margin-top: 12px; }
 </style>
 </head>
 <body>
@@ -80,6 +82,21 @@
   <div class="panou">
     <h2>Conturi</h2>
     <div id="lista">Se încarcă…</div>
+  </div>
+
+  <!-- Update din GitHub fără drepturi de administrator pe Windows: serverul
+       porneşte sarcina „SDK Actualizare" (SYSTEM) — vezi server/actualizare.js -->
+  <div class="panou">
+    <h2>Actualizare aplicaţie</h2>
+    <div>Versiunea care rulează: <span class="mono" id="versiune">…</span></div>
+    <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap">
+      <button class="mic" id="btnVerifica">Verifică ce e nou</button>
+      <button class="mic primar" id="btnActualizeaza">Actualizează acum</button>
+    </div>
+    <div id="noutati" class="mic" style="margin-top:10px"></div>
+    <div class="dim mic" style="margin-top:10px">Fă update-ul când nu lucrează nimeni: serverul se opreşte ~1 minut.
+      Dacă testele sau pornirea pică, revine singur la versiunea de dinainte.</div>
+    <pre id="jurnal" class="mono" hidden></pre>
   </div>
 </div>
 
@@ -160,6 +177,41 @@ $('formNou').addEventListener('submit', async e => {
   incarca();
 });
 
+// ── Actualizare ──
+let urmarire = null;
+async function stareActualizare() {
+  const r = await fetch('/api/actualizare').catch(() => null);
+  if (!r?.ok) { if (urmarire) $('versiune').textContent = 'serverul reporneşte…'; return; }
+  const s = await r.json();
+  $('versiune').textContent = s.versiune || '—';
+  $('btnActualizeaza').disabled = !s.disponibil || s.ruleaza;
+  $('btnActualizeaza').textContent = s.ruleaza ? 'Actualizare în curs…' : 'Actualizează acum';
+  if (!s.disponibil) $('btnActualizeaza').title = 'Merge doar pe serverul Windows';
+  if (s.jurnal) { $('jurnal').hidden = false; $('jurnal').textContent = s.jurnal; $('jurnal').scrollTop = 1e9; }
+  if (s.ruleaza && !urmarire) urmarire = setInterval(stareActualizare, 3000);
+  if (!s.ruleaza && urmarire) { clearInterval(urmarire); urmarire = null; }
+}
+
+$('btnVerifica').addEventListener('click', async () => {
+  $('noutati').textContent = 'Întreb GitHub…';
+  const r = await api('/api/actualizare/verifica', { method: 'POST' });
+  if (!r) return;
+  if (!r.ok) { $('noutati').innerHTML = `<div class="mesaj eroare">${esc(await eroareDin(r))}</div>`; return; }
+  const { noutati } = await r.json();
+  $('noutati').innerHTML = noutati.length
+    ? `Schimbări noi:<ul class="mono">${noutati.map(n => `<li>${esc(n)}</li>`).join('')}</ul>`
+    : '<span class="stare-activ">Aplicaţia e la zi.</span>';
+});
+
+$('btnActualizeaza').addEventListener('click', async () => {
+  if (!await confirma('Actualizezi aplicaţia acum?\n\nServerul se opreşte pentru ~1 minut; cine lucrează în aplicaţie pierde ce n-a salvat.', 'Actualizează')) return;
+  const r = await api('/api/actualizare', { method: 'POST' });
+  if (r && !r.ok) return alerta(await eroareDin(r));
+  // sarcina porneşte în câteva sute de ms; urmărim jurnalul până se termină
+  setTimeout(stareActualizare, 1500);
+  if (!urmarire) urmarire = setInterval(stareActualizare, 3000);
+});
+
 $('iesire').addEventListener('click', async () => {
   await fetch('/api/logout', { method: 'POST' });
   location.href = '/login';
@@ -175,6 +227,7 @@ $('iesire').addEventListener('click', async () => {
     return;
   }
   incarca();
+  stareActualizare();
 })();
 </script>
 </body>

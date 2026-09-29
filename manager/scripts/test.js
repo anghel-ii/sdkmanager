@@ -97,6 +97,7 @@ async function main() {
 
   console.log('\nDrepturi');
   verifica('admin vede lista de conturi', (await cer('GET', '/api/utilizatori')).stare === 200);
+  verifica('admin vede starea actualizării', (await cer('GET', '/api/actualizare')).stare === 200);
 
   const creat = await cer('POST', '/api/utilizatori',
     { nume: 'Maria Birou', user: 'maria', parola: 'parola-maria-1', rol: 'birou' });
@@ -432,6 +433,7 @@ async function main() {
       verifica('birou: NU poate modifica nr. existent → 403', (await fact({ numar: 'B-2' })).stare === 403 && nr() === 'B-1');
       verifica('birou: NU poate anula facturarea → 403', (await fact({ numar: '', anuleaza: true })).stare === 403 && nr() === 'B-1');
       verifica('birou: NU vede conturile → 403', (await cer('GET', '/api/utilizatori')).stare === 403);
+      verifica('birou: NU poate porni actualizarea → 403', (await cer('POST', '/api/actualizare')).stare === 403);
       const eu = (await cer('GET', '/api/eu')).date.utilizator;
       verifica('/api/eu spune rolul (pt. interfaţă)', eu?.rol === 'birou');
     });

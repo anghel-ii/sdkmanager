@@ -54,6 +54,8 @@ Dublu-clic pe **`C:\Aplicatii\SDK\Actualizeaza aplicatia.bat`**, când nu lucrea
 3. aduce codul nou, îl construieşte şi rulează testele;
 4. reporneşte serverul şi verifică dacă răspunde.
 
+**Fără să fii administrator pe Windows:** în aplicaţie, logat cu un cont `admin`, mergi la **/admin → Actualizare aplicaţie**. „Verifică ce e nou" arată schimbările de pe GitHub, „Actualizează acum" rulează exact acelaşi update (prin sarcina programată „SDK Actualizare", care rulează ca SYSTEM), iar jurnalul se vede în pagină.
+
 Dacă testele sau pornirea pică, **revine singur la versiunea de dinainte**. Tot ce se întâmplă se scrie în `date\actualizari.log`.
 
 ## Utile

@@ -195,6 +195,16 @@ try {
   Register-ScheduledTask -TaskName $NumeSarcina -Action $actiune -Trigger $declansator -Principal $cine `
     -Settings $setariSarcina -Description 'Managerul de comenzi (Node). Porneşte odată cu serverul.' -Force | Out-Null
 
+  # sarcina de update, fără declanşator: o porneşte serverul din /admin (tot SYSTEM),
+  # ca update-ul să se poată face din browser, fără cont de administrator pe Windows
+  $actualizeaza = Join-Path $cod 'deploy\windows\actualizeaza.ps1'
+  $actiuneUpdate = New-ScheduledTaskAction -Execute 'powershell.exe' `
+    -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$actualizeaza`""
+  $setariUpdate = New-ScheduledTaskSettingsSet -ExecutionTimeLimit (New-TimeSpan -Hours 1) `
+    -MultipleInstances IgnoreNew -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
+  Register-ScheduledTask -TaskName 'SDK Actualizare' -Action $actiuneUpdate -Principal $cine `
+    -Settings $setariUpdate -Description 'Update din GitHub, pornit din pagina /admin a managerului.' -Force | Out-Null
+
   # scurtătura de update, în rădăcină
   Set-Content -Path (Join-Path $Radacina 'Actualizeaza aplicatia.bat') -Encoding Ascii `
     -Value @('@echo off', 'call "%~dp0cod\deploy\windows\actualizeaza.bat"')
