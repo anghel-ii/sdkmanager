@@ -1,6 +1,6 @@
 const { db } = require('./db.js');
 const auth = require('./auth.js');
-const { json, eroare, redirect } = require('./http.js');
+const { json, redirect } = require('./http.js');
 const { anunta } = require('./evenimente.js');
 
 // ═══════════════════════════════════════════════════════════════════════════

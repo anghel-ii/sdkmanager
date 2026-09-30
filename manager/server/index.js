@@ -4,7 +4,7 @@ const fs    = require('node:fs');
 
 const { config } = require('./config.js');
 const { deschide, inchide, backup } = require('./db.js');
-const { json, eroare, redirect, serveste, router } = require('./http.js');
+const { eroare, redirect, serveste, router } = require('./http.js');
 const auth = require('./auth.js');
 
 const utilizatori = require('./api/utilizatori.js');

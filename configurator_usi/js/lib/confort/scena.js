@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import { box } from '../comun/geo.js';
 import { buildDoor, DOOR_D } from './door.js';
 
 // ── Elemente comune familiei "suspendată" ────────────────────────────────────

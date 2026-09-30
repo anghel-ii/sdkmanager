@@ -550,7 +550,7 @@ async function renderDetaliu(id) {
   if (!r) return;
   if (!r.ok) { $('continut').innerHTML = '<div class="mesaj eroare">Comanda nu există.</div>'; return; }
 
-  const { comanda: c, pozitii, coduri, scanari, sticla, sticlaLinii = [] } = await r.json();
+  const { comanda: c, pozitii, coduri, scanari, sticlaLinii = [] } = await r.json();
   const p = pozitii[0];   // o comandă = un singur sistem
   const total = facturareTotala(pozitii);
   const eOferta = c.tip === 'oferta';
