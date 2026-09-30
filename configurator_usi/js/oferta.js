@@ -41,6 +41,18 @@ async function verificaSesiunea() {
   return stare;
 }
 
+// Sugestii pt. câmpul „Nume client", din baza de clienţi a managerului.
+// Fără manager (sau nelogat) nu se caută nimic — câmpul rămâne unul simplu.
+export async function cautaClienti(q) {
+  if (stare !== 'logat' || q.length < 2) return [];
+  try {
+    const r = await fetch('/api/clienti/cauta?q=' + encodeURIComponent(q), { headers: { Accept: 'application/json' } });
+    return r.ok ? (await r.json()).clienti : [];
+  } catch {
+    return [];
+  }
+}
+
 // ── Poziţia curentă ──────────────────────────────────────────────────────────
 
 // Îngheaţă configuraţia curentă. Întoarce { eroare } dacă facturarea are coduri

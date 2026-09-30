@@ -688,6 +688,9 @@ async function main() {
       && db2().prepare('SELECT COUNT(*) AS n FROM client').get().n === 4, JSON.stringify(dan));
     const l = (await cer('GET', '/api/clienti')).date;
     verifica('lista: cei modificaţi de agenţi primii', l.clienti[0].nume === 'Nou' && l.clienti[1].nume === 'Dan', l.clienti.map(c => c.nume).join());
+    const cauta = async q => (await cer('GET', '/api/clienti/cauta?q=' + encodeURIComponent(q))).date.clienti.map(c => c.nume).join();
+    verifica('sugestii configurator: cei care încep cu textul, primii', await cauta('an') === 'Ana SRL,Dan', await cauta('an'));
+    verifica('… sub 2 litere sau cu % tastat → nimic', await cauta('a') === '' && await cauta('%%') === '');
     verifica('pagina /clienti se serveşte', (await cer('GET', '/clienti')).stare === 200);
     const ag = await cer('GET', '/api/agenti');
     verifica('admin vede conturile agenţilor (de pe Cloudflare)', ag.stare === 200 && ag.date.agenti[0]?.user === 'ion', JSON.stringify(ag.date));

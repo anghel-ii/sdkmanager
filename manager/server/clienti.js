@@ -60,6 +60,19 @@ const lista = ({ res }) => json(res, 200, {
   clienti: db().prepare('SELECT * FROM client ORDER BY modificat_la IS NULL, modificat_la DESC, nume').all(),
 });
 
+// Configuratorul: sugestii pt. câmpul „Nume client" (doar propune — se vinde şi
+// celor care nu sunt în bază). Numele care ÎNCEP cu textul vin primele.
+// LIKE din SQLite ignoră majusculele doar la litere fără diacritice.
+function cauta({ req, res }) {
+  const q = (new URL(req.url, 'http://x').searchParams.get('q') ?? '').trim();
+  if (q.length < 2) return json(res, 200, { clienti: [] });
+  const text = q.replace(/[\\%_]/g, '\\$&');   // % şi _ tastate se caută ca atare
+  json(res, 200, { clienti: db().prepare(`
+    SELECT nume, cui, agent, judet, localitate, adresa_sediu, adresa_livrare, telefon_administrator, telefon_delegat
+      FROM client WHERE nume LIKE ? ESCAPE '\\'
+     ORDER BY nume NOT LIKE ? ESCAPE '\\', nume LIMIT 20`).all(`%${text}%`, `${text}%`) });
+}
+
 async function preiaAcum({ res }) {
   if (!activ()) return eroare(res, 409, 'Legătura cu Cloudflare nu e configurată — lipeşte cheia în /admin.');
   const noi = await preia();
@@ -114,6 +127,7 @@ module.exports = {
   preia, porneste,
   rute: [
     ['GET',  '/api/clienti',       { handler: lista }],
+    ['GET',  '/api/clienti/cauta', { handler: cauta }],
     ['POST', '/api/clienti/preia', { handler: preiaAcum }],
     ['PUT',   '/api/clienti/cheie', { handler: puneCheie, rol: 'admin' }],
     ['GET',   '/api/agenti',       { handler: agenti, rol: 'admin' }],
