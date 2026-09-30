@@ -1,0 +1,32 @@
+# Aceiaşi paşi ca deploy/windows/comun.ps1 (Construieste-Si-Testeaza), la fiecare push.
+name: teste
+on:
+  push:
+  pull_request:
+
+jobs:
+  teste:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: configurator_usi/package-lock.json
+
+      - name: Configurator — dependenţe, build, teste, tipuri
+        working-directory: configurator_usi
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+          npm test
+          npm run tipuri
+
+      - name: Manager — teste
+        working-directory: manager
+        run: npm test
+
+      - name: Baza de clienţi — cititorul de Excel
+        working-directory: clienti-agenti
+        run: node test/xlsx.test.mjs

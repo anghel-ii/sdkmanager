@@ -5,7 +5,8 @@
     "build": "node build.js",
     "dev": "node dev.js",
     "catalog": "node build.js --catalog-only",
-    "test": "node test/ruleaza.js"
+    "test": "node test/ruleaza.js",
+    "tipuri": "npx -y -p typescript@7.0.2 tsc -p jsconfig.json"
   },
   "dependencies": {
     "three": "0.128.0"
