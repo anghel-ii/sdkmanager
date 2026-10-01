@@ -53,6 +53,9 @@ async function preia() {
 function porneste() {
   preia();
   setInterval(preia, 5 * 60 * 1000).unref();
+  // propunerile agenţilor — pentru insigna de pe butonul „Clienţi" (din minut în minut)
+  reimprospateazaPropuneri();
+  setInterval(reimprospateazaPropuneri, 60 * 1000).unref();
 }
 
 const lista = ({ res }) => json(res, 200, {
@@ -112,13 +115,33 @@ const agenti = laCloudflare('/api/agenti');
 // pe Cloudflare stau ca propuneri şi abia aprobarea le scrie în baza de clienţi (de
 // unde le preia copia de aici). Lista o vede oricine; aprobă conducerea sau adminul.
 const APROBA = ['admin', 'conducere'];
-const propuneri = laCloudflare('/api/propuneri', { propuneri: [] });
+// Ultima listă citită de pe Cloudflare: o reîmprospătează serverul din minut în minut
+// (nu fiecare pagină deschisă) şi anunţă paginile când se schimbă numărul — insigna de
+// pe „Clienţi" (în /api/sumar) şi secţiunea „De aprobat" se actualizează singure.
+let deAprobat = { propuneri: [], la: 0 };
+async function reimprospateazaPropuneri() {
+  if (!activ()) return;
+  const r = await laCF('GET', '/api/propuneri');
+  if (r.eroare || r.stare !== 200) return;   // rămâne lista de dinainte
+  const cheieLista = l => l.map(p => `${p.id}:${p.trimis_la}`).join();
+  const inainte = cheieLista(deAprobat.propuneri);
+  deAprobat = { propuneri: r.date.propuneri ?? [], la: Date.now() };
+  if (cheieLista(deAprobat.propuneri) !== inainte) anunta();   // s-a schimbat ceva → paginile se reîmprospătează
+}
+const nrDeAprobat = () => (activ() ? deAprobat.propuneri.length : 0);
+// pagina „Clienţi": lista de acum (citită din nou dacă e mai veche de 15 s)
+async function propuneri({ res }) {
+  if (!activ()) return json(res, 200, { activ: false, propuneri: [] });
+  if (Date.now() - deAprobat.la > 15 * 1000) await reimprospateazaPropuneri();
+  json(res, 200, { activ: true, propuneri: deAprobat.propuneri });
+}
 async function decide({ res, params }) {
   if (!['aproba', 'respinge'].includes(params.actiune)) return eroare(res, 404, 'Acţiune necunoscută.');
   if (!activ()) return eroare(res, 409, 'Legătura cu Cloudflare nu e configurată.');
   const r = await laCF('POST', `/api/propuneri/${encodeURIComponent(params.id)}/${params.actiune}`);
   if (r.eroare) return eroare(res, ...r.eroare);
   if (r.stare === 200 && params.actiune === 'aproba') await preia();   // intră imediat şi în copia de aici
+  await reimprospateazaPropuneri();   // insigna scade la toţi
   json(res, r.stare, r.date);
 }
 // „Intră ca acest agent": link de o folosinţă (60 s) spre site-ul agenţilor
@@ -145,7 +168,7 @@ async function puneCheie({ req, res }) {
 }
 
 module.exports = {
-  preia, porneste,
+  preia, porneste, nrDeAprobat,
   rute: [
     ['GET',  '/api/clienti',       { handler: lista }],
     ['GET',  '/api/clienti/cauta', { handler: cauta }],

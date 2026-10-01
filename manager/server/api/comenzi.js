@@ -468,6 +468,7 @@ const sumar = ctx => json(ctx.res, 200, {
     FROM comanda WHERE anulat = 0
 `).get(),
   sticla: require('../sticla.js').sumarSticla(),   // bucăţi de sticlă de comandat
+  deAprobat: require('../clienti.js').nrDeAprobat(), // clienţi noi / modificări de la agenţi, de aprobat
 });
 
 module.exports = {

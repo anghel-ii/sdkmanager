@@ -137,7 +137,7 @@
   <a href="/" class="nume" style="color:inherit; text-decoration:none">Manager comenzi</a>
   <button id="ofertaNoua" class="primar">+ OFERTĂ NOUĂ</button>
   <a href="/sticla" class="buton" id="linkSticla">Comandă sticlă <span class="insigna" id="nrSticla"></span></a>
-  <a href="/clienti" class="buton">Clienţi</a>
+  <a href="/clienti" class="buton" title="Clienţii; numărul = trimise de agenţi, de aprobat">Clienţi <span class="insigna" id="nrClienti"></span></a>
   <a href="/admin" class="buton" id="linkAdmin" hidden>Utilizatori</a>
   <span class="spatiu"></span>
   <span class="dim mic" id="cine"></span>
@@ -826,6 +826,7 @@ async function actualizeazaSticla() {
   if (!r?.ok) return;
   sumar = await r.json();
   $('nrSticla').textContent = sumar.sticla || '';
+  $('nrClienti').textContent = sumar.deAprobat || '';
   puneCate();
 }
 

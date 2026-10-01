@@ -189,9 +189,8 @@ $('preia').addEventListener('click', async () => {
   $('cine').textContent = eu.nume;
   await incarca();
   incarcaPropuneri();
-  urmareste(incarca);
-  // agenţii trimit de pe Cloudflare — de acolo nu vine niciun anunţ live, deci verificăm din minut în minut
-  setInterval(incarcaPropuneri, 60 * 1000);
+  // serverul verifică propunerile din minut în minut şi anunţă când se schimbă
+  urmareste(() => { incarca(); incarcaPropuneri(); });
 })();
 
 $('iesire').addEventListener('click', async () => {

@@ -750,6 +750,7 @@ async function main() {
     // ce trimit agenţii aşteaptă aprobarea de aici
     const pr = (await cer('GET', '/api/clienti/propuneri')).date;
     verifica('propunerile agenţilor (de pe Cloudflare)', pr.activ && pr.propuneri.length === 2, JSON.stringify(pr));
+    verifica('… şi numărul lor, pt. insigna de pe „Clienţi"', (await cer('GET', '/api/sumar')).date.deAprobat === 2);
     verifica('acţiune necunoscută → 404', (await cer('POST', '/api/clienti/propuneri/7/sterge')).stare === 404);
     cookie = null;
     await cer('POST', '/api/login', { user: 'maria', parola: 'parola-maria-1' });
@@ -763,6 +764,7 @@ async function main() {
     verifica('respinge → nu ajunge în copie', (await cer('POST', '/api/clienti/propuneri/8/respinge')).stare === 200
       && !db2().prepare("SELECT 1 FROM client WHERE nume = 'Respins SRL'").get() && !(await cer('GET', '/api/clienti/propuneri')).date.propuneri.length);
     verifica('a doua oară → 404 de acolo', (await cer('POST', '/api/clienti/propuneri/7/aproba')).stare === 404);
+    verifica('insigna scade la 0 după aprobare / respingere', (await cer('GET', '/api/sumar')).date.deAprobat === 0);
     cookie = null;
     await cer('POST', '/api/login', { user: 'admin', parola: 'parola-admin-1' });
     fals.close();
