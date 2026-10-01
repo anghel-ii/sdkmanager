@@ -50,3 +50,15 @@ CREATE TABLE IF NOT EXISTS client (
 );
 CREATE INDEX IF NOT EXISTS client_versiune ON client(versiune);
 CREATE INDEX IF NOT EXISTS client_agent    ON client(agent);
+
+-- Ce adaugă / modifică agenţii NU intră direct în `client`: aşteaptă aprobarea din
+-- manager (pagina Clienţi → Aprobă / Respinge, userul 2026-10-01). Abia aprobarea
+-- scrie în `client` şi îi creşte versiunea — deci managerul preia doar ce s-a aprobat.
+CREATE TABLE IF NOT EXISTS propunere (
+  id        INTEGER PRIMARY KEY AUTOINCREMENT,
+  client_id INTEGER REFERENCES client(id) ON DELETE CASCADE,   -- NULL = client nou
+  agent     TEXT NOT NULL,
+  date_json TEXT NOT NULL,          -- câmpurile propuse (CAMPURI din lib/comun.js)
+  creat_la  TEXT NOT NULL,          -- ultima trimitere a agentului
+  UNIQUE (client_id)                -- o singură modificare în aşteptare pe client (NULL-urile nu se ciocnesc)
+);

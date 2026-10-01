@@ -38,6 +38,10 @@
   ul { list-style: none; padding: 0; display: grid; gap: 8px; }
   li button { width: 100%; text-align: left; font-weight: 400; padding: 12px; }
   li b { display: block; font-weight: 600; }
+  /* trimis, dar încă neaprobat în manager */
+  .astept { display: inline-block; margin-top: 4px; padding: 2px 8px; border-radius: 999px; font-size: .78rem;
+            background: #4a3a12; color: #f0c65a; }
+  #notaAprobare { background: #4a3a12; color: #f0c65a; padding: 10px 12px; border-radius: 8px; font-size: .9rem; }
 </style>
 </head>
 <body>
@@ -73,6 +77,7 @@
   <section id="ecranClient" hidden>
     <div class="cap"><h1 id="titluClient"></h1></div>
     <form id="f" autocomplete="off">
+      <p id="notaAprobare" hidden></p>
       <label>Nume client / firmă *<input name="nume" required maxlength="120"></label>
       <label>CUI<input name="cui" maxlength="20"></label>
       <label class="rand"><input type="checkbox" id="pf"> Persoană fizică (fără CUI)</label>
@@ -97,7 +102,9 @@
 // ═══════════════════════════════════════════════════════════════════════════
 //  Agentul intră cu user + parolă (cookie de sesiune, 90 de zile), îşi vede
 //  clienţii (cei cu numele lui în coloana AGENT), îi modifică şi adaugă alţii.
-//  API: functions/api/{login,logout,clienti}.
+//  Ce adaugă / modifică aşteaptă APROBAREA din manager (pagina Clienţi) — până
+//  atunci îl vede doar el, marcat „în aşteptare", şi îl poate corecta.
+//  API: functions/api/{login,logout,clienti,propuneri}.
 // ═══════════════════════════════════════════════════════════════════════════
 const $ = id => document.getElementById(id);
 const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -124,9 +131,11 @@ async function api(cale, optiuni = {}) {
   return j;
 }
 
+// cei în aşteptarea aprobării primii, apoi alfabetic
+const ordine = (a, b) => (!!b.inAsteptare - !!a.inAsteptare) || a.nume.localeCompare(b.nume, 'ro', { sensitivity: 'base' });
 async function incarca() {
   const j = await api('/api/clienti');
-  clienti = j.clienti;
+  clienti = j.clienti.sort(ordine);
   $('agent').textContent = j.agent;
   $('banda').hidden = !j.admin;
   $('banda').textContent = `Eşti în contul lui ${j.agent}, intrat din manager (admin). Ce modifici aici se vede la agent.`;
@@ -138,9 +147,11 @@ function randeaza() {
   const q = normal($('cauta').value.trim());
   const gasiti = !q ? clienti : clienti.filter(c => normal(Object.values(c).join(' ')).includes(q));
   $('numar').textContent = `${gasiti.length} ${gasiti.length === 1 ? 'client' : 'clienţi'}`;
-  $('lista').innerHTML = gasiti.map(c => `<li><button data-id="${c.id}">
+  // `k` = poziţia în listă: clienţii noi neaprobaţi n-au încă id
+  $('lista').innerHTML = gasiti.map(c => `<li><button data-k="${clienti.indexOf(c)}">
     <b>${esc(c.nume)}</b>
     <span class="dim">${esc([c.localitate, c.judet].filter(Boolean).join(', ') || c.cui || '')}</span>
+    ${c.inAsteptare ? `<br><span class="astept">⏳ ${c.inAsteptare === 'nou' ? 'client nou' : 'modificare'} în aşteptarea aprobării</span>` : ''}
   </button></li>`).join('');
 }
 
@@ -151,6 +162,10 @@ function deschide(c) {
   for (const el of $('f').elements) if (el.name) el.value = c?.[el.name] ?? '';
   $('pf').checked = c?.cui === 'Persoana Fizica';
   $('f').elements.cui.readOnly = $('pf').checked;
+  $('notaAprobare').hidden = !c?.inAsteptare;
+  $('notaAprobare').textContent = c?.inAsteptare === 'nou'
+    ? 'Clientul ăsta aşteaptă aprobarea — încă nu e în baza firmei. Îl mai poţi corecta.'
+    : 'Modificarea ta aşteaptă aprobarea — vezi aici ce ai trimis. O mai poţi corecta.';
   mesaj('');
   arata('ecranClient');
 }
@@ -173,8 +188,8 @@ $('iesire').addEventListener('click', async () => {
 
 $('cauta').addEventListener('input', randeaza);
 $('lista').addEventListener('click', e => {
-  const b = e.target.closest('button[data-id]');
-  if (b) deschide(clienti.find(c => c.id === +b.dataset.id));
+  const b = e.target.closest('button[data-k]');
+  if (b) deschide(clienti[+b.dataset.k]);
 });
 $('nou').addEventListener('click', () => deschide(null));
 $('inapoi').addEventListener('click', () => { mesaj(''); arata('ecranLista'); });
@@ -189,18 +204,18 @@ $('pf').addEventListener('change', e => {
 $('f').addEventListener('submit', async e => {
   e.preventDefault();
   const date = Object.fromEntries(new FormData($('f')));
-  if (!curent && ![date.telefon_administrator, date.telefon_delegat, date.email].some(t => t.trim())) {
+  if (!curent?.id && ![date.telefon_administrator, date.telefon_delegat, date.email].some(t => t.trim())) {
     return mesaj('Completează cel puţin un telefon sau e-mailul.', 'eroare');
   }
   $('salveaza').disabled = true;
   try {
-    const { client } = await api(curent ? `/api/clienti/${curent.id}` : '/api/clienti',
-      { method: curent ? 'PUT' : 'POST', body: JSON.stringify(date) });
-    clienti = [...clienti.filter(c => c.id !== client.id), client]
-      .sort((a, b) => a.nume.localeCompare(b.nume, 'ro', { sensitivity: 'base' }));
+    // client existent → PUT pe el; client nou încă neaprobat → PUT pe propunere; altfel client nou
+    const cale = curent?.id ? `/api/clienti/${curent.id}` : curent?.propunere_id ? `/api/propuneri/${curent.propunere_id}` : '/api/clienti';
+    const { client } = await api(cale, { method: curent ? 'PUT' : 'POST', body: JSON.stringify(date) });
+    clienti = [...clienti.filter(c => c !== curent), client].sort(ordine);
     randeaza();
     arata('ecranLista');
-    mesaj(`✓ ${client.nume} — salvat.`, 'ok');
+    mesaj(`✓ ${client.nume} — trimis spre aprobare; intră în baza firmei după ce e aprobat.`, 'ok');
   } catch (err) {
     mesaj(textEroare(err), 'eroare');
   } finally {

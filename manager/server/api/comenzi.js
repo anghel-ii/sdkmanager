@@ -58,9 +58,20 @@ function validează(corp) {
 
   const pozitii = corp.pozitii;
   if (!Array.isArray(pozitii) || !pozitii.length) return gresit('Oferta n-are nicio configuraţie.');
-  if (pozitii.length > 1) return gresit('O ofertă are un singur sistem de uşi / rame.');
+  // mai multe produse pe o ofertă (userul, 2026-10-01): ex. rame + Confort + sertare
+  if (pozitii.length > MAX_POZITII) return gresit(`O ofertă are cel mult ${MAX_POZITII} produse.`);
+  for (const [i, p] of pozitii.entries()) {
+    const v = valideazaPozitia(p);
+    if (v) return gresit(pozitii.length > 1 ? `Produsul ${i + 1}: ${v}` : v);
+  }
+  return { ok: true };
+}
 
-  const p = pozitii[0];
+const MAX_POZITII = 20;
+
+// null = poziţia e bună; altfel mesajul pentru UI
+function valideazaPozitia(p) {
+  const gresit = m => m;
   if (!p || typeof p !== 'object')            return gresit('Configuraţie lipsă.');
   if (!String(p.sistem || '').trim())         return gresit('Sistemul lipseşte.');
   // oferta cu amănuntul (configurator_usi/amanunt.html): produse la bucată, fără gol
@@ -85,10 +96,10 @@ function validează(corp) {
       if (!Number.isFinite(+l.cantitate))     return gresit(`Cantitate invalidă în „${lista}".`);
     }
   }
-  return { ok: true };
+  return null;
 }
 
-// Scrie configuraţia (poziţia unică) + liniile ei.
+// Scrie o poziţie (un produs al ofertei: sistem de uşi, rame, amănunt) + liniile ei.
 function scriePozitia(d, comandaId, p) {
   const pozitieId = Number(d.prepare(`
     INSERT INTO pozitie (comanda_id, idx, sistem, eticheta, finisaj, latime, inaltime, nr_usi, config_json)
@@ -164,7 +175,8 @@ async function creeaza(ctx) {
       utilizator.id,
     ).lastInsertRowid);
 
-    const pozitieId = scriePozitia(d, comandaId, corp.pozitii[0]);
+    // un singur cod de bare pe comandă, pe prima poziţie
+    const [pozitieId] = corp.pozitii.map(p => scriePozitia(d, comandaId, p));
     const cod = codBare(an, numar);
     d.prepare('INSERT INTO usa (pozitie_id, idx, cod_bare) VALUES (?, 1, ?)').run(pozitieId, cod);
 
@@ -200,12 +212,13 @@ async function modifica(ctx) {
     const cod = d.prepare(`SELECT a.cod_bare FROM usa a JOIN pozitie p ON p.id = a.pozitie_id
                             WHERE p.comanda_id = ? ORDER BY p.idx, a.idx LIMIT 1`).get(id)?.cod_bare;
 
-    // poziţia nouă întâi, apoi mutăm codul de bare pe ea (scanările rămân legate
-    // de rândul lui din `usa`), abia apoi ştergem poziţia veche cu tot ce ţine de ea
-    const pozitieId = scriePozitia(d, id, corp.pozitii[0]);
-    if (cod) d.prepare('UPDATE usa SET pozitie_id = ?, idx = 1 WHERE cod_bare = ?').run(pozitieId, cod);
+    // poziţiile noi întâi, apoi mutăm codul de bare pe prima (scanările rămân legate
+    // de rândul lui din `usa`), abia apoi ştergem poziţiile vechi cu tot ce ţine de ele
+    const noi = corp.pozitii.map(p => scriePozitia(d, id, p));
+    if (cod) d.prepare('UPDATE usa SET pozitie_id = ?, idx = 1 WHERE cod_bare = ?').run(noi[0], cod);
     for (const p of vechi) d.prepare('DELETE FROM pozitie WHERE id = ?').run(p.id);   // CASCADE: linii, coduri vechi pe uşă
-    d.prepare('UPDATE pozitie SET idx = 1 WHERE id = ?').run(pozitieId);
+    // renumerotare 1..N, în ordine (fiecare idx ţintă e deja liber — UNIQUE pe comandă)
+    noi.forEach((pid, k) => d.prepare('UPDATE pozitie SET idx = ? WHERE id = ?').run(k + 1, pid));
 
     return { id, numar: c.numar, ...(config.scanare && { coduri: cod ? [{ cod_bare: cod }] : [] }) };
   });
@@ -258,7 +271,9 @@ function listeaza(ctx) {
     SELECT c.id, c.numar, c.numar_comanda, c.oferta_nr, c.tip, c.client_nume, c.client_telefon, c.creat_la, c.confirmat_la, c.finalizat_la,
            c.factura_nr, c.facturat_la, c.plata, c.avans,
            u.nume AS creat_de_nume,
-           (SELECT p.eticheta FROM pozitie p WHERE p.comanda_id = c.id ORDER BY p.idx LIMIT 1) AS sistem,
+           -- toate produsele ofertei, în ordine: „Ramă 820 + Confort Gamma + Ofertă cu amănuntul"
+           (SELECT GROUP_CONCAT(eticheta, ' + ') FROM (SELECT p.eticheta FROM pozitie p WHERE p.comanda_id = c.id ORDER BY p.idx)) AS sistem,
+           (SELECT COUNT(*) FROM pozitie p WHERE p.comanda_id = c.id) AS nr_pozitii,
            ${config.scanare ? `(${ULTIMA_SCANARE})` : 'NULL'} AS ultima,
            (${STICLA}) AS sticla_brut,
            EXISTS (SELECT 1 FROM fixare f WHERE f.comanda_id = c.id AND f.utilizator_id = ?) AS fixat

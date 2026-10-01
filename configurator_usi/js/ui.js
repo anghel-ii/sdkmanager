@@ -12,10 +12,11 @@ import { suprapuneriConfort, areCodH, areSinaSimpla } from './lib/confort/index.
 import gameJson from './systems/game.json';
 import { renderRame, syncRame, refreshRame } from './ui_rame.js';
 import { activeazaCampuri } from './campuri.js';
-import { LIVRARE, AGENTI, PLATI, detaliiComanda } from './lib/comun/comanda.js';
+import { LIVRARE, AGENTI, PLATI, detaliiComanda, liniaTransport } from './lib/comun/comanda.js';
 import { stareRameGoala } from './lib/rame/rame.js';
 import { renderUtil } from './ui_util.js';
 import { initSugestiiClienti } from './sugestii-clienti.js';
+import * as cosul from './cos.js';
 import { stareUtilGoala } from './lib/util/util.js';
 
 // Toate accesele la DOM sunt tolerante la elemente lipsă (HTML din cache vechi).
@@ -95,7 +96,19 @@ function renderBilling() {
   const box = $('roBilling');
   if (!box) return;
 
-  const { lines, errors, mode } = currentBilling();
+  const f = currentBilling();
+  const { errors, mode } = f;
+  // ofertă cu mai multe produse (js/cos.js): tabelul are facturarea pe TOATĂ oferta —
+  // produsele din coş + cel de pe ecran, comasate (aşa se lipeşte în NeoManager)
+  const altele = cos.pozitii.filter((_, k) => k !== cos.curent);
+  const toataOferta = altele.length > 0;
+  // în ordinea ofertei: produsul de pe ecran la locul lui din coş (sau la coadă, dacă e nou)
+  const lista = cos.pozitii.map((x, k) => (k === cos.curent ? null : x));
+  const peEcran = state.system ? { pozitie: { linii: { facturare: f.lines } } } : null;
+  if (cos.curent != null) lista[cos.curent] = peEcran; else if (peEcran) lista.push(peEcran);
+  const lines = toataOferta
+    ? cosul.facturareComasata(cosul.transportOData(lista.filter(Boolean), liniaTransport(state)))
+    : f.lines;
   const meta = systems[state.system]?.meta;
   const family = meta?.catalog ?? meta?.family;   // vezi nota din billing.js
   const catGol = [
@@ -121,7 +134,7 @@ function renderBilling() {
   const disabled = (errors.length || !lines.length) ? ' disabled' : '';
 
   box.innerHTML = `
-    <div class="bom-title">FACTURARE — NEOMANAGER${mode ? ` <span class="bill-mode">${mode}</span>` : ''}</div>
+    <div class="bom-title">FACTURARE — NEOMANAGER${toataOferta ? ` · toată oferta (${altele.length + (state.system ? 1 : 0)} produse)` : ''}${mode ? ` <span class="bill-mode">${mode}</span>` : ''}</div>
     ${tabel}${catGol}${erori}
     <div class="bill-copy-buttons">
       <button id="btnCopyCod" class="btn-copy"${disabled}>Copiază coduri</button>
@@ -897,9 +910,12 @@ function renderOferta() {
 
   // Ce anume se trimite — arătat înainte de salvare, ca să nu fie surprize.
   const p = oferta.pozitieCurenta();
+  const t = cosul.toate(cos, curentaUsi());
+  const altele = (t.pozitii?.length ?? cos.pozitii.length) - (state.system && !p.eroare ? 1 : 0);
   box.innerHTML = `
     <div class="oferta-cine dim mic">${esc(utilizator.nume)}</div>
-    ${p.eroare
+    ${!state.system && cos.pozitii.length ? ''   // nimic pe ecran, dar coşul are produse — se salvează ele
+      : p.eroare
       ? `<div class="oferta-msg eroare">${esc(p.eroare)}</div>`
       : `<div class="oferta-sumar">
            <strong>${esc(p.pozitie.eticheta)}</strong>
@@ -907,10 +923,27 @@ function renderOferta() {
              ${esc(p.pozitie.finisaj)} · ${systems[state.system]?.meta.rame
                ? `${currentSpec()?.nrRame ?? 0} rame`
                : `${p.pozitie.nrUsi} ${p.pozitie.nrUsi === 1 ? 'uşă' : 'uşi'}`}</div>
-         </div>`}`;
+         </div>`}
+    ${altele > 0 ? `<div class="oferta-hint">+ ${altele} ${altele === 1 ? 'alt produs' : 'alte produse'} în ofertă (vezi „Adaugă la ofertă")</div>` : ''}`;
   arata(true);
-  for (const b of butoane) b.disabled = !!p.eroare || !configuratieCompleta();
+  // se salvează tot coşul + produsul de pe ecran; unul început dar neterminat blochează
+  for (const b of butoane) b.disabled = !t.pozitii;
 }
+
+// ── Coşul ofertei (js/cos.js): mai multe produse pe o ofertă ────────────────
+let cos = cosul.citeste();
+let cardCos = null;
+// produsul de pe ecran: null = neînceput (nu s-a ales modelul)
+function curentaUsi() {
+  if (!state.system) return null;
+  const p = oferta.pozitieCurenta();
+  if (p.eroare) return { eroare: p.eroare };
+  if (!configuratieCompleta()) return { eroare: 'configuraţia nu e completă.' };
+  return { gama: systems[state.system].meta.family, pozitie: p.pozitie };
+}
+const clientPtCos = () => ({
+  client: { nume: $('clientNume').value, telefon: $('clientTelefon').value, adresa: $('clientAdresa').value },
+  ofertaNr: $('ofertaNr').value, comanda: detaliiComanda(state) });
 
 function mesajOferta(html, fel) {
   const el = $('ofertaMesaj');
@@ -933,7 +966,7 @@ function cerePlata() {
 
 const TEXT_BUTON = { oferta: 'Salvează oferta', comanda: 'Salvează comanda', plata: 'Aşteaptă plata' };
 const textButoane = () => {
-  $('btnConfirma').textContent = ofertaEditata ? 'Salvează modificările' : TEXT_BUTON.oferta;
+  $('btnConfirma').textContent = cos.ofertaEditata ? 'Salvează modificările' : TEXT_BUTON.oferta;
   $('btnComanda').textContent = TEXT_BUTON.comanda;
   $('btnPlata').textContent   = TEXT_BUTON.plata;
 };
@@ -946,6 +979,8 @@ async function trimiteOferta(unde = 'oferta') {
     $('ofertaNr').focus();
     return mesajOferta('Completează nr. de ofertă.', 'eroare');
   }
+  const tot = cosul.toate(cos, curentaUsi());
+  if (tot.eroare) return mesajOferta(esc(tot.eroare), 'eroare');
   const plata = unde === 'comanda' ? await cerePlata() : null;
   if (unde === 'comanda' && !plata) return;
 
@@ -957,7 +992,8 @@ async function trimiteOferta(unde = 'oferta') {
   // telefon a comenzii; managerul îl afişează ca „Telefon / adresă".
   const r = await oferta.confirma({
     ofertaNr,
-    id:         ofertaEditata,
+    id:         cos.ofertaEditata,
+    pozitii:    cosul.transportOData(tot.pozitii, liniaTransport(state)).map(x => x.pozitie),
     nume:       $('clientNume').value,
     telefon:    $('clientTelefon').value,
     adresa:     $('clientAdresa').value,
@@ -973,10 +1009,11 @@ async function trimiteOferta(unde = 'oferta') {
   // care se printează de obicei imediat după. CLEAR PAGE resetează tot.
   // dacă trecerea mai departe (comandă / aşteaptă plata) eşuează, rămâi aici şi
   // butoanele lucrează pe ACEEAŞI ofertă — o nouă apăsare n-o dublează
-  ofertaEditata = r.comanda.id;
+  Object.assign(cos, clientPtCos(), { ofertaEditata: r.comanda.id, numar: r.comanda.numar });
+  cosul.scrie(cos);
 
-  // după salvare: direct pe pagina comenzii din manager (userul, 2026-09-28)
-  const laComanda = () => { location.href = '/#comanda/' + r.comanda.id; };
+  // după salvare: direct pe pagina comenzii din manager (userul, 2026-09-28); coşul s-a golit
+  const laComanda = () => { cosul.goleste(); location.href = '/#comanda/' + r.comanda.id; };
   if (unde === 'oferta') return laComanda();
 
   const t = await oferta.treceIn(r.comanda.id, unde, plata ?? {});
@@ -992,9 +1029,6 @@ async function trimiteOferta(unde = 'oferta') {
 // bare DOAR dacă configuraţia n-a mai fost schimbată de la salvare — altfel
 // codurile ar fi ale altei comenzi decât ce e desenat pe fişă.
 let ofertaSalvata = null;
-// id-ul ofertei deschise din manager cu „Modifică oferta" (?oferta=<id>) — la
-// salvare se actualizează ea, nu se creează una nouă.
-let ofertaEditata = null;
 // Fişa unei comenzi deschisă din manager (?fisa=<id>) — orice stare (ofertă,
 // în lucru, finalizată): { numar, client, bom, factura } din listele salvate.
 // În modul ăsta nu se salvează nimic (butonul de ofertă e ascuns).
@@ -1112,43 +1146,52 @@ export async function initUI() {
   // Pagina principală a managerului trimite `?gama=suspendata|confort|rame|util`;
   // „Modifică oferta" din manager trimite `?oferta=<id>`.
   const params = new URLSearchParams(location.search);
-  // Oferta cu amănuntul are pagina ei (amanunt.html): acolo duc şi „Ofertă nouă",
-  // şi „Modifică oferta" / „Fişă" din manager când oferta e cu amănuntul.
-  const laAmanunt = o => o.pozitii?.[0]?.sistem === 'amanunt' && (location.replace('amanunt.html' + location.search), true);
-  if (params.get('gama') === 'amanunt') return location.replace('amanunt.html');
+  // Oferta cu amănuntul are pagina ei (amanunt.html): acolo duc „Ofertă nouă",
+  // produsele cu amănuntul din coş şi „Fişă" din manager pentru ele.
+  if (params.get('gama') === 'amanunt') return location.replace('amanunt.html' + location.search);
   const gama = gamaDupaId(params.get('gama'));
   gamaActiva = gama?.id ?? null;
 
-  // Oferta salvată: configuraţia ei ÎNLOCUIEŞTE starea implicită, înainte de
-  // primul render — tot UI-ul de mai jos o citeşte din `state`.
+  // „Modifică oferta" din manager: toate produsele ofertei intră în coş, apoi se
+  // deschide primul (pe pagina gamei lui); restul se modifică din „Adaugă la ofertă".
   let eroareIncarcare = null;
   if (params.get('oferta')) {
     const o = await oferta.incarcaOferta(params.get('oferta'));
-    if (laAmanunt(o)) return;
-    const cfg = o.pozitii?.[0]?.config;
-    if (o.eroare || !cfg) eroareIncarcare = o.eroare || 'Oferta n-are configuraţie.';
+    if (o.eroare || !o.pozitii?.length) eroareIncarcare = o.eroare || 'Oferta n-are configuraţie.';
     else if (o.comanda.tip !== 'oferta') eroareIncarcare = `${o.comanda.numar_comanda || o.comanda.numar} a fost acceptată — nu se mai modifică.`;
     else {
-      Object.assign(state, structuredClone(cfg));
-      gamaActiva = systems[state.system]?.meta.family ?? null;
-      ofertaEditata = o.comanda.id;
-      ofertaSalvata = { comanda: { id: o.comanda.id, numar: o.comanda.numar,
-        coduri: (o.coduri ?? []).map(cod_bare => ({ cod_bare })) }, stare: null };
-      $('clientNume').value    = o.comanda.client_nume ?? '';
-      $('clientTelefon').value = o.comanda.client_telefon ?? '';
-      $('clientAdresa').value  = o.comanda.client_adresa ?? '';
-      $('ofertaNr').value      = o.comanda.oferta_nr ?? '';
-      const btn = $('btnConfirma');
-      if (btn) btn.textContent = 'Salvează modificările';
+      cos = cosul.dinOferta(o, p => (p.sistem === 'amanunt' ? 'amanunt' : systems[p.sistem]?.meta.family));
+      cosul.scrie(cos);
+      return location.replace(cosul.url(cos.pozitii[0].gama, { poz: 0 }));
     }
+  }
+
+  // Un produs din coş (?cos=1&poz=k): configuraţia lui ÎNLOCUIEŞTE starea
+  // implicită, înainte de primul render — tot UI-ul de mai jos o citeşte din `state`.
+  if (cosul.activ() && !params.get('fisa')) {
+    const k = params.has('poz') ? +params.get('poz') : null;
+    const x = cos.pozitii[k];
+    cos.curent = x && x.gama !== 'amanunt' ? k : null;
+    if (cos.curent != null) {
+      Object.assign(state, structuredClone(x.pozitie.config));
+      gamaActiva = systems[state.system]?.meta.family ?? null;
+    }
+    state.comanda = { ...cos.comanda };
+    $('clientNume').value    = cos.client.nume ?? '';
+    $('clientTelefon').value = cos.client.telefon ?? '';
+    $('clientAdresa').value  = cos.client.adresa ?? '';
+    $('ofertaNr').value      = cos.ofertaNr ?? '';
+    cosul.scrie(cos);
   }
 
   // Fişa unei comenzi (butonul „Fişă" din manager): configuraţia salvată +
   // listele îngheţate la salvare; fişa se deschide singură la final.
   if (params.get('fisa')) {
     const o = await oferta.incarcaOferta(params.get('fisa'));
-    if (laAmanunt(o)) return;
-    const poz = o.pozitii?.[0];
+    // fiecare produs al ofertei are fişa lui (?poz=k), „ca şi cum ar fi comenzi diferite"
+    const k = +params.get('poz') || 0, n = o.pozitii?.length ?? 0;
+    if (o.pozitii?.[k]?.sistem === 'amanunt') return location.replace('amanunt.html' + location.search);
+    const poz = o.pozitii?.[k];
     if (o.eroare || !poz?.config) eroareIncarcare = o.eroare || 'Comanda n-are configuraţie.';
     else {
       Object.assign(state, structuredClone(poz.config));
@@ -1157,7 +1200,7 @@ export async function initUI() {
       $('clientTelefon').value = o.comanda.client_telefon ?? '';
       $('clientAdresa').value  = o.comanda.client_adresa ?? '';
       modFisa = {
-        numar:  o.comanda.numar_comanda || o.comanda.numar,
+        numar:  `${o.comanda.numar_comanda || o.comanda.numar}${n > 1 ? ` · produsul ${k + 1} din ${n}` : ''}`,
         coduri: (o.coduri ?? []).map(cod_bare => ({ cod_bare })),
         client: o.comanda.client_nume ?? '',
         bom: (poz.linii?.necesar ?? []).map(l =>
@@ -1173,7 +1216,7 @@ export async function initUI() {
   // Ecran gol la ORICE gamă cerută (suspendate din 2026-09-21): niciun model,
   // nicio culoare, cotele goale. Fără ?gama= (dist/ deschis direct) rămâne
   // comportamentul vechi — modelul implicit din state.js.
-  if (gama && !params.get('oferta') && !params.get('fisa')) {
+  if (gama && !params.get('oferta') && !params.get('fisa') && cos.curent == null) {
     state.system = null;
     state.finish = null;
     state.doors  = 0;
@@ -1242,11 +1285,19 @@ export async function initUI() {
   aplicaGama();
   rebuild();
 
-  if (ofertaEditata) {
-    // configuraţia de acum = cea salvată → fişa primeşte codul de bare
-    ofertaSalvata.stare = JSON.stringify(state);
-    mesajOferta(`Modifici oferta <strong>${esc(ofertaSalvata.comanda.numar)}</strong>.`, 'ok');
+  if (cos.ofertaEditata) {
+    $('btnConfirma').textContent = 'Salvează modificările';
+    mesajOferta(`Modifici oferta <strong>${esc(cos.numar ?? '')}</strong>.`, 'ok');
   }
+  // „Adaugă la ofertă" — nu şi pe fişa deschisă din manager
+  if (!modFisa) {
+    // facturarea comasată e în tabul Facturare, nu şi în card
+    cardCos = cosul.initCard($('groupCos'), cos, { curenta: curentaUsi, client: clientPtCos, gamaEcran: currentGama,
+                                                   transport: () => liniaTransport(state), facturareInCard: false });
+    document.addEventListener('cos:schimbat', renderBilling);
+    document.addEventListener('configurator:rebuild', () => cardCos.actualizeaza());
+    document.addEventListener('cos:schimbat', renderOferta);
+  } else if ($('groupCos')) $('groupCos').hidden = true;
   if (eroareIncarcare) mesajOferta(esc(eroareIncarcare), 'eroare');
   if (modFisa) {
     mesajOferta(`Fişa comenzii <strong>${esc(modFisa.numar)}</strong> — deschisă doar pentru printare; de aici nu se salvează nimic.`, 'ok');

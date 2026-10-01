@@ -22,6 +22,7 @@
     main { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 20px; padding: 20px;
            max-width: 1400px; margin: 0 auto; align-items: start; }
     @media (max-width: 1000px) { main { grid-template-columns: 1fr; } }
+    .stanga { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
     .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; }
 
     table.produse { width: 100%; border-collapse: collapse; font-size: 14px; }
@@ -105,6 +106,7 @@
 </header>
 
 <main>
+  <div class="stanga">
   <section class="card">
     <div class="group-label">PRODUSE — scrie denumirea sau codul şi alege din listă</div>
     <table class="produse">
@@ -119,6 +121,12 @@
       <button id="btnCopyCant" class="fisa-print" type="button">Copiază cantităţi</button>
     </div>
   </section>
+  <!-- o ofertă cu mai multe produse: rame + Confort + sertare… (js/cos.js) -->
+  <section class="card" id="cardCosSec">
+    <div class="group-label">ADAUGĂ LA OFERTĂ</div>
+    <div id="cardCos"></div>
+  </section>
+  </div>
 
   <!-- CLIENT — aceleaşi câmpuri ca în configurator -->
   <section class="card" id="groupClient">

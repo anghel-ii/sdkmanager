@@ -55,7 +55,8 @@ async function trateaza(req, res) {
     const utilizator = auth.dinToken(auth.tokenDinCerere(req));
 
     if (!spec.public && !utilizator)  return eroare(res, 401, 'Trebuie să fii autentificat.');
-    if (spec.rol && utilizator.rol !== spec.rol) {
+    // rol: unul ('admin') sau mai multe (['admin', 'conducere'])
+    if (spec.rol && ![].concat(spec.rol).includes(utilizator.rol)) {
       return eroare(res, 403, 'Nu ai drepturile necesare pentru operaţia asta.');
     }
 

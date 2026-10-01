@@ -249,8 +249,8 @@ async function main() {
            oferta.date.comanda?.numar);
   verifica('un singur cod de bare pe comandă (5 uşi)', oferta.date.comanda?.coduri?.length === 1,
            JSON.stringify(oferta.date.comanda?.coduri));
-  verifica('respinsă: două sisteme într-o ofertă', (await cer('POST', '/api/comenzi', {
-    client: { nume: 'X' }, pozitii: [pozitie('suspendataA', 'A', 1, 1200), pozitie('suspendataA', 'A', 1, 1200)] })).stare === 400);
+  verifica('respinsă: peste 20 de produse într-o ofertă', (await cer('POST', '/api/comenzi', {
+    client: { nume: 'X' }, pozitii: Array(21).fill(pozitie('suspendataA', 'A', 1, 1200)) })).stare === 400);
 
   const id = oferta.date.comanda.id;
   const det = await cer('GET', `/api/comenzi/${id}`);
@@ -650,6 +650,25 @@ async function main() {
     verifica('… dar nu fără produse', (await cer('POST', '/api/comenzi', { client: { nume: 'X' }, pozitii: [amanunt([])] })).stare === 400);
     verifica('… iar o uşă tot cere cotele', (await cer('POST', '/api/comenzi', { client: { nume: 'X' },
       pozitii: [{ ...pozitie('confortVerona', 'V', 2, 0) }] })).stare === 400);
+
+    // mai multe produse pe o ofertă: fiecare cu fişa lui, facturarea comasată în manager
+    const multi = await cer('POST', '/api/comenzi', { client: { nume: 'Client Multi' }, ofertaNr: 'NM-M',
+      pozitii: [pozitie('rama820', 'Ramă 820', 6, 600), pozitie('confortGamma', 'Confort Gamma', 2, 1800),
+                amanunt([{ cod: 'SM127', denumire: 'Cuplaj sertar', um: 'set', cantitate: 4 }])] });
+    verifica('ofertă cu 3 produse → 201, un singur cod de bare', multi.stare === 201 && multi.date.comanda.coduri?.length === 1, JSON.stringify(multi.date));
+    const mid = multi.date.comanda.id;
+    const dm = (await cer('GET', `/api/comenzi/${mid}`)).date;
+    verifica('… cele 3 poziţii, în ordine', dm.pozitii.map(p => `${p.idx}:${p.sistem}`).join() === '1:rama820,2:confortGamma,3:amanunt', dm.pozitii.map(p => p.sistem).join());
+    const rm = (await cer('GET', '/api/comenzi?tip=oferta')).date.comenzi.find(c => c.id === mid);
+    verifica('… în listă toate sistemele', rm?.sistem === 'Ramă 820 + Confort Gamma + Ofertă cu amănuntul' && rm.nr_pozitii === 3, rm?.sistem);
+    verifica('… produsul greşit e numit', (await cer('POST', '/api/comenzi', { client: { nume: 'X' },
+      pozitii: [pozitie('rama820', 'R', 1, 600), amanunt([])] })).date.eroare?.startsWith('Produsul 2:'));
+    const codM = dm.coduri[0];
+    const mod = await cer('PUT', `/api/comenzi/${mid}`, { client: { nume: 'Client Multi' },
+      pozitii: [amanunt([{ cod: 'SM178', denumire: 'Cuplaj', um: 'set', cantitate: 2 }]), pozitie('rama820', 'Ramă 820', 3, 600)] });
+    const dm2 = (await cer('GET', `/api/comenzi/${mid}`)).date;
+    verifica('modificare: 2 produse, renumerotate 1..2, acelaşi cod de bare', mod.stare === 200
+      && dm2.pozitii.map(p => `${p.idx}:${p.sistem}`).join() === '1:amanunt,2:rama820' && dm2.coduri.join() === codM, JSON.stringify(dm2.pozitii.map(p => [p.idx, p.sistem])));
   }
 
   console.log('\nClienţi — copia bazei de pe Cloudflare');
@@ -659,6 +678,8 @@ async function main() {
     // GET ?dupa=<versiune> → ce s-a schimbat după ea, în ordinea versiunii, câte `pagina`
     let versiune = 0, pagina = 2, primitAgent = null;
     const externi = new Map();
+    const propuse = new Map([[7, { id: 7, tip: 'nou', agent: 'Ion', trimis_la: '2026-10-01 10:00:00', propus: { nume: 'Propus SRL' }, actual: null }],
+                             [8, { id: 8, tip: 'nou', agent: 'Ion', trimis_la: '2026-10-01 10:01:00', propus: { nume: 'Respins SRL' }, actual: null }]]);
     const schimba = c => externi.set(c.id, { ...externi.get(c.id), ...c, versiune: ++versiune });
     schimba({ id: 1, agent: 'Ion', nume: 'Ana SRL', cui: 'RO1', telefon_administrator: '0722' });
     schimba({ id: 2, agent: 'Ion', nume: 'Dan', email: 'd@x.ro', judet: 'IASI', delegat: 'Vio' });
@@ -666,6 +687,16 @@ async function main() {
     const fals = http.createServer((q, r) => {
       if (q.headers.authorization !== 'Bearer cheie-test') { r.writeHead(401); return r.end('{}'); }
       if (q.url === '/api/agenti/intra') return r.end(JSON.stringify({ url: 'https://agenti.test/api/intra?t=bilet' }));
+      // propunerile agenţilor (clienti-agenti/functions/api/propuneri): aprobarea scrie clientul
+      if (q.url === '/api/propuneri') return r.end(JSON.stringify({ propuneri: [...propuse.values()] }));
+      const pr = q.url.match(/^\/api\/propuneri\/(\d+)\/(aproba|respinge)$/);
+      if (pr && q.method === 'POST') {
+        const p = propuse.get(+pr[1]);
+        if (!p) { r.writeHead(404); return r.end(JSON.stringify({ eroare: 'Propunerea nu mai există.' })); }
+        propuse.delete(p.id);
+        if (pr[2] === 'aproba') schimba({ id: 50 + p.id, agent: p.agent, ...p.propus });
+        return r.end(JSON.stringify({ ok: true }));
+      }
       if (q.url === '/api/agenti') {
         if (q.method === 'GET') return r.end(JSON.stringify({ agenti: [{ user: 'ion', nume: 'Ion', activ: 1, clienti: 2, sesiuni: 1 }], faraCont: [] }));
         let corp = ''; q.on('data', b => corp += b);
@@ -715,6 +746,25 @@ async function main() {
       && primitAgent.metoda === 'PATCH' && primitAgent.activ === false);
     const intra = await cer('POST', '/api/agenti/intra', { nume: 'Ion' });
     verifica('admin: „Intră ca agent" → linkul de intrare', intra.stare === 200 && intra.date.url.includes('/api/intra?t='), JSON.stringify(intra.date));
+
+    // ce trimit agenţii aşteaptă aprobarea de aici
+    const pr = (await cer('GET', '/api/clienti/propuneri')).date;
+    verifica('propunerile agenţilor (de pe Cloudflare)', pr.activ && pr.propuneri.length === 2, JSON.stringify(pr));
+    verifica('acţiune necunoscută → 404', (await cer('POST', '/api/clienti/propuneri/7/sterge')).stare === 404);
+    cookie = null;
+    await cer('POST', '/api/login', { user: 'maria', parola: 'parola-maria-1' });
+    verifica('biroul vede propunerile, dar nu aprobă (403)', (await cer('GET', '/api/clienti/propuneri')).date.propuneri?.length === 2
+      && (await cer('POST', '/api/clienti/propuneri/7/aproba')).stare === 403);
+    cookie = null;
+    await cer('POST', '/api/login', { user: 'ion', parola: 'parola-noua-1' });
+    const ap = await cer('POST', '/api/clienti/propuneri/7/aproba');
+    verifica('conducerea aprobă → clientul e imediat în copia de aici', ap.stare === 200
+      && db2().prepare("SELECT 1 FROM client WHERE nume = 'Propus SRL'").get(), JSON.stringify(ap));
+    verifica('respinge → nu ajunge în copie', (await cer('POST', '/api/clienti/propuneri/8/respinge')).stare === 200
+      && !db2().prepare("SELECT 1 FROM client WHERE nume = 'Respins SRL'").get() && !(await cer('GET', '/api/clienti/propuneri')).date.propuneri.length);
+    verifica('a doua oară → 404 de acolo', (await cer('POST', '/api/clienti/propuneri/7/aproba')).stare === 404);
+    cookie = null;
+    await cer('POST', '/api/login', { user: 'admin', parola: 'parola-admin-1' });
     fals.close();
     verifica('Cloudflare căzut → 502 cu mesaj', (await cer('GET', '/api/agenti')).stare === 502);
     config.clientiUrl = config.clientiCheie = '';

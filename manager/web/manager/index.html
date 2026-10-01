@@ -126,6 +126,8 @@
   .factura-form input { width: 110px; padding: 5px 8px; font-size: .84rem; }
   button.mic { padding: 5px 10px; font-size: .8rem; }
   .butoane { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .poz-titlu { font-size: .9rem; margin: 18px 0 8px; color: var(--accent); }
+  .panou-detaliu > .poz-titlu:first-child { margin-top: 4px; }
   details > summary { cursor: pointer; color: var(--text-dim); font-size: .84rem; padding: 6px 0; }
 </style>
 </head>
@@ -326,7 +328,8 @@ const virgulaLei = n => Number(n).toLocaleString('ro-RO', { minimumFractionDigit
 // pagina curentă. Cadrul rămâne până la următoarea fişă (scoaterea lui ar
 // închide dialogul de print). Configuratorul răspunde prin postMessage.
 let butonFisa = null;
-function deschideFisa(id, buton) {
+// `poz` = produsul ofertei (0, 1, …): fiecare are fişa lui, ca o comandă separată
+function deschideFisa(id, buton, poz = 0) {
   document.getElementById('cadruFisa')?.remove();
   if (butonFisa) { butonFisa.disabled = false; butonFisa.textContent = butonFisa.dataset.text; }
   butonFisa = buton ?? null;
@@ -336,7 +339,7 @@ function deschideFisa(id, buton) {
   f.setAttribute('aria-hidden', 'true');
   // nu display:none — configuratorul are nevoie de un cadru „viu" (3D, print)
   f.style.cssText = 'position:fixed; left:-10000px; top:0; width:1200px; height:900px; border:0; visibility:hidden';
-  f.src = `/configurator/?fisa=${encodeURIComponent(id)}`;
+  f.src = `/configurator/?fisa=${encodeURIComponent(id)}&poz=${poz}`;
   document.body.appendChild(f);
 }
 window.addEventListener('message', e => {
@@ -517,7 +520,9 @@ function randeazaTabel() {
               ? facturareHtml(c) : '<span class="dim">—</span>'}</td>` : ''}
           <td class="dim" data-c="cine">${esc(c.creat_de_nume)}</td>
           <td class="dim mic data" data-c="data">${dataOra(dataRand(c))}</td>
-          <td class="actiuni" data-c="actiuni"><button class="mic fisa" data-id="${c.id}" title="Deschide fişa comenzii pentru printare">🖶 Fişă</button>${tabRand(c) === 'oferta'
+          <td class="actiuni" data-c="actiuni">${c.nr_pozitii > 1
+            ? `<button class="mic fise" data-id="${c.id}" title="${c.nr_pozitii} produse — fiecare cu fişa lui, în pagina comenzii">🖶 Fişe (${c.nr_pozitii})</button>`
+            : `<button class="mic fisa" data-id="${c.id}" title="Deschide fişa comenzii pentru printare">🖶 Fişă</button>`}${tabRand(c) === 'oferta'
             ? ` <button class="mic modifica" data-id="${c.id}">Modifică oferta</button>` : ''}</td>
         </tr>`).join('')}</tbody>
     </table>` : q ? `
@@ -539,6 +544,9 @@ function randeazaTabel() {
   // „Modifică oferta" — redeschide configuratorul cu configuraţia salvată
   document.querySelectorAll('button.fisa').forEach(b =>
     b.addEventListener('click', e => { e.stopPropagation(); deschideFisa(b.dataset.id, b); }));
+  // mai multe produse: fişele lor sunt în pagina comenzii (câte un buton pe produs)
+  document.querySelectorAll('button.fise').forEach(b =>
+    b.addEventListener('click', e => { e.stopPropagation(); location.hash = '#comanda/' + b.dataset.id; }));
   document.querySelectorAll('button.modifica').forEach(b =>
     b.addEventListener('click', e => { e.stopPropagation(); location.href = '/configurator/?oferta=' + b.dataset.id; }));
   // pin — per utilizator; se schimbă local imediat, apoi se salvează
@@ -573,26 +581,34 @@ function tabelAtelier(coduri, scanari) {
 // Interfaţa nouă: acelaşi meniu ca jos în configurator — Specificaţie / Necesar /
 // Necesar client / Facturare, un singur tabel vizibil. Taburile goale nu apar.
 let tabDetaliu = 'facturare';
-function blocTaburi(p, total) {
+// Specificaţia unui produs de uşi / rame (oferta cu amănuntul o are pe a ei, în blocTaburi)
+function specUsi(p) {
+  const rame = /^rama/.test(p.sistem ?? '');
+  return `<dl class="perechi">
+      <dt>Sistem</dt><dd>${esc(p.eticheta)}</dd><dt>Culoare</dt><dd>${esc(p.finisaj)}</dd>
+      ${rame ? `<dt>Ramă max.</dt><dd class="mono">${p.inaltime} × ${p.latime} mm</dd><dt>Nr. rame</dt><dd class="mono">${p.nr_usi}</dd>`
+             : `<dt>Înălţime gol</dt><dd class="mono">${p.inaltime} mm</dd><dt>Lăţime gol</dt><dd class="mono">${p.latime} mm</dd>
+                <dt>Nr. uşi</dt><dd class="mono">${p.nr_usi}</dd>`}</dl>`;
+}
+
+function blocTaburi(pozitii, total) {
   const cell = (l, areCod) => `<tr>
     ${areCod ? `<td class="cod">${esc(l.cod ?? '—')}</td>` : ''}<td>${esc(l.denumire)}</td>
     <td class="num">${virgula(l.cantitate)}${l.um && l.um !== 'buc' ? ' ' + esc(l.um) : ''}</td>
     ${l.debitare !== undefined ? `<td class="num dim">${esc(l.debitare ?? '—')}</td>` : ''}</tr>`;
   const tabel = (coloane, randuri) => `<table class="date"><thead><tr>${coloane.map((c, i) =>
     `<th${/Cant|Debitare/.test(c) ? ' class="num"' : ''}>${c}</th>`).join('')}</tr></thead><tbody>${randuri}</tbody></table>`;
-  const rame = /^rama/.test(p?.sistem ?? '');
-  // oferta cu amănuntul: produse la bucată — fără culoare, gol sau uşi
-  const spec = p?.sistem === 'amanunt' ? `<dl class="perechi">
+  // mai multe produse pe o ofertă: fiecare cu titlul lui; facturarea rămâne comasată
+  const multe = pozitii.length > 1;
+  const titlu = (p, k) => (multe ? `<h3 class="poz-titlu">${k + 1}. ${esc(p.eticheta)}</h3>` : '');
+  const pePozitii = (f) => pozitii.map((p, k) => { const h = f(p); return h ? titlu(p, k) + h : ''; }).join('');
+  const specPoz = p => (p.sistem === 'amanunt' ? `<dl class="perechi">
       <dt>Sistem</dt><dd>${esc(p.eticheta)}</dd><dt>Produse</dt><dd class="mono">${p.linii.facturare.length}</dd></dl>`
-    : p ? `<dl class="perechi">
-      <dt>Sistem</dt><dd>${esc(p.eticheta)}</dd><dt>Culoare</dt><dd>${esc(p.finisaj)}</dd>
-      ${rame ? `<dt>Ramă max.</dt><dd class="mono">${p.inaltime} × ${p.latime} mm</dd><dt>Nr. rame</dt><dd class="mono">${p.nr_usi}</dd>`
-             : `<dt>Înălţime gol</dt><dd class="mono">${p.inaltime} mm</dd><dt>Lăţime gol</dt><dd class="mono">${p.latime} mm</dd>
-                <dt>Nr. uşi</dt><dd class="mono">${p.nr_usi}</dd>`}</dl>` : '';
+    : specUsi(p));
   const panouri = {
-    spec,
-    necesar: p?.linii.necesar.length ? tabel(['Cod', 'Reper', 'Cant.', 'Debitare'], p.linii.necesar.map(l => cell(l, true)).join('')) : '',
-    client:  p?.linii.client.length  ? tabel(['Reper', 'Cant.', 'Debitare'], p.linii.client.map(l => cell(l, false)).join('')) : '',
+    spec: pePozitii(specPoz),
+    necesar: pePozitii(p => (p.linii.necesar.length ? tabel(['Cod', 'Reper', 'Cant.', 'Debitare'], p.linii.necesar.map(l => cell(l, true)).join('')) : '')),
+    client:  pePozitii(p => (p.linii.client.length ? tabel(['Reper', 'Cant.', 'Debitare'], p.linii.client.map(l => cell(l, false)).join('')) : '')),
     facturare: `${tabel(['Cod', 'Denumire', 'Cant.'], total.map(l => cell({ ...l, debitare: undefined }, true)).join(''))}
       <div class="butoane"><button id="copCod" class="primar">Copiază coduri</button><button id="copCant" class="primar">Copiază cantităţi</button></div>
       <p class="dim mic" style="margin-top:8px">Paste pe coloană în grila NeoManager: întâi celula de start din „Cod", apoi cea din „Cantitate".</p>`,
@@ -607,13 +623,16 @@ function blocTaburi(p, total) {
 }
 
 // Facturarea pentru paste se face pe TOATĂ comanda, nu per poziţie: în
-// NeoManager se lipeşte o singură comandă. Liniile cu acelaşi cod se adună.
+// NeoManager se lipeşte o singură comandă. Liniile cu acelaşi cod se adună —
+// în afară de transport, care e o dată pe comandă (fiecare produs îl are pe al lui).
+const O_DATA_PE_COMANDA = new Set(['CHLTTRMANIP']);
 function facturareTotala(pozitii) {
   const pe = new Map();
   for (const p of pozitii) {
     for (const l of p.linii.facturare) {
       const e = pe.get(l.cod) ?? { cod: l.cod, denumire: l.denumire, um: l.um, cantitate: 0 };
-      e.cantitate = Math.round((e.cantitate + l.cantitate) * 100) / 100;
+      e.cantitate = O_DATA_PE_COMANDA.has(l.cod) ? Math.max(e.cantitate, l.cantitate)
+        : Math.round((e.cantitate + l.cantitate) * 100) / 100;
       pe.set(l.cod, e);
     }
   }
@@ -626,7 +645,6 @@ async function renderDetaliu(id) {
   if (!r.ok) { $('continut').innerHTML = '<div class="mesaj eroare">Comanda nu există.</div>'; return; }
 
   const { comanda: c, pozitii, coduri, scanari, sticlaLinii = [] } = await r.json();
-  const p = pozitii[0];   // o comandă = un singur sistem
   const total = facturareTotala(pozitii);
   const eOferta = c.tip === 'oferta';
   const ePlata  = c.tip === 'plata';     // aşteaptă plata — încă nu e comandă în lucru
@@ -643,7 +661,9 @@ async function renderDetaliu(id) {
         <div class="dim mic">${eOferta ? 'Ofertă' : ePlata ? 'Aşteaptă plata' : `Comandă${c.finalizat_la ? ' finalizată' : ''} · din oferta ${esc(c.numar)}`}</div>
       </div>
       <div class="spatiu"></div>
-      <button id="fisaDetaliu" title="Deschide fişa comenzii pentru printare">🖶 Printează fişa</button>
+      ${pozitii.length > 1
+        ? pozitii.map((p, k) => `<button class="fisa-poz" data-poz="${k}" title="Fişa produsului ${k + 1}: ${esc(p.eticheta)}">🖶 Fişa ${k + 1}</button>`).join('')
+        : '<button id="fisaDetaliu" title="Deschide fişa comenzii pentru printare">🖶 Printează fişa</button>'}
       ${eOferta ? `<button id="modifica">Modifică oferta</button>
                    <button class="primar" id="accepta">Acceptă oferta</button>` : ''}
       ${ePlata ? '<button class="primar" id="accepta">Plată primită</button>' : ''}
@@ -683,7 +703,7 @@ async function renderDetaliu(id) {
       </dl>
     </div>
 
-    ${blocTaburi(p, total)}
+    ${blocTaburi(pozitii, total)}
 
     ${scanari ? `<div class="sectiune" data-z="atelier">
       <h2>Atelier</h2>
@@ -719,6 +739,7 @@ async function renderDetaliu(id) {
   leagaCopiere($('copCant'), total.map(l => qtyText(l.cantitate)));
 
   $('fisaDetaliu')?.addEventListener('click', e => deschideFisa(id, e.currentTarget));
+  document.querySelectorAll('button.fisa-poz').forEach(b => b.addEventListener('click', () => deschideFisa(id, b, +b.dataset.poz)));
 
   // Acceptare: dialogul cere modalitatea de plată (obligatoriu) şi avansul.
   $('accepta')?.addEventListener('click', () => {

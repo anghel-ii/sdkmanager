@@ -27,6 +27,21 @@
   table.clienti td { padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
   table.clienti td.data { white-space: nowrap; }
   .gol { text-align: center; padding: 40px; color: var(--text-dim); }
+
+  /* ce au trimis agenţii şi aşteaptă aprobarea — deasupra listei */
+  #deAprobat { margin-bottom: 28px; }
+  #deAprobat h2 { font-size: 1rem; margin-bottom: 10px; }
+  #deAprobat h2 .cate { color: var(--accent); margin-left: 6px; }
+  .propunere { background: var(--panel); border: 1px solid #d4a24c; border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; }
+  .propunere .cap { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+  .propunere .cap .spatiu { flex: 1; }
+  .propunere .tip { font-size: .72rem; font-weight: 700; letter-spacing: .05em; padding: 2px 8px; border-radius: 999px;
+                    color: #d4a24c; border: 1px solid rgba(212, 162, 76, .5); background: rgba(212, 162, 76, .1); }
+  .propunere table { width: 100%; border-collapse: collapse; font-size: .86rem; }
+  .propunere td { padding: 4px 8px; border-top: 1px solid var(--line); vertical-align: top; }
+  .propunere td:first-child { color: var(--text-dim); width: 190px; }
+  .propunere .vechi { color: var(--danger); text-decoration: line-through; }
+  .propunere .nou { color: var(--ok); }
 </style>
 </head>
 <body>
@@ -39,6 +54,11 @@
 </div>
 
 <div id="continut">
+  <section id="deAprobat" hidden>
+    <h2>De aprobat <span class="cate" id="nrPropuneri"></span>
+      <span class="dim mic" style="font-weight:400">— trimise de agenţi; intră în lista de clienţi doar după aprobare</span></h2>
+    <div id="propuneri"></div>
+  </section>
   <div class="bara-lista">
     <input id="cauta" type="search" placeholder="Caută nume, CUI, telefon, judeţ, agent…">
     <span class="spatiu"></span>
@@ -65,6 +85,53 @@ async function api(cale, optiuni = {}) {
 }
 
 let date = { clienti: [] };
+let eu = null;             // utilizatorul logat — aprobă conducerea sau adminul
+let propuneri = [];
+
+// ── De aprobat: clienţi noi / modificări de la agenţi (pe Cloudflare, până la aprobare) ──
+const ETICHETE = { nume: 'Nume client', cui: 'CUI', judet: 'Judeţ', localitate: 'Localitate', adresa_sediu: 'Adresa sediului',
+  adresa_livrare: 'Adresa de livrare', administrator: 'Administrator', telefon_administrator: 'Telefon administrator',
+  email: 'E-mail', delegat: 'Delegat', telefon_delegat: 'Telefon delegat', discounturi: 'Discounturi' };
+const poateAproba = () => eu?.rol === 'admin' || eu?.rol === 'conducere';
+
+async function incarcaPropuneri() {
+  const r = await api('/api/clienti/propuneri');
+  if (!r?.ok) return;
+  propuneri = (await r.json()).propuneri ?? [];
+  $('deAprobat').hidden = !propuneri.length;
+  $('nrPropuneri').textContent = propuneri.length || '';
+  $('propuneri').innerHTML = propuneri.map(p => {
+    // client nou: tot ce a completat; modificare: doar câmpurile schimbate, vechi → nou
+    const randuri = Object.entries(ETICHETE).map(([k, et]) => {
+      const nou = p.propus[k] ?? '', vechi = p.actual?.[k] ?? '';
+      if (p.tip === 'nou' ? !nou : nou === vechi) return '';
+      return `<tr><td>${et}</td><td>${p.tip === 'nou' ? esc(nou)
+        : `${vechi ? `<span class="vechi">${esc(vechi)}</span> → ` : ''}<span class="nou">${esc(nou) || '<i>(gol)</i>'}</span>`}</td></tr>`;
+    }).join('');
+    return `<div class="propunere" data-id="${p.id}">
+      <div class="cap">
+        <span class="tip">${p.tip === 'nou' ? 'CLIENT NOU' : 'MODIFICARE'}</span>
+        <b>${esc(p.tip === 'nou' ? p.propus.nume : p.actual?.nume)}</b>
+        <span class="dim mic">de la ${esc(p.agent)} · ${dataOra(p.trimis_la)}</span>
+        <span class="spatiu"></span>
+        ${poateAproba() ? `<button class="mic" data-actiune="respinge">Respinge</button>
+          <button class="mic primar" data-actiune="aproba">✓ Aprobă</button>`
+          : '<span class="dim mic">aprobă conducerea sau administratorul</span>'}
+      </div>
+      <table>${randuri || '<tr><td colspan="2" class="dim">nicio schimbare faţă de ce e acum</td></tr>'}</table>
+    </div>`;
+  }).join('');
+  $('propuneri').querySelectorAll('button[data-actiune]').forEach(b => b.addEventListener('click', async () => {
+    const card = b.closest('.propunere'), p = propuneri.find(x => x.id === +card.dataset.id);
+    const aproba = b.dataset.actiune === 'aproba';
+    if (!aproba && !(await confirma(`Respingi ${p.tip === 'nou' ? 'clientul nou' : 'modificarea'} trimisă de ${p.agent}? Se pierde.`, 'Respinge'))) return;
+    card.querySelectorAll('button').forEach(x => { x.disabled = true; });
+    const r = await api(`/api/clienti/propuneri/${p.id}/${b.dataset.actiune}`, { method: 'POST' });
+    if (r && !r.ok) alerta((await r.json().catch(() => ({}))).eroare || 'Operaţia a eşuat.');
+    await incarcaPropuneri();
+    if (aproba) incarca();   // clientul aprobat e deja în copia de aici
+  }));
+}
 
 async function incarca() {
   const r = await api('/api/clienti');
@@ -112,14 +179,19 @@ $('preia').addEventListener('click', async () => {
   $('preia').disabled = false;
   if (r && !r.ok) alerta((await r.json().catch(() => ({}))).eroare || 'Preluarea a eşuat.');
   incarca();
+  incarcaPropuneri();
 });
 
 (async () => {
   const r = await api('/api/eu');
   if (!r) return;
-  $('cine').textContent = (await r.json()).utilizator.nume;
+  eu = (await r.json()).utilizator;
+  $('cine').textContent = eu.nume;
   await incarca();
+  incarcaPropuneri();
   urmareste(incarca);
+  // agenţii trimit de pe Cloudflare — de acolo nu vine niciun anunţ live, deci verificăm din minut în minut
+  setInterval(incarcaPropuneri, 60 * 1000);
 })();
 
 $('iesire').addEventListener('click', async () => {

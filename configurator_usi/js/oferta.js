@@ -63,10 +63,9 @@ export function pozitieCurenta() {
 
 // ── Trimitere ────────────────────────────────────────────────────────────────
 
+// `pozitii` = toate produsele ofertei (coşul + cel de pe ecran, vezi js/cos.js);
 // `id` = oferta deschisă pt. modificare (PUT); fără id → ofertă nouă (POST).
 export async function confirma(date) {
   if (!String(date.nume || '').trim()) return { eroare: 'Completează numele clientului.' };
-  const p = pozitieCurenta();
-  if (p.eroare) return { eroare: p.eroare };
-  return salveaza({ ...date, pozitie: p.pozitie });
+  return salveaza(date);
 }

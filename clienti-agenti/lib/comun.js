@@ -118,3 +118,10 @@ export function eManager(request, env) {
 
 // următoarea versiune — la fiecare adăugare/modificare; managerul cere „după versiunea X"
 export const VERSIUNE_NOUA = '(SELECT COALESCE(MAX(versiune), 0) + 1 FROM client)';
+
+// O propunere (client nou / modificare în aşteptarea aprobării) aşa cum o vede agentul:
+// clientul cu valorile propuse peste cele de acum + cum se recunoaşte.
+export const vedereAgent = (p, client = null) => ({
+  ...(client ?? { id: null, agent: p.agent, creat_la: null }), ...JSON.parse(p.date_json),
+  propunere_id: p.id, inAsteptare: p.client_id ? 'modificare' : 'nou', trimis_la: p.creat_la,
+});

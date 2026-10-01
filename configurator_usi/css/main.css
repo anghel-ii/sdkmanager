@@ -741,3 +741,18 @@ tbody.rame-rand + tbody.rame-rand tr:first-child td { border-top: 1px solid var(
 .rame-seg-rand { display: inline-flex; }
 .rame-seg-rand button { flex: 0 0 auto; padding: 4px 10px; }
 .rame-seg-rand button:disabled { opacity: .35; cursor: not-allowed; }
+
+/* ── „Adaugă la ofertă" — produsele ofertei (js/cos.js), în ambele pagini ── */
+.cos-lista { padding-left: 22px; display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; font-size: 13px; }
+.cos-lista li { line-height: 1.5; }
+.cos-lista li > span:first-child { margin-right: 8px; }
+.cos-lista li.acum > span:first-child { color: var(--accent); font-weight: 600; }
+.cos-game, .cos-fact { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.cos-fact { margin-top: 12px; }
+.cos-lista button, .cos-game button, .cos-fact button {
+  width: auto; padding: 5px 10px; font: inherit; font-size: 12px; cursor: pointer;
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; color: var(--text);
+}
+.cos-lista button { margin-left: 4px; padding: 2px 8px; }
+.cos-lista button:hover, .cos-game button:hover, .cos-fact button:hover { border-color: var(--accent); }
+.cos-msg:not(:empty) { margin-top: 10px; }

@@ -1,10 +1,12 @@
-import { raspuns, CAMPURI, clientDinCerere, agentLogat, eManager, VERSIUNE_NOUA } from '../../../lib/comun.js';
+import { raspuns, clientDinCerere, agentLogat, eManager, vedereAgent } from '../../../lib/comun.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  GET   manager (Bearer CHEIE_MANAGER): ?dupa=<versiune> → tot ce s-a adăugat
-//        sau modificat după ea, câte 500, în ordinea versiunii.
-//        agent logat: clienţii LUI (agent = numele lui).
-//  POST  agent logat: client nou, pe numele lui.
+//        sau modificat după ea, câte 500, în ordinea versiunii — DOAR ce s-a aprobat.
+//        agent logat: clienţii LUI (agent = numele lui), cu propunerile lui în
+//        aşteptare peste ei + clienţii noi încă neaprobaţi.
+//  POST  agent logat: client nou, pe numele lui — ca PROPUNERE, până o aprobă cineva
+//        din manager (vezi api/propuneri).
 // ═══════════════════════════════════════════════════════════════════════════
 
 export async function onRequestGet({ request, env }) {
@@ -16,8 +18,15 @@ export async function onRequestGet({ request, env }) {
   }
   const agent = await agentLogat(request, env);
   if (!agent) return raspuns(401, { eroare: 'Nu eşti logat.' });
-  const { results } = await env.DB.prepare('SELECT * FROM client WHERE agent = ? ORDER BY nume COLLATE NOCASE').bind(agent.nume).all();
-  return raspuns(200, { agent: agent.nume, admin: !!agent.admin, clienti: results });
+  const [clienti, propuneri] = await env.DB.batch([
+    env.DB.prepare('SELECT * FROM client WHERE agent = ? ORDER BY nume COLLATE NOCASE').bind(agent.nume),
+    env.DB.prepare('SELECT * FROM propunere WHERE agent = ?').bind(agent.nume),
+  ]);
+  const pe = new Map(propuneri.results.filter(p => p.client_id).map(p => [p.client_id, p]));
+  return raspuns(200, { agent: agent.nume, admin: !!agent.admin, clienti: [
+    ...propuneri.results.filter(p => !p.client_id).map(p => vedereAgent(p)),
+    ...clienti.results.map(c => (pe.has(c.id) ? vedereAgent(pe.get(c.id), c) : c)),
+  ] });
 }
 
 export async function onRequestPost({ request, env }) {
@@ -25,9 +34,7 @@ export async function onRequestPost({ request, env }) {
   if (!agent) return raspuns(401, { eroare: 'Nu eşti logat.' });
   const { v, eroare } = await clientDinCerere(request, true);
   if (eroare) return raspuns(400, { eroare });
-  const col = Object.keys(CAMPURI);
-  const r = await env.DB.prepare(`INSERT INTO client (agent, ${col.join(', ')}, creat_la, modificat_la, versiune)
-    VALUES (?${', ?'.repeat(col.length)}, datetime('now'), datetime('now'), ${VERSIUNE_NOUA}) RETURNING *`)
-    .bind(agent.nume, ...col.map(k => v[k])).first();
-  return raspuns(201, { client: r });
+  const p = await env.DB.prepare(`INSERT INTO propunere (client_id, agent, date_json, creat_la)
+    VALUES (NULL, ?, ?, datetime('now')) RETURNING *`).bind(agent.nume, JSON.stringify(v)).first();
+  return raspuns(201, { client: vedereAgent(p) });
 }

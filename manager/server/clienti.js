@@ -83,23 +83,44 @@ async function preiaAcum({ res }) {
 // Conturile agenţilor stau pe Cloudflare (clienti-agenti/functions/api/agenti.js);
 // pagina /admin le vede şi le administrează prin serverul ăsta, cu cheia
 // managerului. Nimic nu se ţine aici — parola nouă trece doar în răspuns.
-const laCloudflare = cale => async function ({ req, res }) {
-  if (!activ()) return req.method === 'GET' ? json(res, 200, { activ: false, agenti: [], faraCont: [] })
-    : eroare(res, 409, 'Legătura cu Cloudflare nu e configurată.');
-  const corp = req.method === 'GET' ? undefined : JSON.stringify(await corpJson(req));
+// O cerere la Cloudflare cu cheia managerului → { stare, date } sau { eroare: [cod, mesaj] }.
+async function laCF(metoda, cale, corp) {
   let r;
   try {
-    r = await fetch(`${config.clientiUrl}${cale}`, { method: req.method, body: corp,
+    r = await fetch(`${config.clientiUrl}${cale}`, { method: metoda, body: corp,
       headers: { Authorization: `Bearer ${cheie()}`, 'Content-Type': 'application/json' },
       signal: AbortSignal.timeout(15000) });
   } catch (e) {
-    return eroare(res, 502, `Cloudflare nu răspunde: ${e.message}`);
+    return { eroare: [502, `Cloudflare nu răspunde: ${e.message}`] };
   }
   const date = await r.json().catch(() => ({}));
-  if (r.status === 401) return eroare(res, 502, 'Cloudflare a refuzat cheia managerului.');
-  json(res, r.status, r.ok && req.method === 'GET' ? { activ: true, ...date } : date);
+  if (r.status === 401) return { eroare: [502, 'Cloudflare a refuzat cheia managerului.'] };
+  return { stare: r.status, date };
+}
+
+// ruta de aici → aceeaşi cerere acolo; `inactiv` = răspunsul la GET fără legătură
+const laCloudflare = (cale, inactiv = { agenti: [], faraCont: [] }) => async function ({ req, res }) {
+  if (!activ()) return req.method === 'GET' ? json(res, 200, { activ: false, ...inactiv })
+    : eroare(res, 409, 'Legătura cu Cloudflare nu e configurată.');
+  const r = await laCF(req.method, cale, req.method === 'GET' ? undefined : JSON.stringify(await corpJson(req)));
+  if (r.eroare) return eroare(res, ...r.eroare);
+  json(res, r.stare, r.stare < 300 && req.method === 'GET' ? { activ: true, ...r.date } : r.date);
 };
 const agenti = laCloudflare('/api/agenti');
+
+// Clienţii noi / modificările agenţilor aşteaptă APROBAREA de aici (userul, 2026-10-01):
+// pe Cloudflare stau ca propuneri şi abia aprobarea le scrie în baza de clienţi (de
+// unde le preia copia de aici). Lista o vede oricine; aprobă conducerea sau adminul.
+const APROBA = ['admin', 'conducere'];
+const propuneri = laCloudflare('/api/propuneri', { propuneri: [] });
+async function decide({ res, params }) {
+  if (!['aproba', 'respinge'].includes(params.actiune)) return eroare(res, 404, 'Acţiune necunoscută.');
+  if (!activ()) return eroare(res, 409, 'Legătura cu Cloudflare nu e configurată.');
+  const r = await laCF('POST', `/api/propuneri/${encodeURIComponent(params.id)}/${params.actiune}`);
+  if (r.eroare) return eroare(res, ...r.eroare);
+  if (r.stare === 200 && params.actiune === 'aproba') await preia();   // intră imediat şi în copia de aici
+  json(res, r.stare, r.date);
+}
 // „Intră ca acest agent": link de o folosinţă (60 s) spre site-ul agenţilor
 const intraCaAgent = laCloudflare('/api/agenti/intra');
 
@@ -129,6 +150,8 @@ module.exports = {
     ['GET',  '/api/clienti',       { handler: lista }],
     ['GET',  '/api/clienti/cauta', { handler: cauta }],
     ['POST', '/api/clienti/preia', { handler: preiaAcum }],
+    ['GET',  '/api/clienti/propuneri', { handler: propuneri }],
+    ['POST', '/api/clienti/propuneri/:id/:actiune', { handler: decide, rol: APROBA }],
     ['PUT',   '/api/clienti/cheie', { handler: puneCheie, rol: 'admin' }],
     ['GET',   '/api/agenti',       { handler: agenti, rol: 'admin' }],
     ['POST',  '/api/agenti',       { handler: agenti, rol: 'admin' }],

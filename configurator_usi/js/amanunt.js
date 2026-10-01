@@ -1,5 +1,6 @@
 import produse from './catalog/amanunt.json';
 import * as manager from './manager.js';
+import * as cosul from './cos.js';
 import { cautator, debitare } from './amanunt-calcul.js';
 import { initSugestiiClienti } from './sugestii-clienti.js';
 import { LIVRARE, AGENTI, PLATI, plataText, liniaTransport } from './lib/comun/comanda.js';
@@ -35,9 +36,9 @@ const textDebitare = l => {
 };
 // livrare / plată / agent — aceeaşi formă ca state.comanda din configurator
 const comanda = { livrare: null, agent: null, plata: null };
-let ofertaEditata = null;   // ?oferta=<id> — se salvează peste ea
-let numarEditat = '';
-let modFisa = null;         // ?fisa=<id> — doar tipar: { numar }
+// coşul ofertei (js/cos.js): produsele deja adăugate + oferta deschisă din manager, dacă e
+const cos = cosul.citeste();
+let modFisa = null;         // ?fisa=<id>&poz=<k> — doar tipar: { numar, debitare }
 
 // ── Ce se facturează ────────────────────────────────────────────────────────
 
@@ -82,13 +83,15 @@ const debitareHtml = (l, i) => {
   const piese = l.debitare ?? [];
   return `<tr class="debitare" data-i="${i}"><td></td><td colspan="5"><div class="deb">
     <span class="deb-titlu">Debitare <span class="dim">· bară de ${l.bara} mm</span></span>
-    ${[...piese, { l: '', buc: '' }].map((p, k) => `<span class="piesa" data-k="${k}">
+    ${[...piese, { l: '', buc: '' }].map((p, k) => piesaHtml(p, k, k < piese.length)).join('')}
+    <span class="deb-rez">${rezultatHtml(l)}</span></div></td></tr>`;
+};
+const butonX = k => `<button class="deb-x" type="button" aria-label="Scoate bucata ${k + 1}">✕</button>`;
+const piesaHtml = (p, k, cuX) => `<span class="piesa" data-k="${k}">
       <input class="deb-l" type="number" min="0" step="1" inputmode="numeric" value="${p.l}" placeholder="mm" aria-label="Lungimea bucăţii ${k + 1} (mm)">
       <span class="dim">×</span>
       <input class="deb-b" type="number" min="0" step="1" inputmode="numeric" value="${p.buc}" placeholder="buc" aria-label="Nr. de bucăţi ${k + 1}">
-      ${k < piese.length ? `<button class="deb-x" type="button" aria-label="Scoate bucata ${k + 1}">✕</button>` : ''}</span>`).join('')}
-    <span class="deb-rez">${rezultatHtml(l)}</span></div></td></tr>`;
-};
+      ${cuX ? butonX(k) : ''}</span>`;
 const rezultatHtml = l => {
   const d = deb(l);
   if (!d) return '<span class="dim">scrie lungimea şi nr. de bucăţi — se calculează din câte bare ies</span>';
@@ -114,6 +117,7 @@ function actualizeaza() {
   const alteRanduri = linii.some(l => l.cod || String(l.denumire).trim());
   $('erori').innerHTML = alteRanduri ? errors.map(e => `<div class="bill-err">⚠ ${esc(e)}</div>`).join('') : '';
   for (const id of ['btnCopyCod', 'btnCopyCant']) $(id).disabled = !!errors.length;
+  card?.actualizeaza();
   renderOferta();
 }
 
@@ -157,10 +161,14 @@ $('randuri').addEventListener('input', e => {
   } else if (e.target.matches('.deb-l, .deb-b')) {
     const k = +e.target.closest('.piesa').dataset.k, piese = linii[i].debitare;
     const camp = e.target.classList.contains('deb-l') ? 'l' : 'buc';
-    if (k === piese.length) {   // perechea goală de la coadă devine bucată → apare alta goală
-      piese.push({ l: '', buc: '', [camp]: e.target.value });
-      randeaza();
-      return focusPe(`tr.debitare[data-i="${i}"] .piesa[data-k="${k}"] .deb-${camp === 'l' ? 'l' : 'b'}`);
+    // perechea goală de la coadă devine bucată → după ea apare alta goală. Fără să
+    // refacă tabelul: refăcut, câmpul s-ar fi refocusat cu cifra selectată şi a doua
+    // tastă ar fi înlocuit-o („345" → „45").
+    if (k === piese.length) {
+      piese.push({ l: '', buc: '' });
+      const piesa = e.target.closest('.piesa');
+      piesa.insertAdjacentHTML('beforeend', butonX(k));
+      piesa.insertAdjacentHTML('afterend', piesaHtml({ l: '', buc: '' }, k + 1, false));
     }
     piese[k][camp] = e.target.value;
     // fără să refacă tabelul: doar cantitatea (nr. de bare) şi rezultatul
@@ -310,10 +318,12 @@ initSugestiiClienti(agent => { $('comandaAgent').value = agent; comanda.agent = 
 
 // ── Salvare la manager (aceiaşi paşi ca în configurator) ────────────────────
 
-function pozitie() {
+// Produsul de pe ecran pentru coş: null cât nu e niciun rând început.
+function curenta() {
+  if (!linii.some(l => l.cod || String(l.denumire).trim())) return null;
   const f = facturare();
   if (f.errors.length) return { eroare: f.errors[0] };
-  return { pozitie: {
+  return { gama: 'amanunt', pozitie: {
     sistem: 'amanunt', eticheta: 'Ofertă cu amănuntul', finisaj: '',
     latime: 0, inaltime: 0, nrUsi: 1,
     config: { system: 'amanunt', amanunt: linii.filter(l => l.cod), comanda: { ...comanda } },
@@ -323,9 +333,15 @@ function pozitie() {
   } };
 }
 
+// clientul şi detaliile — duse în coş când treci la alt produs
+const clientPtCos = () => ({
+  client: { nume: $('clientNume').value, telefon: $('clientTelefon').value, adresa: $('clientAdresa').value },
+  ofertaNr: $('ofertaNr').value, comanda: { ...comanda } });
+let card = null;
+
 const mesaj = (html, fel) => { $('ofertaMesaj').innerHTML = `<div class="oferta-msg ${fel}">${html}</div>`; };
 const BUTOANE = ['btnConfirma', 'btnComanda', 'btnPlata'];
-const TEXT = { btnConfirma: () => (ofertaEditata ? 'Salvează modificările' : 'Salvează oferta'),
+const TEXT = { btnConfirma: () => (cos.ofertaEditata ? 'Salvează modificările' : 'Salvează oferta'),
                btnComanda: () => 'Salvează comanda', btnPlata: () => 'Aşteaptă plata' };
 
 function renderOferta() {
@@ -342,8 +358,9 @@ function renderOferta() {
     return;
   }
   arata(true);
-  const gata = !facturare().errors.length;
-  for (const id of BUTOANE) $(id).disabled = !gata;
+  const t = cosul.toate(cos, curenta());
+  $('ofertaUI').innerHTML = t.pozitii?.length > 1 ? `<div class="oferta-hint">${t.pozitii.length} produse în ofertă</div>` : '';
+  for (const id of BUTOANE) $(id).disabled = !t.pozitii;
 }
 
 function cerePlata() {
@@ -363,8 +380,8 @@ async function trimite(unde) {
   const ofertaNr = $('ofertaNr').value.trim();
   if (unde === 'oferta' && !ofertaNr) { $('ofertaNr').focus(); return mesaj('Completează nr. de ofertă.', 'eroare'); }
   if (!$('clientNume').value.trim()) { $('clientNume').focus(); return mesaj('Completează numele clientului.', 'eroare'); }
-  const p = pozitie();
-  if (p.eroare) return mesaj(esc(p.eroare), 'eroare');
+  const tot = cosul.toate(cos, curenta());
+  if (tot.eroare) return mesaj(esc(tot.eroare), 'eroare');
   const plata = unde === 'comanda' ? await cerePlata() : null;
   if (unde === 'comanda' && !plata) return;
 
@@ -373,13 +390,15 @@ async function trimite(unde) {
   const gata = () => { for (const id of BUTOANE) { $(id).disabled = false; $(id).textContent = TEXT[id](); } };
 
   const r = await manager.salveaza({
-    ofertaNr, id: ofertaEditata, pozitie: p.pozitie,
+    ofertaNr, id: cos.ofertaEditata, pozitii: cosul.transportOData(tot.pozitii, liniaTransport({ comanda })).map(x => x.pozitie),
     nume: $('clientNume').value, telefon: $('clientTelefon').value, adresa: $('clientAdresa').value,
     detalii: { ...comanda }, email: '', observatii: '',
   });
   if (r.eroare) { gata(); return mesaj(esc(r.eroare), 'eroare'); }
-  ofertaEditata = r.comanda.id;   // o nouă apăsare lucrează pe ACEEAŞI ofertă
-  const laComanda = () => { location.href = '/#comanda/' + r.comanda.id; };
+  // o nouă apăsare lucrează pe ACEEAŞI ofertă (coşul o ţine minte); gata → coşul se goleşte
+  Object.assign(cos, clientPtCos(), { ofertaEditata: r.comanda.id, numar: r.comanda.numar });
+  cosul.scrie(cos);
+  const laComanda = () => { cosul.goleste(); location.href = '/#comanda/' + r.comanda.id; };
   if (unde === 'oferta') return laComanda();
   const t = await manager.treceIn(r.comanda.id, unde, plata ?? {});
   if (t.eroare) {
@@ -417,36 +436,50 @@ function tipareste() {
 }
 $('btnFisa').addEventListener('click', tipareste);
 
-// ── Pornire: ofertă nouă, „Modifică oferta" (?oferta=) sau „Fişă" (?fisa=) ──
+// ── Pornire: produs nou, din coş (?cos=1&poz=k) sau „Fişă" din manager (?fisa=id&poz=k) ──
+
+const puneClientul = (client, ofertaNr, detalii) => {
+  Object.assign(comanda, detalii);
+  for (const [k, sel] of [['livrare', 'comandaLivrare'], ['plata', 'comandaPlata'], ['agent', 'comandaAgent']]) if (comanda[k]) $(sel).value = comanda[k];
+  $('clientNume').value = client.nume ?? '';
+  $('clientTelefon').value = client.telefon ?? '';
+  $('clientAdresa').value = client.adresa ?? '';
+  $('ofertaNr').value = ofertaNr ?? '';
+};
 
 (async () => {
   const params = new URLSearchParams(location.search);
-  const id = params.get('oferta') ?? params.get('fisa');
+  // „Modifică oferta": coşul cu toate produsele ofertei îl face configuratorul (ştie gamele)
+  if (params.get('oferta')) return location.replace(`./?oferta=${encodeURIComponent(params.get('oferta'))}`);
   let eroare = null;
-  if (id) {
-    const o = await manager.incarcaOferta(id);
-    const p = o.pozitii?.[0];
+  if (params.get('fisa')) {
+    const o = await manager.incarcaOferta(params.get('fisa'));
+    const k = +params.get('poz') || 0, p = o.pozitii?.[k];
     if (o.eroare || p?.sistem !== 'amanunt') eroare = o.eroare || 'Nu e o ofertă cu amănuntul.';
-    else if (params.get('oferta') && o.comanda.tip !== 'oferta') eroare = `${o.comanda.numar_comanda || o.comanda.numar} a fost acceptată — nu se mai modifică.`;
     else {
-      // fişa: liniile ÎNGHEŢATE la salvare; modificarea: rândurile ofertei (transportul se pune singur)
-      linii = params.get('fisa')
-        ? p.linii.facturare.map(l => ({ cod: l.cod, denumire: l.denumire, um: l.um, cantitate: l.cantitate }))
-        : (p.config.amanunt ?? []).map(l => ({ ...l }));
-      Object.assign(comanda, p.config.comanda);
-      for (const [k, sel] of [['livrare', 'comandaLivrare'], ['plata', 'comandaPlata'], ['agent', 'comandaAgent']]) if (comanda[k]) $(sel).value = comanda[k];
-      $('clientNume').value = o.comanda.client_nume ?? '';
-      $('clientTelefon').value = o.comanda.client_telefon ?? '';
-      $('clientAdresa').value = o.comanda.client_adresa ?? '';
-      $('ofertaNr').value = o.comanda.oferta_nr ?? '';
-      if (params.get('oferta')) { ofertaEditata = o.comanda.id; numarEditat = o.comanda.numar; }
-      else modFisa = { numar: o.comanda.numar_comanda || o.comanda.numar,
-                       debitare: new Map((p.linii.necesar ?? []).filter(n => n.debitare).map(n => [n.cod, n.debitare])) };
+      // fişa: liniile ÎNGHEŢATE la salvare
+      linii = p.linii.facturare.map(l => ({ cod: l.cod, denumire: l.denumire, um: l.um, cantitate: l.cantitate }));
+      puneClientul({ nume: o.comanda.client_nume, telefon: o.comanda.client_telefon, adresa: o.comanda.client_adresa },
+                   o.comanda.oferta_nr, p.config.comanda);
+      const n = o.pozitii.length;
+      modFisa = { numar: `${o.comanda.numar_comanda || o.comanda.numar}${n > 1 ? ` · produsul ${k + 1} din ${n}` : ''}`,
+                  debitare: new Map((p.linii.necesar ?? []).filter(x => x.debitare).map(x => [x.cod, x.debitare])) };
     }
+  } else if (cosul.activ()) {
+    puneClientul(cos.client, cos.ofertaNr, cos.comanda);
+    const k = params.has('poz') ? +params.get('poz') : null;
+    cos.curent = cos.pozitii[k]?.gama === 'amanunt' ? k : null;
+    if (cos.curent != null) linii = (cos.pozitii[k].pozitie.config.amanunt ?? []).map(l => ({ ...l, debitare: l.debitare?.map(p => ({ ...p })) }));
+    cosul.scrie(cos);
   }
+  if (!modFisa) {
+    card = cosul.initCard($('cardCos'), cos, { curenta, client: clientPtCos, gamaEcran: () => 'amanunt',
+                                               transport: () => liniaTransport({ comanda }) });
+    document.addEventListener('cos:schimbat', renderOferta);
+  } else $('cardCosSec').hidden = true;
   randeaza();
   await manager.initOferta(renderOferta);
-  if (ofertaEditata) { $('btnConfirma').textContent = TEXT.btnConfirma(); mesaj(`Modifici oferta <strong>${esc(numarEditat)}</strong>.`, 'ok'); }
+  if (cos.ofertaEditata) { $('btnConfirma').textContent = TEXT.btnConfirma(); mesaj(`Modifici oferta <strong>${esc(cos.numar ?? '')}</strong>.`, 'ok'); }
   if (eroare) mesaj(esc(eroare), 'eroare');
   if (params.get('fisa')) {
     if (modFisa) tipareste();

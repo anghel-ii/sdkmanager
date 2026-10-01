@@ -58,9 +58,9 @@ export async function incarcaOferta(id) {
   }
 }
 
-// Salvează poziţia gata făcută. `id` = oferta deschisă pt. modificare (PUT,
-// acelaşi număr şi cod de bare); fără id → ofertă nouă (POST).
-export async function salveaza({ nume, telefon, adresa, email, observatii, detalii, ofertaNr, id = null, pozitie }) {
+// Salvează produsele ofertei (poziţiile gata făcute, vezi js/cos.js). `id` = oferta
+// deschisă pt. modificare (PUT, acelaşi număr şi cod de bare); fără id → ofertă nouă (POST).
+export async function salveaza({ nume, telefon, adresa, email, observatii, detalii, ofertaNr, id = null, pozitii }) {
   let r;
   try {
     r = await fetch(id ? `/api/comenzi/${id}` : '/api/comenzi', {
@@ -71,7 +71,7 @@ export async function salveaza({ nume, telefon, adresa, email, observatii, detal
         observatii,
         detalii,   // livrare / agent / facturare (coloanele comenzii)
         ofertaNr,  // nr. de ofertă scris de mână
-        pozitii: [pozitie],
+        pozitii,
       }),
     });
   } catch {

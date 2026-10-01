@@ -29,6 +29,8 @@ const PASI = [
   { id: 'culoare', titlu: 'Culoare',    el: () => [grupul($('colorSwatches'))] },
   { id: 'dim',     titlu: 'Dimensiuni', el: () => [$('groupHeight'), $('groupWidth'), $('groupDoorsTracks'), $('groupRame'), $('groupUtil')] },
   { id: 'usi',     titlu: 'Uşi',        el: () => [$('groupUsi')] },
+  // mai multe produse pe o ofertă (js/cos.js) — opţional, deci nu e niciodată „pasul următor"
+  { id: 'cos',     titlu: 'Adaugă la ofertă', el: () => [$('groupCos')] },
   { id: 'oferta',  titlu: 'Ofertă',     el: () => [] },
 ];
 const TABURI = [['spec', 'Specificaţie'], ['roBom', 'Necesar'], ['roClient', 'Client'], ['roBilling', 'Facturare']];
@@ -224,6 +226,7 @@ function actualizeaza() {
     dim:     rame ? (spec?.nrRame ?? 0) > 0 : !!(meta && hGol && lGol && usiAlese),
     usi:     !!meta && !rame && !!hGol && !!lGol && usiAlese && vizibil($('groupUsi')) && !n,
     oferta:  !!meta && !n && complet,
+    cos:     document.querySelectorAll('#groupCos .cos-lista li').length > 1,
   };
   const rezumat = {
     model:   meta ? `${esc(meta.label)}${meta.sketch ? ` <img src="${esc(meta.sketch)}" alt="">` : ''}` : '',
@@ -232,6 +235,7 @@ function actualizeaza() {
       ? `${hGol} × ${lGol} mm${areUsi ? ` · ${state.doors} uşi${suprap ? ` · ${suprap} ${suprap === '1' ? 'suprapunere' : 'suprapuneri'}` : ''}` : ''}` : '',
     usi:     `${state.doors || (meta?.doors ?? 0)} uşi · ${noi} asamblate de noi`,
     oferta:  n ? `${n} ${n === 1 ? 'eroare' : 'erori'}` : `${f.lines.length} linii de facturare`,
+    cos:     `${document.querySelectorAll('#groupCos .cos-lista li').length} produse în ofertă`,
   };
   if (rame) PASI[2].titlu = 'Rânduri şi opţiuni';
 
@@ -245,7 +249,7 @@ function actualizeaza() {
     s.classList.toggle('gata', gata[p.id]);
     s.querySelector('.pas-nr').textContent = gata[p.id] ? '✓' : String(i + 1);
     s.querySelector('.pas-rez').innerHTML = gata[p.id] || p.id === 'oferta' ? rezumat[p.id] : '';
-    if (!curent && !gata[p.id] && !s.hidden) curent = p.id;
+    if (!curent && !gata[p.id] && !s.hidden && p.id !== 'cos') curent = p.id;
     s.classList.remove('curent');
   });
   if (curent) document.querySelector(`.pas[data-pas="${curent}"]`).classList.add('curent');
