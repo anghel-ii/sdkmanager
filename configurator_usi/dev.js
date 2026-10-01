@@ -6,9 +6,9 @@ async function dev() {
   execSync('node build.js', { stdio: 'inherit' });
 
   const ctx = await esbuild.context({
-    entryPoints: ['js/app.js'],
+    entryPoints: { bundle: 'js/app.js', amanunt: 'js/amanunt.js' },
     bundle:    true,
-    outfile:   'dist/bundle.js',
+    outdir:    'dist',
     platform:  'browser',
     sourcemap: true,
   });

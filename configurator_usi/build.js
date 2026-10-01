@@ -68,6 +68,16 @@ async function build() {
     platform: 'browser',
     minify:   true,
   });
+  // „Ofertă cu amănuntul" — pagina ei, fără 3D (produsele: scripts/amanunt.mjs)
+  await esbuild.build({
+    entryPoints: ['js/amanunt.js'],
+    bundle:   true,
+    outfile:  'dist/amanunt.js',
+    platform: 'browser',
+    minify:   true,
+  });
+  fs.writeFileSync('dist/amanunt.html', fs.readFileSync('amanunt.html', 'utf8')
+    .replace('<script type="module" src="js/amanunt.js"></script>', '<script src="amanunt.js"></script>'));
 
   // transforma index.html: scoate importmap + scriptul de modul, baga bundle.js
   let html = fs.readFileSync('index.html', 'utf8');

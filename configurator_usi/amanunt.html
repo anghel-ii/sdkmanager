@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ofertă cu amănuntul</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <!-- aceleaşi culori şi câmpuri de client ca în configurator -->
+  <link rel="stylesheet" href="css/main.css">
+  <style>
+    body { overflow: auto; }
+    .bara { display: flex; align-items: center; gap: 16px; padding: 12px 20px; background: var(--panel);
+            border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5; }
+    .bara h1 { font-size: 16px; font-weight: 600; flex: 1; }
+    .bara .acasa { color: var(--text); text-decoration: none; font-size: 13px; }
+    .bara .acasa:hover { color: var(--accent); }
+    .dim { color: var(--text-dim); }
+    .mic { font-size: 12px; }
+    .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+    main { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 20px; padding: 20px;
+           max-width: 1400px; margin: 0 auto; align-items: start; }
+    @media (max-width: 1000px) { main { grid-template-columns: 1fr; } }
+    .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; }
+
+    table.produse { width: 100%; border-collapse: collapse; font-size: 14px; }
+    table.produse th { text-align: left; font-size: 11px; font-weight: 500; color: var(--text-dim);
+                       padding: 0 6px 8px; border-bottom: 1px solid var(--line); }
+    table.produse td { padding: 6px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+    table.produse .nr { width: 28px; color: var(--text-dim); font-size: 12px; text-align: right; }
+    table.produse .cod { width: 150px; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12px;
+                         color: var(--text-dim); word-break: break-all; }
+    table.produse .num { width: 110px; text-align: right; }
+    table.produse .um { width: 54px; color: var(--text-dim); font-size: 12px; }
+    table.produse .x { width: 34px; text-align: center; }
+    table.produse input { width: 100%; padding: 8px 10px; font: inherit; border: 1px solid var(--line);
+                          border-radius: 6px; background: var(--bg); color: var(--text); }
+    table.produse input:focus { outline: none; border-color: var(--accent); }
+    table.produse input.cant { text-align: right; }
+    table.produse tr.transport td { color: var(--text-dim); font-style: italic; }
+    .avert { color: var(--danger); font-family: 'Inter', sans-serif; font-style: normal; }
+    /* debitarea produselor la bară — sub rândul lor */
+    table.produse tr.cu-debitare td { border-bottom: none; padding-bottom: 2px; }
+    table.produse tr.debitare td { padding-top: 0; }
+    .deb { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 8px 10px;
+           background: var(--panel-2); border: 1px dashed var(--line); border-radius: 8px; font-size: 13px; }
+    .deb-titlu { font-weight: 600; font-size: 12px; margin-right: 4px; }
+    .piesa { display: inline-flex; align-items: center; gap: 4px; }
+    table.produse .piesa input { width: 78px; padding: 5px 7px; text-align: right; }
+    table.produse .piesa input.deb-b { width: 58px; }
+    /* fără săgeţile de număr în câmpurile mici — acopereau cifrele */
+    .piesa input { -moz-appearance: textfield; appearance: textfield; }
+    .piesa input::-webkit-inner-spin-button, .piesa input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    .deb-rez { flex-basis: 100%; }
+    table.produse input[readonly] { color: var(--accent); border-style: dashed; }
+    button.deb-x { background: none; border: none; color: var(--text-dim); cursor: pointer; padding: 2px 4px; }
+    button.deb-x:hover { color: var(--danger); }
+    button.sterge { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 14px; padding: 4px 8px; }
+    button.sterge:hover { color: var(--danger); }
+
+    /* lista de sugestii — una singură, mutată sub câmpul în care scrii */
+    #sugestii { position: fixed; z-index: 20; list-style: none; max-height: 340px; overflow-y: auto;
+                background: var(--panel-2); border: 1px solid var(--accent-dim); border-radius: 8px;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, .45); padding: 4px; }
+    #sugestii[hidden] { display: none; }
+    #sugestii li { padding: 7px 10px; border-radius: 6px; cursor: pointer; }
+    #sugestii li .sub { display: block; font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+    #sugestii { overscroll-behavior: contain; }   /* rotiţa la capătul listei nu mută pagina */
+    #sugestii li[aria-selected="true"] { background: var(--accent-dim); }
+    #sugestii li[aria-selected="true"] .sub { color: #dbe7f7; }
+    #sugestii .nimic { padding: 8px 10px; color: var(--text-dim); font-size: 13px; cursor: default; }
+
+    .sub-tabel { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    .sub-tabel .spatiu { flex: 1; }
+    .sub-tabel button { width: auto; padding: 8px 12px; }
+    #erori:empty { display: none; }
+    #erori { margin-top: 10px; }
+    .bill-err { color: var(--danger); font-size: 13px; margin-top: 4px; }
+
+    /* foaia de tipar — doar la print */
+    #tipar { display: none; }
+    @media print {
+      body { background: #fff; color: #000; }
+      .bara, main, #sugestii, dialog { display: none !important; }
+      #tipar { display: block; font-size: 12px; padding: 0; }
+      #tipar h1 { font-size: 18px; margin-bottom: 2px; }
+      #tipar .cap { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+      #tipar table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+      #tipar th, #tipar td { border: 1px solid #999; padding: 5px 7px; text-align: left; }
+      #tipar th { background: #eee; font-size: 11px; }
+      #tipar td.num { text-align: right; white-space: nowrap; }
+      #tipar td.bifa { width: 28px; }
+      #tipar .deb-tipar { font-size: 11px; margin-top: 3px; font-weight: 600; }
+      #tipar table.perechi td:first-child { width: 130px; color: #444; }
+    }
+  </style>
+</head>
+<body>
+<header class="bara">
+  <!-- apare doar când pagina e servită de manager -->
+  <a class="acasa" id="linkAcasa" href="/" style="display:none">← Acasă</a>
+  <h1>Ofertă cu amănuntul</h1>
+  <span class="dim mic" id="cine"></span>
+</header>
+
+<main>
+  <section class="card">
+    <div class="group-label">PRODUSE — scrie denumirea sau codul şi alege din listă</div>
+    <table class="produse">
+      <thead><tr><th class="nr">#</th><th>Produs</th><th>Cod</th><th class="num">Cantitate</th><th>UM</th><th></th></tr></thead>
+      <tbody id="randuri"></tbody>
+    </table>
+    <div id="erori"></div>
+    <div class="sub-tabel">
+      <span class="dim mic" id="total"></span>
+      <span class="spatiu"></span>
+      <button id="btnCopyCod" class="fisa-print" type="button">Copiază coduri</button>
+      <button id="btnCopyCant" class="fisa-print" type="button">Copiază cantităţi</button>
+    </div>
+  </section>
+
+  <!-- CLIENT — aceleaşi câmpuri ca în configurator -->
+  <section class="card" id="groupClient">
+    <div class="group-label">CLIENT</div>
+    <div class="oferta-client">
+      <input type="text" id="clientNume"    placeholder="Nume client" autocomplete="off" list="clientiLista">
+      <datalist id="clientiLista"></datalist>
+      <input type="tel"  id="clientTelefon" placeholder="Telefon" autocomplete="off">
+      <input type="text" id="clientAdresa"  placeholder="Adresă" autocomplete="off">
+    </div>
+    <div class="oferta-client comanda-detalii">
+      <select id="comandaLivrare" data-c="livrare" aria-label="Mod de livrare"></select>
+      <select id="comandaPlata" data-c="plata" aria-label="Metodă de plată"></select>
+      <select id="comandaAgent" data-c="agent" aria-label="Agent"></select>
+      <input type="text" id="ofertaNr" placeholder="Nr. ofertă" autocomplete="off" style="display:none">
+    </div>
+    <div id="ofertaUI"></div>
+    <div class="client-butoane">
+      <button id="btnConfirma" class="oferta-confirma" type="button" style="display:none">Salvează oferta</button>
+      <button id="btnComanda" class="oferta-confirma" type="button" style="display:none">Salvează comanda</button>
+      <button id="btnPlata" class="oferta-confirma" type="button" style="display:none">Aşteaptă plata</button>
+      <button id="btnFisa" class="fisa-print" type="button">🖶 Printează</button>
+    </div>
+    <div id="ofertaMesaj"></div>
+  </section>
+</main>
+
+<ul id="sugestii" role="listbox" aria-label="Produse" hidden></ul>
+<section id="tipar"></section>
+
+<!-- „Salvează comanda" — ca la Acceptă din manager: plata obligatorie, avansul opţional -->
+<dialog id="dialogPlata" class="dialog-plata">
+  <form method="dialog" id="formPlata">
+    <h3>Salvează comanda</h3>
+    <label>Modalitate de plată
+      <select id="plataMod" required></select>
+    </label>
+    <label>Avans încasat (lei) — 0 dacă nu se încasează avans
+      <input id="plataAvans" type="number" min="0" step="0.01" value="0" inputmode="decimal" required>
+    </label>
+    <div class="dialog-butoane">
+      <button type="button" id="plataRenunta" class="fisa-print">Renunţă</button>
+      <button type="submit" class="oferta-confirma">Salvează comanda</button>
+    </div>
+  </form>
+</dialog>
+
+<script type="module" src="js/amanunt.js"></script>
+</body>
+</html>

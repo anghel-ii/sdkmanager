@@ -5,7 +5,7 @@
     "build": "node build.js",
     "dev": "node dev.js",
     "catalog": "node build.js --catalog-only",
-    "test": "node test/ruleaza.js",
+    "test": "node test/ruleaza.js && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON test/amanunt.test.mjs",
     "tipuri": "npx -y -p typescript@7.0.2 tsc -p jsconfig.json"
   },
   "dependencies": {

@@ -337,9 +337,11 @@ async function main() {
   // `cer` parsează singur răspunsurile application/json — game.json vine cu
   // content-type corect, deci `.date` e deja obiect.
   const gj = (await cer('GET', '/configurator/game.json')).date;
-  verifica('game.json se serveşte din dist', gj.game?.length === 4 && gj.game.some(g => g.id === 'util'), typeof gj);
+  verifica('game.json se serveşte din dist', gj.game?.length === 5 && gj.game.some(g => g.id === 'util'), typeof gj);
+  // oferta cu amănuntul n-are modele — are pagina ei (amanunt.html)
   verifica('gamele au sistem implicit',
-    gj.game?.every(g => g.implicit && g.modele?.length), JSON.stringify(gj.game?.map(g => g.id)));
+    gj.game?.every(g => g.id === 'amanunt' || (g.implicit && g.modele?.length)), JSON.stringify(gj.game?.map(g => g.id)));
+  verifica('pagina ofertei cu amănuntul se serveşte', (await cer('GET', '/configurator/amanunt.html')).stare === 200);
 
   console.log('\nScanare din atelier');
   const scan = (cod, op, extra = '') => cer('GET',
@@ -636,6 +638,18 @@ async function main() {
     const pl = await cer('POST', `/api/comenzi/${pid}/accepta`, { plata: 'proforma', avans: 0 });
     verifica('plată primită → comandă în lucru', pl.stare === 200 && pl.date.comanda.tip === 'comanda' && /^CMD-/.test(pl.date.comanda.numar_comanda));
     verifica('… şi a ieşit din Aşteaptă plata', !(await cer('GET', '/api/comenzi?tip=plata')).date.comenzi.length);
+    const cate = async tip => (await cer('GET', '/api/comenzi?tip=' + tip)).date.comenzi.length;
+    const peTaburi = await cate('oferta') + await cate('plata') + await cate('comanda') + await cate('finalizata');
+    verifica('căutarea globală: tip=toate = cele patru taburi la un loc', peTaburi > 1 && await cate('toate') === peTaburi, `${peTaburi}`);
+    // oferta cu amănuntul (configurator_usi/amanunt.html): produse la bucată, fără gol şi uşi
+    const amanunt = linii => ({ sistem: 'amanunt', eticheta: 'Ofertă cu amănuntul', finisaj: '', latime: 0, inaltime: 0, nrUsi: 1,
+      config: { system: 'amanunt', amanunt: linii }, linii: { facturare: linii, necesar: [], client: [], sticla: [] } });
+    const am = await cer('POST', '/api/comenzi', { client: { nume: 'Client Amanunt' }, ofertaNr: 'NM-AM',
+      pozitii: [amanunt([{ cod: 'SM127', denumire: 'Cuplaj sertar', um: 'set', cantitate: 4 }])] });
+    verifica('ofertă cu amănuntul: fără cote → 201', am.stare === 201, JSON.stringify(am.date));
+    verifica('… dar nu fără produse', (await cer('POST', '/api/comenzi', { client: { nume: 'X' }, pozitii: [amanunt([])] })).stare === 400);
+    verifica('… iar o uşă tot cere cotele', (await cer('POST', '/api/comenzi', { client: { nume: 'X' },
+      pozitii: [{ ...pozitie('confortVerona', 'V', 2, 0) }] })).stare === 400);
   }
 
   console.log('\nClienţi — copia bazei de pe Cloudflare');

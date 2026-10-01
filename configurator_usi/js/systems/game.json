@@ -8,7 +8,8 @@
     "Sistem nou: adaugă-l în js/systems/registry.js ŞI în lista `modele` de aici.",
     "  tabel : true  → două coloane (Deschidere Totală ↔ Parţială), perechi pe rând",
     "          false → listă simplă, două modele pe rând",
-    "  implicit = sistemul pe care se deschide gama când o alegi"
+    "  implicit = sistemul pe care se deschide gama când o alegi",
+    "amanunt (fără modele): ?gama=amanunt duce la amanunt.html — vezi initUI în js/ui.js"
   ],
   "game": [
     {
@@ -144,6 +145,12 @@
           "label": "Soft"
         }
       ]
+    },
+    {
+      "id": "amanunt",
+      "label": "Ofertă cu amănuntul",
+      "descriere": "Sertare, mânere, accesorii — produsele de vânzare din NeoManager",
+      "modele": []
     }
   ]
 }

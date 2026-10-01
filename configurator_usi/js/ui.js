@@ -15,6 +15,7 @@ import { activeazaCampuri } from './campuri.js';
 import { LIVRARE, AGENTI, PLATI, detaliiComanda } from './lib/comun/comanda.js';
 import { stareRameGoala } from './lib/rame/rame.js';
 import { renderUtil } from './ui_util.js';
+import { initSugestiiClienti } from './sugestii-clienti.js';
 import { stareUtilGoala } from './lib/util/util.js';
 
 // Toate accesele la DOM sunt tolerante la elemente lipsă (HTML din cache vechi).
@@ -855,46 +856,6 @@ function initDetaliiComanda() {
   }
 }
 
-// ── Sugestii de clienţi (baza din manager) ──────────────────────────────────
-// Câmpul rămâne LIBER: lista doar propune — se vinde şi celor care nu sunt în
-// ea (userul, 2026-09-30). La ALEGEREA din listă se completează telefonul,
-// adresa şi agentul clientului; tastat de mână nu se completează nimic.
-function initSugestiiClienti() {
-  const camp = $('clientNume'), lista = $('clientiLista');
-  if (!camp || !lista) return;
-  let gasiti = [], completat = null;   // completat = ce am pus noi la ultima alegere
-  const CONTACT = ['clientTelefon', 'clientAdresa'];
-  // „Catalin Cucolas" din bază = „Cucolas Catalin" din lista de agenţi
-  const cuvinte = t => String(t ?? '').toLowerCase().split(/\s+/).sort().join(' ');
-  camp.addEventListener('input', async e => {
-    // alegerea din listă nu e tastare: fără inputType (Chrome) sau insertReplacementText (Firefox)
-    if (!e.inputType || e.inputType === 'insertReplacementText') {
-      // ponytail: la nume identice (13 din 5300) ia primul; listă proprie în loc de <datalist> dacă deranjează
-      const c = gasiti.find(c => c.nume === camp.value);
-      if (!c) return;
-      completat = { nume: c.nume,
-        clientTelefon: c.telefon_delegat || c.telefon_administrator || '',
-        clientAdresa:  [c.adresa_livrare || c.adresa_sediu, c.localitate, c.judet].filter(Boolean).join(', ') };
-      for (const id of CONTACT) $(id).value = completat[id];
-      const agent = AGENTI.find(a => cuvinte(a) === cuvinte(c.agent));
-      if (agent) { $('comandaAgent').value = agent; state.comanda.agent = agent; rebuild(); }
-      return;
-    }
-    // alt nume decât cel ales: telefonul / adresa puse de noi nu mai sunt ale lui
-    // (ce a scris omul de mână rămâne)
-    if (completat && !camp.value.startsWith(completat.nume)) {
-      for (const id of CONTACT) if ($(id).value === completat[id]) $(id).value = '';
-      completat = null;
-    }
-    const q = camp.value.trim();
-    const clienti = await oferta.cautaClienti(q);
-    if (camp.value.trim() !== q) return;   // între timp s-a mai tastat
-    gasiti = clienti;
-    lista.innerHTML = clienti.map(c =>
-      `<option value="${esc(c.nume)}" label="${esc([c.localitate, c.cui].filter(Boolean).join(' · '))}"></option>`).join('');
-  });
-}
-
 // ── Ofertă (coş + confirmare) ───────────────────────────────────────────────
 // Panoul apare DOAR când configuratorul e servit de managerul de comenzi.
 // Deschis direct de pe disc, oferta.js raportează 'fara-server' şi nu randăm
@@ -1151,6 +1112,10 @@ export async function initUI() {
   // Pagina principală a managerului trimite `?gama=suspendata|confort|rame|util`;
   // „Modifică oferta" din manager trimite `?oferta=<id>`.
   const params = new URLSearchParams(location.search);
+  // Oferta cu amănuntul are pagina ei (amanunt.html): acolo duc şi „Ofertă nouă",
+  // şi „Modifică oferta" / „Fişă" din manager când oferta e cu amănuntul.
+  const laAmanunt = o => o.pozitii?.[0]?.sistem === 'amanunt' && (location.replace('amanunt.html' + location.search), true);
+  if (params.get('gama') === 'amanunt') return location.replace('amanunt.html');
   const gama = gamaDupaId(params.get('gama'));
   gamaActiva = gama?.id ?? null;
 
@@ -1159,6 +1124,7 @@ export async function initUI() {
   let eroareIncarcare = null;
   if (params.get('oferta')) {
     const o = await oferta.incarcaOferta(params.get('oferta'));
+    if (laAmanunt(o)) return;
     const cfg = o.pozitii?.[0]?.config;
     if (o.eroare || !cfg) eroareIncarcare = o.eroare || 'Oferta n-are configuraţie.';
     else if (o.comanda.tip !== 'oferta') eroareIncarcare = `${o.comanda.numar_comanda || o.comanda.numar} a fost acceptată — nu se mai modifică.`;
@@ -1181,6 +1147,7 @@ export async function initUI() {
   // listele îngheţate la salvare; fişa se deschide singură la final.
   if (params.get('fisa')) {
     const o = await oferta.incarcaOferta(params.get('fisa'));
+    if (laAmanunt(o)) return;
     const poz = o.pozitii?.[0];
     if (o.eroare || !poz?.config) eroareIncarcare = o.eroare || 'Comanda n-are configuraţie.';
     else {
@@ -1252,7 +1219,8 @@ export async function initUI() {
   $('btnComanda')?.addEventListener('click', () => trimiteOferta('comanda'));
   $('btnPlata')?.addEventListener('click', () => trimiteOferta('plata'));
   initDetaliiComanda();
-  initSugestiiClienti();
+  // la alegerea unui client din listă, agentul lui trece în selectorul de agent
+  initSugestiiClienti(agent => { $('comandaAgent').value = agent; state.comanda.agent = agent; rebuild(); });
   // CLEAR PAGE — configuraţie nouă de la zero: reîncărcarea paginii (cu acelaşi
   // ?gama=) readuce exact ecranul iniţial gol, fără stare rămasă pe undeva.
   $('btnClear')?.addEventListener('click', () => location.reload());

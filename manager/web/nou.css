@@ -29,11 +29,12 @@ body.ui-nou .bara-lista { position: relative; }
 body.ui-nou #taburiSus { padding: 16px 16px 12px; }
 @media (min-width: 1100px) { body.ui-nou #taburiSus { padding: 24px 24px 12px; } }
 body.ui-nou #cauta { width: auto; max-width: 420px; }
-body.ui-nou .bara-lista > #cauta, body.ui-nou .bara-lista > #sortare { align-self: flex-start; }
+body.ui-nou .bara-lista > #cauta, body.ui-nou .bara-lista > #unde, body.ui-nou .bara-lista > #sortare { align-self: flex-start; }
 @media (min-width: 700px) {
   body.ui-nou .bara-lista { display: grid; grid-template-columns: minmax(0, 420px) 1fr auto; }
   body.ui-nou .bara-lista .taburi { grid-column: 1 / -1; }
   body.ui-nou .bara-lista > #cauta { grid-column: 1; }
+  body.ui-nou .bara-lista > #unde { grid-column: 2; justify-self: start; align-self: center; }
   body.ui-nou .bara-lista > #sortare { grid-column: 3; align-self: center; }
 }
 

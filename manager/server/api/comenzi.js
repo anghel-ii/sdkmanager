@@ -63,8 +63,11 @@ function validează(corp) {
   const p = pozitii[0];
   if (!p || typeof p !== 'object')            return gresit('Configuraţie lipsă.');
   if (!String(p.sistem || '').trim())         return gresit('Sistemul lipseşte.');
-  if (!Number.isFinite(+p.latime)  || +p.latime  <= 0) return gresit('Lăţime invalidă.');
-  if (!Number.isFinite(+p.inaltime)|| +p.inaltime<= 0) return gresit('Înălţime invalidă.');
+  // oferta cu amănuntul (configurator_usi/amanunt.html): produse la bucată, fără gol
+  const faraCote = p.sistem === 'amanunt';
+  if (!faraCote && (!Number.isFinite(+p.latime)  || +p.latime  <= 0)) return gresit('Lăţime invalidă.');
+  if (!faraCote && (!Number.isFinite(+p.inaltime)|| +p.inaltime<= 0)) return gresit('Înălţime invalidă.');
+  if (faraCote && !p.linii?.facturare?.length) return gresit('Oferta n-are niciun produs.');
 
   const nrUsi = +p.nrUsi;
   // gama rame: numărul de rame — pot fi zeci într-o comandă
@@ -219,6 +222,7 @@ const FILTRE = {
   plata:      "c.tip = 'plata'",
   comanda:    "c.tip = 'comanda' AND c.finalizat_la IS NULL",
   finalizata: "c.tip = 'comanda' AND c.finalizat_la IS NOT NULL",
+  toate:      '1',   // căutarea globală din manager: toate stările la un loc
 };
 
 // Ultima operaţie scanată a comenzii — coloana „Status" din liste.
@@ -251,7 +255,7 @@ function listeaza(ctx) {
   const filtru = FILTRE[tab] ?? FILTRE.oferta;
 
   const randuri = db().prepare(`
-    SELECT c.id, c.numar, c.numar_comanda, c.oferta_nr, c.tip, c.client_nume, c.creat_la, c.confirmat_la, c.finalizat_la,
+    SELECT c.id, c.numar, c.numar_comanda, c.oferta_nr, c.tip, c.client_nume, c.client_telefon, c.creat_la, c.confirmat_la, c.finalizat_la,
            c.factura_nr, c.facturat_la, c.plata, c.avans,
            u.nume AS creat_de_nume,
            (SELECT p.eticheta FROM pozitie p WHERE p.comanda_id = c.id ORDER BY p.idx LIMIT 1) AS sistem,
