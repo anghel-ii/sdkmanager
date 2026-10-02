@@ -186,6 +186,8 @@ $('preia').addEventListener('click', async () => {
   const r = await api('/api/eu');
   if (!r) return;
   eu = (await r.json()).utilizator;
+  // biroul n-are pagina Clienţi (nici API-ul ei) — înapoi la pagina principală
+  if (eu.rol === 'birou') { location.replace('/'); return; }
   $('cine').textContent = eu.nume;
   await incarca();
   incarcaPropuneri();

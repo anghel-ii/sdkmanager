@@ -754,8 +754,10 @@ async function main() {
     verifica('acţiune necunoscută → 404', (await cer('POST', '/api/clienti/propuneri/7/sterge')).stare === 404);
     cookie = null;
     await cer('POST', '/api/login', { user: 'maria', parola: 'parola-maria-1' });
-    verifica('biroul vede propunerile, dar nu aprobă (403)', (await cer('GET', '/api/clienti/propuneri')).date.propuneri?.length === 2
-      && (await cer('POST', '/api/clienti/propuneri/7/aproba')).stare === 403);
+    verifica('biroul n-are pagina Clienţi: nici lista, nici propunerile, nici aprobarea (403)',
+      (await cer('GET', '/api/clienti')).stare === 403 && (await cer('GET', '/api/clienti/propuneri')).stare === 403
+      && (await cer('POST', '/api/clienti/preia')).stare === 403 && (await cer('POST', '/api/clienti/propuneri/7/aproba')).stare === 403);
+    verifica('… dar are sugestiile din configurator', (await cer('GET', '/api/clienti/cauta?q=an')).stare === 200);
     cookie = null;
     await cer('POST', '/api/login', { user: 'ion', parola: 'parola-noua-1' });
     const ap = await cer('POST', '/api/clienti/propuneri/7/aproba');

@@ -137,7 +137,7 @@
   <a href="/" class="nume" style="color:inherit; text-decoration:none">Manager comenzi</a>
   <button id="ofertaNoua" class="primar">+ OFERTĂ NOUĂ</button>
   <a href="/sticla" class="buton" id="linkSticla">Comandă sticlă <span class="insigna" id="nrSticla"></span></a>
-  <a href="/clienti" class="buton" title="Clienţii; numărul = trimise de agenţi, de aprobat">Clienţi <span class="insigna" id="nrClienti"></span></a>
+  <a href="/clienti" class="buton" id="linkClienti" hidden title="Clienţii; numărul = trimise de agenţi, de aprobat">Clienţi <span class="insigna" id="nrClienti"></span></a>
   <a href="/admin" class="buton" id="linkAdmin" hidden>Utilizatori</a>
   <span class="spatiu"></span>
   <span class="dim mic" id="cine"></span>
@@ -866,6 +866,7 @@ function asculta() {
   eu = (await r.json()).utilizator;
   $('cine').textContent = eu.nume;
   $('linkAdmin').hidden = eu.rol !== 'admin';   // dashboard-ul de conturi — doar admin
+  $('linkClienti').hidden = eu.rol === 'birou'; // clienţii — nu şi biroul (userul, 2026-10-02)
   actualizeazaSticla();
   const pr = await api('/api/preferinte');
   if (pr?.ok) sortare = (await pr.json()).sortare ?? 'data';

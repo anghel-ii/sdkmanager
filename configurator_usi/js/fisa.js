@@ -4,7 +4,7 @@ import { currentSpec, currentBom, currentBilling, currentClientPanels } from './
 import { finishesOf, familia } from './familii.js';
 import { findGeam } from './lib/comun/geam.js';
 import { suprapuneriEfective, PROFIL_H_3D } from './lib/confort/index.js';
-import { ASAMBLARE, FARA_GAURIRE, cotaGauri, MARGINE_GAURA_MM } from './lib/rame/rame.js';
+import { ASAMBLARE, FARA_GAURIRE, cotaGauri } from './lib/rame/rame.js';
 import { detaliiComanda, plataText } from './lib/comun/comanda.js';
 import JsBarcode from 'jsbarcode';
 
@@ -214,21 +214,24 @@ function debitareRame(spec) {
         <td class="deb-buc">${x.buc} buc</td>${cuGauri ? `<td class="deb-buc">${x.gauri}</td>` : ''}
         <td class="deb-mm">${x.geamH} × ${x.geamL} mm</td><td class="bifa"></td></tr>`).join('')}</tbody>
     </table>`;
-  // în dreapta tabelului ramelor: etapele din atelier + semnătura colegului
-  const semnaturi = `
-    <table class="deb-semnaturi">
-      <thead><tr><th>Operaţie</th><th>Semnătură</th></tr></thead>
-      <tbody>${['Debitare', 'Gaurire', 'Garnitura', 'Asamblare', 'Coletare']
-        .map(op => `<tr><td class="deb-et">${op}</td><td></td></tr>`).join('')}</tbody>
-    </table>`;
   return `<div class="debitare-rame">
-    <div class="deb-sus">${rame}${semnaturi}</div>
+    <div class="deb-sus">${rame}</div>
     ${e842
       ? sectiune('842', randuri('VERTICALA 842', vert)) +
         sectiune('841', randuri('VERTICALA 841', vert) + randuri('ORIZONTALA 841', oriz))
       : sectiune(spec.model, randuri(`VERTICALA ${spec.model}`, vert) + randuri(`ORIZONTALA ${spec.model}`, oriz))}
   </div>`;
 }
+
+// Rame: etapele din atelier + semnătura colegului — în capul fişei, în dreapta,
+// sub client (userul, 2026-10-02: „vine mai sus"; înainte stătea lângă tabelul ramelor).
+// Pe orizontală — operaţiile pe un rând, semnăturile dedesubt — ca să nu lungească capul.
+const OPERATII_RAME = ['Debitare', 'Gaurire', 'Garnitura', 'Asamblare', 'Coletare'];
+const semnaturiRame = () => `
+    <table class="deb-semnaturi">
+      <thead><tr>${OPERATII_RAME.map(op => `<th>${op}</th>`).join('')}</tr></thead>
+      <tbody><tr>${OPERATII_RAME.map(() => '<td></td>').join('')}</tr></tbody>
+    </table>`;
 
 // ── Schiţa de găurire pt. CNC — pe verso, la rame (userul, 2026-10-02) ──────
 // Câte un desen tehnic pe fiecare rând de rame (o mărime): conturul ramei la
@@ -291,22 +294,13 @@ function schiteGaurire(spec, rame) {
   const n = spec.pline.length, col = Math.min(n, 3), randuri = Math.ceil(n / col);
   const marime = { lat: (192 - 8 * (col - 1)) / col, inalt: Math.max(45, Math.min(95, 125 / randuri - 16)) };
   const desene = spec.pline.map(x => {
-    const cote = cotaGauri(x.h, x.gauri, rame.gaurire);
-    const nota = cote?.length
-      ? `Găuri, de sus: <b>${cote.map(virgula1).join(' · ')}</b> mm`
-      : `${x.gauri ? `${x.gauri} găuri — ` : ''}cotele: după schiţa clientului<div class="gaur-mana"></div>`;
+    // strict desenul, cu cotele ramei şi bucăţile deasupra (userul, 2026-10-02: fără explicaţii)
     return `<div class="gaur-desen">
-      <div class="gaur-cap">Rândul ${x.i + 1} · <b>${x.h} × ${x.l} mm</b> · ${x.buc} buc${cote?.length ? ` · ${cote.length} găuri / ramă` : ''}</div>
-      ${desenGaurire(x, spec.m.fata, cote, marime)}
-      <div class="gaur-nota">${nota}</div>
+      <div class="gaur-cap"><b>${x.h} × ${x.l} mm</b> · ${x.buc} buc</div>
+      ${desenGaurire(x, spec.m.fata, cotaGauri(x.h, x.gauri, rame.gaurire), marime)}
     </div>`;
   }).join('');
-  return `<div class="schite-gaurire">
-    <h2>Schiţă găurire — ${esc(rame.gaurire)}${rame.balama ? ` · balama ${esc(rame.balama)}` : ''}${rame.placuta ? ` · plăcuţă ${esc(rame.placuta)}` : ''}</h2>
-    <div class="gaur-legenda">Cote în mm, la centrul găurii, măsurate de la marginea de SUS a ramei; găurile pe profilul
-      balamalelor (desenat în stânga). Prima şi ultima gaură la ${MARGINE_GAURA_MM} mm de margini. Linia punctată = faţa profilului.</div>
-    <div class="gaur-lista">${desene}</div>
-  </div>`;
+  return `<div class="schite-gaurire"><div class="gaur-lista">${desene}</div></div>`;
 }
 
 // ── Codul de bare al comenzii (Code128) — UNUL pe comandă, oricâte uşi / rame
@@ -447,6 +441,10 @@ export function deschideFisa(client, oferta = null, salvate = null) {
     ['Geam / oglindă',    rame.asamblare === 'noi' ? (findGeam(rame.geam)?.denumire ?? '—') : 'al clientului'],
     ['Cote găurire',      rame.gaurire ?? '—'],
     ['Vopsire cod RAL',   rame.ral || null],
+    // detaliile comenzii — la rame în acelaşi tabel (userul, 2026-10-02), ca fişa să fie mai compactă
+    ['Mod de livrare',    detaliiComanda(state).livrare ?? '—'],
+    ['Metodă de plată',   plataText(detaliiComanda(state).plata) ?? '—'],
+    ['Agent',             detaliiComanda(state).agent ?? '—'],
   ], 'cote') : tabelMic([
     ['H gol',                `${spec.opening.h} mm`],
     ['L gol',                `${spec.opening.w} mm`],
@@ -507,12 +505,13 @@ export function deschideFisa(client, oferta = null, salvate = null) {
       `<div class="obs-camp"><div class="obs-et">${c}</div></div>`).join('')}
   </div>`;
 
-  // Rame — pe spate, sus: 3 rubrici de observaţii scrise de mână (2026-09-21)
+  // Rame — 3 rubrici de observaţii scrise de mână (2026-09-21); pe FAŢĂ, jos, umplu
+  // restul foii (userul, 2026-10-02 — înainte erau pe verso)
   const observatiiRame = `
-    <table class="obs-rame">
-      <thead><tr>${['Detalii geam/oglinda', 'Detalii facturare', 'Detalii livrare'].map(t => `<th>${t}</th>`).join('')}</tr></thead>
-      <tbody><tr><td></td><td></td><td></td></tr></tbody>
-    </table>`;
+  <div class="obs-rame">
+    ${['Detalii geam/oglinda', 'Detalii facturare', 'Detalii livrare'].map(c =>
+      `<div class="obs-camp"><div class="obs-et">${c}</div></div>`).join('')}
+  </div>`;
 
   const html = `<!DOCTYPE html>
 <html lang="ro"><head><meta charset="UTF-8">
@@ -681,32 +680,27 @@ export function deschideFisa(client, oferta = null, salvate = null) {
   table.deb-rame .bifa { width: 8mm; }
   .deb-sus { display: flex; gap: 3mm; align-items: flex-start; }
   .deb-sus table.deb-rame { flex: 1; width: auto; }
-  table.deb-semnaturi { flex: 0 0 54mm; width: 54mm; margin-top: 0; font-size: 13px; }
-  table.deb-semnaturi td, table.deb-semnaturi th { padding: 1.2mm 2.5mm; height: 8mm; }
-  table.deb-semnaturi td:first-child { width: 24mm; }
+  table.deb-semnaturi { width: 100%; table-layout: fixed; font-size: 12px; }
+  table.deb-semnaturi th { padding: 1mm; text-align: center; background: #eee; }
+  table.deb-semnaturi td { height: 13mm; }
   table.deb-rame td, table.deb-rame th { white-space: nowrap; }
-  table.obs-rame { margin-top: 0; margin-bottom: 4mm; }
-  table.obs-rame { table-layout: fixed; }
-  table.obs-rame th { font-size: 13px; background: #eee; }
-  table.obs-rame td { height: 60mm; }
   /* codul de bare al comenzii — bandă îngustă deasupra capului de pagină,
      aliniată la dreapta; restul feţei rămâne aşezat exact ca înainte */
   .bara-cod { display: flex; justify-content: flex-end; align-items: center; gap: 4mm; margin: -2mm 0 2mm; }
   .numar-oferta { font-size: 15px; font-weight: 700; font-family: monospace; letter-spacing: .03em; }
 
   /* schiţa de găurire pt. CNC (verso, rame) */
-  .schite-gaurire h2 { margin-top: 0; }
-  .gaur-legenda { font-size: 10.5px; color: #444; margin-bottom: 3mm; }
   .gaur-lista { display: flex; flex-wrap: wrap; gap: 4mm 8mm; align-items: flex-start; margin-bottom: 4mm; }
-  /* lăţimea = a desenului; titlul şi nota se rup pe rânduri, nu lăţesc coloana */
+  /* lăţimea = a desenului (cotele de deasupra îl pot lăţi puţin) */
   .gaur-desen { break-inside: avoid; width: min-content; }
-  .gaur-cap, .gaur-nota { min-width: 40mm; }
-  .gaur-cap { font-size: 12px; margin-bottom: 1mm; }
+  .gaur-cap { min-width: 30mm; }
+  .gaur-cap { font-size: 14px; margin-bottom: 1mm; white-space: nowrap; }
   .gaur-desen svg { display: block; font-family: 'Segoe UI', Arial, sans-serif; }
-  .gaur-nota { font-size: 12px; margin-top: 1mm; }
-  .gaur-mana { height: 14mm; border-bottom: 1px solid #999; }
-  /* cu schiţa de găurire pe verso, rubricile de observaţii sunt mai joase */
-  .schite-gaurire + table.obs-rame td { height: 22mm; }
+  /* rame: rubricile de observaţii — un rând de 3 căsuţe care umple restul feţei */
+  .obs-rame { display: flex; gap: 3mm; min-height: 25mm; margin-top: 3mm; }
+  .obs-rame .obs-camp { flex: 1; }
+  .fata.intinde .obs-rame { flex: 1; }
+  .fata.intinde .jos:has(+ .obs-rame) { flex: 0 0 auto; }
   .obs-camp { flex: 1; min-height: 12mm; border: 1.5px solid #000; border-radius: 2mm; padding: 1.5mm 2.5mm; }
   .obs-et { font-size: 14px; font-weight: 700; letter-spacing: .05em; }
 
@@ -728,7 +722,7 @@ export function deschideFisa(client, oferta = null, salvate = null) {
       </div>
       ${telefon || adresa ? `<div class="data-mica">${[telefon && `Tel. ${esc(telefon)}`, adresa && esc(adresa)].filter(Boolean).join(' · ')}</div>` : ''}
       <div class="data-mica">Data: ${acum()}</div>
-      ${detalii}
+      ${rame ? semnaturiRame() : detalii}
       ${montaj}
     </div>
   </div>
@@ -738,14 +732,16 @@ export function deschideFisa(client, oferta = null, salvate = null) {
     : rame ? debitareRame(spec) : blocDesene(sys, spec)}
 
   <div class="jos">${necesarHtml}${eRame ? '' : campuriAtelier}</div>
+  ${eRame ? observatiiRame : ''}
 
   </div>
 
   <div class="spate">
-    <div class="antet-mic"><strong>${esc(modelScurt)} — ${esc(finisajLabel)}</strong>${oferta ? ` · <strong>${esc(oferta.numar)}</strong>` : ''}
-      ${client ? ` · ${esc(client)}` : ''} · ${acum()}</div>
+    <!-- la rame versoul începe direct cu schiţa de găurire, fără antet (userul, 2026-10-02) -->
+    ${rame ? '' : `<div class="antet-mic"><strong>${esc(modelScurt)} — ${esc(finisajLabel)}</strong>${oferta ? ` · <strong>${esc(oferta.numar)}</strong>` : ''}
+      ${client ? ` · ${esc(client)}` : ''} · ${acum()}</div>`}
 
-    ${rame ? schiteGaurire(spec, rame) + observatiiRame : ''}
+    ${rame ? schiteGaurire(spec, rame) : ''}
     ${rame || util ? '' : tabelDimensiuniPanouri(spec)}
 
     ${tabel(['Cod', 'Denumire', 'Cant.'],

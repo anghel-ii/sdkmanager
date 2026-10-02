@@ -115,6 +115,9 @@ const agenti = laCloudflare('/api/agenti');
 // pe Cloudflare stau ca propuneri şi abia aprobarea le scrie în baza de clienţi (de
 // unde le preia copia de aici). Lista o vede oricine; aprobă conducerea sau adminul.
 const APROBA = ['admin', 'conducere'];
+// Pagina Clienţi (lista, preluarea, propunerile) — nu şi biroul (userul, 2026-10-02).
+// Sugestiile din configurator (/api/clienti/cauta) rămân pt. toţi: biroul face oferte.
+const CLIENTI = ['admin', 'conducere'];
 // Ultima listă citită de pe Cloudflare: o reîmprospătează serverul din minut în minut
 // (nu fiecare pagină deschisă) şi anunţă paginile când se schimbă numărul — insigna de
 // pe „Clienţi" (în /api/sumar) şi secţiunea „De aprobat" se actualizează singure.
@@ -170,10 +173,10 @@ async function puneCheie({ req, res }) {
 module.exports = {
   preia, porneste, nrDeAprobat,
   rute: [
-    ['GET',  '/api/clienti',       { handler: lista }],
+    ['GET',  '/api/clienti',       { handler: lista, rol: CLIENTI }],
     ['GET',  '/api/clienti/cauta', { handler: cauta }],
-    ['POST', '/api/clienti/preia', { handler: preiaAcum }],
-    ['GET',  '/api/clienti/propuneri', { handler: propuneri }],
+    ['POST', '/api/clienti/preia', { handler: preiaAcum, rol: CLIENTI }],
+    ['GET',  '/api/clienti/propuneri', { handler: propuneri, rol: CLIENTI }],
     ['POST', '/api/clienti/propuneri/:id/:actiune', { handler: decide, rol: APROBA }],
     ['PUT',   '/api/clienti/cheie', { handler: puneCheie, rol: 'admin' }],
     ['GET',   '/api/agenti',       { handler: agenti, rol: 'admin' }],
