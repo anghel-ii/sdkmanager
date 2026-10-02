@@ -94,7 +94,7 @@
   </div>
   <div id="mesaj" role="status"></div>
   <p class="dim ajutor">Scrii direct în celule (Enter = rândul de jos). Când ieşi de pe un rând, modificarea se
-    trimite spre aprobare — până e aprobată, rândul e galben. Client nou: ultimul rând, cu nume şi un telefon sau e-mail.
+    trimite spre aprobare — până e aprobată, rândul e galben. Client nou: primul rând, cu nume şi un telefon sau e-mail.
     Reducerile: doar numărul (15 = 15%).</p>
   <div class="foaie"><table id="tabel"></table></div>
 </section>
@@ -169,7 +169,7 @@ async function incarca() {
 }
 
 // ── Tabelul ─────────────────────────────────────────────────────────────────
-// `k` = poziţia în `clienti`; rândul gol de la coadă (client nou) are k = 'nou'.
+// `k` = poziţia în `clienti`; rândul gol de sus (client nou, userul 2026-10-02) are k = 'nou'.
 const valoriRand = c => {
   const { pe, alte } = desfaReduceri(c?.discounturi);
   return { ...Object.fromEntries(COLOANE.map(([k]) => [k, c?.[k] ?? ''])), ...Object.fromEntries(GAME.map(g => [`g:${g}`, pe[g] ?? ''])), alte };
@@ -202,7 +202,7 @@ function randeaza() {
       <tr class="coloane">${COLOANE.map(([k, t]) => `<th${k === 'nume' ? ' class="nume"' : ''}>${t}</th>`).join('')}
         ${GAME.map(g => `<th class="gama">${g}</th>`).join('')}<th>Alte</th><th>Stare</th></tr>
     </thead>
-    <tbody>${arataK.map(k => randHtml(clienti[k], k)).join('')}${randHtml(null, 'nou')}</tbody>`;
+    <tbody>${randHtml(null, 'nou')}${arataK.map(k => randHtml(clienti[k], k)).join('')}</tbody>`;
   salvat.clear();
   $('tabel').querySelectorAll('tbody tr').forEach(tr => salvat.set(tr.dataset.k, JSON.stringify(citesteRand(tr))));
 }
