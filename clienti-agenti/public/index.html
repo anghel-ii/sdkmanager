@@ -6,122 +6,145 @@
 <meta name="robots" content="noindex">
 <title>Clienţii mei</title>
 <style>
-  :root { --bg: #14171c; --panel: #1d2127; --line: #2e343d; --text: #e6e8eb; --dim: #9aa3ad;
-          --accent: #4da3ff; --accent-dim: #1f6fd1; --ok: #4caf7d; --danger: #e5605a; }
+  :root { --bg: #14171c; --panel: #1d2127; --panel-2: #23282f; --line: #2e343d; --text: #e6e8eb; --dim: #9aa3ad;
+          --accent: #4da3ff; --accent-dim: #1f6fd1; --ok: #4caf7d; --danger: #e5605a; --astept: #f0c65a; }
   * { box-sizing: border-box; margin: 0; }
-  body { background: var(--bg); color: var(--text); font: 16px/1.4 system-ui, sans-serif; padding: 16px; }
-  main { max-width: 560px; margin: 0 auto; }
+  body { background: var(--bg); color: var(--text); font: 15px/1.4 system-ui, sans-serif; }
   [hidden] { display: none !important; }
-  h1 { font-size: 1.3rem; }
-  .dim { color: var(--dim); font-size: .9rem; }
-  .cap { display: flex; align-items: center; gap: 10px; margin: 4px 0 16px; }
-  .cap .spatiu { flex: 1; }
-  form { display: grid; gap: 14px; }
-  label { display: grid; gap: 6px; font-size: .9rem; color: var(--dim); }
-  label.rand { display: flex; align-items: center; gap: 10px; color: var(--text); margin-top: -6px; }
-  label.rand input { width: auto; }
-  input, textarea, select { font: inherit; padding: 12px; border-radius: 8px; border: 1px solid var(--line);
-                            background: var(--panel); color: var(--text); width: 100%; }
-  input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); border-color: transparent; }
-  button { font: inherit; font-weight: 600; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--line);
+  h1 { font-size: 1.25rem; }
+  .dim { color: var(--dim); font-size: .88rem; }
+  input, button { font: inherit; }
+  input { padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--text); width: 100%; }
+  input:focus { outline: 2px solid var(--accent); border-color: transparent; }
+  button { font-weight: 600; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line);
            background: var(--panel); color: var(--text); cursor: pointer; }
   button.primar { background: var(--accent-dim); border-color: var(--accent-dim); color: #fff; }
-  button:disabled { opacity: .6; }
-  .butoane { display: flex; gap: 10px; }
-  .butoane button { flex: 1; }
-  #mesaj { padding: 12px; border-radius: 8px; margin-bottom: 14px; }
+  #mesaj { padding: 10px 12px; border-radius: 8px; margin: 0 16px 12px; }
   #mesaj:empty { display: none; }
   #mesaj.ok { background: #1c3a2a; color: var(--ok); }
   #mesaj.eroare { background: #3d1f1f; color: var(--danger); }
-  #cauta { margin-bottom: 12px; }
-  #banda { background: #4a3a12; color: #f0c65a; padding: 10px 12px; border-radius: 8px; margin-bottom: 14px; font-size: .9rem; }
-  ul { list-style: none; padding: 0; display: grid; gap: 8px; }
-  li button { width: 100%; text-align: left; font-weight: 400; padding: 12px; }
-  li b { display: block; font-weight: 600; }
-  /* trimis, dar încă neaprobat în manager */
-  .astept { display: inline-block; margin-top: 4px; padding: 2px 8px; border-radius: 999px; font-size: .78rem;
-            background: #4a3a12; color: #f0c65a; }
-  #notaAprobare { background: #4a3a12; color: #f0c65a; padding: 10px 12px; border-radius: 8px; font-size: .9rem; }
+  #banda { background: #4a3a12; color: var(--astept); padding: 10px 16px; font-size: .9rem; }
+
+  /* 1. login */
+  #ecranLogin { max-width: 420px; margin: 0 auto; padding: 24px 16px; }
+  #fLogin { display: grid; gap: 14px; }
+  #fLogin label { display: grid; gap: 6px; font-size: .9rem; color: var(--dim); }
+
+  /* 2. tabelul, ca un Excel: fiecare celulă se scrie direct; rândul se trimite la ieşirea din el */
+  #ecranTabel { display: flex; flex-direction: column; height: 100vh; }
+  .cap { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 16px; }
+  .cap .spatiu { flex: 1; }
+  #cauta { width: 280px; max-width: 100%; }
+  .ajutor { padding: 0 16px 10px; }
+  .foaie { flex: 1; overflow: auto; border-top: 1px solid var(--line); }
+  /* lăţimea = suma coloanelor (pusă din JS) — tabelul curge spre dreapta, ca în Excel */
+  table { border-collapse: separate; border-spacing: 0; font-size: 14px; table-layout: fixed; }
+  th, td { border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 6px 8px;
+           white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 0; }
+  th { position: sticky; top: 0; z-index: 2; background: var(--panel-2); font-size: 12px; font-weight: 600;
+       color: var(--dim); text-align: left; }
+  th.gama { color: var(--accent); text-align: center; }
+  thead tr.grup th { top: 0; text-align: center; color: var(--accent); }
+  thead tr.coloane th { top: 29px; }
+  td { background: var(--bg); }
+  /* prima coloană (numele) rămâne pe loc la scroll în dreapta */
+  th.nume, td.nume { position: sticky; left: 0; z-index: 1; font-weight: 600; border-right: 2px solid var(--line); }
+  th.nume { z-index: 3; }
+  td[contenteditable] { cursor: text; }
+  td[contenteditable]:focus { outline: 2px solid var(--accent); outline-offset: -2px; background: var(--panel);
+                              white-space: normal; overflow: visible; text-overflow: clip; }
+  td.gama { text-align: center; font-variant-numeric: tabular-nums; }
+  td.gama:not(:empty)::after { content: '%'; color: var(--dim); margin-left: 1px; }
+  td.gama:focus::after { content: none; }
+  td.stare { text-align: center; font-size: 13px; }
+  tr.astept td { background: #2a2414; }
+  tr.astept td.nume { background: #2a2414; }
+  tr.nou td { background: var(--panel); }
+  tr.nou td.nume:empty::before { content: '+ client nou — scrie numele'; color: var(--dim); font-weight: 400; }
+  tr.greseala td { box-shadow: inset 0 0 0 1px var(--danger); }
+  .pastila { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; }
+  .pastila.astept { background: #4a3a12; color: var(--astept); }
+  .pastila.ok { background: #1c3a2a; color: var(--ok); }
+  .pastila.eroare { background: #3d1f1f; color: var(--danger); }
 </style>
 </head>
 <body>
-<main>
-  <!-- adminul intrat în contul agentului din /admin-ul managerului -->
-  <div id="banda" hidden></div>
-  <div id="mesaj" role="status"></div>
+<!-- adminul intrat în contul agentului din /admin-ul managerului -->
+<div id="banda" hidden></div>
 
-  <!-- 1. Login -->
-  <section id="ecranLogin" hidden>
-    <h1 style="margin-bottom:16px">Clienţi — agenţi de vânzări</h1>
-    <form id="fLogin">
-      <label>User<input name="user" autocomplete="username" autocapitalize="none" required></label>
-      <label>Parolă<input name="parola" type="password" autocomplete="current-password" required></label>
-      <button class="primar">Intră</button>
-    </form>
-  </section>
+<!-- 1. Login -->
+<section id="ecranLogin" hidden>
+  <h1 style="margin-bottom:16px">Clienţi — agenţi de vânzări</h1>
+  <div id="mesajLogin" class="dim" style="margin-bottom:12px"></div>
+  <form id="fLogin">
+    <label>User<input name="user" autocomplete="username" autocapitalize="none" required></label>
+    <label>Parolă<input name="parola" type="password" autocomplete="current-password" required></label>
+    <button class="primar">Intră</button>
+  </form>
+</section>
 
-  <!-- 2. Lista clienţilor agentului -->
-  <section id="ecranLista" hidden>
-    <div class="cap">
-      <div><h1>Clienţii mei</h1><span class="dim" id="agent"></span></div>
-      <span class="spatiu"></span>
-      <button id="iesire">Ieşi</button>
-    </div>
-    <button class="primar" id="nou" style="width:100%; margin-bottom:12px">+ Client nou</button>
+<!-- 2. Clienţii agentului, ca un tabel de Excel -->
+<section id="ecranTabel" hidden>
+  <div class="cap">
+    <div><h1>Clienţii mei</h1><span class="dim" id="agent"></span></div>
+    <span class="spatiu"></span>
     <input id="cauta" type="search" placeholder="Caută nume, CUI, localitate, telefon…">
-    <p class="dim" id="numar" style="margin-bottom:8px"></p>
-    <ul id="lista"></ul>
-  </section>
+    <span class="dim" id="numar"></span>
+    <button id="iesire">Ieşi</button>
+  </div>
+  <div id="mesaj" role="status"></div>
+  <p class="dim ajutor">Scrii direct în celule (Enter = rândul de jos). Când ieşi de pe un rând, modificarea se
+    trimite spre aprobare — până e aprobată, rândul e galben. Client nou: ultimul rând, cu nume şi un telefon sau e-mail.
+    Reducerile: doar numărul (15 = 15%).</p>
+  <div class="foaie"><table id="tabel"></table></div>
+</section>
 
-  <!-- 3. Fişa unui client (nou sau de modificat) -->
-  <section id="ecranClient" hidden>
-    <div class="cap"><h1 id="titluClient"></h1></div>
-    <form id="f" autocomplete="off">
-      <p id="notaAprobare" hidden></p>
-      <label>Nume client / firmă *<input name="nume" required maxlength="120"></label>
-      <label>CUI<input name="cui" maxlength="20"></label>
-      <label class="rand"><input type="checkbox" id="pf"> Persoană fizică (fără CUI)</label>
-      <label>Judeţ<select name="judet"><option value="">—</option><option>ALBA</option><option>ARAD</option><option>ARGES</option><option>BACAU</option><option>BIHOR</option><option>BISTRITA-NASAUD</option><option>BOTOSANI</option><option>BRAILA</option><option>BRASOV</option><option>BUCURESTI</option><option>BUZAU</option><option>CALARASI</option><option>CARAS-SEVERIN</option><option>CLUJ</option><option>CONSTANTA</option><option>COVASNA</option><option>DAMBOVITA</option><option>DOLJ</option><option>GALATI</option><option>GIURGIU</option><option>GORJ</option><option>HARGHITA</option><option>HUNEDOARA</option><option>IALOMITA</option><option>IASI</option><option>ILFOV</option><option>MARAMURES</option><option>MEHEDINTI</option><option>MURES</option><option>NEAMT</option><option>OLT</option><option>PRAHOVA</option><option>SALAJ</option><option>SATU MARE</option><option>SIBIU</option><option>SUCEAVA</option><option>TELEORMAN</option><option>TIMIS</option><option>TULCEA</option><option>VALCEA</option><option>VASLUI</option><option>VRANCEA</option></select></label>
-      <label>Localitatea<input name="localitate" maxlength="80"></label>
-      <label>Adresa sediului social<input name="adresa_sediu" maxlength="300"></label>
-      <label>Adresa de livrare (stradă, nr.)<input name="adresa_livrare" maxlength="300"></label>
-      <label>Nume administrator<input name="administrator" maxlength="120"></label>
-      <label>Telefon administrator<input name="telefon_administrator" type="tel" maxlength="40"></label>
-      <label>E-mail<input name="email" type="email" maxlength="120"></label>
-      <label>Delegat (cine preia marfa)<input name="delegat" maxlength="120"></label>
-      <label>Telefon delegat<input name="telefon_delegat" type="tel" maxlength="40"></label>
-      <label>Discounturi<textarea name="discounturi" rows="2" maxlength="500"></textarea></label>
-      <div class="butoane">
-        <button type="button" id="inapoi">Înapoi</button>
-        <button class="primar" id="salveaza">Salvează</button>
-      </div>
-    </form>
-  </section>
-</main>
 <script>
 // ═══════════════════════════════════════════════════════════════════════════
-//  Agentul intră cu user + parolă (cookie de sesiune, 90 de zile), îşi vede
-//  clienţii (cei cu numele lui în coloana AGENT), îi modifică şi adaugă alţii.
-//  Ce adaugă / modifică aşteaptă APROBAREA din manager (pagina Clienţi) — până
-//  atunci îl vede doar el, marcat „în aşteptare", şi îl poate corecta.
+//  Agentul intră cu user + parolă (cookie de sesiune, 90 de zile) şi îşi vede
+//  clienţii (cei cu numele lui în coloana AGENT) într-un tabel ca în Excel
+//  (userul, 2026-10-02): toate coloanele, fiecare celulă editabilă, plus câte o
+//  coloană pe fiecare gamă de reducere. Ce modifică / adaugă aşteaptă APROBAREA
+//  din manager (pagina Clienţi) — până atunci rândul e galben.
 //  API: functions/api/{login,logout,clienti,propuneri}.
+//
+//  Reducerile stau în baza de date tot în câmpul `discounturi`, ca text
+//  („LUX 15%, CONFORT 15%, …", la fel ca în Excel-ul firmei); aici textul se
+//  desface pe coloane şi se recompune la salvare. Ce nu e „gamă procent" rămâne
+//  în coloana „Alte".
 // ═══════════════════════════════════════════════════════════════════════════
 const $ = id => document.getElementById(id);
 const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const normal = t => String(t ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
-let clienti = [];
-let curent = null;   // clientul deschis în fişă; null = client nou
+// coloanele clientului (în ordinea din Excel) — [câmp, titlu, lăţime px]
+const COLOANE = [
+  ['nume', 'Nume client / firmă', 230], ['cui', 'CUI', 120], ['judet', 'Judeţ', 110], ['localitate', 'Localitate', 130],
+  ['adresa_sediu', 'Adresa sediului', 220], ['adresa_livrare', 'Adresa de livrare', 220],
+  ['administrator', 'Administrator', 150], ['telefon_administrator', 'Telefon administrator', 140], ['email', 'E-mail', 190],
+  ['delegat', 'Delegat (preia marfa)', 150], ['telefon_delegat', 'Telefon delegat', 130],
+];
+// gamele de reducere — aceleaşi nume ca în Excel-ul firmei
+const GAME = ['LUX', 'CONFORT', 'UTIL', 'Usi', 'GOLA', 'MANER', 'Sertare', 'Hairpin', 'Jolly', 'Dressing', 'Rehau', 'Acc SDK', 'Lamele'];
 
-// fetch aruncă TypeError fără internet (textul diferă: Chrome/Safari/Firefox)
-const textEroare = err => err instanceof TypeError ? 'Fără internet — încearcă din nou.' : err.message;
-
-function mesaj(t, tip) { $('mesaj').textContent = t; $('mesaj').className = tip; if (t) scrollTo(0, 0); }
-
-function arata(ecran) {
-  for (const e of ['ecranLogin', 'ecranLista', 'ecranClient']) $(e).hidden = e !== ecran;
-  scrollTo(0, 0);
+// „LUX 15%, CONFORT 12,5%, ceva" → { pe: { LUX: '15', CONFORT: '12,5' }, alte: 'ceva' }
+function desfaReduceri(text) {
+  const pe = {}, alte = [];
+  for (const parte of String(text ?? '').split(',').map(s => s.trim()).filter(Boolean)) {
+    const m = parte.match(/^(.+?)\s+(\d+(?:[.,]\d+)?)\s*%$/);
+    const gama = m && GAME.find(g => normal(g) === normal(m[1]));
+    if (gama && !(gama in pe)) pe[gama] = m[2]; else alte.push(parte);
+  }
+  return { pe, alte: alte.join(', ') };
 }
+const compuneReduceri = (pe, alte) =>
+  [...GAME.filter(g => pe[g]).map(g => `${g} ${pe[g]}%`), ...(alte ? [alte] : [])].join(', ') || '';
+
+let clienti = [];
+// textul unui rând, aşa cum era când a intrat pe ecran — ca să ştim dacă s-a schimbat ceva
+const salvat = new Map();
+const textMesaj = (t, tip) => { $('mesaj').textContent = t; $('mesaj').className = tip || ''; };
+const textEroare = err => err instanceof TypeError ? 'Fără internet — încearcă din nou.' : err.message;
 
 async function api(cale, optiuni = {}) {
   const r = await fetch(cale, { headers: { 'Content-Type': 'application/json' }, ...optiuni });
@@ -130,9 +153,11 @@ async function api(cale, optiuni = {}) {
   if (!r.ok) throw new Error(j.eroare || 'Eroare — încearcă din nou.');
   return j;
 }
+function arata(ecran) { for (const e of ['ecranLogin', 'ecranTabel']) $(e).hidden = e !== ecran; }
 
 // cei în aşteptarea aprobării primii, apoi alfabetic
 const ordine = (a, b) => (!!b.inAsteptare - !!a.inAsteptare) || a.nume.localeCompare(b.nume, 'ro', { sensitivity: 'base' });
+
 async function incarca() {
   const j = await api('/api/clienti');
   clienti = j.clienti.sort(ordine);
@@ -140,91 +165,127 @@ async function incarca() {
   $('banda').hidden = !j.admin;
   $('banda').textContent = `Eşti în contul lui ${j.agent}, intrat din manager (admin). Ce modifici aici se vede la agent.`;
   randeaza();
-  arata('ecranLista');
+  arata('ecranTabel');
+}
+
+// ── Tabelul ─────────────────────────────────────────────────────────────────
+// `k` = poziţia în `clienti`; rândul gol de la coadă (client nou) are k = 'nou'.
+const valoriRand = c => {
+  const { pe, alte } = desfaReduceri(c?.discounturi);
+  return { ...Object.fromEntries(COLOANE.map(([k]) => [k, c?.[k] ?? ''])), ...Object.fromEntries(GAME.map(g => [`g:${g}`, pe[g] ?? ''])), alte };
+};
+const stareHtml = c => !c ? '' : c.inAsteptare
+  ? `<span class="pastila astept" title="Trimis ${esc(c.trimis_la ?? '')} — aşteaptă aprobarea">⏳ ${c.inAsteptare === 'nou' ? 'nou' : 'modificat'}</span>` : '';
+
+function randHtml(c, k) {
+  const v = valoriRand(c);
+  const celula = (cheie, clasa = '') => `<td contenteditable="plaintext-only" spellcheck="false" data-c="${esc(cheie)}"${clasa ? ` class="${clasa}"` : ''}>${esc(v[cheie])}</td>`;
+  return `<tr data-k="${k}" class="${c?.inAsteptare ? 'astept' : k === 'nou' ? 'nou' : ''}">
+    ${COLOANE.map(([cheie]) => celula(cheie, cheie === 'nume' ? 'nume' : '')).join('')}
+    ${GAME.map(g => celula(`g:${g}`, 'gama')).join('')}
+    ${celula('alte')}
+    <td class="stare">${stareHtml(c)}</td>
+  </tr>`;
 }
 
 function randeaza() {
   const q = normal($('cauta').value.trim());
-  const gasiti = !q ? clienti : clienti.filter(c => normal(Object.values(c).join(' ')).includes(q));
-  $('numar').textContent = `${gasiti.length} ${gasiti.length === 1 ? 'client' : 'clienţi'}`;
-  // `k` = poziţia în listă: clienţii noi neaprobaţi n-au încă id
-  $('lista').innerHTML = gasiti.map(c => `<li><button data-k="${clienti.indexOf(c)}">
-    <b>${esc(c.nume)}</b>
-    <span class="dim">${esc([c.localitate, c.judet].filter(Boolean).join(', ') || c.cui || '')}</span>
-    ${c.inAsteptare ? `<br><span class="astept">⏳ ${c.inAsteptare === 'nou' ? 'client nou' : 'modificare'} în aşteptarea aprobării</span>` : ''}
-  </button></li>`).join('');
+  const arataK = clienti.map((c, k) => k).filter(k => !q || normal(Object.values(clienti[k]).join(' ')).includes(q));
+  $('numar').textContent = `${arataK.length} ${arataK.length === 1 ? 'client' : 'clienţi'}`;
+  const latime = [...COLOANE.map(c => c[2]), ...GAME.map(() => 74), 160, 110];
+  $('tabel').style.width = `${latime.reduce((a, w) => a + w, 0)}px`;
+  $('tabel').innerHTML = `
+    <colgroup>${latime.map(w => `<col style="width:${w}px">`).join('')}</colgroup>
+    <thead>
+      <tr class="grup"><th class="nume"></th><th colspan="${COLOANE.length - 1}"></th>
+        <th colspan="${GAME.length + 1}">REDUCERI PE GAME (%)</th><th></th></tr>
+      <tr class="coloane">${COLOANE.map(([k, t]) => `<th${k === 'nume' ? ' class="nume"' : ''}>${t}</th>`).join('')}
+        ${GAME.map(g => `<th class="gama">${g}</th>`).join('')}<th>Alte</th><th>Stare</th></tr>
+    </thead>
+    <tbody>${arataK.map(k => randHtml(clienti[k], k)).join('')}${randHtml(null, 'nou')}</tbody>`;
+  salvat.clear();
+  $('tabel').querySelectorAll('tbody tr').forEach(tr => salvat.set(tr.dataset.k, JSON.stringify(citesteRand(tr))));
 }
 
-function deschide(c) {
-  curent = c;
-  $('titluClient').textContent = c ? c.nume : 'Client nou';
-  $('f').reset();
-  for (const el of $('f').elements) if (el.name) el.value = c?.[el.name] ?? '';
-  $('pf').checked = c?.cui === 'Persoana Fizica';
-  $('f').elements.cui.readOnly = $('pf').checked;
-  $('notaAprobare').hidden = !c?.inAsteptare;
-  $('notaAprobare').textContent = c?.inAsteptare === 'nou'
-    ? 'Clientul ăsta aşteaptă aprobarea — încă nu e în baza firmei. Îl mai poţi corecta.'
-    : 'Modificarea ta aşteaptă aprobarea — vezi aici ce ai trimis. O mai poţi corecta.';
-  mesaj('');
-  arata('ecranClient');
+const citesteRand = tr => Object.fromEntries([...tr.querySelectorAll('td[data-c]')].map(td => [td.dataset.c, td.textContent.trim()]));
+
+// ── Salvarea unui rând (la ieşirea din el) ──────────────────────────────────
+async function salveazaRand(tr) {
+  const k = tr.dataset.k, v = citesteRand(tr);
+  if (JSON.stringify(v) === salvat.get(k)) return;   // nimic schimbat
+  const c = k === 'nou' ? null : clienti[+k];
+  if (!v.nume) { if (c) return arataEroare(tr, 'Numele clientului e obligatoriu.'); return; }   // rând nou gol
+  const reduceri = Object.fromEntries(GAME.map(g => [g, v[`g:${g}`].replace(/%/g, '').trim()]));
+  const gresita = GAME.find(g => reduceri[g] && !/^\d+([.,]\d+)?$/.test(reduceri[g]));
+  if (gresita) return arataEroare(tr, `Reducerea la ${gresita} trebuie să fie un număr (ex. 15).`);
+  const date = { ...Object.fromEntries(COLOANE.map(([cheie]) => [cheie, v[cheie]])), discounturi: compuneReduceri(reduceri, v.alte) };
+  if (!c?.id && ![date.telefon_administrator, date.telefon_delegat, date.email].some(Boolean)) {
+    return arataEroare(tr, 'Client nou: completează cel puţin un telefon sau e-mailul.');
+  }
+  const stare = tr.querySelector('.stare');
+  stare.innerHTML = '<span class="dim">se trimite…</span>';
+  try {
+    // client existent → PUT pe el; client nou încă neaprobat → PUT pe propunere; altfel client nou
+    const cale = c?.id ? `/api/clienti/${c.id}` : c?.propunere_id ? `/api/propuneri/${c.propunere_id}` : '/api/clienti';
+    const { client } = await api(cale, { method: c ? 'PUT' : 'POST', body: JSON.stringify(date) });
+    if (c) clienti[+k] = client; else clienti.push(client);
+    tr.classList.remove('greseala');
+    if (!c) {   // rândul nou a devenit client — tabelul se reface (apare alt rând gol)
+      randeaza();
+      textMesaj(`✓ ${client.nume} — trimis spre aprobare.`, 'ok');
+      return;
+    }
+    salvat.set(k, JSON.stringify(citesteRand(tr)));
+    tr.className = 'astept';
+    stare.innerHTML = stareHtml(client);
+    textMesaj(`✓ ${client.nume} — trimis spre aprobare.`, 'ok');
+  } catch (err) {
+    arataEroare(tr, textEroare(err));
+  }
+}
+function arataEroare(tr, t) {
+  tr.classList.add('greseala');
+  tr.querySelector('.stare').innerHTML = `<span class="pastila eroare" title="${esc(t)}">⚠ nesalvat</span>`;
+  textMesaj(t, 'eroare');
 }
 
+// ieşirea de pe un rând (focusul trece în alt rând sau în afara tabelului) → se trimite
+$('tabel').addEventListener('focusout', e => {
+  const tr = e.target.closest('tr');
+  if (tr && !tr.contains(e.relatedTarget)) salveazaRand(tr);
+});
+// Enter = celula de dedesubt (ca în Excel); Esc = renunţă la ce ai scris în celulă
+let inainte = '';
+$('tabel').addEventListener('focusin', e => { if (e.target.matches('td[contenteditable]')) inainte = e.target.textContent; });
+$('tabel').addEventListener('keydown', e => {
+  const td = e.target.closest('td[contenteditable]');
+  if (!td) return;
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    const jos = td.parentElement.nextElementSibling?.querySelector(`td[data-c="${CSS.escape(td.dataset.c)}"]`);
+    (jos ?? td).focus();
+  } else if (e.key === 'Escape') { td.textContent = inainte; td.blur(); }
+});
+
+// ── Login / ieşire / căutare ────────────────────────────────────────────────
 $('fLogin').addEventListener('submit', async e => {
   e.preventDefault();
   try {
     await api('/api/login', { method: 'POST', body: JSON.stringify(Object.fromEntries(new FormData($('fLogin')))) });
     $('fLogin').reset();
-    mesaj('');
+    $('mesajLogin').textContent = '';
     await incarca();
-  } catch (err) { mesaj(textEroare(err), 'eroare'); }
+  } catch (err) { $('mesajLogin').textContent = textEroare(err); }
 });
-
 $('iesire').addEventListener('click', async () => {
   await api('/api/logout', { method: 'POST' }).catch(() => {});
   $('banda').hidden = true;
   arata('ecranLogin');
 });
-
 $('cauta').addEventListener('input', randeaza);
-$('lista').addEventListener('click', e => {
-  const b = e.target.closest('button[data-k]');
-  if (b) deschide(clienti[+b.dataset.k]);
-});
-$('nou').addEventListener('click', () => deschide(null));
-$('inapoi').addEventListener('click', () => { mesaj(''); arata('ecranLista'); });
-
-// Persoană fizică → CUI = „Persoana Fizica", exact ca în Excel-ul de clienţi
-$('pf').addEventListener('change', e => {
-  const cui = $('f').elements.cui;
-  cui.value = e.target.checked ? 'Persoana Fizica' : '';
-  cui.readOnly = e.target.checked;
-});
-
-$('f').addEventListener('submit', async e => {
-  e.preventDefault();
-  const date = Object.fromEntries(new FormData($('f')));
-  if (!curent?.id && ![date.telefon_administrator, date.telefon_delegat, date.email].some(t => t.trim())) {
-    return mesaj('Completează cel puţin un telefon sau e-mailul.', 'eroare');
-  }
-  $('salveaza').disabled = true;
-  try {
-    // client existent → PUT pe el; client nou încă neaprobat → PUT pe propunere; altfel client nou
-    const cale = curent?.id ? `/api/clienti/${curent.id}` : curent?.propunere_id ? `/api/propuneri/${curent.propunere_id}` : '/api/clienti';
-    const { client } = await api(cale, { method: curent ? 'PUT' : 'POST', body: JSON.stringify(date) });
-    clienti = [...clienti.filter(c => c !== curent), client].sort(ordine);
-    randeaza();
-    arata('ecranLista');
-    mesaj(`✓ ${client.nume} — trimis spre aprobare; intră în baza firmei după ce e aprobat.`, 'ok');
-  } catch (err) {
-    mesaj(textEroare(err), 'eroare');
-  } finally {
-    $('salveaza').disabled = false;
-  }
-});
 
 // fără sesiune → ecranul de login (îl arată api() la 401)
-incarca().catch(err => { if (!$('ecranLogin').hidden) return; arata('ecranLogin'); mesaj(textEroare(err), 'eroare'); });
+incarca().catch(err => { if (!$('ecranLogin').hidden) return; arata('ecranLogin'); $('mesajLogin').textContent = textEroare(err); });
 </script>
 </body>
 </html>
