@@ -57,7 +57,65 @@ function geamModelLabel(i) {
 // în dreapta doar dacă are bară H, pt. eticheta „H").
 const PARTE_TEXT = { fata: 'faţă', spate: 'spate', ambele: 'faţă + spate' };
 
+// Pe ce parte are uşa amortizare — doar la uşile asamblate DE NOI (userul, 2026-10-02):
+// Confort / UTIL = amortizările alese pe uşă; suspendate = rola cu amortizor.
+function amortizareUsa(sys, i) {
+  if (state.assembly?.[i] !== 'noi') return { st: false, dr: false };
+  if (sys.meta.family === 'suspendata') {
+    const w = state.wheels?.[i] ?? {};
+    return { st: w.left === 'amortizor', dr: w.right === 'amortizor' };
+  }
+  const a = state.amortizare?.[i] ?? {};
+  const are = v => !!v && v !== 'fara';
+  return { st: are(a.left), dr: are(a.right) };
+}
+
+// Amortizarea pe desenul uşii: un pătrăţel cu X sus, în colţul părţii respective.
+// `mont` / `sus` = lăţimea profilului vertical / de sus (semnul stă în dreptul lor).
+function semneAmortizare(amort, W, H, mont, sus, linie) {
+  const latura = Math.min(W, H) * 0.16, dist = mont * 0.5 + latura * 0.12, y0 = sus * 0.5 + latura * 0.15;
+  const el = [];
+  for (const [are, x0] of [[amort.st, dist], [amort.dr, W - dist - latura]]) {
+    if (!are) continue;
+    el.push(`<rect x="${x0}" y="${y0}" width="${latura}" height="${latura}" fill="#fff" stroke="#000" stroke-width="${linie * 1.5}"/>`,
+      `<line x1="${x0}" y1="${y0}" x2="${x0 + latura}" y2="${y0 + latura}" stroke="#000" stroke-width="${linie * 1.5}"/>`,
+      `<line x1="${x0 + latura}" y1="${y0}" x2="${x0}" y2="${y0 + latura}" stroke="#000" stroke-width="${linie * 1.5}"/>`);
+  }
+  return el;
+}
+
+// UTIL: desenul unei uşi asamblate de noi (userul, 2026-10-02 — „doar dacă montăm noi"):
+// conturul, profilele mâner pe laturi, orizontalele U, panourile de PAL cu cotele lor
+// (de jos în sus, ca în spec) şi divizările H dintre ele, plus semnul de amortizare.
+const INALT_U_DESEN = 20, GROS_H_DESEN = 12;
+function desenUtil(sys, spec, i) {
+  const p = spec.glass.panels[i];
+  const W = Math.round(spec.doorW), H = spec.doorH, mont = spec.m.adaos;
+  const o = state.util?.orizontale ?? 'ambele';
+  const sus = spec.uPeUsa && o !== 'jos' ? INALT_U_DESEN : 0, jos = spec.uPeUsa && o !== 'sus' ? INALT_U_DESEN : 0;
+  const linie = Math.max(W, H) * 0.004;
+  const el = [`<rect x="${linie / 2}" y="${linie / 2}" width="${W - linie}" height="${H - linie}" fill="none" stroke="#000" stroke-width="${linie * 2}"/>`];
+  const total = p.heights.reduce((a, h) => a + h, 0) || 1;
+  const loc = H - sus - jos - p.divisions * GROS_H_DESEN;
+  let y = H - jos;   // SVG: y în jos; panourile urcă de jos
+  p.heights.forEach((h, k) => {
+    const hp = loc * h / total;
+    y -= hp;
+    el.push(`<rect x="${mont}" y="${y}" width="${W - 2 * mont}" height="${hp}" fill="none" stroke="#000" stroke-width="${linie}"/>`);
+    const font = Math.min((W - 2 * mont) * 0.15, hp * 0.26), cx = W / 2, cy = y + hp / 2;
+    el.push(`<text x="${cx}" y="${cy - font * 0.15}" font-size="${font}" font-weight="700" text-anchor="middle">PAL</text>`,
+      `<text x="${cx}" y="${cy + font * 0.95}" font-size="${font * 0.8}" text-anchor="middle">${Math.round(h)}×${Math.round(spec.panouL)}</text>`);
+    if (k < p.heights.length - 1) {
+      y -= GROS_H_DESEN;
+      el.push(`<line x1="${mont}" y1="${y + GROS_H_DESEN / 2}" x2="${W - mont}" y2="${y + GROS_H_DESEN / 2}" stroke="#000" stroke-width="${GROS_H_DESEN}"/>`);
+    }
+  });
+  el.push(...semneAmortizare(amortizareUsa(sys, i), W, H, mont, sus, linie));
+  return { svg: `<svg viewBox="0 0 ${W} ${H}">${el.join('')}</svg>`, raport: W / H };
+}
+
 function desenUsa(sys, spec, i, margH = 0) {
+  const amort = amortizareUsa(sys, i);
   const p = spec.glass?.panels?.[i];
   if (!p?.heights) return { svg: '', raport: 0.5 };
   const W = spec.door.w, H = spec.door.h;
@@ -99,6 +157,9 @@ function desenUsa(sys, spec, i, margH = 0) {
     }
   });
 
+  // desenat ultimul, peste geam
+  el.push(...semneAmortizare(amort, W, H, mont, sus, linie));
+
   return {
     svg: `<svg viewBox="0 0 ${W + marg} ${H}">${el.join('')}</svg>`,
     raport: (W + marg) / H,
@@ -113,9 +174,9 @@ function textSubDesen(sys, i) {
   const da = state.divAplicate?.[i];
   const areSticla = (state.panels?.[i] ?? []).some(m => m !== 'pal');
   const randuri = [
-    ['Geam', areSticla ? geamModelLabel(i) : '—'],
-    // Confort: amortizări; suspendate: rolele alese pe fiecare parte
-    sys.meta.family === 'confort'
+    ...(sys.meta.family === 'util' ? [] : [['Geam', areSticla ? geamModelLabel(i) : '—']]),
+    // Confort / UTIL: amortizări; suspendate: rolele alese pe fiecare parte
+    sys.meta.family !== 'suspendata'
       ? ['Amortizare', `St ${amortizareLabel(a.left)} · Dr ${amortizareLabel(a.right)}`]
       : ['Role', `St ${rolaLabel(w.left)} · Dr ${rolaLabel(w.right)}`],
     ...(da && da.latime !== 'fara'
@@ -125,12 +186,13 @@ function textSubDesen(sys, i) {
   return randuri.map(([e, v]) => `<div class="sub-rand"><span class="sub-et">${e}:</span> ${esc(v)}</div>`).join('');
 }
 
-function blocDesene(sys, spec) {
-  const n = spec.door.count || 0;
+// `usi` = ce uşi se desenează (indicii lor; implicit toate), `desen(i)` = desenul uneia
+function blocDesene(sys, spec, usi = [...Array(spec.door.count || 0).keys()], desen = null) {
+  const n = usi.length;
   if (!n) return '';
   const margH = (spec.glass?.panels ?? []).some(p => p.profil?.includes('H')) ? 110 : 0;
-  const coloane = Array.from({ length: n }, (_, i) => {
-    const { svg, raport } = desenUsa(sys, spec, i, margH);
+  const coloane = usi.map(i => {
+    const { svg, raport } = desen ? desen(i) : desenUsa(sys, spec, i, margH);
     const cine = state.assembly?.[i] === 'client' ? 'CLIENTUL ASAMBLEAZĂ' : 'NOI ASAMBLĂM';
     return `
       <div class="usa-col" style="--r:${raport.toFixed(4)}">
@@ -729,6 +791,7 @@ export function deschideFisa(client, oferta = null, salvate = null) {
 
   ${util ? tabel(['PAL (clientul)', 'Dimensiuni', 'Cant.'], panouriClient.map(r =>
         `<tr><td>${esc(r.label)}</td><td>${esc(r.cut)}</td><td class="num">${r.qty} buc</td></tr>`))
+      + blocDesene(sys, spec, [...Array(spec.n).keys()].filter(i => state.assembly?.[i] === 'noi'), i => desenUtil(sys, spec, i))
     : rame ? debitareRame(spec) : blocDesene(sys, spec)}
 
   <div class="jos">${necesarHtml}${eRame ? '' : campuriAtelier}</div>
