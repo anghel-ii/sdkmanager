@@ -26,6 +26,7 @@ import { state } from '../js/state.js';
 import { systems } from '../js/systems/registry.js';
 import { initBuilder, buildConfig, currentSpec, currentBom, currentBilling,
          currentClientPanels, currentSticla, finishesOf } from '../js/builder.js';
+import { cotaGauri } from '../js/lib/rame/rame.js';
 import catalog from '../js/catalog/catalog.generated.json';
 
 const FISIER = new URL('./referinta.json', import.meta.url);
@@ -327,7 +328,13 @@ for (const [id, W, H, doors, tracks] of [['confortVerona', 1800, 2100, 2, 2], ['
   const verifica = (ok, mesaj) => { if (!ok) { console.error('✗ rame: ' + mesaj); process.exit(1); } };
   verifica(s.nrGauri === 6, `sus/jos: aştept 3 rame × 2 găuri = 6, am ${s.nrGauri}`);
   verifica(s.manere[0]?.bare === 1, `mâner 2 × 1400 mm: aştept 1 bară de 3000, am ${s.manere[0]?.bare}`);
-  console.log('✓ rame: 2 găuri la „sus/jos", bare de mâner de 3000 mm');
+  // schiţa de găurire (verso): cotele de sus, la centrul găurii
+  const c = (h, n, g) => JSON.stringify(cotaGauri(h, n, g));
+  verifica(c(600, 2, '100 mm de margini sus/jos') === '[100,500]', `cote sus/jos 600: ${c(600, 2, '100 mm de margini sus/jos')}`);
+  verifica(c(2000, 3, '100 mm sus/jos si la mijloc') === '[100,1000,1900]', `cote la mijloc: ${c(2000, 3, '100 mm sus/jos si la mijloc')}`);
+  verifica(c(1999, 4, '100 mm sus/jos si impartite egal') === '[100,699.7,1299.3,1899]', `cote egale: ${c(1999, 4, '100 mm sus/jos si impartite egal')}`);
+  verifica(c(800, 3, 'vezi schita pe spate') === 'null' && c(800, 2, 'Fara gaurire') === '[]', 'schiţa clientului / fără găurire');
+  console.log('✓ rame: 2 găuri la „sus/jos", bare de mâner de 3000 mm, cotele schiţei de găurire');
 }
 
 // ── Graniţele dintre familii ────────────────────────────────────────────────

@@ -4,7 +4,7 @@ import { currentSpec, currentBom, currentBilling, currentClientPanels } from './
 import { finishesOf, familia } from './familii.js';
 import { findGeam } from './lib/comun/geam.js';
 import { suprapuneriEfective, PROFIL_H_3D } from './lib/confort/index.js';
-import { ASAMBLARE } from './lib/rame/rame.js';
+import { ASAMBLARE, FARA_GAURIRE, cotaGauri, MARGINE_GAURA_MM } from './lib/rame/rame.js';
 import { detaliiComanda, plataText } from './lib/comun/comanda.js';
 import JsBarcode from 'jsbarcode';
 
@@ -227,6 +227,85 @@ function debitareRame(spec) {
       ? sectiune('842', randuri('VERTICALA 842', vert)) +
         sectiune('841', randuri('VERTICALA 841', vert) + randuri('ORIZONTALA 841', oriz))
       : sectiune(spec.model, randuri(`VERTICALA ${spec.model}`, vert) + randuri(`ORIZONTALA ${spec.model}`, oriz))}
+  </div>`;
+}
+
+// ── Schiţa de găurire pt. CNC — pe verso, la rame (userul, 2026-10-02) ──────
+// Câte un desen tehnic pe fiecare rând de rame (o mărime): conturul ramei la
+// scară, faţa profilului, găurile de balama pe latura balamalelor şi cotele lor —
+// lanţ de cote din stânga (de SUS în jos, la centrul găurii), H şi L de gabarit.
+// Toate ramele de pe un rând sunt identice → un desen, cu nr. de bucăţi.
+const virgula1 = n => virgula(Math.round(n * 10) / 10);
+function desenGaurire(x, fata, cote, { inalt = 105, lat = 120 } = {}) {
+  const H = x.h, L = x.l;
+  // k = unităţi SVG (mm de ramă) pe un mm tipărit: desenul are max. `inalt` mm înălţime şi
+  // `lat` mm lăţime pe foaie, cu loc de cote (stânga 18 mm, dreapta 9, sus 9, jos 2)
+  const k = Math.max(H / (inalt - 11), L / (lat - 27));
+  const st = 18 * k, dr = 9 * k, sus = 9 * k, jos = 2 * k;
+  const fnt = 3.1 * k, gros = 0.5 * k, sub = 0.18 * k;
+  const el = [];
+  const linie = (x1, y1, x2, y2, w = sub, extra = '') =>
+    el.push(`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#000" stroke-width="${w}"${extra}/>`);
+  const textV = (x0, y0, t, bold = false) => el.push(`<text x="${x0}" y="${y0}" font-size="${fnt}" text-anchor="middle"
+    ${bold ? 'font-weight="700"' : ''} transform="rotate(-90 ${x0} ${y0})">${t}</text>`);
+  // conturul ramei + faţa profilului (geamul începe de acolo)
+  el.push(`<rect x="0" y="0" width="${L}" height="${H}" fill="none" stroke="#000" stroke-width="${gros}"/>`);
+  if (fata * 2 < Math.min(H, L)) el.push(`<rect x="${fata}" y="${fata}" width="${L - 2 * fata}" height="${H - 2 * fata}"
+    fill="none" stroke="#000" stroke-width="${sub}" stroke-dasharray="${2 * k} ${1.2 * k}"/>`);
+  // H şi L de gabarit
+  const xH = L + 5 * k, yL = -5 * k, tic = 1.5 * k;
+  linie(xH, 0, xH, H); linie(xH - tic, 0, xH + tic, 0); linie(xH - tic, H, xH + tic, H);
+  textV(xH - 1.2 * k, H / 2, `H ${virgula1(H)}`, true);
+  linie(0, yL, L, yL); linie(0, yL - tic, 0, yL + tic); linie(L, yL - tic, L, yL + tic);
+  el.push(`<text x="${L / 2}" y="${yL - 1.2 * k}" font-size="${fnt}" font-weight="700" text-anchor="middle">L ${virgula1(L)}</text>`);
+  // găurile, pe profilul din stânga (latura balamalelor), cu lanţul de cote alături
+  if (cote?.length) {
+    const xc = fata / 2, xLant = -7 * k, r = 1.6 * k;
+    const opriri = [0, ...cote, H];
+    linie(xLant, 0, xLant, H);
+    opriri.forEach(y => linie(xLant - tic, y, xLant + tic, y));
+    cote.forEach(y => {
+      linie(xLant + tic, y, xc - r * 1.4, y, sub * 0.8, ` stroke-dasharray="${0.8 * k} ${0.8 * k}"`);
+      el.push(`<circle cx="${xc}" cy="${y}" r="${r}" fill="#fff" stroke="#000" stroke-width="${gros * 0.8}"/>`);
+      linie(xc - r * 1.6, y, xc + r * 1.6, y, sub); linie(xc, y - r * 1.6, xc, y + r * 1.6, sub);
+    });
+    for (let j = 1; j < opriri.length; j++) {
+      const t = virgula1(opriri[j] - opriri[j - 1]), y = (opriri[j - 1] + opriri[j]) / 2;
+      // cotă scurtă pe foaie (sub ~9 mm): cifra culcată nu încape între linii → orizontală, în stânga
+      if ((opriri[j] - opriri[j - 1]) / k < 9) {
+        el.push(`<text x="${xLant - 2 * k}" y="${y + fnt * 0.35}" font-size="${fnt}" text-anchor="end">${t}</text>`);
+      } else textV(xLant - 1.2 * k, y, t);
+    }
+  }
+  const vbW = L + st + dr, vbH = H + sus + jos;
+  return `<svg viewBox="${-st} ${-sus} ${vbW} ${vbH}" style="width:${(vbW / k).toFixed(1)}mm; height:${(vbH / k).toFixed(1)}mm">${el.join('')}</svg>`;
+}
+
+// Doar la 820 / 822 / 824 cu găuri de balama. Fără schiţă la „Fara gaurire" (să nu-l
+// încurce pe omul de la CNC) şi la 831 / 841 / 842 „Gaurire Standard" — acolo profilul
+// are un singur fel de gaură, îl ştie din vedere (userul, 2026-10-02).
+function schiteGaurire(spec, rame) {
+  if (spec.m.grup !== '820' || !rame.gaurire || rame.gaurire === FARA_GAURIRE || !spec.pline.length) return '';
+  // cu mai multe mărimi, desenele se micşorează ca versoul să rămână pe o foaie:
+  // câte 3 pe rând, iar înălţimea scade cu nr. de rânduri (până la 45 mm)
+  const n = spec.pline.length, col = Math.min(n, 3), randuri = Math.ceil(n / col);
+  const marime = { lat: (192 - 8 * (col - 1)) / col, inalt: Math.max(45, Math.min(95, 125 / randuri - 16)) };
+  const desene = spec.pline.map(x => {
+    const cote = cotaGauri(x.h, x.gauri, rame.gaurire);
+    const nota = cote?.length
+      ? `Găuri, de sus: <b>${cote.map(virgula1).join(' · ')}</b> mm`
+      : `${x.gauri ? `${x.gauri} găuri — ` : ''}cotele: după schiţa clientului<div class="gaur-mana"></div>`;
+    return `<div class="gaur-desen">
+      <div class="gaur-cap">Rândul ${x.i + 1} · <b>${x.h} × ${x.l} mm</b> · ${x.buc} buc${cote?.length ? ` · ${cote.length} găuri / ramă` : ''}</div>
+      ${desenGaurire(x, spec.m.fata, cote, marime)}
+      <div class="gaur-nota">${nota}</div>
+    </div>`;
+  }).join('');
+  return `<div class="schite-gaurire">
+    <h2>Schiţă găurire — ${esc(rame.gaurire)}${rame.balama ? ` · balama ${esc(rame.balama)}` : ''}${rame.placuta ? ` · plăcuţă ${esc(rame.placuta)}` : ''}</h2>
+    <div class="gaur-legenda">Cote în mm, la centrul găurii, măsurate de la marginea de SUS a ramei; găurile pe profilul
+      balamalelor (desenat în stânga). Prima şi ultima gaură la ${MARGINE_GAURA_MM} mm de margini. Linia punctată = faţa profilului.</div>
+    <div class="gaur-lista">${desene}</div>
   </div>`;
 }
 
@@ -615,6 +694,19 @@ export function deschideFisa(client, oferta = null, salvate = null) {
   .bara-cod { display: flex; justify-content: flex-end; align-items: center; gap: 4mm; margin: -2mm 0 2mm; }
   .numar-oferta { font-size: 15px; font-weight: 700; font-family: monospace; letter-spacing: .03em; }
 
+  /* schiţa de găurire pt. CNC (verso, rame) */
+  .schite-gaurire h2 { margin-top: 0; }
+  .gaur-legenda { font-size: 10.5px; color: #444; margin-bottom: 3mm; }
+  .gaur-lista { display: flex; flex-wrap: wrap; gap: 4mm 8mm; align-items: flex-start; margin-bottom: 4mm; }
+  /* lăţimea = a desenului; titlul şi nota se rup pe rânduri, nu lăţesc coloana */
+  .gaur-desen { break-inside: avoid; width: min-content; }
+  .gaur-cap, .gaur-nota { min-width: 40mm; }
+  .gaur-cap { font-size: 12px; margin-bottom: 1mm; }
+  .gaur-desen svg { display: block; font-family: 'Segoe UI', Arial, sans-serif; }
+  .gaur-nota { font-size: 12px; margin-top: 1mm; }
+  .gaur-mana { height: 14mm; border-bottom: 1px solid #999; }
+  /* cu schiţa de găurire pe verso, rubricile de observaţii sunt mai joase */
+  .schite-gaurire + table.obs-rame td { height: 22mm; }
   .obs-camp { flex: 1; min-height: 12mm; border: 1.5px solid #000; border-radius: 2mm; padding: 1.5mm 2.5mm; }
   .obs-et { font-size: 14px; font-weight: 700; letter-spacing: .05em; }
 
@@ -653,7 +745,7 @@ export function deschideFisa(client, oferta = null, salvate = null) {
     <div class="antet-mic"><strong>${esc(modelScurt)} — ${esc(finisajLabel)}</strong>${oferta ? ` · <strong>${esc(oferta.numar)}</strong>` : ''}
       ${client ? ` · ${esc(client)}` : ''} · ${acum()}</div>
 
-    ${rame ? observatiiRame : ''}
+    ${rame ? schiteGaurire(spec, rame) + observatiiRame : ''}
     ${rame || util ? '' : tabelDimensiuniPanouri(spec)}
 
     ${tabel(['Cod', 'Denumire', 'Cant.'],
@@ -738,6 +830,19 @@ export function deschideFisa(client, oferta = null, salvate = null) {
         var f = parseFloat(getComputedStyle(c).fontSize);
         while (c.scrollWidth > c.clientWidth + 1 && f > 7) { f -= 0.5; c.style.fontSize = f + 'px'; }
       });
+    }
+
+    // Verso (rame): schiţele de găurire se micşorează în trepte de 10% până încape
+    // totul pe o foaie — altfel ce rămâne trece pe o a treia pagină şi strică
+    // printul faţă-verso. Cel mult ~50% din mărime, să rămână cotele lizibile.
+    var spate = document.querySelector('.spate'), schite = document.querySelectorAll('.gaur-desen svg');
+    if (spate && schite.length) {
+      for (var t = 0; t < 6 && spate.offsetHeight > 297 * PX * 0.98; t++) {
+        schite.forEach(function (sv) {
+          sv.style.width = (parseFloat(sv.style.width) * 0.9).toFixed(1) + 'mm';
+          sv.style.height = (parseFloat(sv.style.height) * 0.9).toFixed(1) + 'mm';
+        });
+      }
     }
   });
 </script>

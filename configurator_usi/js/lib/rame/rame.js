@@ -69,8 +69,22 @@ export const FARA_GAURIRE = 'Fara gaurire';   // la toate modelele (userul, 2026
 // nr. de găuri nu se mai scrie pe rând
 export const DOUA_GAURI = '100 mm de margini sus/jos';
 export const GAURIRE_820 = [FARA_GAURIRE, DOUA_GAURI, '100 mm sus/jos si la mijloc',
-                            '100 mm sus/jos si impartite egal', 'vezi schita pe spate'];
+                            '100 mm sus/jos si impartite egal', 'vezi schita pe spate'];   // SCHITA_CLIENT
 export const GAURIRE_831 = ['Fara gaurire', 'Gaurire Standard'];
+export const SCHITA_CLIENT = 'vezi schita pe spate';
+
+// Cotele găurilor de balama pe o ramă, de SUS în jos, în mm (la centrul găurii) —
+// pt. schiţa de găurire de pe verso (CNC). Prima şi ultima la 100 mm de margini,
+// celelalte împărţite egal între ele („la mijloc" = una la jumătate). null = cotele
+// nu se ştiu de aici (schiţa clientului, găurirea standard INVISIO); [] = fără găuri.
+export const MARGINE_GAURA_MM = 100;
+export function cotaGauri(h, gauri, gaurire) {
+  if (!gauri || !gaurire || gaurire === FARA_GAURIRE) return [];
+  if (!GAURIRE_820.includes(gaurire) || gaurire === SCHITA_CLIENT) return null;
+  if (gauri === 1) return [h / 2];
+  const pas = (h - 2 * MARGINE_GAURA_MM) / (gauri - 1);
+  return Array.from({ length: gauri }, (_, k) => Math.round((MARGINE_GAURA_MM + k * pas) * 10) / 10);
+}
 // livrare / agent / facturare: acum ale comenzii, la toate gamele (lib/comun/comanda.js)
 export { LIVRARE, AGENTI, PLATI } from '../comun/comanda.js';
 
