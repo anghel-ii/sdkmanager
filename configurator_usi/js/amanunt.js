@@ -119,7 +119,29 @@ function actualizeaza() {
   for (const id of ['btnCopyCod', 'btnCopyCant']) $(id).disabled = !!errors.length;
   card?.actualizeaza();
   renderOferta();
+  pasi();
 }
+
+// paşii, ca în configurator: ✓ pe cei gata, albastru pe primul neterminat; starea pe cardul de jos
+function pasi() {
+  const { errors } = facturare();
+  const gata = { produse: !errors.length, client: !!$('clientNume').value.trim() };
+  let curent = null;
+  document.querySelectorAll('.pas[data-pas]').forEach(s => {
+    const id = s.dataset.pas;
+    if (!(id in gata)) return;
+    s.classList.toggle('gata', gata[id]);
+    s.querySelector('.pas-nr').textContent = gata[id] ? '✓' : id === 'produse' ? '1' : '2';
+    s.classList.remove('curent');
+    if (!curent && !gata[id]) { curent = s; s.classList.add('curent'); }
+  });
+  const st = $('nouStare');
+  st.className = 'nou-stare ' + (gata.produse ? 'ok' : '');
+  st.textContent = gata.produse ? 'Gata de salvat' : errors[0] === 'Adaugă cel puţin un produs.' ? 'Adaugă cel puţin un produs' : `${errors.length} ${errors.length === 1 ? 'eroare' : 'erori'}`;
+}
+$('clientNume').addEventListener('input', pasi);
+// Goleşte pagina — ca în configurator: produsul de pe ecran de la zero (coşul rămâne)
+$('btnClear').addEventListener('click', () => location.reload());
 
 const rand = el => +el.closest('tr').dataset.i;
 const focus = (i, cls) => {
@@ -473,10 +495,10 @@ const puneClientul = (client, ofertaNr, detalii) => {
     cosul.scrie(cos);
   }
   if (!modFisa) {
-    card = cosul.initCard($('cardCos'), cos, { curenta, client: clientPtCos, gamaEcran: () => 'amanunt',
+    card = cosul.initCard($('cardCos'), cos, { curenta, client: clientPtCos, gamaEcran: () => 'amanunt', produse: $('cosProduse'),
                                                transport: () => liniaTransport({ comanda }) });
     document.addEventListener('cos:schimbat', renderOferta);
-  } else $('cardCosSec').hidden = true;
+  } else { $('cardCosSec').hidden = true; $('nouActiuni').hidden = true; }
   randeaza();
   await manager.initOferta(renderOferta);
   if (cos.ofertaEditata) { $('btnConfirma').textContent = TEXT.btnConfirma(); mesaj(`Modifici oferta <strong>${esc(cos.numar ?? '')}</strong>.`, 'ok'); }

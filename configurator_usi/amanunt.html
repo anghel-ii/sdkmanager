@@ -8,6 +8,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <!-- aceleaşi culori şi câmpuri de client ca în configurator -->
   <link rel="stylesheet" href="css/main.css">
+  <!-- paşii, pasul Client şi cardul de acţiuni de jos — aceleaşi ca în configurator (userul, 2026-10-05) -->
+  <link rel="stylesheet" href="css/nou.css">
   <style>
     body { overflow: auto; }
     .bara { display: flex; align-items: center; gap: 16px; padding: 12px 20px; background: var(--panel);
@@ -19,11 +21,11 @@
     .mic { font-size: 12px; }
     .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
 
-    main { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 20px; padding: 20px;
-           max-width: 1400px; margin: 0 auto; align-items: start; }
-    @media (max-width: 1000px) { main { grid-template-columns: 1fr; } }
-    .stanga { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
-    .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; }
+    /* o singură coloană de paşi (fără 3D), cardul de acţiuni lipit jos — ca în configurator */
+    main { display: flex; flex-direction: column; gap: 12px; padding: 16px 20px 0; max-width: 980px; margin: 0 auto; min-height: calc(100vh - 53px); }
+    body.ui-nou main > #nouActiuni { margin-top: auto; }
+    .sub-tabel button { font-size: 13px; }
+    .pas-indemn { font-size: 12px; color: var(--text-dim); font-weight: 400; }
 
     table.produse { width: 100%; border-collapse: collapse; font-size: 14px; }
     table.produse th { text-align: left; font-size: 11px; font-weight: 500; color: var(--text-dim);
@@ -57,13 +59,6 @@
     table.produse input[readonly] { color: var(--accent); border-style: dashed; }
     button.deb-x { background: none; border: none; color: var(--text-dim); cursor: pointer; padding: 2px 4px; }
     button.deb-x:hover { color: var(--danger); }
-    /* câmpurile clientului cu etichetă; un singur buton principal (Salvează oferta) */
-    .nou-camp { display: flex; flex-direction: column; gap: 5px; margin: 0; }
-    .nou-camp > span { font-size: 12px; color: var(--text-dim); }
-    .nou-camp:has(> [style*="display: none"]) { display: none; }
-    #btnComanda, #btnPlata { background: var(--panel-2); border-color: var(--line); }
-    #btnComanda:hover:not(:disabled), #btnPlata:hover:not(:disabled) { background: #272c34; border-color: var(--accent-dim); }
-    #btnConfirma { color: #fff; font-weight: 600; }
     button.sterge { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 14px; padding: 4px 8px; }
     button.sterge:hover { color: var(--danger); }
 
@@ -104,7 +99,7 @@
     }
   </style>
 </head>
-<body>
+<body class="ui-nou">
 <header class="bara" id="bara">
   <!-- servită de manager, /bara.js o înlocuieşte cu bara comună (titlul rămâne, ca „unde eşti") -->
   <a class="acasa" id="linkAcasa" href="/" style="display:none">← Acasă</a>
@@ -114,53 +109,68 @@
 <script src="/bara.js"></script>
 
 <main>
-  <div class="stanga">
-  <section class="card">
-    <div class="group-label">PRODUSE — scrie denumirea sau codul şi alege din listă</div>
-    <table class="produse">
-      <thead><tr><th class="nr">#</th><th>Produs</th><th>Cod</th><th class="num">Cantitate</th><th>UM</th><th></th></tr></thead>
-      <tbody id="randuri"></tbody>
-    </table>
-    <div id="erori"></div>
-    <div class="sub-tabel">
-      <span class="dim mic" id="total"></span>
-      <span class="spatiu"></span>
-      <button id="btnCopyCod" class="fisa-print" type="button">Copiază coduri</button>
-      <button id="btnCopyCant" class="fisa-print" type="button">Copiază cantităţi</button>
-    </div>
-  </section>
-  <!-- o ofertă cu mai multe produse: rame + Confort + sertare… (js/cos.js) -->
-  <section class="card" id="cardCosSec">
-    <div class="group-label">ADAUGĂ LA OFERTĂ</div>
-    <div id="cardCos"></div>
-  </section>
-  </div>
+  <!-- celelalte produse ale ofertei, câte un card restrâns (js/cos.js) -->
+  <div id="cosProduse"></div>
 
-  <!-- CLIENT — aceleaşi câmpuri ca în configurator -->
-  <section class="card" id="groupClient">
-    <div class="group-label">CLIENT</div>
-    <!-- etichete deasupra câmpurilor, ca în pasul Client din configurator (2026-10-05) -->
-    <div class="oferta-client">
-      <label class="nou-camp"><span>Nume client</span><input type="text" id="clientNume" placeholder="Nume client" autocomplete="off" list="clientiLista"></label>
-      <datalist id="clientiLista"></datalist>
-      <label class="nou-camp"><span>Telefon</span><input type="tel" id="clientTelefon" placeholder="Telefon" autocomplete="off"></label>
-      <label class="nou-camp"><span>Adresă</span><input type="text" id="clientAdresa" placeholder="Adresă" autocomplete="off"></label>
+  <section class="pas curent" data-pas="produse">
+    <div class="pas-cap"><span class="pas-nr">1</span><span class="pas-titlu">Produse</span>
+      <span class="pas-indemn">scrie denumirea sau codul şi alege din listă</span></div>
+    <div class="pas-corp">
+      <table class="produse">
+        <thead><tr><th class="nr">#</th><th>Produs</th><th>Cod</th><th class="num">Cantitate</th><th>UM</th><th></th></tr></thead>
+        <tbody id="randuri"></tbody>
+      </table>
+      <div id="erori"></div>
+      <div class="sub-tabel">
+        <span class="dim mic" id="total"></span>
+        <span class="spatiu"></span>
+        <button id="btnCopyCod" class="fisa-print" type="button">Copiază coduri</button>
+        <button id="btnCopyCant" class="fisa-print" type="button">Copiază cantităţi</button>
+      </div>
     </div>
-    <div class="oferta-client comanda-detalii">
-      <label class="nou-camp"><span>Mod de livrare</span><select id="comandaLivrare" data-c="livrare" aria-label="Mod de livrare"></select></label>
-      <label class="nou-camp"><span>Metodă de plată</span><select id="comandaPlata" data-c="plata" aria-label="Metodă de plată"></select></label>
-      <label class="nou-camp"><span>Agent</span><select id="comandaAgent" data-c="agent" aria-label="Agent"></select></label>
-      <label class="nou-camp"><span>Număr ofertă</span><input type="text" id="ofertaNr" placeholder="Nr. ofertă" autocomplete="off" style="display:none"></label>
-    </div>
-    <div id="ofertaUI"></div>
-    <div class="client-butoane">
-      <button id="btnConfirma" class="oferta-confirma" type="button" style="display:none">Salvează oferta</button>
-      <button id="btnComanda" class="oferta-confirma" type="button" style="display:none">Salvează comanda</button>
-      <button id="btnPlata" class="oferta-confirma" type="button" style="display:none">Aşteaptă plata</button>
-      <button id="btnFisa" class="fisa-print" type="button">🖶 Printează</button>
-    </div>
-    <div id="ofertaMesaj"></div>
   </section>
+
+  <!-- o ofertă cu mai multe produse: rame + Confort + sertare… (js/cos.js) — doar butoanele gamelor -->
+  <section class="pas optional" data-pas="cos" id="cardCosSec">
+    <div class="pas-cap"><span class="pas-nr">+</span><span class="pas-titlu">Adaugă alt produs la ofertă</span></div>
+    <div class="pas-corp"><div id="cardCos"></div></div>
+  </section>
+
+  <!-- CLIENT — aceleaşi câmpuri ca în configurator: stânga nume / telefon / adresă, dreapta livrare / plată / agent -->
+  <section class="pas" data-pas="client">
+    <div class="pas-cap"><span class="pas-nr">2</span><span class="pas-titlu">Client</span></div>
+    <div class="pas-corp">
+      <div id="groupClient">
+        <div class="oferta-client">
+          <label class="nou-camp"><span>Nume client</span><input type="text" id="clientNume" placeholder="Nume client" autocomplete="off" list="clientiLista"></label>
+          <datalist id="clientiLista"></datalist>
+          <label class="nou-camp"><span>Telefon</span><input type="tel" id="clientTelefon" placeholder="Telefon" autocomplete="off"></label>
+          <label class="nou-camp"><span>Adresă</span><input type="text" id="clientAdresa" placeholder="Adresă" autocomplete="off"></label>
+        </div>
+        <div class="oferta-client comanda-detalii">
+          <label class="nou-camp"><span>Mod de livrare</span><select id="comandaLivrare" data-c="livrare" aria-label="Mod de livrare"></select></label>
+          <label class="nou-camp"><span>Metodă de plată</span><select id="comandaPlata" data-c="plata" aria-label="Metodă de plată"></select></label>
+          <label class="nou-camp"><span>Agent</span><select id="comandaAgent" data-c="agent" aria-label="Agent"></select></label>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- cardul de acţiuni, lipit jos: starea · nr. ofertă · Goleşte pagina, apoi butoanele, apoi mesajele -->
+  <div id="nouActiuni">
+    <div class="nou-banda">
+      <span class="nou-stare" id="nouStare"></span>
+      <label class="nou-camp"><span>Număr ofertă</span><input type="text" id="ofertaNr" placeholder="Nr. ofertă" autocomplete="off" style="display:none"></label>
+      <button id="btnClear" class="btn-clear" type="button">Goleşte pagina</button>
+      <div class="client-butoane">
+        <button id="btnConfirma" class="oferta-confirma" type="button" style="display:none">Salvează oferta</button>
+        <button id="btnComanda" class="oferta-confirma" type="button" style="display:none">Salvează comanda</button>
+        <button id="btnPlata" class="oferta-confirma" type="button" style="display:none">Aşteaptă plata</button>
+        <button id="btnFisa" class="fisa-print" type="button">🖶 Printează lista</button>
+      </div>
+    </div>
+    <div class="nou-mesaje"><div id="ofertaUI"></div><div id="ofertaMesaj"></div></div>
+  </div>
 </main>
 
 <ul id="sugestii" role="listbox" aria-label="Produse" hidden></ul>
