@@ -28,3 +28,20 @@ export const liniaTransport = state => {
   const livrare = detaliiComanda(state).livrare;
   return livrare && livrare !== 'Ridicare personala' ? TRANSPORT : null;
 };
+
+// Ce mai trebuie completat ca oferta să se poată salva (userul, 2026-10-05): numele
+// clientului, modul de livrare, agentul şi nr. ofertei; la acceptarea pe loc
+// („Salvează comanda") şi telefonul + adresa (în manager le cere fereastra de
+// acceptare). → [{ id, text }], în ordinea câmpurilor din pagină. Doar în browser.
+export function campuriLipsa({ laAcceptare = false } = {}) {
+  const v = id => document.getElementById(id)?.value?.trim();
+  return [['clientNume', 'numele clientului'],
+          ...(laAcceptare ? [['clientTelefon', 'telefonul'], ['clientAdresa', 'adresa']] : []),
+          ['comandaLivrare', 'modul de livrare'], ['comandaAgent', 'agentul'], ['ofertaNr', 'numărul ofertei']]
+    .filter(([id]) => !v(id)).map(([id, text]) => ({ id, text }));
+}
+// cursorul în câmpul care lipseşte (la meniul căutabil — în caseta lui)
+export function focusCamp(id) {
+  const el = document.getElementById(id);
+  (el?.hidden ? el.nextElementSibling?.querySelector('input') : el)?.focus();
+}

@@ -367,12 +367,16 @@ async function accepta(ctx) {
   if (!PLATI.includes(corp.plata)) return eroare(ctx.res, 400, 'Alege modalitatea de plată: factură proformă, proformă cu amănuntul, factură fiscală, bon fiscal sau factură de avans.');
   const avans = corp.avans == null || String(corp.avans).trim() === '' ? 0 : Number(String(corp.avans).replace(',', '.'));
   if (!Number.isFinite(avans) || avans < 0) return eroare(ctx.res, 400, 'Avansul trebuie să fie un număr (0 = fără avans).');
+  // telefonul şi adresa: pe ofertă erau opţionale, la acceptare se cer (userul, 2026-10-05) —
+  // dacă lipsesc, vin din fereastra de acceptare
+  const telefon = text(corp.telefon) ?? c.client_telefon, adresa = text(corp.adresa, 300) ?? c.client_adresa;
+  if (!telefon || !adresa) return eroare(ctx.res, 400, 'Completează telefonul şi adresa clientului — se cer la acceptare.');
 
   db().prepare(`
     UPDATE comanda SET tip = 'comanda', confirmat_la = ${ACUM()}, confirmat_de = ?, plata = ?, avans = ?,
-                       tip_schimbat_la = ${ACUM()}
+                       tip_schimbat_la = ${ACUM()}, client_telefon = ?, client_adresa = ?
      WHERE id = ?
-  `).run(ctx.utilizator.id, corp.plata, Math.round(avans * 100) / 100, id);
+  `).run(ctx.utilizator.id, corp.plata, Math.round(avans * 100) / 100, telefon, adresa, id);
 
   anunta({ comanda: id });
   json(ctx.res, 200, { comanda: db().prepare('SELECT * FROM comanda WHERE id = ?').get(id) });

@@ -12,7 +12,7 @@ import { suprapuneriConfort, suprapuneriEfective, areCodH, areSinaSimpla } from 
 import gameJson from './systems/game.json';
 import { renderRame, syncRame, refreshRame } from './ui_rame.js';
 import { activeazaCampuri } from './campuri.js';
-import { LIVRARE, AGENTI, PLATI, detaliiComanda, liniaTransport } from './lib/comun/comanda.js';
+import { LIVRARE, AGENTI, PLATI, detaliiComanda, liniaTransport, campuriLipsa, focusCamp } from './lib/comun/comanda.js';
 import { stareRameGoala } from './lib/rame/rame.js';
 import { renderUtil } from './ui_util.js';
 import { initSugestiiClienti } from './sugestii-clienti.js';
@@ -928,6 +928,7 @@ function renderOferta() {
   arata(true);
   // se salvează tot coşul + produsul de pe ecran; unul început dar neterminat blochează
   for (const b of butoane) b.disabled = !t.pozitii;
+  document.dispatchEvent(new Event('configurator:oferta'));   // starea din ui_nou (butoanele s-au arătat)
 }
 
 // ── Coşul ofertei (js/cos.js): mai multe produse pe o ofertă ────────────────
@@ -975,9 +976,11 @@ const textButoane = () => {
 // Oferta se salvează întâi (POST / PUT), apoi, la comandă / plată, trece mai departe.
 async function trimiteOferta(unde = 'oferta') {
   const ofertaNr = $('ofertaNr').value.trim();
-  if (unde === 'oferta' && !ofertaNr) {
-    $('ofertaNr').focus();
-    return mesajOferta('Completează nr. de ofertă.', 'eroare');
+  // obligatorii: numele, livrarea, agentul, nr. ofertei; la „Salvează comanda" şi telefonul + adresa
+  const lipsa = campuriLipsa({ laAcceptare: unde === 'comanda' });
+  if (lipsa.length) {
+    focusCamp(lipsa[0].id);
+    return mesajOferta(`Completează ${lipsa.map(x => x.text).join(', ')}.`, 'eroare');
   }
   const tot = cosul.toate(cos, curentaUsi());
   if (tot.eroare) return mesajOferta(esc(tot.eroare), 'eroare');

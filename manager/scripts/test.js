@@ -320,7 +320,9 @@ async function main() {
   ]) verifica(`acceptare respinsă: ${ce} → 400`, (await cer('POST', `/api/comenzi/${id}/accepta`, corp)).stare === 400);
   verifica('… şi oferta a rămas ofertă', db2().prepare('SELECT tip FROM comanda WHERE id = ?').get(id).tip === 'oferta');
 
-  const acc = await cer('POST', `/api/comenzi/${id}/accepta`, { plata: 'fiscala', avans: '1500.5' });
+  verifica('acceptare fără telefon / adresă → 400', (await cer('POST', `/api/comenzi/${id}/accepta`, { plata: 'fiscala' })).stare === 400);
+  const acc = await cer('POST', `/api/comenzi/${id}/accepta`, { plata: 'fiscala', avans: '1500.5', telefon: '0722 000 111', adresa: 'Str. Test 1' });
+  verifica('telefonul şi adresa din fereastra de acceptare se salvează', acc.date.comanda?.client_telefon === '0722 000 111' && acc.date.comanda?.client_adresa === 'Str. Test 1');
   verifica('acceptare → 200', acc.stare === 200);
   verifica('se salvează plata şi avansul', acc.date.comanda?.plata === 'fiscala' && acc.date.comanda?.avans === 1500.5,
     JSON.stringify({ plata: acc.date.comanda?.plata, avans: acc.date.comanda?.avans }));
@@ -505,7 +507,7 @@ async function main() {
     ] } }] });
   const ofS = (await cer('POST', '/api/comenzi', cuSticla('Client Sticla'))).date.comanda;
   verifica('oferta neacceptată NU apare la sticlă', (await cer('GET', '/api/sticla')).date.linii.length === 0);
-  const accS = await cer('POST', `/api/comenzi/${ofS.id}/accepta`, { plata: 'bon' });
+  const accS = await cer('POST', `/api/comenzi/${ofS.id}/accepta`, { plata: 'bon', telefon: '0700', adresa: 'X' });
   verifica('acceptare fără avans → avans 0', accS.date.comanda?.avans === 0, accS.date.comanda?.avans);
   const st = (await cer('GET', '/api/sticla')).date.linii;
   verifica('comanda acceptată → 3 linii de sticlă', st.length === 3, st.length);
@@ -642,7 +644,7 @@ async function main() {
     verifica('nu se modifică din configurator', (await cer('PUT', `/api/comenzi/${pid}`, {
       client: { nume: 'Y' }, pozitii: [pozitie('confortGamma', 'G', 1, 1200)] })).stare === 409);
     verifica('nu se facturează cât aşteaptă plata', (await cer('POST', `/api/comenzi/${pid}/factura`, { numar: 'F1' })).stare === 409);
-    const pl = await cer('POST', `/api/comenzi/${pid}/accepta`, { plata: 'proforma', avans: 0 });
+    const pl = await cer('POST', `/api/comenzi/${pid}/accepta`, { plata: 'proforma', avans: 0, telefon: '0700', adresa: 'X' });
     verifica('plată primită → comandă în lucru', pl.stare === 200 && pl.date.comanda.tip === 'comanda' && pl.date.comanda.numar_comanda == null);
     verifica('… şi a ieşit din Aşteaptă plata', !(await cer('GET', '/api/comenzi?tip=plata')).date.comenzi.length);
     // „Înapoi în ofertă" — 10 minute după trecere, doar cât nu s-a lucrat pe ea
@@ -652,7 +654,7 @@ async function main() {
     verifica('înapoi a doua oară → 409', (await cer('POST', `/api/comenzi/${pid}/inapoi-oferta`)).stare === 409);
     verifica('aşteaptă plata → înapoi în ofertă → 200', (await cer('POST', `/api/comenzi/${pid}/asteapta-plata`)).stare === 200
       && (await cer('POST', `/api/comenzi/${pid}/inapoi-oferta`)).stare === 200);
-    const re = await cer('POST', `/api/comenzi/${pid}/accepta`, { plata: 'proforma', avans: 0 });
+    const re = await cer('POST', `/api/comenzi/${pid}/accepta`, { plata: 'proforma', avans: 0, telefon: '0700', adresa: 'X' });
     verifica('reacceptată: acelaşi nr. de ofertă', re.stare === 200 && re.date.comanda.oferta_nr === 'NM-77');
     db2().prepare("UPDATE comanda SET tip_schimbat_la = datetime('now', '-11 minutes') WHERE id = ?").run(pid);
     verifica('după 10 minute → 409', (await cer('POST', `/api/comenzi/${pid}/inapoi-oferta`)).stare === 409);
@@ -805,7 +807,7 @@ async function main() {
     const creat = Date.parse(db2().prepare('SELECT creat_la FROM comanda WHERE id = ?').get(o.date.comanda.id).creat_la.replace(' ', 'T') + 'Z');
     verifica('oferta nouă: ora exactă, nu a ceasului serverului', Math.abs(creat - (Date.now() + 5 * 60e3)) < 5000,
       new Date(creat).toISOString());
-    const acc = await cer('POST', `/api/comenzi/${o.date.comanda.id}/accepta`, { plata: 'proforma', avans: 0 });
+    const acc = await cer('POST', `/api/comenzi/${o.date.comanda.id}/accepta`, { plata: 'proforma', avans: 0, telefon: '0700', adresa: 'X' });
     const conf = Date.parse(acc.date.comanda.confirmat_la.replace(' ', 'T') + 'Z');
     verifica('acceptarea: ora exactă', Math.abs(conf - (Date.now() + 5 * 60e3)) < 5000);
     verifica('/api/ora dă ora exactă', Math.abs((await cer('GET', '/api/ora')).date.acum - (Date.now() + 5 * 60e3)) < 2000);

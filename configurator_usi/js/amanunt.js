@@ -3,7 +3,7 @@ import * as manager from './manager.js';
 import * as cosul from './cos.js';
 import { cautator, debitare } from './amanunt-calcul.js';
 import { initSugestiiClienti } from './sugestii-clienti.js';
-import { LIVRARE, AGENTI, PLATI, plataText, liniaTransport } from './lib/comun/comanda.js';
+import { LIVRARE, AGENTI, PLATI, plataText, liniaTransport, campuriLipsa, focusCamp } from './lib/comun/comanda.js';
 import { copyRows } from './lib/comun/clipboard.js';
 import { qtyText } from './lib/comun/num.js';
 import { dataRo } from './ora.js';
@@ -127,7 +127,9 @@ function actualizeaza() {
 // paşii, ca în configurator: ✓ pe cei gata, albastru pe primul neterminat; starea pe cardul de jos
 function pasi() {
   const { errors } = facturare();
-  const gata = { produse: !errors.length, client: !!$('clientNume').value.trim() };
+  const lipsa = $('ofertaNr').style.display !== 'none' ? campuriLipsa() : [];
+  const gata = { produse: !errors.length,
+                 client: !lipsa.some(x => ['clientNume', 'comandaLivrare', 'comandaAgent'].includes(x.id)) };
   let curent = null;
   document.querySelectorAll('.pas[data-pas]').forEach(s => {
     const id = s.dataset.pas;
@@ -138,10 +140,13 @@ function pasi() {
     if (!curent && !gata[id]) { curent = s; s.classList.add('curent'); }
   });
   const st = $('nouStare');
-  st.className = 'nou-stare ' + (gata.produse ? 'ok' : '');
-  st.textContent = gata.produse ? 'Gata de salvat' : errors[0] === 'Adaugă cel puţin un produs.' ? 'Adaugă cel puţin un produs' : `${errors.length} ${errors.length === 1 ? 'eroare' : 'erori'}`;
+  st.className = 'nou-stare ' + (gata.produse && !lipsa.length ? 'ok' : '');
+  st.textContent = !gata.produse ? (errors[0] === 'Adaugă cel puţin un produs.' ? 'Adaugă cel puţin un produs' : `${errors.length} ${errors.length === 1 ? 'eroare' : 'erori'}`)
+    : lipsa.length ? `Mai completează: ${lipsa.map(x => x.text).join(', ')}` : 'Gata de salvat';
 }
-$('clientNume').addEventListener('input', pasi);
+// starea se schimbă la datele clientului şi la nr. ofertei
+for (const id of ['clientNume', 'clientTelefon', 'clientAdresa', 'comandaLivrare', 'comandaPlata', 'comandaAgent', 'ofertaNr'])
+  for (const ev of ['input', 'change']) $(id).addEventListener(ev, pasi);
 // Goleşte pagina — ca în configurator: produsul de pe ecran de la zero (coşul rămâne)
 $('btnClear').addEventListener('click', () => location.reload());
 
@@ -393,6 +398,7 @@ function renderOferta() {
   const t = cosul.toate(cos, curenta());
   $('ofertaUI').innerHTML = t.pozitii?.length > 1 ? `<div class="oferta-hint">${t.pozitii.length} produse în ofertă</div>` : '';
   for (const id of BUTOANE) $(id).disabled = !t.pozitii;
+  pasi();   // butoanele s-au arătat (servit de manager) → starea cere şi datele clientului
 }
 
 function cerePlata() {
@@ -410,8 +416,9 @@ function cerePlata() {
 
 async function trimite(unde) {
   const ofertaNr = $('ofertaNr').value.trim();
-  if (unde === 'oferta' && !ofertaNr) { $('ofertaNr').focus(); return mesaj('Completează nr. de ofertă.', 'eroare'); }
-  if (!$('clientNume').value.trim()) { $('clientNume').focus(); return mesaj('Completează numele clientului.', 'eroare'); }
+  // obligatorii: numele, livrarea, agentul, nr. ofertei; la „Salvează comanda" şi telefonul + adresa
+  const lipsa = campuriLipsa({ laAcceptare: unde === 'comanda' });
+  if (lipsa.length) { focusCamp(lipsa[0].id); return mesaj(`Completează ${lipsa.map(x => x.text).join(', ')}.`, 'eroare'); }
   const tot = cosul.toate(cos, curenta());
   if (tot.eroare) return mesaj(esc(tot.eroare), 'eroare');
   const plata = unde === 'comanda' ? await cerePlata() : null;

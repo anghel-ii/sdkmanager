@@ -30,6 +30,7 @@
   dialog.fereastra { color: var(--text); width: min(440px, calc(100% - 32px)); }
   dialog.fereastra::backdrop { background: rgba(0, 0, 0, .55); }
   .camp { display: grid; gap: 6px; margin-bottom: 14px; }
+  .camp[hidden] { display: none; }
   .camp select, .camp input { font: inherit; padding: 8px 10px; border-radius: 8px;
     border: 1px solid var(--line); background: var(--panel-2); color: var(--text); }
   .butoane { display: flex; gap: 8px; justify-content: flex-end; }
@@ -144,6 +145,13 @@
         <option value="bon">Bon fiscal</option>
         <option value="avans">Factură de avans</option>
       </select>
+    </label>
+    <!-- telefonul şi adresa se cer la acceptare — apar doar dacă oferta nu le are -->
+    <label class="camp" id="accTelefonCamp">Telefonul clientului
+      <input id="accTelefon" type="tel" autocomplete="off">
+    </label>
+    <label class="camp" id="accAdresaCamp">Adresa clientului
+      <input id="accAdresa" type="text" autocomplete="off">
     </label>
     <label class="camp">Avans încasat (lei) — 0 dacă nu se încasează avans
       <input id="accAvans" type="number" min="0" step="0.01" value="0" inputmode="decimal" required>
@@ -771,13 +779,18 @@ async function renderDetaliu(id) {
     $('titluAccepta').textContent = $('accOk').textContent = ePlata ? 'Plată primită' : 'Acceptă oferta';
     // metoda aleasă deja în configurator (dacă e una din cele actuale)
     if (c.plata && $('accPlata').querySelector(`option[value="${c.plata}"]`)) $('accPlata').value = c.plata;
+    for (const [camp, inp, are] of [['accTelefonCamp', 'accTelefon', c.client_telefon], ['accAdresaCamp', 'accAdresa', c.client_adresa]]) {
+      $(camp).hidden = !!are;
+      $(inp).required = !are;
+    }
     $('accOk').disabled = false;
     $('accRenunta').onclick = () => dlg.close();
     $('formAccepta').onsubmit = async e => {
       e.preventDefault();
       $('accOk').disabled = true;
       const rr = await api(`/api/comenzi/${id}/accepta`, { method: 'POST',
-        body: JSON.stringify({ plata: $('accPlata').value, avans: $('accAvans').value }) });
+        body: JSON.stringify({ plata: $('accPlata').value, avans: $('accAvans').value,
+                               telefon: $('accTelefon').value, adresa: $('accAdresa').value }) });
       if (!rr) return;
       if (!rr.ok) {
         const d = await rr.json().catch(() => ({}));

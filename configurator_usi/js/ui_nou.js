@@ -3,6 +3,7 @@ import { systems } from './systems/registry.js';
 import { currentSpec, currentBilling } from './builder.js';
 import gameJson from './systems/game.json';
 import { configuratieCompleta } from './ui.js';
+import { campuriLipsa } from './lib/comun/comanda.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  INTERFAŢA NOUĂ (userul, 2026-09-24; designul din Superdesign)
@@ -132,7 +133,12 @@ export function initNou() {
   document.querySelector('#sidebar > hr.sep')?.remove();
 
   document.addEventListener('configurator:rebuild', actualizeaza);
-  $('groupClient')?.addEventListener('input', actualizeaza);   // pasul Client se bifează la nume
+  // pasul Client şi starea se schimbă la datele clientului (meniurile căutabile dau doar `change`)
+  for (const ev of ['input', 'change']) {
+    $('groupClient')?.addEventListener(ev, actualizeaza);
+    $('ofertaNr')?.addEventListener(ev, actualizeaza);
+  }
+  document.addEventListener('configurator:oferta', actualizeaza);
   // la orice re-randare a barei (carduri, opţiuni avansate, rame): câmpuri în loc
   // de steppere şi texte fără prescurtări. Idempotent, deci nu se ciclează.
   const curata = () => { inlocuiesteSteppere(sidebar); scrieIntreg(sidebar); };
@@ -230,9 +236,13 @@ function actualizeaza() {
   // „gata" şi nici erori (erorile de facturare vin după, pe configuraţia întreagă)
   const inceputa = configuratieCompleta();
   const complet = inceputa && !n && f.lines.length > 0;
-  stare.className = 'nou-stare ' + (!inceputa ? '' : n ? 'eroare' : complet ? 'ok' : '');
+  // „Gata de salvat" doar cu datele clientului obligatorii (userul, 2026-10-05) — când se
+  // poate salva (servit de manager: nr. ofertei e la vedere); fişa se printează oricum
+  const lipsa = complet && $('ofertaNr')?.style.display !== 'none' ? campuriLipsa() : [];
+  stare.className = 'nou-stare ' + (!inceputa ? '' : n ? 'eroare' : complet && !lipsa.length ? 'ok' : '');
   stare.textContent = !inceputa ? 'Configuraţie incompletă'
-    : n ? `${n} ${n === 1 ? 'eroare' : 'erori'}` : complet ? 'Gata de salvat' : 'Configuraţie incompletă';
+    : n ? `${n} ${n === 1 ? 'eroare' : 'erori'}`
+    : complet ? (lipsa.length ? `Mai completează: ${lipsa.map(x => x.text).join(', ')}` : 'Gata de salvat') : 'Configuraţie incompletă';
   stare.title = n ? f.errors.join('\n') : '';
 
   // cotele pe 3D
@@ -257,7 +267,7 @@ function actualizeaza() {
     dim:     rame ? (spec?.nrRame ?? 0) > 0 : !!(meta && hGol && lGol && usiAlese),
     usi:     !!meta && !rame && !!hGol && !!lGol && usiAlese && vizibil($('groupUsi')) && !n,
     oferta:  !!meta && !n && complet,
-    client:  !!$('clientNume')?.value.trim(),
+    client:  !campuriLipsa().some(x => ['clientNume', 'comandaLivrare', 'comandaAgent'].includes(x.id)),
     cos:     false,   // opţional — nu se bifează
   };
   const rezumat = {
