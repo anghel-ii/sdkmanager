@@ -616,6 +616,20 @@ function facturareTotala(pozitii) {
   return [...pe.values()];
 }
 
+// gamele configuratorului (game.json) — pt. alegerea gamei şi numele fişelor; o singură cerere
+let _game = null;
+const incarcaGame = () => (_game ??= fetch('/configurator/game.json').then(r => (r.ok ? r.json() : null)).catch(() => null));
+// Butoanele de fişă ale unei oferte cu mai multe produse: „Fişa Confort", „Fişa UTIL"…
+// (userul, 2026-10-05) — la două produse din aceeaşi gamă, modelul; la acelaşi model, şi numărul.
+function numeFise(pozitii, game) {
+  const gama = pozitii.map(p => {
+    const g = game?.game.find(x => x.id === p.sistem || (x.tabel ? x.modele.flat() : x.modele).some(m => m.id === p.sistem));
+    return g ? (g.id === 'amanunt' ? 'amănunt' : g.label) : p.eticheta;
+  });
+  const model = pozitii.map((p, k) => (gama.filter(x => x === gama[k]).length > 1 ? p.eticheta : gama[k]));
+  return model.map((m, k) => (model.filter(x => x === m).length > 1 ? `${m} ${k + 1}` : m));
+}
+
 // un pas din drumul comenzii (cardul din dreapta al detaliului): gata | acum | viitor | info
 const pas = (stare, titlu, continut, cls = '') =>
   `<dt class="${stare}">${titlu}</dt><dd class="${stare}${cls ? ' ' + cls : ''}">${continut}</dd>`;
@@ -626,6 +640,7 @@ async function renderDetaliu(id) {
   if (!r.ok) { $('continut').innerHTML = '<div class="mesaj eroare">Comanda nu există.</div>'; return; }
 
   const { comanda: c, pozitii, coduri, scanari, sticlaLinii = [] } = await r.json();
+  const fise = pozitii.length > 1 ? numeFise(pozitii, await incarcaGame()) : [];
   const total = facturareTotala(pozitii);
   const eOferta = c.tip === 'oferta';
   const ePlata  = c.tip === 'plata';     // aşteaptă plata — încă nu e comandă în lucru
@@ -649,7 +664,7 @@ async function renderDetaliu(id) {
       </div>
       <div class="spatiu"></div>
       ${pozitii.length > 1
-        ? pozitii.map((p, k) => `<button class="fisa-poz" data-poz="${k}" title="Fişa produsului ${k + 1}: ${esc(p.eticheta)}">🖶 Fişa ${k + 1}</button>`).join('')
+        ? pozitii.map((p, k) => `<button class="fisa-poz" data-poz="${k}" title="Fişa produsului ${k + 1}: ${esc(p.eticheta)}">🖶 Fişa ${esc(fise[k])}</button>`).join('')
         : '<button id="fisaDetaliu" title="Deschide fişa comenzii pentru printare">🖶 Printează fişa</button>'}
       ${minuteInapoi > 0 ? `<button class="rosu" id="inapoiOferta" title="Greşeală? O mai poţi întoarce în oferte ${minuteInapoi} ${minuteInapoi === 1 ? 'minut' : 'minute'}">↩ Înapoi în ofertă</button>` : ''}
       ${eOferta ? `<button id="modifica">Modifică oferta</button>
@@ -795,7 +810,7 @@ window.addEventListener('hashchange', ruteaza);
 // ── Ofertă nouă — alegerea gamei ─────────────────────────────────────────────
 async function deschideAlegereGama() {
   if (!$('listaGame').children.length) {
-    const g = await fetch('/configurator/game.json').then(r => (r.ok ? r.json() : null)).catch(() => null);
+    const g = await incarcaGame();
     const cate = x => (x.tabel ? x.modele.flat() : x.modele).length;
     $('listaGame').innerHTML = (g?.game ?? []).map(x => `
       <a href="/configurator/?gama=${encodeURIComponent(x.id)}">
