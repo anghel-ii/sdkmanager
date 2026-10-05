@@ -76,6 +76,14 @@ function faCautabil(sel) {
 
   const textAles = () => valide.find(o => o.valoare === sel.value)?.text ?? '';
   inp.value = textAles();
+  // valoarea pusă din cod (ex. agentul clientului ales din sugestii, oferta deschisă
+  // din manager) se vede şi în casetă — altfel meniul ascuns avea valoarea, caseta rămânea goală
+  const proprietate = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
+  Object.defineProperty(sel, 'value', {
+    configurable: true,
+    get() { return proprietate.get.call(this); },
+    set(v) { proprietate.set.call(this, v); if (lista.hidden) inp.value = textAles(); },
+  });
 
   let rezultate = [], activ = 0;
   const randeaza = () => {
