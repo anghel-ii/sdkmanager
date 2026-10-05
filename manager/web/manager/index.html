@@ -630,6 +630,11 @@ async function renderDetaliu(id) {
   const eOferta = c.tip === 'oferta';
   const ePlata  = c.tip === 'plata';     // aşteaptă plata — încă nu e comandă în lucru
   const eComanda = c.tip === 'comanda';
+  // „Înapoi în ofertă": 10 minute după ce a ieşit din oferte, cât nu s-a lucrat pe ea
+  // (serverul verifică oricum; aici doar nu arătăm butonul degeaba)
+  const ramas = c.tip_schimbat_la && !c.factura_nr && !c.finalizat_la
+    ? 10 * 60e3 - (Date.now() - Date.parse(c.tip_schimbat_la.replace(' ', 'T') + 'Z')) : 0;
+  const minuteInapoi = ramas > 0 ? Math.ceil(ramas / 60e3) : 0;
 
   $('continut').innerHTML = `
     <button class="inapoi" id="inapoi">← Înapoi la ${cautare.trim() ? 'rezultatele căutării' : 'listă'}</button>
@@ -646,7 +651,9 @@ async function renderDetaliu(id) {
       ${pozitii.length > 1
         ? pozitii.map((p, k) => `<button class="fisa-poz" data-poz="${k}" title="Fişa produsului ${k + 1}: ${esc(p.eticheta)}">🖶 Fişa ${k + 1}</button>`).join('')
         : '<button id="fisaDetaliu" title="Deschide fişa comenzii pentru printare">🖶 Printează fişa</button>'}
+      ${minuteInapoi > 0 ? `<button id="inapoiOferta" title="Greşeală? O mai poţi întoarce în oferte ${minuteInapoi} ${minuteInapoi === 1 ? 'minut' : 'minute'}">↩ Înapoi în ofertă</button>` : ''}
       ${eOferta ? `<button id="modifica">Modifică oferta</button>
+                   <button id="laPlata">Aşteaptă plata</button>
                    <button class="primar" id="accepta">Acceptă oferta</button>` : ''}
       ${ePlata ? '<button class="primar" id="accepta">Plată primită</button>' : ''}
       ${eComanda && !c.finalizat_la ? '<button id="finalizeaza">Marchează finalizată</button>' : ''}
@@ -706,6 +713,20 @@ async function renderDetaliu(id) {
   tabCurent = eOferta ? 'oferta' : ePlata ? 'plata' : c.finalizat_la ? 'finalizata' : 'comanda';
   asiguraTaburi();   // taburile rămân sus şi aici, cu tabul comenzii marcat
   $('modifica')?.addEventListener('click', () => { location.href = '/configurator/?oferta=' + id; });
+  // trecerile simple (fără dialog): în „aşteaptă plata" / înapoi în oferte
+  for (const [btn, cale, intrebare] of [
+    ['laPlata', 'asteapta-plata', 'Trimiţi oferta la „Aşteaptă plata"?'],
+    ['inapoiOferta', 'inapoi-oferta', 'O întorci în oferte? De acolo o poţi accepta sau trimite la „Aşteaptă plata".'],
+  ]) {
+    $(btn)?.addEventListener('click', async () => {
+      if (!(await confirma(intrebare))) return;
+      const rr = await api(`/api/comenzi/${id}/${cale}`, { method: 'POST' });
+      if (rr && !rr.ok) alerta((await rr.json().catch(() => ({}))).eroare || 'Operaţia a eşuat.');
+      renderDetaliu(id);
+    });
+  }
+  // butonul dispare singur când trec cele 10 minute
+  if (minuteInapoi > 0) setTimeout(() => $('inapoiOferta')?.remove(), ramas);
   leagaFacturare($('continut'), () => renderDetaliu(id));
   leagaSticla(sticlaLinii, () => renderDetaliu(id));
   $('anuleazaFactura')?.addEventListener('click', async () => {

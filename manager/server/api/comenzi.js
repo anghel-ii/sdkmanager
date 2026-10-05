@@ -343,7 +343,7 @@ function asteaptaPlata(ctx) {
   if (!c)                 return eroare(ctx.res, 404, 'Comandă inexistentă.');
   if (c.anulat)           return eroare(ctx.res, 400, 'Oferta e anulată.');
   if (c.tip !== 'oferta') return eroare(ctx.res, 409, c.tip === 'plata' ? 'Comanda aşteaptă deja plata.' : `Oferta e deja comandă (${c.numar_comanda}).`);
-  db().prepare("UPDATE comanda SET tip = 'plata' WHERE id = ?").run(id);
+  db().prepare("UPDATE comanda SET tip = 'plata', tip_schimbat_la = datetime('now') WHERE id = ?").run(id);
   anunta({ comanda: id });
   json(ctx.res, 200, { comanda: db().prepare('SELECT * FROM comanda WHERE id = ?').get(id) });
 }
@@ -366,10 +366,39 @@ async function accepta(ctx) {
 
   const numarComanda = c.numar.replace(/^OF-/, 'CMD-');
   db().prepare(`
-    UPDATE comanda SET tip = 'comanda', numar_comanda = ?, confirmat_la = datetime('now'), confirmat_de = ?, plata = ?, avans = ?
+    UPDATE comanda SET tip = 'comanda', numar_comanda = ?, confirmat_la = datetime('now'), confirmat_de = ?, plata = ?, avans = ?,
+                       tip_schimbat_la = datetime('now')
      WHERE id = ?
   `).run(numarComanda, ctx.utilizator.id, corp.plata, Math.round(avans * 100) / 100, id);
 
+  anunta({ comanda: id });
+  json(ctx.res, 200, { comanda: db().prepare('SELECT * FROM comanda WHERE id = ?').get(id) });
+}
+
+// „Înapoi în ofertă" (userul, 2026-10-05): o ofertă trecută din greşeală în lucru
+// sau la „aşteaptă plata" se întoarce în oferte (de acolo o duci unde trebuia) —
+// doar în primele MINUTE_INAPOI minute şi doar cât nu s-a lucrat pe ea: fără
+// factură, finalizare, sticlă comandată sau scanări. Numărul CMD- se şterge; la
+// o nouă acceptare iese acelaşi (vine din OF-), deci etichetele rămân valabile.
+const MINUTE_INAPOI = 10;
+function inapoiInOferta(ctx) {
+  const id = Number(ctx.params.id);
+  const c = db().prepare(`SELECT *, tip_schimbat_la >= datetime('now', '-${MINUTE_INAPOI} minutes') AS la_timp
+                            FROM comanda WHERE id = ?`).get(id);
+  if (!c)                   return eroare(ctx.res, 404, 'Comandă inexistentă.');
+  if (c.tip === 'oferta')   return eroare(ctx.res, 409, 'E deja ofertă.');
+  if (!c.la_timp)           return eroare(ctx.res, 409, `Înapoi în ofertă se poate doar în primele ${MINUTE_INAPOI} minute.`);
+  if (c.factura_nr)         return eroare(ctx.res, 409, 'Comanda e deja facturată — anulează întâi factura.');
+  if (c.finalizat_la)       return eroare(ctx.res, 409, 'Comanda e deja finalizată.');
+  const lucrat = db().prepare(`
+    SELECT EXISTS (SELECT 1 FROM pozitie_linie l JOIN pozitie p ON p.id = l.pozitie_id
+                    WHERE p.comanda_id = ? AND l.comandat_la IS NOT NULL) AS sticla,
+           EXISTS (SELECT 1 FROM scanare s JOIN usa a ON a.id = s.usa_id JOIN pozitie p ON p.id = a.pozitie_id
+                    WHERE p.comanda_id = ?) AS scanat`).get(id, id);
+  if (lucrat.sticla)        return eroare(ctx.res, 409, 'Sticla e deja comandată la furnizor.');
+  if (lucrat.scanat)        return eroare(ctx.res, 409, 'S-a început lucrul în atelier (există scanări).');
+  db().prepare(`UPDATE comanda SET tip = 'oferta', numar_comanda = NULL, confirmat_la = NULL, confirmat_de = NULL,
+                                   avans = NULL, tip_schimbat_la = NULL WHERE id = ?`).run(id);
   anunta({ comanda: id });
   json(ctx.res, 200, { comanda: db().prepare('SELECT * FROM comanda WHERE id = ?').get(id) });
 }
@@ -480,6 +509,7 @@ module.exports = {
     ['PUT',  '/api/comenzi/:id',             { handler: modifica }],
     ['POST', '/api/comenzi/:id/accepta',     { handler: accepta }],
     ['POST', '/api/comenzi/:id/asteapta-plata', { handler: asteaptaPlata }],
+    ['POST', '/api/comenzi/:id/inapoi-oferta',  { handler: inapoiInOferta }],
     ['POST', '/api/comenzi/:id/finalizeaza', { handler: schimbaFinalizare(true) }],
     ['POST', '/api/comenzi/:id/redeschide',  { handler: schimbaFinalizare(false) }],
     ['POST', '/api/comenzi/:id/factura',     { handler: factura }],

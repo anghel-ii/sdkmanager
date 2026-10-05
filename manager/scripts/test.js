@@ -460,7 +460,7 @@ async function main() {
     const idVechi = Number(db2().prepare("INSERT INTO utilizator (nume, user, parola_hash, parola_salt, rol) VALUES ('Vechi', 'vechi', 'x', 'x', 'operator')").run().lastInsertRowid);
     require('../server/db.js').roluriNoi(db2());
     verifica('migraţie: operator → birou', db2().prepare('SELECT rol FROM utilizator WHERE id = ?').get(idVechi).rol === 'birou');
-    verifica('schema la versiunea 13', db2().prepare('PRAGMA user_version').get().user_version === 13);
+    verifica('schema la versiunea 14', db2().prepare('PRAGMA user_version').get().user_version === 14);
   }
 
   console.log('\nFixare şi sortare — per utilizator');
@@ -645,6 +645,22 @@ async function main() {
     const pl = await cer('POST', `/api/comenzi/${pid}/accepta`, { plata: 'proforma', avans: 0 });
     verifica('plată primită → comandă în lucru', pl.stare === 200 && pl.date.comanda.tip === 'comanda' && /^CMD-/.test(pl.date.comanda.numar_comanda));
     verifica('… şi a ieşit din Aşteaptă plata', !(await cer('GET', '/api/comenzi?tip=plata')).date.comenzi.length);
+    // „Înapoi în ofertă" — 10 minute după trecere, doar cât nu s-a lucrat pe ea
+    const cmd = pl.date.comanda.numar_comanda;
+    const ina = await cer('POST', `/api/comenzi/${pid}/inapoi-oferta`);
+    verifica('înapoi în ofertă → 200, e iar ofertă, fără CMD-', ina.stare === 200 && ina.date.comanda.tip === 'oferta'
+      && ina.date.comanda.numar_comanda === null && ina.date.comanda.confirmat_la === null, JSON.stringify(ina.date));
+    verifica('înapoi a doua oară → 409', (await cer('POST', `/api/comenzi/${pid}/inapoi-oferta`)).stare === 409);
+    verifica('aşteaptă plata → înapoi în ofertă → 200', (await cer('POST', `/api/comenzi/${pid}/asteapta-plata`)).stare === 200
+      && (await cer('POST', `/api/comenzi/${pid}/inapoi-oferta`)).stare === 200);
+    const re = await cer('POST', `/api/comenzi/${pid}/accepta`, { plata: 'proforma', avans: 0 });
+    verifica('reacceptată: acelaşi număr CMD-', re.date.comanda.numar_comanda === cmd);
+    db2().prepare("UPDATE comanda SET tip_schimbat_la = datetime('now', '-11 minutes') WHERE id = ?").run(pid);
+    verifica('după 10 minute → 409', (await cer('POST', `/api/comenzi/${pid}/inapoi-oferta`)).stare === 409);
+    db2().prepare("UPDATE comanda SET tip_schimbat_la = datetime('now') WHERE id = ?").run(pid);
+    await cer('POST', `/api/comenzi/${pid}/factura`, { numar: 'F-INAPOI' });
+    verifica('facturată → nu se mai întoarce (409)', (await cer('POST', `/api/comenzi/${pid}/inapoi-oferta`)).stare === 409);
+    await cer('POST', `/api/comenzi/${pid}/factura`, { numar: '', anuleaza: true });
     const cate = async tip => (await cer('GET', '/api/comenzi?tip=' + tip)).date.comenzi.length;
     const peTaburi = await cate('oferta') + await cate('plata') + await cate('comanda') + await cate('finalizata');
     verifica('căutarea globală: tip=toate = cele patru taburi la un loc', peTaburi > 1 && await cate('toate') === peTaburi, `${peTaburi}`);

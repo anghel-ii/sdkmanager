@@ -172,38 +172,55 @@ body.ui-nou #nouPasi { width: 100%; box-sizing: border-box; }
      • clientul = pas propriu, cu etichete deasupra câmpurilor
      • texte mai mari în cardurile de uşă; tabelele cu fontul obişnuit, codurile mono
    ═══════════════════════════════════════════════════════════════════════════ */
-@media (min-width: 1100px) {
-  body.ui-nou #app { grid-template-columns: minmax(600px, 60fr) minmax(0, 40fr); }
-}
 body.ui-nou #sidebar { padding: 16px 20px 24px; }
 body.ui-nou #nouPasi { gap: 12px; }
 
-/* ── banda de acţiuni ── */
-body.ui-nou #nouActiuni { flex-direction: column; align-items: stretch; gap: 8px; padding: 10px 12px; margin-bottom: 12px; }
-.nou-banda { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-body.ui-nou #nouActiuni .nou-stare { flex: 1 1 120px; min-width: 0; overflow: hidden; text-overflow: ellipsis; padding: 7px 12px; }
-body.ui-nou .nou-banda .client-butoane { display: flex; flex-direction: row-reverse; gap: 6px; margin-left: auto; }
+/* ── cardul de acţiuni, lipit jos (ca fosta bară a clientului) ──
+   rândul 1: starea · nr. ofertă · Goleşte pagina; rândul 2: Fişă / Aşteaptă plata /
+   Salvează comanda / Salvează oferta (principal, în dreapta); dedesubt mesajele */
+body.ui-nou #sidebar { padding-bottom: 0; }
+body.ui-nou #nouActiuni {
+  position: sticky; top: auto; bottom: 0; z-index: 6;
+  flex-direction: column; align-items: stretch; gap: 8px; padding: 10px 12px; margin: 4px 0 0;
+  border-radius: 10px 10px 0 0; border-bottom: none;
+  /* prima umbră = fundalul, acoperă fâşia de sub card; a doua îl ridică deasupra paşilor */
+  box-shadow: 0 12px 0 0 var(--bg), 0 -8px 16px -8px rgba(0, 0, 0, .6);
+}
+.nou-banda { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: center; }
+body.ui-nou #nouActiuni .nou-stare { min-width: 0; overflow: hidden; text-overflow: ellipsis; padding: 7px 12px; }
+body.ui-nou .nou-banda .nou-camp { flex-direction: row; align-items: center; gap: 8px; }
+body.ui-nou .nou-banda .nou-camp > span { white-space: nowrap; }
+body.ui-nou .nou-banda .nou-camp input {
+  width: 150px; padding: 7px 10px; font: inherit; font-size: 13px;
+  border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--text);
+}
+body.ui-nou .nou-banda .nou-camp input:focus { outline: none; border-color: var(--accent); }
+/* bara de derulare a paşilor, închisă la culoare (era albă între paşi şi 3D) */
+body.ui-nou #sidebar { scrollbar-color: var(--line) var(--bg); }
+body.ui-nou .nou-banda .client-butoane {
+  grid-column: 1 / -1; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 8px;
+}
+body.ui-nou #btnFisa { order: 1; } body.ui-nou #btnPlata { order: 2; }
+body.ui-nou #btnComanda { order: 3; } body.ui-nou #btnConfirma { order: 4; }
 body.ui-nou .nou-banda .client-butoane button,
 body.ui-nou #nouActiuni .btn-clear {
-  width: auto; margin: 0; padding: 8px 10px; font-size: 13px; font-weight: 500; line-height: 1.3;
+  width: auto; margin: 0; padding: 9px 10px; font-size: 13px; font-weight: 500; line-height: 1.3;
   border-radius: 6px; white-space: nowrap;
 }
 /* un singur buton principal: Salvează oferta; restul secundare */
 body.ui-nou #btnConfirma { background: var(--accent-dim); border-color: var(--accent); color: #fff; font-weight: 600; }
 body.ui-nou #btnComanda, body.ui-nou #btnPlata { background: var(--panel-2); border-color: var(--line); color: var(--text); font-weight: 500; }
 body.ui-nou #btnComanda:hover:not(:disabled), body.ui-nou #btnPlata:hover:not(:disabled) { background: #272c34; border-color: var(--accent-dim); }
-body.ui-nou #nouActiuni .btn-clear { font-weight: 500; padding: 8px 12px; }
 .nou-mesaje { display: flex; flex-direction: column; gap: 6px; }
 .nou-mesaje:not(:has(> :not(:empty))) { display: none; }
 body.ui-nou .nou-mesaje .oferta-msg, body.ui-nou .nou-mesaje .oferta-hint { margin: 0; }
 body.ui-nou #ofertaUI .oferta-sumar, body.ui-nou #ofertaUI .oferta-cine { display: none; }
 body.ui-nou #ofertaUI:empty, body.ui-nou #ofertaMesaj:empty { display: none; }
 
-/* ── pasul Client ── */
-body.ui-nou #groupClient { margin: 0; }
+/* ── pasul Client: două coloane — stânga nume / telefon / adresă, dreapta livrare / plată / agent ── */
+body.ui-nou #groupClient { margin: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 20px; }
 body.ui-nou #groupClient > .group-label { display: none; }
-body.ui-nou #groupClient .oferta-client { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 12px; margin: 0 0 12px; }
-body.ui-nou #groupClient .comanda-detalii { grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0; }
+body.ui-nou #groupClient .oferta-client { display: flex; flex-direction: column; gap: 10px; margin: 0; }
 .nou-camp { display: flex; flex-direction: column; gap: 5px; min-width: 0; margin: 0; }
 .nou-camp > span { font-size: 12px; color: var(--text-dim); }
 .nou-camp:has(> [style*="display: none"]) { display: none; }

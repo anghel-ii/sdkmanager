@@ -56,8 +56,8 @@ export function initNou() {
     if (acasa) { acasa.textContent = '← Manager'; bara.prepend(acasa); }
   }
 
-  // ── banda de acţiuni, lipită sus în coloana paşilor: starea, Goleşte pagina şi
-  //    butoanele de salvare / fişă (mutate din bara clientului), mesajele dedesubt ──
+  // ── cardul de acţiuni, lipit JOS în coloana paşilor (userul, 2026-10-05): starea,
+  //    nr. de ofertă, Goleşte pagina, butoanele de salvare / fişă; mesajele dedesubt ──
   const actiuni = document.createElement('div');
   actiuni.id = 'nouActiuni';
   actiuni.innerHTML = `<div class="nou-banda"><button type="button" class="nou-stare" id="nouStare" hidden></button></div>
@@ -80,6 +80,7 @@ export function initNou() {
     const cautabil = el.nextElementSibling?.classList.contains('cautabil') ? el.nextElementSibling : null;
     el.before(l);
     l.append(el, ...(cautabil ? [cautabil] : []));
+    if (id === 'ofertaNr') banda.insertBefore(l, clear ?? null);   // nr. de ofertă pe cardul de jos, lângă salvare
   }
   actiuni.querySelector('#nouStare').addEventListener('click', () => { deschide('oferta'); arataTab('roBilling'); });
 
@@ -101,7 +102,7 @@ export function initNou() {
   const cont = document.createElement('div');
   cont.id = 'nouPasi';
   sidebar.insertBefore(cont, document.querySelector('.brand')?.nextSibling ?? sidebar.firstChild);
-  sidebar.insertBefore(actiuni, cont);
+  cont.after(actiuni);
   PASI.forEach((p, i) => {
     const s = document.createElement('section');
     s.className = 'pas' + (p.optional ? ' optional' : '');

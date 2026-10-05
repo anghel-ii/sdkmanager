@@ -145,6 +145,10 @@ const MIGRATII = [
   // să nu se umble pe server prin Remote Desktop. Prima: cheia bazei de clienţi
   // de pe Cloudflare (`clienti_cheie`); nu intră în git, stă doar în bază.
   d => d.exec('CREATE TABLE setare (cheie TEXT PRIMARY KEY, valoare TEXT)'),
+  // v13 → v14 (2026-10-05): când a ieşit oferta din „oferte" (în lucru sau
+  // aşteaptă plata) — „Înapoi în ofertă" merge doar câteva minute după (userul).
+  // Comenzile de dinainte: NULL, deci nu se mai pot întoarce.
+  d => d.exec('ALTER TABLE comanda ADD COLUMN tip_schimbat_la TEXT'),
 ];
 
 // Exportată pt. test.
