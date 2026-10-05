@@ -30,7 +30,7 @@ const PASI = [
   { id: 'dim',     titlu: 'Dimensiuni', el: () => [$('groupHeight'), $('groupWidth'), $('groupDoorsTracks'), $('groupRame'), $('groupUtil')] },
   { id: 'usi',     titlu: 'Uşi',        el: () => [$('groupUsi')] },
   // mai multe produse pe o ofertă (js/cos.js) — opţional: fără număr, nu e niciodată „pasul următor"
-  { id: 'cos',     titlu: 'Produse în ofertă', el: () => [$('groupCos')], optional: true },
+  { id: 'cos',     titlu: 'Adaugă alt produs la ofertă', el: () => [$('groupCos')], optional: true },
   // datele clientului — pas propriu (userul, 2026-10-05), nu bară lipită jos
   { id: 'client',  titlu: 'Client',     el: () => [$('groupClient')] },
   { id: 'oferta',  titlu: 'Rezultat',   el: () => [] },
@@ -103,6 +103,9 @@ export function initNou() {
   cont.id = 'nouPasi';
   sidebar.insertBefore(cont, document.querySelector('.brand')?.nextSibling ?? sidebar.firstChild);
   cont.after(actiuni);
+  // celelalte produse ale ofertei (cos.js), restrânse, deasupra paşilor produsului de pe ecran
+  const produse = $('cosProduse');
+  if (produse) cont.prepend(produse);
   PASI.forEach((p, i) => {
     const s = document.createElement('section');
     s.className = 'pas' + (p.optional ? ' optional' : '');
@@ -255,7 +258,7 @@ function actualizeaza() {
     usi:     !!meta && !rame && !!hGol && !!lGol && usiAlese && vizibil($('groupUsi')) && !n,
     oferta:  !!meta && !n && complet,
     client:  !!$('clientNume')?.value.trim(),
-    cos:     document.querySelectorAll('#groupCos .cos-lista li').length > 1,
+    cos:     false,   // opţional — nu se bifează
   };
   const rezumat = {
     model:   meta ? `${esc(meta.label)}${meta.sketch ? ` <img src="${esc(meta.sketch)}" alt="">` : ''}` : '',

@@ -10,6 +10,7 @@
   --accent:     #4da3ff;
   --accent-dim: #1f6fd1;
   --danger:     #b96a5b;
+  --ok:         #6b9b7a;
   --glass:      #5b8fb9;
   --glass-bg:   rgba(91, 143, 185, 0.16);
   --pal:        #a3784f;
@@ -756,3 +757,26 @@ tbody.rame-rand + tbody.rame-rand tr:first-child td { border-top: 1px solid var(
 .cos-lista button { margin-left: 4px; padding: 2px 8px; }
 .cos-lista button:hover, .cos-game button:hover, .cos-fact button:hover { border-color: var(--accent); }
 .cos-msg:not(:empty) { margin-top: 10px; }
+
+/* ── celelalte produse ale ofertei, câte un card restrâns (js/cos.js, userul 2026-10-05):
+   model, culoare, dimensiuni (+ uşi / suprapuneri), Modifică / ✕; dedesubt „se configurează acum" ── */
+#cosProduse:empty { display: none; }
+.cos-produs { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; margin-bottom: 8px; }
+.cos-produs-cap { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+.cos-produs-spatiu { flex: 1; }
+.cos-produs-cap button {
+  width: auto; padding: 5px 10px; font: inherit; font-size: 12px; cursor: pointer;
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; color: var(--text);
+}
+.cos-produs-cap button:hover { border-color: var(--accent); }
+.cos-produs-nr {
+  width: 22px; height: 22px; flex: none; border-radius: 50%; display: grid; place-items: center;
+  font-size: 12px; font-weight: 600; background: rgba(107, 155, 122, .2); color: #6b9b7a;
+}
+.cos-produs-det { display: flex; flex-wrap: wrap; gap: 4px 22px; margin: 8px 0 0 32px; font-size: 13px; }
+.cos-produs-det div { display: flex; gap: 6px; }
+.cos-produs-det dt { color: var(--text-dim); }
+.cos-produs-det dd { margin: 0; color: var(--text); font-weight: 500; }
+.cos-ecran { display: flex; align-items: center; gap: 10px; margin: 6px 0 10px; font-size: 13px; font-weight: 600; color: var(--accent); }
+.cos-ecran .cos-produs-nr { background: var(--accent-dim); color: #fff; }
+.cos-game button { padding: 9px 14px; font-size: 13px; }

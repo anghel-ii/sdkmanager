@@ -102,10 +102,24 @@ export function dinOferta(o, gamaDin) {
     ofertaEditata: o.comanda.id, numar: o.comanda.oferta_nr || o.comanda.numar };
 }
 
+// Rândurile cardului restrâns al unui produs din coş: model, culoare, dimensiuni
+// (+ nr. de uşi / suprapuneri, unde e cazul — le dă configuratorul prin `detalii`).
+export function detaliiImplicite(p) {
+  if (p.sistem === 'amanunt') return [['Produse', descriere(p).split(' · ')[1]]];
+  const r = [['Model', p.eticheta], ['Culoare', p.finisaj]];
+  if (/^rama/.test(p.sistem)) r.push(['Rame', p.nrUsi]);
+  else r.push(['Dimensiuni', `${p.inaltime} × ${p.latime} mm`]);
+  return r;
+}
+
 // ── Cardul „Adaugă la ofertă" ───────────────────────────────────────────────
 // `curenta()` = produsul de pe ecran (vezi toate); `client()` = câmpurile de
 // client + detaliile, de dus mai departe în coş la schimbarea paginii.
-export function initCard(el, cos, { curenta, client, gamaEcran, transport, facturareInCard = true }) {
+// `el` = cardul cu butoanele gamelor (doar ele — userul, 2026-10-05); celelalte
+// produse ale ofertei apar ca un card restrâns fiecare, în `produse` (deasupra
+// paşilor produsului de pe ecran) sau, fără el, în `el`, deasupra butoanelor.
+export function initCard(el, cos, { curenta, client, gamaEcran, transport, facturareInCard = true,
+                                     produse = null, detalii = detaliiImplicite }) {
   if (!el) return { actualizeaza: () => {} };
   const mesaj = t => { el.querySelector('.cos-msg').innerHTML = t ? `<div class="oferta-msg eroare">${esc(t)}</div>` : ''; };
 
@@ -124,31 +138,43 @@ export function initCard(el, cos, { curenta, client, gamaEcran, transport, factu
     const c = curenta();
     const t = toate(cos, c && !c.eroare ? c : null);
     const facturare = t.pozitii ? facturareComasata(transportOData(t.pozitii, transport())) : [];
-    const randuri = cos.pozitii.map((x, k) => k === cos.curent
-      ? `<li class="acum"><span>${esc(descriere(c && !c.eroare ? c.pozitie : x.pozitie))}</span><span class="dim mic">se modifică acum, pe ecran</span></li>`
-      : `<li><span>${esc(descriere(x.pozitie))}</span>
-           <button type="button" class="mic" data-modifica="${k}">Modifică</button>
-           <button type="button" class="mic" data-scoate="${k}" aria-label="Scoate produsul ${k + 1} din ofertă">✕</button></li>`);
-    if (cos.curent == null) randuri.push(`<li class="acum"><span>${c && !c.eroare ? esc(descriere(c.pozitie))
-      : esc(gameJson.game.find(g => g.id === gamaEcran())?.label ?? 'Produsul de pe ecran')}</span>
-      <span class="dim mic">${c ? (c.eroare ? 'în lucru, pe ecran' : 'pe ecran — intră în ofertă la salvare') : 'neînceput'}</span></li>`);
+    const altele = cos.pozitii.map((x, k) => [x, k]).filter(([, k]) => k !== cos.curent);
+    const nrEcran = (cos.curent ?? cos.pozitii.length) + 1;
+    const carduri = altele.map(([x, k]) => `
+      <div class="cos-produs">
+        <div class="cos-produs-cap">
+          <span class="cos-produs-nr">${k + 1}</span>
+          <strong>${esc(gameJson.game.find(g => g.id === x.gama)?.label ?? x.pozitie.eticheta)}</strong>
+          <span class="cos-produs-spatiu"></span>
+          <button type="button" class="mic" data-modifica="${k}">Modifică</button>
+          <button type="button" class="mic" data-scoate="${k}" aria-label="Scoate produsul ${k + 1} din ofertă">✕</button>
+        </div>
+        <dl class="cos-produs-det">${detalii(x.pozitie).filter(([, v]) => v != null && v !== '')
+          .map(([e, v]) => `<div><dt>${esc(e)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>
+      </div>`).join('');
+    const sus = altele.length ? `${carduri}
+      <div class="cos-ecran"><span class="cos-produs-nr">${nrEcran}</span>
+        ${esc(gameJson.game.find(g => g.id === gamaEcran())?.label ?? 'Produsul de pe ecran')} — se configurează acum, mai jos</div>` : '';
+    if (produse) produse.innerHTML = sus;
     el.innerHTML = `
-      <ol class="cos-lista">${randuri.join('')}</ol>
-      <div class="cos-game"><span class="dim mic">Adaugă:</span>${gameJson.game.map(g =>
-        `<button type="button" class="mic" data-gama="${esc(g.id)}">+ ${esc(g.label)}</button>`).join('')}</div>
+      ${produse ? '' : sus}
+      <div class="cos-game">${gameJson.game.map(g =>
+        `<button type="button" data-gama="${esc(g.id)}">+ ${esc(g.label)}</button>`).join('')}</div>
       ${facturareInCard && t.pozitii?.length > 1 ? `<div class="cos-fact"><span class="dim mic">Facturare comasată, toată oferta: ${facturare.length} linii</span>
         <button type="button" class="mic" data-copiaza="cod">Copiază coduri</button>
         <button type="button" class="mic" data-copiaza="cant">Copiază cantităţi</button></div>` : ''}
       <div class="cos-msg"></div>`;
-    el.querySelectorAll('[data-gama]').forEach(b => b.addEventListener('click', () => {
+    const cutii = [el, ...(produse ? [produse] : [])];
+    const toti = sel => cutii.flatMap(c => [...c.querySelectorAll(sel)]);
+    toti('[data-gama]').forEach(b => b.addEventListener('click', () => {
       if (pune()) location.href = url(b.dataset.gama);
     }));
-    el.querySelectorAll('[data-modifica]').forEach(b => b.addEventListener('click', () => {
+    toti('[data-modifica]').forEach(b => b.addEventListener('click', () => {
       const k = +b.dataset.modifica;
       const gama = cos.pozitii[k].gama;
       if (pune()) location.href = url(gama, { poz: k });
     }));
-    el.querySelectorAll('[data-scoate]').forEach(b => b.addEventListener('click', () => {
+    toti('[data-scoate]').forEach(b => b.addEventListener('click', () => {
       const k = +b.dataset.scoate;
       if (!confirm(`Scoţi din ofertă: ${descriere(cos.pozitii[k].pozitie)}?`)) return;
       cos.pozitii.splice(k, 1);
@@ -163,7 +189,7 @@ export function initCard(el, cos, { curenta, client, gamaEcran, transport, factu
       actualizeaza();
       el.dispatchEvent(new CustomEvent('cos:schimbat', { bubbles: true }));
     }));
-    el.querySelectorAll('[data-copiaza]').forEach(b => b.addEventListener('click', () => {
+    toti('[data-copiaza]').forEach(b => b.addEventListener('click', () => {
       const r = facturare.map(l => [b.dataset.copiaza === 'cod' ? l.cod : qtyText(l.cantitate)]);
       copyRows(r).then(ok => { const o = b.textContent; b.textContent = ok ? '✓ copiat' : '⚠ eroare'; setTimeout(() => { b.textContent = o; }, 1400); });
     }));

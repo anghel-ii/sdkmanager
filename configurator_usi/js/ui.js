@@ -8,7 +8,7 @@ import { geamList, geamCount, GROSIMI_CLIENT, clientGeamLabel } from './lib/comu
 import catalog from './catalog/catalog.generated.json';
 import * as oferta from './oferta.js';
 import { deschideFisa } from './fisa.js';
-import { suprapuneriConfort, areCodH, areSinaSimpla } from './lib/confort/index.js';
+import { suprapuneriConfort, suprapuneriEfective, areCodH, areSinaSimpla } from './lib/confort/index.js';
 import gameJson from './systems/game.json';
 import { renderRame, syncRame, refreshRame } from './ui_rame.js';
 import { activeazaCampuri } from './campuri.js';
@@ -924,7 +924,7 @@ function renderOferta() {
                ? `${currentSpec()?.nrRame ?? 0} rame`
                : `${p.pozitie.nrUsi} ${p.pozitie.nrUsi === 1 ? 'uşă' : 'uşi'}`}</div>
          </div>`}
-    ${altele > 0 ? `<div class="oferta-hint">+ ${altele} ${altele === 1 ? 'alt produs' : 'alte produse'} în ofertă (vezi „Adaugă la ofertă")</div>` : ''}`;
+    ${altele > 0 ? `<div class="oferta-hint">+ ${altele} ${altele === 1 ? 'alt produs' : 'alte produse'} în ofertă (cardurile de sus) — se salvează împreună</div>` : ''}`;
   arata(true);
   // se salvează tot coşul + produsul de pe ecran; unul început dar neterminat blochează
   for (const b of butoane) b.disabled = !t.pozitii;
@@ -1083,6 +1083,16 @@ function ceLipseste() {
     meta?.doorsRange && !state.doors && 'numărul de uşi');
   const l = lipsa.filter(Boolean);
   return l.length ? `Mai alege: ${l.join(', ')}.` : '';
+}
+
+// Cardul restrâns al unui produs din coş: model, culoare, dimensiuni (cos.js) +
+// nr. de uşi şi suprapuneri la gamele unde se aleg (Confort, UTIL).
+function detaliiProdus(p) {
+  const r = cosul.detaliiImplicite(p);
+  const meta = systems[p.sistem]?.meta, c = p.config ?? {};
+  if (meta?.doorsRange) r.push(['Uşi', p.nrUsi], ['Suprapuneri', meta.suprapuneri
+    ? meta.suprapuneri(c.doors) : suprapuneriEfective(c.doors, meta.suprapuneriObligatorii ? 2 : c.tracks)]);
+  return r;
 }
 
 const currentGama = () => systems[state.system]?.meta.family ?? gamaActiva;
@@ -1303,7 +1313,8 @@ export async function initUI() {
   if (!modFisa) {
     // facturarea comasată e în tabul Facturare, nu şi în card
     cardCos = cosul.initCard($('groupCos'), cos, { curenta: curentaUsi, client: clientPtCos, gamaEcran: currentGama,
-                                                   transport: () => liniaTransport(state), facturareInCard: false });
+                                                   transport: () => liniaTransport(state), facturareInCard: false,
+                                                   produse: $('cosProduse'), detalii: detaliiProdus });
     document.addEventListener('cos:schimbat', renderBilling);
     document.addEventListener('configurator:rebuild', () => cardCos.actualizeaza());
     document.addEventListener('cos:schimbat', renderOferta);
