@@ -164,10 +164,17 @@ async function main() {
   const acasa = String((await cer('GET', '/')).date);
   for (const [ce, bucata] of [
     ['listele de comenzi',     '/api/comenzi?tip='],
-    ['butonul OFERTĂ NOUĂ',    'id="ofertaNoua"'],
+    ['bara comună',            '/bara.js'],
     ['gamele din configurator','/configurator/game.json'],
-    ['linkul spre sticlă',     'href="/sticla"'],
   ]) verifica(`pagina principală are ${ce}`, acasa.includes(bucata), bucata);
+
+  // bara de sus, comună tuturor paginilor (web/bara.js)
+  const bara = String((await cer('GET', '/bara.js')).date);
+  for (const [ce, bucata] of [
+    ['butonul OFERTĂ NOUĂ', 'id="ofertaNoua"'],
+    ['linkul spre sticlă',  'href="/sticla"'],
+    ['linkul Acasă',        'href="/"'],
+  ]) verifica(`bara comună are ${ce}`, bara.includes(bucata), bucata);
 
   const mg = String((await cer('GET', '/comenzi')).date);
   for (const [ce, bucata] of [
@@ -175,7 +182,7 @@ async function main() {
     ['apelul de listare',   '/api/comenzi?tip='],
     ['rutarea pe hash',     '#comanda/'],
     ['tabul din hash',      "location.hash === '#comenzi'"],
-    ['linkul Acasă',        'href="/"'],
+    ['bara comună',         '/bara.js'],
     ['butonul de acceptare','/accepta'],
     ['copierea NeoManager', 'copCant'],
   ]) verifica(`pagina managerului are ${ce}`, mg.includes(bucata));

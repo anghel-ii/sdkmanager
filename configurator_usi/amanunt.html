@@ -98,12 +98,13 @@
   </style>
 </head>
 <body>
-<header class="bara">
-  <!-- apare doar când pagina e servită de manager -->
+<header class="bara" id="bara">
+  <!-- servită de manager, /bara.js o înlocuieşte cu bara comună (titlul rămâne, ca „unde eşti") -->
   <a class="acasa" id="linkAcasa" href="/" style="display:none">← Acasă</a>
-  <h1>Ofertă cu amănuntul</h1>
+  <h1 class="bara-context">Ofertă cu amănuntul</h1>
   <span class="dim mic" id="cine"></span>
 </header>
+<script src="/bara.js"></script>
 
 <main>
   <div class="stanga">

@@ -347,7 +347,7 @@ const TEXT = { btnConfirma: () => (cos.ofertaEditata ? 'Salvează modificările'
 function renderOferta() {
   const { stare, utilizator } = manager.stareOferta();
   const servit = stare === 'logat' || stare === 'nelogat';
-  $('linkAcasa').style.display = servit ? '' : 'none';
+  if ($('linkAcasa')) $('linkAcasa').style.display = servit ? '' : 'none';
   $('cine').textContent = utilizator?.nume ?? '';
   const arata = da => { for (const id of BUTOANE) $(id).style.display = da ? '' : 'none'; $('ofertaNr').style.display = da ? '' : 'none'; };
   if (!servit || modFisa) { $('ofertaUI').innerHTML = ''; return arata(false); }

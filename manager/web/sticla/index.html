@@ -11,16 +11,6 @@
 <script src="/copiaza.js"></script>
 <script src="/mail-sticla.js"></script>
 <style>
-  #bara {
-    display: flex; align-items: center; gap: 16px;
-    padding: 14px 24px;
-    background: var(--panel); border-bottom: 1px solid var(--line);
-    position: sticky; top: 0; z-index: 10;
-  }
-  #bara .nume { font-weight: 600; }
-  #bara .spatiu { flex: 1; }
-  #bara a.mic { color: var(--text); text-decoration: none; }
-  #bara a.mic:hover { color: var(--accent); }
   #continut { padding: 24px; max-width: 1100px; margin: 0 auto; }
 
   .taburi { display: flex; gap: 8px; margin-bottom: 20px; }
@@ -50,13 +40,8 @@
 </head>
 <body>
 
-<div id="bara">
-  <a href="/" class="nume" style="color:inherit; text-decoration:none">← Manager comenzi</a>
-  <span class="spatiu"></span>
-  <a href="/comenzi" class="mic">Comenzi</a>
-  <span class="dim mic" id="cine"></span>
-  <button id="iesire">Ieşi</button>
-</div>
+<div id="bara"></div>
+<script src="/bara.js"></script>
 
 <div id="continut">
   <div class="taburi">
@@ -196,16 +181,11 @@ document.querySelectorAll('.taburi button').forEach(b => b.addEventListener('cli
 (async () => {
   const r = await api('/api/eu');
   if (!r) return;
-  $('cine').textContent = (await r.json()).utilizator.nume;
   await incarca();
   // actualizare live — comenzi noi acceptate, linii marcate de alţi colegi
   urmareste(incarca);
 })();
 
-$('iesire').addEventListener('click', async () => {
-  await fetch('/api/logout', { method: 'POST' });
-  location.href = '/login';
-});
 </script>
 </body>
 </html>

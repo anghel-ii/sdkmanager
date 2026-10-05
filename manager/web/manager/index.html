@@ -13,29 +13,11 @@
 <script src="/copiaza.js"></script>
 <script src="/mail-sticla.js"></script>
 <style>
-  #bara {
-    display: flex; align-items: center; gap: 16px;
-    padding: 14px 24px;
-    background: var(--panel); border-bottom: 1px solid var(--line);
-    position: sticky; top: 0; z-index: 10;
-  }
-  #bara .nume { font-weight: 600; }
-  #bara .spatiu { flex: 1; }
-  #bara a.mic { color: var(--text); text-decoration: none; }
-  #bara a.mic:hover { color: var(--accent); }
-  #bara button.primar { background: var(--accent-dim); border-color: var(--accent); color: #fff; font-weight: 600; }
-  #bara a.buton { padding: 10px 16px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel-2);
-                  color: var(--text); text-decoration: none; }
-  #bara a.buton:hover { border-color: var(--accent); }
-  #bara a.buton[hidden] { display: none; }
   .sticla-nu { color: var(--danger); font-size: .84rem; }
   .sticla-furnizori { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
   .sticla-furnizor { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
   .sticla-partial { color: #d4a24c; font-size: .84rem; }
   .sticla-da { color: var(--ok); }
-  #bara .insigna { display: inline-block; min-width: 1.5em; padding: 0 6px; margin-left: 4px; border-radius: 10px;
-                   background: var(--accent-dim); color: #fff; font-size: .75rem; text-align: center; }
-  #bara .insigna:empty { display: none; }
 
   .fundal { position: fixed; inset: 0; background: rgba(0, 0, 0, .55); z-index: 50;
             display: grid; place-items: center; padding: 16px; }
@@ -133,16 +115,8 @@
 </head>
 <body class="ui-nou">
 
-<div id="bara">
-  <a href="/" class="nume" style="color:inherit; text-decoration:none">Manager comenzi</a>
-  <button id="ofertaNoua" class="primar">+ OFERTĂ NOUĂ</button>
-  <a href="/sticla" class="buton" id="linkSticla">Comandă sticlă <span class="insigna" id="nrSticla"></span></a>
-  <a href="/clienti" class="buton" id="linkClienti" hidden title="Clienţii; numărul = trimise de agenţi, de aprobat">Clienţi <span class="insigna" id="nrClienti"></span></a>
-  <a href="/admin" class="buton" id="linkAdmin" hidden>Utilizatori</a>
-  <span class="spatiu"></span>
-  <span class="dim mic" id="cine"></span>
-  <button id="iesire">Ieşi</button>
-</div>
+<div id="bara"></div>
+<script src="/bara.js"></script>
 
 <!-- OFERTĂ NOUĂ — alegi gama, apoi se deschide configuratorul pe ea.
      Gamele vin din configurator (game.json), aceeaşi sursă ca selectorul lui. -->
@@ -804,6 +778,8 @@ async function deschideAlegereGama() {
 }
 const inchideAlegereGama = () => { $('alegeGama').hidden = true; };
 $('ofertaNoua').addEventListener('click', deschideAlegereGama);
+// „+ OFERTĂ NOUĂ" din bara altei pagini (bara.js) vine aici cu ?nou
+if (new URLSearchParams(location.search).has('nou')) { history.replaceState(null, '', '/' + location.hash); deschideAlegereGama(); }
 // linkul din lista goală de oferte deschide tot alegerea gamei (fără el, configuratorul pornea pe suspendate)
 document.addEventListener('click', e => {
   if (e.target.closest('a.deschide-gama')) { e.preventDefault(); deschideAlegereGama(); }
@@ -867,9 +843,6 @@ function asculta() {
   const r = await api('/api/eu');
   if (!r) return;
   eu = (await r.json()).utilizator;
-  $('cine').textContent = eu.nume;
-  $('linkAdmin').hidden = eu.rol !== 'admin';   // dashboard-ul de conturi — doar admin
-  $('linkClienti').hidden = eu.rol === 'birou'; // clienţii — nu şi biroul (userul, 2026-10-02)
   actualizeazaSticla();
   const pr = await api('/api/preferinte');
   if (pr?.ok) sortare = (await pr.json()).sortare ?? 'data';
@@ -877,10 +850,6 @@ function asculta() {
   asculta();
 })();
 
-$('iesire').addEventListener('click', async () => {
-  await fetch('/api/logout', { method: 'POST' });
-  location.href = '/login';
-});
 </script>
 </body>
 </html>

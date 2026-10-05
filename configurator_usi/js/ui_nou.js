@@ -46,8 +46,13 @@ export function initNou() {
   bara.innerHTML = `
     <span class="nou-cale" id="nouCale"></span>`;
   app.prepend(bara);
-  const acasa = $('linkAcasa');            // renderOferta îi pune adresa şi vizibilitatea
-  if (acasa) { acasa.textContent = '← Manager'; bara.prepend(acasa); }
+  // servit de manager: bara comună a managerului (/bara.js), cu „unde eşti" lângă linkuri;
+  // altfel (Cloudflare, de pe disc) bara proprie, cu drumul înapoi
+  if (window.puneBara) { bara.querySelector('#nouCale').classList.add('bara-context'); window.puneBara(bara); }
+  else {
+    const acasa = $('linkAcasa');          // renderOferta îi pune adresa şi vizibilitatea
+    if (acasa) { acasa.textContent = '← Manager'; bara.prepend(acasa); }
+  }
 
   // ── cardul cu starea + CLEAR PAGE: primul în bara din stânga, rămâne sus la scroll ──
   const actiuni = document.createElement('div');

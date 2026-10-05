@@ -12,9 +12,9 @@
 body.ui-nou #app {
   display: grid;
   grid-template-columns: 680px minmax(0, 1fr);
-  grid-template-rows: 44px minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
 }
-body.ui-nou #nouBara { grid-column: 1 / -1; grid-row: 1; }
+body.ui-nou #nouBara, body.ui-nou #bara { grid-column: 1 / -1; grid-row: 1; }
 body.ui-nou #sidebar {
   grid-column: 1; grid-row: 2;
   width: auto !important; min-width: 0 !important;
@@ -25,8 +25,8 @@ body.ui-nou #stage { grid-column: 2; grid-row: 2; min-height: 0; }
 body.ui-nou .brand { display: none; }
 
 @media (max-width: 1099px) {
-  body.ui-nou #app { grid-template-columns: minmax(0, 1fr); grid-template-rows: 44px 260px minmax(0, 1fr); }
-  body.ui-nou.nou-3d-ascuns #app { grid-template-rows: 44px 40px minmax(0, 1fr); }
+  body.ui-nou #app { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 260px minmax(0, 1fr); }
+  body.ui-nou.nou-3d-ascuns #app { grid-template-rows: auto 40px minmax(0, 1fr); }
   body.ui-nou #stage { grid-column: 1; grid-row: 2; border-bottom: 1px solid var(--line); }
   body.ui-nou #sidebar { grid-column: 1; grid-row: 3; border-right: none; }
   body.ui-nou #nouPasi, body.ui-nou #groupClient > * { max-width: 900px; margin-left: auto; margin-right: auto; }
