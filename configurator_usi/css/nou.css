@@ -29,7 +29,7 @@ body.ui-nou .brand { display: none; }
   body.ui-nou.nou-3d-ascuns #app { grid-template-rows: auto 40px minmax(0, 1fr); }
   body.ui-nou #stage { grid-column: 1; grid-row: 2; border-bottom: 1px solid var(--line); }
   body.ui-nou #sidebar { grid-column: 1; grid-row: 3; border-right: none; }
-  body.ui-nou #nouPasi, body.ui-nou #groupClient > * { max-width: 900px; margin-left: auto; margin-right: auto; }
+  body.ui-nou #nouPasi { max-width: 900px; margin-left: auto; margin-right: auto; }
   body.ui-nou .hint { display: none; }
 }
 @media (min-width: 1100px) { body.ui-nou #nouAscunde { display: none; } }
@@ -123,28 +123,8 @@ body.ui-nou #groupRame, body.ui-nou #groupUtil { flex-basis: 100%; }
 .nou-taburi button[hidden] { display: none; }
 body.ui-nou .nou-panou { margin-bottom: 0; }
 
-/* ── bara clientului, lipită jos (mereu la vedere) ── */
-body.ui-nou #groupClient {
-  position: sticky; bottom: 0; z-index: 5;
-  margin: 0 -16px; padding: 10px 16px;
-  background: var(--panel); border-top: 1px solid var(--line);
-  display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 8px; row-gap: 6px; align-items: center;
-}
-body.ui-nou #groupClient > .group-label { display: none; }
-body.ui-nou #groupClient .oferta-client { flex-direction: row; margin: 0; grid-column: 1; }
-body.ui-nou #groupClient .oferta-client input:first-child { flex: 0 1 210px; }
-body.ui-nou #groupClient .oferta-client input:last-child  { flex: 1 1 auto; }
-body.ui-nou #groupClient .client-butoane { flex-direction: row-reverse; grid-column: 2; }
-body.ui-nou #groupClient .client-butoane button { width: auto; margin: 0; padding: 9px 14px; white-space: nowrap; }
-body.ui-nou #btnConfirma, body.ui-nou #btnComanda, body.ui-nou #btnPlata { font-weight: 600; color: #fff; }
-body.ui-nou #ofertaUI, body.ui-nou #ofertaMesaj { grid-column: 1 / -1; }
-body.ui-nou #ofertaUI .oferta-sumar, body.ui-nou #ofertaUI .oferta-cine { display: none; }
-body.ui-nou #ofertaUI:empty, body.ui-nou #ofertaMesaj:empty { display: none; }
-body.ui-nou #ofertaUI .oferta-msg, body.ui-nou #ofertaMesaj .oferta-msg { margin: 0; }
-
 /* titlul grupului repetă titlul pasului (UŞI, FINISAJ) */
 body.ui-nou #groupUsi > .group-label, body.ui-nou .pas[data-pas="culoare"] .group > .group-label { display: none; }
-body.ui-nou #groupClient .client-butoane button { font-size: 13px; }
 body.ui-nou .door-row-label { width: 64px; }
 
 /* ── câmpuri numerice în loc de steppere, cote pe rânduri separate, fără texte rupte ── */
@@ -179,26 +159,83 @@ body.ui-nou input[type="number"] { -moz-appearance: textfield; appearance: textf
 body.ui-nou input[type="number"]::-webkit-inner-spin-button,
 body.ui-nou input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 
-/* bara clientului pe două rânduri: nume / telefon / adresă, apoi livrare / facturare / agent;
-   butoanele în dreapta, pe ambele rânduri */
-body.ui-nou #groupClient .oferta-client { grid-column: 1; }
-body.ui-nou #groupClient .oferta-client:not(.comanda-detalii) { grid-row: 1; }
-body.ui-nou #groupClient .comanda-detalii { grid-row: 2; }
-body.ui-nou #groupClient .client-butoane { grid-column: 2; grid-row: 1 / span 2; flex-direction: column; justify-content: center; }
-/* 4 butoane (ofertă / comandă / aşteaptă plata / fişă) — două câte două */
-body.ui-nou #groupClient .client-butoane { display: grid; grid-template-columns: auto auto; gap: 6px; align-content: center; }
-body.ui-nou #groupClient .oferta-client input, body.ui-nou #groupClient .oferta-client select { flex: 1 1 0; min-width: 0; }
-body.ui-nou #groupClient .oferta-client input:first-child { flex: 1.3 1 0; }
-/* lăţimile câmpurilor clientului (înlocuiesc regulile de când erau doar 2 câmpuri) */
-body.ui-nou #groupClient .oferta-client > * { flex: 1 1 0 !important; min-width: 0; width: auto; }
-body.ui-nou #groupClient .oferta-client:not(.comanda-detalii) > :last-child { flex-grow: 1.5 !important; }
-
 /* paşii au mereu aceeaşi lăţime (până la 900px) — în bara laterală (flex pe
    coloană) marginile auto îi făceau cât conţinutul, deci se schimbau la taburi */
 body.ui-nou #nouPasi { width: 100%; box-sizing: border-box; }
 
-/* butoanele clientului pe un rând separat, dedesubt: câmpurile au toată lăţimea
-   (altfel „Mod de livrare" / „Metodă de plată" se tăiau) */
-body.ui-nou #groupClient { grid-template-columns: minmax(0, 1fr); }
-body.ui-nou #groupClient .client-butoane { grid-column: 1; grid-row: 3; grid-template-columns: repeat(4, minmax(0, 1fr)); }
-body.ui-nou #groupClient .client-butoane button { width: 100%; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   REDESIGN (userul, 2026-10-05: „mai intuitiv, mai unitar, mai frumos")
+     • paşii ~58% din ecran, 3D-ul ~42%
+     • banda de acţiuni lipită sus: starea, Goleşte pagina, Salvează oferta (principal)
+       + Salvează comanda / Aşteaptă plata / Printează fişa; mesajele dedesubt
+     • clientul = pas propriu, cu etichete deasupra câmpurilor
+     • texte mai mari în cardurile de uşă; tabelele cu fontul obişnuit, codurile mono
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (min-width: 1100px) {
+  body.ui-nou #app { grid-template-columns: minmax(600px, 60fr) minmax(0, 40fr); }
+}
+body.ui-nou #sidebar { padding: 16px 20px 24px; }
+body.ui-nou #nouPasi { gap: 12px; }
+
+/* ── banda de acţiuni ── */
+body.ui-nou #nouActiuni { flex-direction: column; align-items: stretch; gap: 8px; padding: 10px 12px; margin-bottom: 12px; }
+.nou-banda { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+body.ui-nou #nouActiuni .nou-stare { flex: 1 1 120px; min-width: 0; overflow: hidden; text-overflow: ellipsis; padding: 7px 12px; }
+body.ui-nou .nou-banda .client-butoane { display: flex; flex-direction: row-reverse; gap: 6px; margin-left: auto; }
+body.ui-nou .nou-banda .client-butoane button,
+body.ui-nou #nouActiuni .btn-clear {
+  width: auto; margin: 0; padding: 8px 10px; font-size: 13px; font-weight: 500; line-height: 1.3;
+  border-radius: 6px; white-space: nowrap;
+}
+/* un singur buton principal: Salvează oferta; restul secundare */
+body.ui-nou #btnConfirma { background: var(--accent-dim); border-color: var(--accent); color: #fff; font-weight: 600; }
+body.ui-nou #btnComanda, body.ui-nou #btnPlata { background: var(--panel-2); border-color: var(--line); color: var(--text); font-weight: 500; }
+body.ui-nou #btnComanda:hover:not(:disabled), body.ui-nou #btnPlata:hover:not(:disabled) { background: #272c34; border-color: var(--accent-dim); }
+body.ui-nou #nouActiuni .btn-clear { font-weight: 500; padding: 8px 12px; }
+.nou-mesaje { display: flex; flex-direction: column; gap: 6px; }
+.nou-mesaje:not(:has(> :not(:empty))) { display: none; }
+body.ui-nou .nou-mesaje .oferta-msg, body.ui-nou .nou-mesaje .oferta-hint { margin: 0; }
+body.ui-nou #ofertaUI .oferta-sumar, body.ui-nou #ofertaUI .oferta-cine { display: none; }
+body.ui-nou #ofertaUI:empty, body.ui-nou #ofertaMesaj:empty { display: none; }
+
+/* ── pasul Client ── */
+body.ui-nou #groupClient { margin: 0; }
+body.ui-nou #groupClient > .group-label { display: none; }
+body.ui-nou #groupClient .oferta-client { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 12px; margin: 0 0 12px; }
+body.ui-nou #groupClient .comanda-detalii { grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0; }
+.nou-camp { display: flex; flex-direction: column; gap: 5px; min-width: 0; margin: 0; }
+.nou-camp > span { font-size: 12px; color: var(--text-dim); }
+.nou-camp:has(> [style*="display: none"]) { display: none; }
+body.ui-nou .nou-camp input, body.ui-nou .nou-camp select { width: 100%; font-size: 14px; padding: 9px 11px; }
+
+/* ── paşii ── */
+body.ui-nou .pas { border-radius: 10px; }
+body.ui-nou .pas-cap { padding: 12px 16px 8px; }
+body.ui-nou .pas-corp { padding: 4px 16px 16px; }
+body.ui-nou .pas-titlu { font-size: 14px; }
+body.ui-nou .pas.optional .pas-nr { border-style: dashed; color: var(--accent); font-size: 15px; }
+
+/* modelele: butoane mai joase, nu cât un card */
+body.ui-nou .model-table button { font-size: 16px; font-weight: 600; padding: 13px 8px; }
+
+/* ── cardurile de uşă: texte lizibile (erau 9–11px, mono) ── */
+body.ui-nou .door-card { padding: 12px 14px; gap: 14px; background: var(--panel-2); }
+body.ui-nou .door-fields-col { gap: 9px; }
+body.ui-nou .door-row-label, body.ui-nou .amortizare-parte-label, body.ui-nou .av-eticheta {
+  font-family: 'Inter', sans-serif; font-size: 12px;
+}
+body.ui-nou .door-row select.geam-select, body.ui-nou .door-row .cautabil-in { font-size: 13px; padding: 7px 10px; }
+body.ui-nou .segmented button { font-size: 13px; }
+body.ui-nou .segmented.mini button { font-size: 12px; padding: 6px 8px; }
+body.ui-nou .panel-chip { font-size: 12px; padding: 8px 10px; }
+body.ui-nou .btn-avansat { font-size: 12px; padding: 6px 10px; }
+body.ui-nou .av-rand, body.ui-nou .av-unit, body.ui-nou .av-nota { font-size: 12px; }
+body.ui-nou .toate-usi-label { font-size: 13px; text-transform: none; letter-spacing: 0; }
+
+/* ── specificaţie / necesar / facturare: fontul obişnuit, mono doar la coduri şi cantităţi ── */
+body.ui-nou #sidebar .row { font-family: 'Inter', sans-serif; font-size: 13px; padding: 4px 0; }
+body.ui-nou #sidebar table { font-family: 'Inter', sans-serif; font-size: 13px; }
+body.ui-nou #sidebar td { padding: 5px 10px 5px 0; border-bottom: 1px solid rgba(44, 49, 58, .6); }
+body.ui-nou #sidebar td.code, body.ui-nou #sidebar td.num { font-family: 'JetBrains Mono', monospace; font-size: 12.5px; }
+body.ui-nou .bill-hint { font-size: 12px; }

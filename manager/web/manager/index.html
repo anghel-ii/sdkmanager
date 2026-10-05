@@ -616,6 +616,10 @@ function facturareTotala(pozitii) {
   return [...pe.values()];
 }
 
+// un pas din drumul comenzii (cardul din dreapta al detaliului): gata | acum | viitor | info
+const pas = (stare, titlu, continut, cls = '') =>
+  `<dt class="${stare}">${titlu}</dt><dd class="${stare}${cls ? ' ' + cls : ''}">${continut}</dd>`;
+
 async function renderDetaliu(id) {
   const r = await api('/api/comenzi/' + id);
   if (!r) return;
@@ -635,7 +639,8 @@ async function renderDetaliu(id) {
         <h1>${esc(c.client_nume)}</h1>
         <div class="mono nr-comanda">${esc(c.numar_comanda || c.oferta_nr || c.numar)}</div>
         ${c.numar_comanda && c.oferta_nr ? `<div class="dim mic">Nr. ofertă: <strong>${esc(c.oferta_nr)}</strong></div>` : ''}
-        <div class="dim mic">${eOferta ? 'Ofertă' : ePlata ? 'Aşteaptă plata' : `Comandă${c.finalizat_la ? ' finalizată' : ''} · din oferta ${esc(c.oferta_nr || c.numar)}`}</div>
+        <div class="dim mic"><span class="stare-pastila ${eOferta ? 'oferta' : ePlata ? 'plata' : c.finalizat_la ? 'gata' : 'lucru'}">${eOferta ? 'Ofertă'
+          : ePlata ? 'Aşteaptă plata' : c.finalizat_la ? 'Comandă finalizată' : 'Comandă în lucru'}</span>${eOferta || ePlata ? '' : ` din oferta ${esc(c.oferta_nr || c.numar)}`}</div>
       </div>
       <div class="spatiu"></div>
       ${pozitii.length > 1
@@ -665,18 +670,21 @@ async function renderDetaliu(id) {
           <dt>Agent</dt><dd>${esc(c.agent ?? '—')}</dd></dl>` : ''}
         ${c.observatii ? `<div class="info-obs"><span class="dim">Observaţii:</span> ${esc(c.observatii)}</div>` : ''}
       </div>
+      <!-- drumul comenzii: ce s-a făcut (✓, cine şi când), ce urmează (albastru), restul (gri) -->
       <dl class="info-pasi">
-        <dt>Ofertat</dt><dd>${deCine(c.creat_de_nume, c.creat_la)}</dd>
-        ${c.confirmat_la ? `<dt>Acceptat</dt><dd>${deCine(c.confirmat_de_nume, c.confirmat_la)}
-          <div class="dim mic">${esc(PLATI[c.plata] ?? 'plată nealeasă')} · ${c.avans > 0 ? `avans <strong>${virgulaLei(c.avans)} lei</strong>` : 'fără avans'}</div></dd>` : ''}
-        ${eComanda ? `<dt>Facturat</dt><dd class="facturare">${c.factura_nr
+        ${pas('gata', 'Ofertat', deCine(c.creat_de_nume, c.creat_la))}
+        ${c.confirmat_la ? pas('gata', 'Acceptat', `${deCine(c.confirmat_de_nume, c.confirmat_la)}
+          <div class="dim mic">${esc(PLATI[c.plata] ?? 'plată nealeasă')} · ${c.avans > 0 ? `avans <strong>${virgulaLei(c.avans)} lei</strong>` : 'fără avans'}</div>`)
+          : pas('acum', 'Acceptat', `<span class="urmeaza">Urmează: „${ePlata ? 'Plată primită' : 'Acceptă oferta'}"</span>`)}
+        ${eComanda ? pas(c.factura_nr ? 'gata' : 'acum', 'Facturat', c.factura_nr
           ? `<strong class="mono">${esc(c.factura_nr)}</strong> · ${deCine(c.facturat_de_nume, c.facturat_la)}${poateAnulaFactura() ? ' <button class="mic" id="anuleazaFactura">Anulează</button>' : ''}`
           : `<span class="factura-form" data-id="${c.id}">
                <input class="factura-nr" placeholder="nr. factură" autocomplete="off">
                <button class="mic factura-ok" disabled>Marchează facturat</button>
-             </span>`}</dd>` : ''}
-        ${eComanda ? `<dt>Sticlă</dt><dd>${sticlaLinii.length ? blocSticla(sticlaLinii) : '<span class="dim">— fără sticlă de comandat</span>'}</dd>` : ''}
-        ${c.finalizat_la ? `<dt>Finalizat</dt><dd>${deCine(c.finalizat_de_nume, c.finalizat_la)}</dd>` : ''}
+             </span>`, 'facturare') : pas('viitor', 'Facturat', '')}
+        ${eComanda ? pas('info', 'Sticlă', sticlaLinii.length ? blocSticla(sticlaLinii) : '<span class="dim">— fără sticlă de comandat</span>') : ''}
+        ${c.finalizat_la ? pas('gata', 'Finalizat', deCine(c.finalizat_de_nume, c.finalizat_la))
+          : pas('viitor', 'Finalizat', eComanda ? '<span class="dim">după „Marchează finalizată"</span>' : '')}
       </dl>
     </div>
 

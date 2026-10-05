@@ -29,9 +29,11 @@ const PASI = [
   { id: 'culoare', titlu: 'Culoare',    el: () => [grupul($('colorSwatches'))] },
   { id: 'dim',     titlu: 'Dimensiuni', el: () => [$('groupHeight'), $('groupWidth'), $('groupDoorsTracks'), $('groupRame'), $('groupUtil')] },
   { id: 'usi',     titlu: 'Uşi',        el: () => [$('groupUsi')] },
-  // mai multe produse pe o ofertă (js/cos.js) — opţional, deci nu e niciodată „pasul următor"
-  { id: 'cos',     titlu: 'Adaugă la ofertă', el: () => [$('groupCos')] },
-  { id: 'oferta',  titlu: 'Ofertă',     el: () => [] },
+  // mai multe produse pe o ofertă (js/cos.js) — opţional: fără număr, nu e niciodată „pasul următor"
+  { id: 'cos',     titlu: 'Produse în ofertă', el: () => [$('groupCos')], optional: true },
+  // datele clientului — pas propriu (userul, 2026-10-05), nu bară lipită jos
+  { id: 'client',  titlu: 'Client',     el: () => [$('groupClient')] },
+  { id: 'oferta',  titlu: 'Rezultat',   el: () => [] },
 ];
 const TABURI = [['spec', 'Specificaţie'], ['roBom', 'Necesar'], ['roClient', 'Client'], ['roBilling', 'Facturare']];
 let tabActiv = 'roBilling';
@@ -54,12 +56,31 @@ export function initNou() {
     if (acasa) { acasa.textContent = '← Manager'; bara.prepend(acasa); }
   }
 
-  // ── cardul cu starea + CLEAR PAGE: primul în bara din stânga, rămâne sus la scroll ──
+  // ── banda de acţiuni, lipită sus în coloana paşilor: starea, Goleşte pagina şi
+  //    butoanele de salvare / fişă (mutate din bara clientului), mesajele dedesubt ──
   const actiuni = document.createElement('div');
   actiuni.id = 'nouActiuni';
-  actiuni.innerHTML = `<button type="button" class="nou-stare" id="nouStare" hidden></button>`;
+  actiuni.innerHTML = `<div class="nou-banda"><button type="button" class="nou-stare" id="nouStare" hidden></button></div>
+    <div class="nou-mesaje"></div>`;
+  const banda = actiuni.querySelector('.nou-banda');
   const clear = $('btnClear');
-  if (clear) actiuni.appendChild(clear);
+  if (clear) banda.appendChild(clear);
+  const butoane = document.querySelector('#groupClient .client-butoane');
+  if (butoane) banda.appendChild(butoane);
+  for (const id of ['ofertaUI', 'ofertaMesaj']) { const el = $(id); if (el) actiuni.querySelector('.nou-mesaje').appendChild(el); }
+  // câmpurile clientului cu eticheta deasupra (până acum doar placeholder)
+  for (const [id, text] of [['clientNume', 'Nume client'], ['clientTelefon', 'Telefon'], ['clientAdresa', 'Adresă'],
+    ['comandaLivrare', 'Mod de livrare'], ['comandaPlata', 'Metodă de plată'], ['comandaAgent', 'Agent'], ['ofertaNr', 'Număr ofertă']]) {
+    const el = $(id);
+    if (!el) continue;
+    const l = document.createElement('label');
+    l.className = 'nou-camp';
+    l.innerHTML = `<span>${text}</span>`;
+    // meniul căutabil (campuri.js) stă imediat după <select>-ul ascuns — merge cu el
+    const cautabil = el.nextElementSibling?.classList.contains('cautabil') ? el.nextElementSibling : null;
+    el.before(l);
+    l.append(el, ...(cautabil ? [cautabil] : []));
+  }
   actiuni.querySelector('#nouStare').addEventListener('click', () => { deschide('oferta'); arataTab('roBilling'); });
 
   // ── cotele pe 3D + „Ascunde 3D" (doar la jumătate de ecran) ──
@@ -83,7 +104,7 @@ export function initNou() {
   sidebar.insertBefore(actiuni, cont);
   PASI.forEach((p, i) => {
     const s = document.createElement('section');
-    s.className = 'pas';
+    s.className = 'pas' + (p.optional ? ' optional' : '');
     s.dataset.pas = p.id;
     s.innerHTML = `
       <div class="pas-cap">
@@ -107,6 +128,7 @@ export function initNou() {
   document.querySelector('#sidebar > hr.sep')?.remove();
 
   document.addEventListener('configurator:rebuild', actualizeaza);
+  $('groupClient')?.addEventListener('input', actualizeaza);   // pasul Client se bifează la nume
   // la orice re-randare a barei (carduri, opţiuni avansate, rame): câmpuri în loc
   // de steppere şi texte fără prescurtări. Idempotent, deci nu se ciclează.
   const curata = () => { inlocuiesteSteppere(sidebar); scrieIntreg(sidebar); };
@@ -231,6 +253,7 @@ function actualizeaza() {
     dim:     rame ? (spec?.nrRame ?? 0) > 0 : !!(meta && hGol && lGol && usiAlese),
     usi:     !!meta && !rame && !!hGol && !!lGol && usiAlese && vizibil($('groupUsi')) && !n,
     oferta:  !!meta && !n && complet,
+    client:  !!$('clientNume')?.value.trim(),
     cos:     document.querySelectorAll('#groupCos .cos-lista li').length > 1,
   };
   const rezumat = {
@@ -241,6 +264,7 @@ function actualizeaza() {
     usi:     `${state.doors || (meta?.doors ?? 0)} uşi · ${noi} asamblate de noi`,
     oferta:  n ? `${n} ${n === 1 ? 'eroare' : 'erori'}` : `${f.lines.length} linii de facturare`,
     cos:     `${document.querySelectorAll('#groupCos .cos-lista li').length} produse în ofertă`,
+    client:  esc([$('clientNume')?.value, $('clientTelefon')?.value].map(v => v?.trim()).filter(Boolean).join(' · ')),
   };
   if (rame) PASI[2].titlu = 'Rânduri şi opţiuni';
 
@@ -252,11 +276,11 @@ function actualizeaza() {
     // pasul 4 dispare la rame (n-au carduri de uşă) şi până apar cardurile
     s.hidden = p.id === 'usi' ? !vizibil($('groupUsi')) : p.id === 'oferta' ? !meta : false;
     s.classList.toggle('gata', gata[p.id]);
-    // numerotare doar pe paşii vizibili (fără 4 lipsă când n-are uşi)
-    if (!s.hidden) nr++;
-    s.querySelector('.pas-nr').textContent = gata[p.id] ? '✓' : String(nr);
+    // numerotare doar pe paşii vizibili şi obligatorii (fără 4 lipsă când n-are uşi)
+    if (!s.hidden && !p.optional) nr++;
+    s.querySelector('.pas-nr').textContent = p.optional ? '+' : gata[p.id] ? '✓' : String(nr);
     s.querySelector('.pas-rez').innerHTML = gata[p.id] || p.id === 'oferta' ? rezumat[p.id] : '';
-    if (!curent && !gata[p.id] && !s.hidden && p.id !== 'cos') curent = p.id;
+    if (!curent && !gata[p.id] && !s.hidden && !p.optional) curent = p.id;
     s.classList.remove('curent');
   });
   if (curent) document.querySelector(`.pas[data-pas="${curent}"]`).classList.add('curent');

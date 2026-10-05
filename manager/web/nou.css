@@ -140,3 +140,30 @@ body.ui-nou .antet .nr-comanda { font-size: .95rem; color: var(--text); margin-b
 
 /* numărul ofertei / comenzii, mic, sub numele clientului (lista) */
 .nr-mic { font-size: .76rem; color: var(--text-dim); font-weight: 400; }
+
+/* ═══ REDESIGN (2026-10-05) ═══ */
+/* taburile listei: plăci joase — numele şi numărul pe acelaşi rând */
+body.ui-nou .taburi button { flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px; }
+body.ui-nou .taburi .tab-nume { font-size: .9rem; }
+body.ui-nou .tab-cate { font-size: 1.15rem; }
+
+/* starea comenzii, ca etichetă colorată sub număr */
+.stare-pastila { display: inline-block; padding: 1px 10px; border-radius: 999px; border: 1px solid; font-size: .8rem; font-weight: 600; margin-right: 6px; }
+.stare-pastila.oferta { color: var(--accent); border-color: rgba(77, 163, 255, .45); background: rgba(77, 163, 255, .1); }
+.stare-pastila.plata  { color: #d4a24c; border-color: rgba(212, 162, 76, .45); background: rgba(212, 162, 76, .1); }
+.stare-pastila.lucru  { color: #b49cff; border-color: rgba(180, 156, 255, .45); background: rgba(180, 156, 255, .1); }
+.stare-pastila.gata   { color: var(--ok); border-color: rgba(107, 155, 122, .45); background: rgba(107, 155, 122, .1); }
+
+/* drumul comenzii: buline — ✓ verde = făcut, albastru = urmează, gri = mai târziu */
+.info-pasi { grid-template-columns: 120px minmax(0, 1fr); gap: 14px 14px; }
+.info-pasi dt { display: flex; align-items: center; gap: 8px; }
+.info-pasi dt::before {
+  content: ''; flex: none; width: 16px; height: 16px; border-radius: 50%; box-sizing: border-box;
+  border: 2px solid var(--line); display: grid; place-items: center; font-size: 10px; line-height: 1;
+}
+.info-pasi dt.gata::before { content: '✓'; background: rgba(107, 155, 122, .25); border-color: var(--ok); color: var(--ok); }
+.info-pasi dt.acum { color: var(--accent); }
+.info-pasi dt.acum::before { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(77, 163, 255, .2); }
+.info-pasi dt.info::before { border-style: dashed; }
+.info-pasi dt.viitor, .info-pasi dd.viitor { opacity: .55; }
+.urmeaza { color: var(--accent); font-weight: 500; }

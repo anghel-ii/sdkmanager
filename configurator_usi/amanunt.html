@@ -57,6 +57,13 @@
     table.produse input[readonly] { color: var(--accent); border-style: dashed; }
     button.deb-x { background: none; border: none; color: var(--text-dim); cursor: pointer; padding: 2px 4px; }
     button.deb-x:hover { color: var(--danger); }
+    /* câmpurile clientului cu etichetă; un singur buton principal (Salvează oferta) */
+    .nou-camp { display: flex; flex-direction: column; gap: 5px; margin: 0; }
+    .nou-camp > span { font-size: 12px; color: var(--text-dim); }
+    .nou-camp:has(> [style*="display: none"]) { display: none; }
+    #btnComanda, #btnPlata { background: var(--panel-2); border-color: var(--line); }
+    #btnComanda:hover:not(:disabled), #btnPlata:hover:not(:disabled) { background: #272c34; border-color: var(--accent-dim); }
+    #btnConfirma { color: #fff; font-weight: 600; }
     button.sterge { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 14px; padding: 4px 8px; }
     button.sterge:hover { color: var(--danger); }
 
@@ -132,17 +139,18 @@
   <!-- CLIENT — aceleaşi câmpuri ca în configurator -->
   <section class="card" id="groupClient">
     <div class="group-label">CLIENT</div>
+    <!-- etichete deasupra câmpurilor, ca în pasul Client din configurator (2026-10-05) -->
     <div class="oferta-client">
-      <input type="text" id="clientNume"    placeholder="Nume client" autocomplete="off" list="clientiLista">
+      <label class="nou-camp"><span>Nume client</span><input type="text" id="clientNume" placeholder="Nume client" autocomplete="off" list="clientiLista"></label>
       <datalist id="clientiLista"></datalist>
-      <input type="tel"  id="clientTelefon" placeholder="Telefon" autocomplete="off">
-      <input type="text" id="clientAdresa"  placeholder="Adresă" autocomplete="off">
+      <label class="nou-camp"><span>Telefon</span><input type="tel" id="clientTelefon" placeholder="Telefon" autocomplete="off"></label>
+      <label class="nou-camp"><span>Adresă</span><input type="text" id="clientAdresa" placeholder="Adresă" autocomplete="off"></label>
     </div>
     <div class="oferta-client comanda-detalii">
-      <select id="comandaLivrare" data-c="livrare" aria-label="Mod de livrare"></select>
-      <select id="comandaPlata" data-c="plata" aria-label="Metodă de plată"></select>
-      <select id="comandaAgent" data-c="agent" aria-label="Agent"></select>
-      <input type="text" id="ofertaNr" placeholder="Nr. ofertă" autocomplete="off" style="display:none">
+      <label class="nou-camp"><span>Mod de livrare</span><select id="comandaLivrare" data-c="livrare" aria-label="Mod de livrare"></select></label>
+      <label class="nou-camp"><span>Metodă de plată</span><select id="comandaPlata" data-c="plata" aria-label="Metodă de plată"></select></label>
+      <label class="nou-camp"><span>Agent</span><select id="comandaAgent" data-c="agent" aria-label="Agent"></select></label>
+      <label class="nou-camp"><span>Număr ofertă</span><input type="text" id="ofertaNr" placeholder="Nr. ofertă" autocomplete="off" style="display:none"></label>
     </div>
     <div id="ofertaUI"></div>
     <div class="client-butoane">

@@ -23,10 +23,11 @@
     #bara .insigna { display: inline-block; min-width: 1.5em; padding: 0 6px; margin-left: 4px; border-radius: 10px;
       background: var(--accent-dim); color: #fff; font-size: .75rem; text-align: center; }
     #bara .insigna:empty { display: none; }
-    #bara .bara-context { flex: none; margin: 0; font-weight: 400; color: var(--text-dim); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    #bara .bara-context { flex: 0 1 auto; margin: 0; font-weight: 400; color: var(--text-dim); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
     #bara .bara-context b { color: var(--text); font-weight: 500; }
     #bara .bara-context i { font-style: normal; margin: 0 5px; }
     #bara #cine { color: var(--text-dim); font-size: 13px; white-space: nowrap; }
+    @media (max-width: 1100px) { #bara #cine { display: none; } }
     @media print { #bara { display: none !important; } }`;
   document.head.appendChild(stil);
 

@@ -1079,7 +1079,7 @@ export function configuratieCompleta() {
 function ceLipseste() {
   const meta = systems[state.system]?.meta;
   const lipsa = [!meta && 'modelul', !state.finish && 'culoarea'];
-  if (!meta?.rame) lipsa.push(!inaltimeAtinsa && 'înălţimea golului', !latimeAtinsa && 'lăţimea golului',
+  if (!meta?.rame && currentGama() !== 'rame') lipsa.push(!inaltimeAtinsa && 'înălţimea golului', !latimeAtinsa && 'lăţimea golului',
     meta?.doorsRange && !state.doors && 'numărul de uşi');
   const l = lipsa.filter(Boolean);
   return l.length ? `Mai alege: ${l.join(', ')}.` : '';
