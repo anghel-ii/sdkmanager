@@ -73,6 +73,7 @@ body.ui-nou .sticla-partial { color: #d4a24c; border-color: rgba(212, 162, 76, .
   body.ui-nou td[data-c]:not([data-c="pin"]):not([data-c="client"]):not([data-c="sistem"]):not([data-c="data"]) { order: 6; font-size: .84rem; }
   body.ui-nou td[data-c="actiuni"] { margin-left: auto; }
   body.ui-nou td[data-c="cine"]::before  { content: 'de '; }
+  body.ui-nou td[data-c="oferta"]::before { content: 'nr. ofertă '; }
   body.ui-nou td[data-c="sticla"]::before { content: 'Sticlă: '; color: var(--text-dim); }
   body.ui-nou td[data-c="avans"]::before  { content: 'avans '; color: var(--text-dim); }
   body.ui-nou td[data-c="status"] .dim, body.ui-nou td[data-c="sticla"] .dim.mic { display: none; }

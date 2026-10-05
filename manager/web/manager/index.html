@@ -493,7 +493,7 @@ function randeazaTabel() {
   // pe taburi: „2 din 14" cât se caută
   potriviri = totul ? Object.fromEntries(TABURI.map(([t]) => [t, randuri.filter(c => tabRand(c) === t).length])) : null;
   puneCate();
-  const coloane = 6 + cuStatus + cuSticla + 3 * cuFacturare;
+  const coloane = 7 + cuStatus + cuSticla + 3 * cuFacturare;
   // căutare: un rând-titlu înaintea fiecărei stări („Oferte 2")
   const titluGrup = (c, i) => !totul || (i && tabRand(randuri[i - 1]) === tabRand(c)) ? '' : `
         <tr class="grup"><td colspan="${coloane}">${TABURI[ordine(c)][1]}<span class="cate">${
@@ -503,14 +503,15 @@ function randeazaTabel() {
     <p class="dim mic rezumat">${randuri.length} ${randuri.length === 1 ? 'rezultat' : 'rezultate'} pentru „${esc(cautare.trim())}" — din oferte, aşteaptă plata, în lucru şi finalizate</p>` : ''}
     <table class="lista">
       <thead><tr>
-        <th></th><th>Client</th><th>Sistem</th>${cuStatus ? '<th>Status</th>' : ''}${cuSticla ? '<th>Sticlă</th>' : ''}${cuFacturare ? '<th>Plată</th><th class="num">Avans</th><th>Facturare</th>' : ''}
+        <th></th><th>Client</th><th>Nr. ofertă</th><th>Sistem</th>${cuStatus ? '<th>Status</th>' : ''}${cuSticla ? '<th>Sticlă</th>' : ''}${cuFacturare ? '<th>Plată</th><th class="num">Avans</th><th>Facturare</th>' : ''}
         <th>Creat de</th><th>Data</th><th></th>
       </tr></thead>
       <tbody>${randuri.map((c, i) => `${titluGrup(c, i)}
         <tr data-id="${c.id}"${c.fixat ? ' class="fixat"' : ''}>
           <td class="pin" data-c="pin"><button class="btn-pin${c.fixat ? ' activ' : ''}" data-id="${c.id}"
                 title="${c.fixat ? 'Scoate de sus' : 'Fixează sus (doar pentru tine)'}">📌</button></td>
-          <td data-c="client">${esc(c.client_nume)}<div class="nr-mic mono">${esc(c.numar_comanda || c.oferta_nr || c.numar)}${c.numar_comanda && c.oferta_nr ? ` · nr. ofertă ${esc(c.oferta_nr)}` : ''}${totul && c.client_telefon ? ` · ${esc(c.client_telefon)}` : ''}</div></td>
+          <td data-c="client">${esc(c.client_nume)}${c.numar_comanda || (totul && c.client_telefon) ? `<div class="nr-mic mono">${[c.numar_comanda, totul && c.client_telefon].filter(Boolean).map(esc).join(' · ')}</div>` : ''}</td>
+          <td class="mono" data-c="oferta">${esc(c.oferta_nr || c.numar)}</td>
           <td data-c="sistem">${esc(c.sistem ?? '—')}</td>
           ${cuStatus ? `<td data-c="status">${statusHtml(c.status)}</td>` : ''}
           ${cuSticla ? `<td class="facturare" data-c="sticla">${sticlaHtml(c.sticla)}</td>` : ''}
