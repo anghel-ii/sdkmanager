@@ -50,6 +50,11 @@ INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('119',
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('130', 'divizare aplicata 20', 'CROM', NULL, NULL, 'Divizare aplicata  20x1,4 mm, finisaj crom lucios 3 m cod 130', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('139', 'divizare aplicata 20', 'ALB', NULL, NULL, 'Divizare aplicata 20x1,4 mm, alb mat 3 m cod 139', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('150', 'divizare aplicata 20', 'NEGRU', NULL, NULL, 'Divizare aplicata 20x1,4 mm, finisaj negru mat 3 m cod 150', 'buc');
+INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('106', 'maner aplicat', 'ALUMINIU', NULL, NULL, 'Maner aplicat cu banda dublu adeziva 300x10x6 mm finisaj aluminiu cod 106', 'buc');
+INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('120', 'maner aplicat', 'SAMPANIE', NULL, NULL, 'Maner aplicat cu banda dublu adeziva 300x10x6 mm finisaj sampanie luciosa cod 120', 'buc');
+INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('131', 'maner aplicat', 'CROM', NULL, NULL, 'Maner aplicat cu banda dublu adeziva 300x10x6 mm finisaj crom lucios cod 131', 'buc');
+INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('140', 'maner aplicat', 'ALB', NULL, NULL, 'Maner aplicat cu banda dublu adeziva 300x10x6 mm finisaj alb mat cod 140', 'buc');
+INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('152', 'maner aplicat', 'NEGRU', NULL, NULL, 'Maner aplicat cu banda dublu adeziva 300x10x6 mm finisaj negru mat cod 152', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('101', 'vertical', 'ALUMINIU', NULL, NULL, 'Profil maner Breda finisaj aluminiu 5,5 m cod 101 cod 101', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('115', 'vertical', 'SAMPANIE', NULL, NULL, 'Profil maner Breda finisaj sampanie luciosa 5,5 m cod 115', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('126', 'vertical', 'CROM', NULL, NULL, 'Profil maner Breda finisaj crom lucios 5,5 m cod 126', 'buc');

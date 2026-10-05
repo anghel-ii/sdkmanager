@@ -82,6 +82,8 @@ function stareUsi(sys, { W, H, finish, doors, tracks, varianta }) {
   state.wheels      = u.map(x => ({ ...x.wheel }));
   state.amortizare  = u.map(x => ({ ...(x.amort ?? { left: 'fara', right: 'fara' }) }));
   state.divAplicate = u.map(x => ({ ...(x.aplicate ?? { latime: 'fara', parte: 'fata', verticale: 0, orizontale: 0 }) }));
+  // LUX: mânerul aplicat (celelalte game nu-l citesc) — în varianta C, pe rând stânga / ambele / dreapta
+  state.manerAplicat = u.map((_, i) => (varianta === 'C' ? ['stanga', 'ambele', 'dreapta'][i % 3] : 'fara'));
 }
 
 function stareRame(sys, { finish, varianta, randuri }) {

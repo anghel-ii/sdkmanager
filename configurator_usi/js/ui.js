@@ -341,6 +341,12 @@ function syncDoors() {
   amortizare.length = n;
   state.amortizare = amortizare;
 
+  // LUX: mânerul aplicat — implicit fără (ofertele de dinainte nu-l au)
+  const manerAplicat = state.manerAplicat ?? [];
+  while (manerAplicat.length < n) manerAplicat.push('fara');
+  manerAplicat.length = n;
+  state.manerAplicat = manerAplicat;
+
   // Divizări APLICATE (Confort, opţiuni avansate) — benzi lipite pe PAL/sticlă,
   // nu separă panouri. lăţime: 'fara' | '10' | '20'; parte: 'fata' | 'spate' | 'ambele'.
   const divAplicate = state.divAplicate ?? [];
@@ -445,7 +451,7 @@ function refreshAvansat() {
 // Diferite: câte un card pe uşă, pornind de la ce era ales pe cardul comun.
 // Ofertele de dinainte (fără alegerea salvată în config): identice doar dacă
 // uşile chiar sunt la fel — altfel nu le stricăm.
-const PER_USA = ['divisions', 'wheels', 'assembly', 'geam', 'geamClient', 'hPanouri', 'divProfil', 'panels', 'amortizare', 'divAplicate'];
+const PER_USA = ['divisions', 'wheels', 'assembly', 'geam', 'geamClient', 'hPanouri', 'divProfil', 'panels', 'amortizare', 'divAplicate', 'manerAplicat'];
 const toateLaFel = () => PER_USA.every(k => (state[k] ?? []).every(x => JSON.stringify(x) === JSON.stringify(state[k][0])));
 const usiIdentice = () => (state.usiIdentice ??= toateLaFel());
 function aliniazaUsile() {
@@ -479,6 +485,8 @@ function renderWheels() {
   // opţiunile avansate (înălţimi de panou, divizări aplicate), ca la Confort.
   const isUtil    = meta?.family === 'util';
   const hasPal    = !!meta?.pal;
+  // LUX: mânerul aplicat — doar în culorile care îl au (nu auriu, nu cupru)
+  const areManerAplicat = isLux && (catalog[meta.catalog] ?? []).some(a => a.tip === 'maner aplicat' && a.finisaj === state.finish);
   // UTIL are o singură amortizare (35 kg, cod 341); Confort 35 şi 60 kg
   const claseAmortizare = isUtil ? ['fara', '35kg'] : ['fara', '35kg', '60kg'];
 
@@ -581,6 +589,15 @@ function renderWheels() {
                 }>${v === 'fara' ? 'Fără' : v}</button>`).join('')}
               </div>
             </div>
+          </div>
+        </div>` : ''}
+
+        ${areManerAplicat ? `
+        <div class="door-row">
+          <span class="door-row-label">Mâner aplicat</span>
+          <div class="segmented mini" data-door="${i}" data-maner-aplicat="1">
+            ${[['fara', 'Fără'], ['stanga', 'Stânga'], ['dreapta', 'Dreapta'], ['ambele', 'Stânga şi dreapta']].map(([v, t]) =>
+              `<button data-v="${v}"${(state.manerAplicat?.[i] ?? 'fara') === v ? ' class="active"' : ''}>${t}</button>`).join('')}
           </div>
         </div>` : ''}
 
@@ -727,6 +744,15 @@ function renderWheels() {
         rebuild();
       });
     });
+  });
+
+  box.querySelectorAll('[data-maner-aplicat]').forEach(seg => {
+    const door = +seg.dataset.door;
+    seg.querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => {
+      state.manerAplicat[door] = btn.dataset.v;
+      seg.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+      rebuild();
+    }));
   });
 
   box.querySelectorAll('.segmented.mini[data-amortizare]').forEach(seg => {

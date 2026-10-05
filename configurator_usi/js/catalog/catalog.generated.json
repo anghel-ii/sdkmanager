@@ -6864,6 +6864,16 @@
       "activ": 1
     },
     {
+      "cod": "106",
+      "tip": "maner aplicat",
+      "finisaj": "ALUMINIU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Maner aplicat cu banda dublu adeziva 300x10x6 mm finisaj aluminiu cod 106",
+      "um": "buc",
+      "activ": 1
+    },
+    {
       "cod": "110",
       "tip": "sina superioara",
       "finisaj": "SAMPANIE",
@@ -6930,6 +6940,16 @@
       "lmin": null,
       "lmax": null,
       "denumire": "Divizare aplicata 20x1,4 mm, finisaj sampanie lucioasa 3 m cod 119",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "120",
+      "tip": "maner aplicat",
+      "finisaj": "SAMPANIE",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Maner aplicat cu banda dublu adeziva 300x10x6 mm finisaj sampanie luciosa cod 120",
       "um": "buc",
       "activ": 1
     },
@@ -7004,6 +7024,16 @@
       "activ": 1
     },
     {
+      "cod": "131",
+      "tip": "maner aplicat",
+      "finisaj": "CROM",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Maner aplicat cu banda dublu adeziva 300x10x6 mm finisaj crom lucios cod 131",
+      "um": "buc",
+      "activ": 1
+    },
+    {
       "cod": "135",
       "tip": "vertical",
       "finisaj": "ALB",
@@ -7054,6 +7084,16 @@
       "activ": 1
     },
     {
+      "cod": "140",
+      "tip": "maner aplicat",
+      "finisaj": "ALB",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Maner aplicat cu banda dublu adeziva 300x10x6 mm finisaj alb mat cod 140",
+      "um": "buc",
+      "activ": 1
+    },
+    {
       "cod": "146",
       "tip": "vertical",
       "finisaj": "NEGRU",
@@ -7100,6 +7140,16 @@
       "lmin": null,
       "lmax": null,
       "denumire": "Divizare aplicata 20x1,4 mm, finisaj negru mat 3 m cod 150",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "152",
+      "tip": "maner aplicat",
+      "finisaj": "NEGRU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Maner aplicat cu banda dublu adeziva 300x10x6 mm finisaj negru mat cod 152",
       "um": "buc",
       "activ": 1
     },
@@ -7876,6 +7926,16 @@
       "activ": 1
     },
     {
+      "cod": "106",
+      "tip": "maner aplicat",
+      "finisaj": "ALUMINIU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Maner aplicat cu banda dublu adeziva 300x10x6 mm finisaj aluminiu cod 106",
+      "um": "buc",
+      "activ": 1
+    },
+    {
       "cod": "110",
       "tip": "sina superioara",
       "finisaj": "SAMPANIE",
@@ -7942,6 +8002,16 @@
       "lmin": null,
       "lmax": null,
       "denumire": "Divizare aplicata 20x1,4 mm, finisaj sampanie lucioasa 3 m cod 119",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "120",
+      "tip": "maner aplicat",
+      "finisaj": "SAMPANIE",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Maner aplicat cu banda dublu adeziva 300x10x6 mm finisaj sampanie luciosa cod 120",
       "um": "buc",
       "activ": 1
     },
@@ -8016,6 +8086,16 @@
       "activ": 1
     },
     {
+      "cod": "131",
+      "tip": "maner aplicat",
+      "finisaj": "CROM",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Maner aplicat cu banda dublu adeziva 300x10x6 mm finisaj crom lucios cod 131",
+      "um": "buc",
+      "activ": 1
+    },
+    {
       "cod": "134",
       "tip": "vertical",
       "finisaj": "ALB",
@@ -8066,6 +8146,16 @@
       "activ": 1
     },
     {
+      "cod": "140",
+      "tip": "maner aplicat",
+      "finisaj": "ALB",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Maner aplicat cu banda dublu adeziva 300x10x6 mm finisaj alb mat cod 140",
+      "um": "buc",
+      "activ": 1
+    },
+    {
       "cod": "145",
       "tip": "vertical",
       "finisaj": "NEGRU",
@@ -8112,6 +8202,16 @@
       "lmin": null,
       "lmax": null,
       "denumire": "Divizare aplicata 20x1,4 mm, finisaj negru mat 3 m cod 150",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "152",
+      "tip": "maner aplicat",
+      "finisaj": "NEGRU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Maner aplicat cu banda dublu adeziva 300x10x6 mm finisaj negru mat cod 152",
       "um": "buc",
       "activ": 1
     },

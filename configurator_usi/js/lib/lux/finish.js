@@ -54,7 +54,7 @@ const _cache = new Map();
 // culoare se oferă (ex. divizarea H la Confort lipseşte la AURIU/CUPRU; acolo
 // doar nu se oferă opţiunea H, vezi areCodH în lib/confort/confort.js).
 // divizarea T lipseşte la cupru — culoarea se oferă oricum, doar divizarea T dă „lipsă cod"
-const TIPURI_OPTIONALE = new Set(['divizare', 'divizare aplicata 10', 'divizare aplicata 20']);
+const TIPURI_OPTIONALE = new Set(['divizare', 'divizare aplicata 10', 'divizare aplicata 20', 'maner aplicat']);
 
 function finisajeDinCatalog(meta, declarate) {
   const family = meta?.catalog ?? meta?.family;

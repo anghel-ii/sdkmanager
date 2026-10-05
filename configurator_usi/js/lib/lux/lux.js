@@ -74,6 +74,9 @@ export function topRailLux(group, { length, H, doorH, mat, track }) {
 }
 
 // ── Panouri (PAL / sticlă) ───────────────────────────────────────────────────
+// Bara dintre două panouri (userul, 2026-10-05): divizarea „T" între PAL–PAL sau
+// PAL–sticlă; între sticlă şi sticlă — profilul intermediar al ramei (171), nu T.
+export const tipBara = (jos, sus) => (jos === 'sticla' && sus === 'sticla' ? 'R' : 'T');
 // Un panou nedivizat: PAL Husa − 2, sticlă Husa − 4 (Excel). Cu divizări: fiecare
 // profil T mai scade 2 mm (nota din Excel), iar marginile de sus/jos ale stivei iau
 // jumătate din deducerea materialului panoului de acolo — ca la Confort, aşa că la
@@ -82,10 +85,14 @@ export function topRailLux(group, { length, H, doorH, mat, track }) {
 const DEDUCERE_H = { pal: 2, sticla: 4 };   // Husa − …, panou nedivizat
 const DEDUCERE_L = { pal: 3, sticla: 5 };   // Lusa − …
 export const DEDUCERE_T = 2;
+// ⚠ intermediarul ramei (sticlă–sticlă): cât scade din înălţime nu e în Excel — presupus
+// tot 2 mm, ca T; de confirmat cu userul
+export const DEDUCERE_INTERMEDIAR = 2;
 
 function panouriUsa(doorH, mats, fixe) {
   const n = mats.length;
-  const stiva = doorH - DEDUCERE_H[mats[0]] / 2 - DEDUCERE_H[mats[n - 1]] / 2 - DEDUCERE_T * (n - 1);
+  let stiva = doorH - DEDUCERE_H[mats[0]] / 2 - DEDUCERE_H[mats[n - 1]] / 2;
+  for (let k = 0; k < n - 1; k++) stiva -= tipBara(mats[k], mats[k + 1]) === 'R' ? DEDUCERE_INTERMEDIAR : DEDUCERE_T;
   const eFix = k => Number.isFinite(fixe?.[k]) && fixe[k] > 0;
   const sumaFixe = mats.reduce((s, _, k) => s + (eFix(k) ? fixe[k] : 0), 0);
   const libere = mats.filter((_, k) => !eFix(k)).length;
@@ -105,7 +112,8 @@ export function glazingLux({ doorW, doorH, divisionsPerDoor, panelsPerDoor, inal
     while (mats.length < panes) mats.push('sticla');
     const { heights, stiva, eroare } = panouriUsa(doorH, mats, inaltimiPerDoor?.[i]);
     const palPanes = mats.filter(m => m === 'pal').length;
-    return { divisions, panes, palPanes, glassPanes: panes - palPanes, mats, heights, stiva, profil: Array(divisions).fill('T'), eroare };
+    const profil = Array.from({ length: divisions }, (_, k) => tipBara(mats[k], mats[k + 1]));
+    return { divisions, panes, palPanes, glassPanes: panes - palPanes, mats, heights, stiva, profil, eroare };
   });
   const sticle = p => p.heights.filter((_, k) => p.mats[k] !== 'pal');
   return {
@@ -120,6 +128,11 @@ export function glazingLux({ doorW, doorH, divisionsPerDoor, panelsPerDoor, inal
 
 // Uşile care au cel puţin un panou de sticlă — au nevoie de ramă (R300 / profilele 170-171).
 export const usiCuSticla = glass => (glass?.panels ?? []).filter(p => p.glassPanes > 0);
+const nrBare = (glass, tip) => (glass?.panels ?? []).reduce((s, p) => s + p.profil.filter(x => x === tip).length, 0);
+
+// Mânerul aplicat — opţional pe uşă: stânga, dreapta sau ambele (userul, 2026-10-05).
+export const MANER_APLICAT = { fara: 0, stanga: 1, dreapta: 1, ambele: 2 };
+export const manereAplicate = state => (state.manerAplicat ?? []).reduce((s, m) => s + (MANER_APLICAT[m] ?? 0), 0);
 
 // ── Divizări aplicate — aceleaşi reguli ca la Confort (bare de 3 m, FFD) ─────
 export const BARA_3M = 3000;
@@ -157,9 +170,10 @@ export function bare3m(lungimi) {
 
 // ── Cantităţile de facturare proprii gamei (spec.bill) ───────────────────────
 export function luxBill(spec, state) {
-  const nrT = (state.divisions ?? []).reduce((s, d) => s + d, 0);
+  const nrT = nrBare(spec.glass, 'T');   // doar barele T (cele sticlă–sticlă sunt ale ramei)
   const seg = segmenteAplicate(spec, state);
   return {
+    manereAplicate: manereAplicate(state),
     // divizarea T: bucăţi de spec.orizontalMm pe bare de 3 m
     bareT:          bare3m(Array(nrT).fill(spec.orizontalMm)).nr,
     bareAplicate10: bare3m(seg.filter(s => s.latime === '10').map(s => s.lungime)).nr,
@@ -185,7 +199,7 @@ function luxLine(cat, tip, finisaj, qty, cut, unit = 'buc') {
 // Profilele — mereu (lista de debitare), ca la Confort.
 export function luxProfileRows(cat, spec, state) {
   const n = spec.door.count, f = state.finish;
-  const nrT = (state.divisions ?? []).reduce((s, d) => s + d, 0);
+  const nrT = nrBare(spec.glass, 'T');
   const rows = [
     luxLine(cat, 'sina superioara', f, 1, `${spec.rail.length} mm`),
     luxLine(cat, 'sina inferioara', f, 1, `${spec.rail.length} mm`),
@@ -209,11 +223,11 @@ export function luxAplicateRows(cat, spec, state) {
 
 // Rama uşilor cu sticlă (Excel: vertical Husa − 2, orizontal + intermediar Lsticlă − 66)
 // — profile de aluminiu 170 / 171, indiferent de culoare. Orizontalele: sus + jos +
-// câte unul pe fiecare divizare (presupus — în Excel cantitatea e goală).
+// intermediarul dintre două sticle (userul, 2026-10-05).
 export function luxRamaRows(spec) {
   const usi = usiCuSticla(spec.glass);
   if (!usi.length) return [];
-  const oriz = usi.reduce((s, p) => s + 2 + p.divisions, 0);
+  const oriz = usi.reduce((s, p) => s + 2 + p.profil.filter(x => x === 'R').length, 0);
   return [
     line('170', 'Profil vertical pentru rama la modelul Lux finisaj aluminiu 5,5 m cod 170', 2 * usi.length, 'buc', `${spec.door.h - 2} mm`),
     line('171', 'Profil orizontal pentru rama la modelul Lux finisaj aluminiu 5,8 m cod 171', oriz, 'buc', `${Math.round(spec.glass.glassW - 66)} mm`),
@@ -225,7 +239,7 @@ const ROTILE_SUP = {
   vent:  { cod: '160', denumire: 'Rotila superioara Vent K8 cod 160' },
   breda: { cod: '161', denumire: 'Rotila superioara Breda K9 cod 161' },
 };
-export function luxFeronerieRows(model, spec, state) {
+export function luxFeronerieRows(model, cat, spec, state) {
   const n = clientDoors(state);
   if (!n) return [];
   const rows = [
@@ -238,6 +252,10 @@ export function luxFeronerieRows(model, spec, state) {
   // garnitura Lux — doar pe panourile de sticlă ale uşilor client
   const garnitura = glassPerDoor(spec, state).filter(g => g.client).reduce((m, g) => m + g.gasketM, 0);
   if (garnitura > 0) rows.push(line('163', 'Garnitura Lux pentru sticla 4 mm cod 163', ceilHalf(garnitura), 'm'));
+  // mânerul aplicat al uşilor client
+  const manere = manereAplicate({ manerAplicat: (state.manerAplicat ?? []).filter((_, i) => state.assembly?.[i] === 'client') });
+  const artManer = (catalog[cat] ?? []).find(a => a.tip === 'maner aplicat' && a.finisaj === state.finish);
+  if (manere && artManer) rows.push(line(artManer.cod, artManer.denumire, manere, 'buc'));
   const supr = suprapuneriLux(spec.door.count);
   if (supr) rows.push(line('275', 'Perie spate antipraf 6x8mm Confort/Lux cod 275', ceilHalf(supr * spec.door.h / 1000), 'm'));
   return rows;
@@ -268,7 +286,7 @@ export function luxDoor3D(spec, state, i) {
     paneHeights:   p?.heights,
     paneThickness: (p?.mats ?? []).map(m => (m === 'pal' ? GROSIME_PAL_MM : grosimeGeam)),
     aplicate:      state.divAplicate?.[i],
-    barShapes:     (p?.profil ?? []).map(() => ({ fata: 5, spate: 5 })),   // profilul T: 5 mm
+    barShapes:     (p?.profil ?? []).map(pr => (pr === 'R' ? { fata: 12, spate: 12 } : { fata: 5, spate: 5 })),   // T 5 mm; intermediarul ramei mai lat
   };
 }
 
@@ -317,7 +335,7 @@ export const bomLux = (model, cat) => (state, s) => [
   ...luxProfileRows(cat, s, state),
   ...luxAplicateRows(cat, s, state),
   ...luxRamaRows(s),
-  ...luxFeronerieRows(model, s, state),
+  ...luxFeronerieRows(model, cat, s, state),
   ...luxAmortizareRows(state),
 ];
 
@@ -351,6 +369,7 @@ export const BILLING_LUX = {
     { tip: 'divizare',             dim: 'orizontalMm', qty: 'bareT' },
     { tip: 'divizare aplicata 10', dim: 'innerWmm',    qty: 'bareAplicate10' },
     { tip: 'divizare aplicata 20', dim: 'innerWmm',    qty: 'bareAplicate20' },
+    { tip: 'maner aplicat',        dim: 'doorWmm',     qty: 'manereAplicate' },
     { cod: '164', denumire: 'Perie laterala 5x5 mm cod 164', qty: 'perieMl', um: 'm' },
     { cod: '275', denumire: 'Perie spate antipraf 6x8mm Confort/Lux cod 275', qty: 'perieSpateM', um: 'm' },
     { cod: '282', denumire: AMORTIZARE['35kg'].denumire, qty: 'amortizare35', factor: 0.5, um: 'set' },

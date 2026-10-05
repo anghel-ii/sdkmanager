@@ -177,6 +177,9 @@ function textSubDesen(sys, i) {
     sys.meta.family !== 'suspendata'
       ? ['Amortizare', `St ${amortizareLabel(a.left)} · Dr ${amortizareLabel(a.right)}`]
       : ['Role', `St ${rolaLabel(w.left)} · Dr ${rolaLabel(w.right)}`],
+    // LUX: mânerul aplicat
+    ...(state.manerAplicat?.[i] && state.manerAplicat[i] !== 'fara'
+      ? [['Mâner aplicat', { stanga: 'stânga', dreapta: 'dreapta', ambele: 'stânga şi dreapta' }[state.manerAplicat[i]]]] : []),
     ...(da && da.latime !== 'fara'
       ? [['Aplicate', `${da.latime}mm ${PARTE_TEXT[da.parte] ?? da.parte} · ${da.verticale ?? 0} vert. × ${da.orizontale ?? 0} oriz. / panou`]]
       : []),
