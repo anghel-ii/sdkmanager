@@ -24,6 +24,7 @@ export const FINISAJE_LUX = [
   { id: 'ALB',      label: 'Alb mat',         hex: '#eceeef' },
   { id: 'NEGRU',    label: 'Negru mat',       hex: '#2a2a2c' },
   { id: 'AURIU',    label: 'Auriu periat',    hex: '#b89a4e' },
+  { id: 'CUPRU',    label: 'Cupru periat',    hex: '#a05a3c' },   // doar Vent (foaia DB din Excel)
 ];
 
 export const FINISAJE_CONFORT = [
@@ -52,7 +53,8 @@ const _cache = new Map();
 // Tipuri de articol OPŢIONALE — există doar în unele culori şi nu decid dacă o
 // culoare se oferă (ex. divizarea H la Confort lipseşte la AURIU/CUPRU; acolo
 // doar nu se oferă opţiunea H, vezi areCodH în lib/confort/confort.js).
-const TIPURI_OPTIONALE = new Set(['divizare aplicata 10', 'divizare aplicata 20']);
+// divizarea T lipseşte la cupru — culoarea se oferă oricum, doar divizarea T dă „lipsă cod"
+const TIPURI_OPTIONALE = new Set(['divizare', 'divizare aplicata 10', 'divizare aplicata 20']);
 
 function finisajeDinCatalog(meta, declarate) {
   const family = meta?.catalog ?? meta?.family;

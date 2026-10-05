@@ -4,6 +4,7 @@
 --  „Calculator profile LUX 2025.xlsx" (verificate în NeoManager, 2026-10-05).
 --    'usa'  — uşa culisantă întreagă (B302.xxx), pe LĂŢIMEA UŞII (doorWmm), ca la Confort
 --    'rama' — rama pt. uşile cu sticlă (R300.xxx), tot pe lăţimea uşii, fără culoare
+--  CUPRU (doar Vent): uşa fără şine (290/291 se facturează separat), max 1500 mm, fără divizare T.
 --  Ultima bandă (…15) e 1501–2000 mm: în NeoManager câteva denumiri zic altfel
 --  („1501-1600" la Vent alb / negru, „1401-1500" la R300.015) — de confirmat.
 -- ═══════════════════════════════════════════════════════════════════════════

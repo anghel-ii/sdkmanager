@@ -4,6 +4,7 @@
 --  „Calculator profile LUX 2025.xlsx" (verificate în NeoManager, 2026-10-05).
 --    'usa'  — uşa culisantă întreagă (V301.xxx), pe LĂŢIMEA UŞII (doorWmm), ca la Confort
 --    'rama' — rama pt. uşile cu sticlă (R300.xxx), tot pe lăţimea uşii, fără culoare
+--  CUPRU (doar Vent): uşa fără şine (290/291 se facturează separat), max 1500 mm, fără divizare T.
 --  Ultima bandă (…15) e 1501–2000 mm: în NeoManager câteva denumiri zic altfel
 --  („1501-1600" la Vent alb / negru, „1401-1500" la R300.015) — de confirmat.
 -- ═══════════════════════════════════════════════════════════════════════════
@@ -25,18 +26,21 @@ INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('121',
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('240', 'sina superioara', 'ALB', NULL, NULL, 'Sina superioara dubla Confort/Lux finisaj alb mat  5,8 m cod 240', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('250', 'sina superioara', 'NEGRU', NULL, NULL, 'Sina superioara dubla Confort/Lux finisaj negru periat 5,8 m cod 250', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('260', 'sina superioara', 'AURIU', NULL, NULL, 'Sina superioara dubla Confort/Lux finisaj auriu periat 5,8 m cod 260', 'buc');
+INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('290', 'sina superioara', 'CUPRU', NULL, NULL, 'Sina superioara dubla Confort/Lux finisaj cupru 3.5 m cod 290', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('201', 'sina inferioara', 'ALUMINIU', NULL, NULL, 'Sina inferioara dubla Confort/Lux finisaj aluminiu 5,8 m cod 201', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('111', 'sina inferioara', 'SAMPANIE', NULL, NULL, 'Sina dubla inferioara, finisaj sampanie lucioasa 5,8 m cod 111', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('122', 'sina inferioara', 'CROM', NULL, NULL, 'Sina dubla inferioara, finisaj crom lucios 5,8 m cod 122', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('241', 'sina inferioara', 'ALB', NULL, NULL, 'Sina inferioara dubla Confort/Lux finisaj alb mat 5,8 m cod 241', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('251', 'sina inferioara', 'NEGRU', NULL, NULL, 'Sina inferioara dubla Confort/Lux finisaj negru periat 5,8 m cod 251', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('261', 'sina inferioara', 'AURIU', NULL, NULL, 'Sina inferioara dubla Confort/Lux finisaj auriu periat 5,8 m cod 261', 'buc');
+INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('291', 'sina inferioara', 'CUPRU', NULL, NULL, 'Sina inferioara dubla Confort/Lux finisaj cupru 3,5 m cod 291', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('102', 'orizontal', 'ALUMINIU', NULL, NULL, 'Orizontal superior/inferior ''''L'''' 18x5 mm  finisaj aluminiu 3 m cod 102', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('116', 'orizontal', 'SAMPANIE', NULL, NULL, 'Orizontal superior/inferior ''''L'''' 18x5 mm  finisaj sampanie lucioasa 3 m cod 116', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('127', 'orizontal', 'CROM', NULL, NULL, 'Orizontal superior/inferior ''''L'''' 18x5 mm finisaj crom lucios 3 m cod 127', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('136', 'orizontal', 'ALB', NULL, NULL, 'Orizontal superior/inferior ''''L'''' 18x5 mm  finisaj alb mat  3 m cod 136', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('147', 'orizontal', 'NEGRU', NULL, NULL, 'Orizontal superior/inferior ''''L'''' 18x5 mm  finisaj negru mat 3 m cod 147', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('154', 'orizontal', 'AURIU', NULL, NULL, 'Orizontal superior/inferior ''''L'''' 18x5 mm, finisaj auriu periat 3 m cod 154', 'buc');
+INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('181', 'orizontal', 'CUPRU', NULL, NULL, 'Orizontal superior/inferior ''''L'''' 18x5 mm  finisaj cupru 3 m cod 181', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('103', 'divizare', 'ALUMINIU', NULL, NULL, 'Divizare ''''T'''' latime 5 mm finisaj aluminiu 3 m cod 103', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('117', 'divizare', 'SAMPANIE', NULL, NULL, 'Divizare ''''T'''' latime 5 mm finisaj sampanie luciosa 3 m cod 117', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('128', 'divizare', 'CROM', NULL, NULL, 'Divizare ''''T'''' latime 5 mm finisaj crom lucios 3 m cod 128', 'buc');
@@ -49,18 +53,21 @@ INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('129',
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('138', 'divizare aplicata 10', 'ALB', NULL, NULL, 'Divizare aplicata 10x1,4 mm, finisaj alb mat 3 m cod 138', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('149', 'divizare aplicata 10', 'NEGRU', NULL, NULL, 'Divizare aplicata 10x1,4 mm, finisaj negru mat 3 m cod 149', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('156', 'divizare aplicata 10', 'AURIU', NULL, NULL, 'Divizare aplicata 10x1,4 mm, finisaj auriu periat 3 m cod 156', 'buc');
+INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('182', 'divizare aplicata 10', 'CUPRU', NULL, NULL, 'Divizare aplicata  10x1,4 mm, finisaj cupru 3 m cod 182', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('105', 'divizare aplicata 20', 'ALUMINIU', NULL, NULL, 'Divizare aplicata 20x1,4 mm, finisaj aluminiu 3 m cod 105 cod 105', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('119', 'divizare aplicata 20', 'SAMPANIE', NULL, NULL, 'Divizare aplicata 20x1,4 mm, finisaj sampanie lucioasa 3 m cod 119', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('130', 'divizare aplicata 20', 'CROM', NULL, NULL, 'Divizare aplicata  20x1,4 mm, finisaj crom lucios 3 m cod 130', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('139', 'divizare aplicata 20', 'ALB', NULL, NULL, 'Divizare aplicata 20x1,4 mm, alb mat 3 m cod 139', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('150', 'divizare aplicata 20', 'NEGRU', NULL, NULL, 'Divizare aplicata 20x1,4 mm, finisaj negru mat 3 m cod 150', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('157', 'divizare aplicata 20', 'AURIU', NULL, NULL, 'Divizare aplicata 20x1,4 mm, finisaj auriu periat 3 m cod 157', 'buc');
+INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('183', 'divizare aplicata 20', 'CUPRU', NULL, NULL, 'Divizare aplicata  20x1,4 mm, finisaj cupru 3 m cod 183', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('100', 'vertical', 'ALUMINIU', NULL, NULL, 'Profil maner Vent  finisaj aluminiu 5,5 m cod 100 cod 100', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('114', 'vertical', 'SAMPANIE', NULL, NULL, 'Profil maner Vent  finisaj sampanie luciosa 5,5 m cod 114', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('125', 'vertical', 'CROM', NULL, NULL, 'Profil maner Vent  finisaj crom lucios 5,5 m cod 125', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('134', 'vertical', 'ALB', NULL, NULL, 'Profil maner Vent  finisaj alb mat 5,5 m cod 134', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('145', 'vertical', 'NEGRU', NULL, NULL, 'Profil maner Vent  finisaj negru mat 5,5 m cod 145', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('153', 'vertical', 'AURIU', NULL, NULL, 'Profil maner Vent finisaj auriu periat 5,5 m cod 153', 'buc');
+INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('180', 'vertical', 'CUPRU', NULL, NULL, 'Profil maner Vent  finisaj cupru 3 m cod 180', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('V301.005', 'usa', 'ALUMINIU', 501, 600, 'Usa culisanta Vent Aluminiu 501-600mm Cod V301.005', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('V301.006', 'usa', 'ALUMINIU', 601, 700, 'Usa culisanta Vent Aluminiu 601-700mm Cod V301.006', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('V301.007', 'usa', 'ALUMINIU', 701, 800, 'Usa culisanta Vent Aluminiu 701-800mm Cod V301.007', 'buc');
@@ -127,6 +134,16 @@ INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('V301.
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('V301.613', 'usa', 'AURIU', 1301, 1400, 'Usa culisanta Vent Auriu periat 1301-1400mm cod V301.613', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('V301.614', 'usa', 'AURIU', 1401, 1500, 'Usa culisanta Vent Auriu periat 1401-1500mm cod V301.614', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('V301.615', 'usa', 'AURIU', 1501, 2000, 'Usa culisanta Vent Auriu periat 1501-2000mm cod V301.615', 'buc');
+INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('V301.075', 'usa', 'CUPRU', 501, 600, 'Usa culisanta Vent Cupru 501-600mm cod V301.075  (fara sine de culisare)', 'buc');
+INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('V301.076', 'usa', 'CUPRU', 601, 700, 'Usa culisanta Vent Cupru 601-700mm cod V301.076 (fara sine de culisare)', 'buc');
+INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('V301.077', 'usa', 'CUPRU', 701, 800, 'Usa culisanta Vent Cupru 701-800mm cod V301.077 (fara sine de culisare)', 'buc');
+INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('V301.078', 'usa', 'CUPRU', 801, 900, 'Usa culisanta Vent Cupru 801-900mm cod V301.078 (fara sine de culisare)', 'buc');
+INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('V301.079', 'usa', 'CUPRU', 901, 1000, 'Usa culisanta Vent Cupru 901-1000mm cod V301.079 (fara sine de culisare)', 'buc');
+INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('V301.710', 'usa', 'CUPRU', 1001, 1100, 'Usa culisanta Vent Cupru 1001-1100mm cod V301.710 (fara sine de culisare)', 'buc');
+INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('V301.711', 'usa', 'CUPRU', 1101, 1200, 'Usa culisanta Vent Cupru 1101-1200mm cod V301.711 (fara sine de culisare)', 'buc');
+INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('V301.712', 'usa', 'CUPRU', 1201, 1300, 'Usa culisanta Vent Cupru 1201-1300mm cod V301.712 (fara sine de culisare)', 'buc');
+INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('V301.713', 'usa', 'CUPRU', 1301, 1400, 'Usa culisanta Vent Cupru 1301-1400mm cod V301.713 (fara sine de culisare)', 'buc');
+INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('V301.714', 'usa', 'CUPRU', 1401, 1500, 'Usa culisanta Vent Cupru 1401-1500mm cod V301.714 (fara sine de culisare)', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('R300.005', 'rama', NULL, 501, 600, 'Rame pt usi cu sticla la gama Lux 501-600mm Cod R300.005', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('R300.006', 'rama', NULL, 601, 700, 'Rame pt usi cu sticla la gama Lux 601-700Mm Cod R300.006', 'buc');
 INSERT INTO articol (cod, tip, finisaj, lmin, lmax, denumire, um) VALUES ('R300.007', 'rama', NULL, 701, 800, 'Rame pt usi cu sticla la gama Lux 701-800mm Cod R300.007', 'buc');

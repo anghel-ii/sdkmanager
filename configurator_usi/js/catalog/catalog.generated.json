@@ -8166,6 +8166,46 @@
       "activ": 1
     },
     {
+      "cod": "180",
+      "tip": "vertical",
+      "finisaj": "CUPRU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Profil maner Vent  finisaj cupru 3 m cod 180",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "181",
+      "tip": "orizontal",
+      "finisaj": "CUPRU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Orizontal superior/inferior ''L'' 18x5 mm  finisaj cupru 3 m cod 181",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "182",
+      "tip": "divizare aplicata 10",
+      "finisaj": "CUPRU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Divizare aplicata  10x1,4 mm, finisaj cupru 3 m cod 182",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "183",
+      "tip": "divizare aplicata 20",
+      "finisaj": "CUPRU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Divizare aplicata  20x1,4 mm, finisaj cupru 3 m cod 183",
+      "um": "buc",
+      "activ": 1
+    },
+    {
       "cod": "200",
       "tip": "sina superioara",
       "finisaj": "ALUMINIU",
@@ -8242,6 +8282,26 @@
       "lmin": null,
       "lmax": null,
       "denumire": "Sina inferioara dubla Confort/Lux finisaj auriu periat 5,8 m cod 261",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "290",
+      "tip": "sina superioara",
+      "finisaj": "CUPRU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Sina superioara dubla Confort/Lux finisaj cupru 3.5 m cod 290",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "291",
+      "tip": "sina inferioara",
+      "finisaj": "CUPRU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Sina inferioara dubla Confort/Lux finisaj cupru 3,5 m cod 291",
       "um": "buc",
       "activ": 1
     },
@@ -8716,6 +8776,56 @@
       "activ": 1
     },
     {
+      "cod": "V301.075",
+      "tip": "usa",
+      "finisaj": "CUPRU",
+      "lmin": 501,
+      "lmax": 600,
+      "denumire": "Usa culisanta Vent Cupru 501-600mm cod V301.075  (fara sine de culisare)",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.076",
+      "tip": "usa",
+      "finisaj": "CUPRU",
+      "lmin": 601,
+      "lmax": 700,
+      "denumire": "Usa culisanta Vent Cupru 601-700mm cod V301.076 (fara sine de culisare)",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.077",
+      "tip": "usa",
+      "finisaj": "CUPRU",
+      "lmin": 701,
+      "lmax": 800,
+      "denumire": "Usa culisanta Vent Cupru 701-800mm cod V301.077 (fara sine de culisare)",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.078",
+      "tip": "usa",
+      "finisaj": "CUPRU",
+      "lmin": 801,
+      "lmax": 900,
+      "denumire": "Usa culisanta Vent Cupru 801-900mm cod V301.078 (fara sine de culisare)",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.079",
+      "tip": "usa",
+      "finisaj": "CUPRU",
+      "lmin": 901,
+      "lmax": 1000,
+      "denumire": "Usa culisanta Vent Cupru 901-1000mm cod V301.079 (fara sine de culisare)",
+      "um": "buc",
+      "activ": 1
+    },
+    {
       "cod": "V301.210",
       "tip": "usa",
       "finisaj": "SAMPANIE",
@@ -9012,6 +9122,56 @@
       "lmin": 1501,
       "lmax": 2000,
       "denumire": "Usa culisanta Vent Auriu periat 1501-2000mm cod V301.615",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.710",
+      "tip": "usa",
+      "finisaj": "CUPRU",
+      "lmin": 1001,
+      "lmax": 1100,
+      "denumire": "Usa culisanta Vent Cupru 1001-1100mm cod V301.710 (fara sine de culisare)",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.711",
+      "tip": "usa",
+      "finisaj": "CUPRU",
+      "lmin": 1101,
+      "lmax": 1200,
+      "denumire": "Usa culisanta Vent Cupru 1101-1200mm cod V301.711 (fara sine de culisare)",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.712",
+      "tip": "usa",
+      "finisaj": "CUPRU",
+      "lmin": 1201,
+      "lmax": 1300,
+      "denumire": "Usa culisanta Vent Cupru 1201-1300mm cod V301.712 (fara sine de culisare)",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.713",
+      "tip": "usa",
+      "finisaj": "CUPRU",
+      "lmin": 1301,
+      "lmax": 1400,
+      "denumire": "Usa culisanta Vent Cupru 1301-1400mm cod V301.713 (fara sine de culisare)",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.714",
+      "tip": "usa",
+      "finisaj": "CUPRU",
+      "lmin": 1401,
+      "lmax": 1500,
+      "denumire": "Usa culisanta Vent Cupru 1401-1500mm cod V301.714 (fara sine de culisare)",
       "um": "buc",
       "activ": 1
     }

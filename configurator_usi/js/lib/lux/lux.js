@@ -4,7 +4,7 @@
 //  codurile şi denumirile — verificate în „baza de date completa.xlsx" (NeoManager).
 //
 //  Formulele din Excel (Hgol/Lgol = golul, Nusi, Nsup = suprapuneri):
-//    Husa = Hgol − 38                        Lusa = (Lgol + 8 × Nsup − 2) / Nusi
+//    Husa = Hgol − 40 (userul, 2026-10-05; Excel zice −38)   Lusa = (Lgol + 8 × Nsup − 2) / Nusi
 //    PAL:     H = Husa − 2,  L = Lusa − 3     sticlă: H = Husa − 4, L = Lusa − 5
 //    fiecare profil de divizare „T" scade 2 mm din înălţime (nota din Excel)
 //    şina sus + jos = Lgol (dublă, 1 buc fiecare)
@@ -32,7 +32,8 @@ import { mm } from '../comun/geo.js';
 import catalog from '../../catalog/catalog.generated.json';
 
 // ── Cote ─────────────────────────────────────────────────────────────────────
-export const doorHeightLux = H => H - 38;
+// −40, nu −38 ca în Excel (userul, 2026-10-05)
+export const doorHeightLux = H => H - 40;
 
 // Suprapunerile — LUX are doar şină dublă; în Excel Nsup se trece de mână, iar
 // exemplele (1→0, 2→1, 3→2, 4→2) bat cu tabelul Confort, aşa că îl folosim (fix pe nr. de uşi).
@@ -122,6 +123,7 @@ export const usiCuSticla = glass => (glass?.panels ?? []).filter(p => p.glassPan
 
 // ── Divizări aplicate — aceleaşi reguli ca la Confort (bare de 3 m, FFD) ─────
 export const BARA_3M = 3000;
+export const BARA_SINA_CUPRU_MM = 3500;
 export function segmenteAplicate(spec, state) {
   const { panels = [], glassW = 0, palW = glassW } = spec.glass ?? {};
   const out = [];
@@ -165,6 +167,9 @@ export function luxBill(spec, state) {
     usiCuSticla:    usiCuSticla(spec.glass).length,
     // perie spate antipraf: suprapuneri × Husa (ca la Confort Verona / Atrani)
     perieSpateM:    ceilHalf(suprapuneriLux(spec.door.count) * spec.door.h / 1000),
+    // CUPRU (doar Vent): uşa vine FĂRĂ şine — 290 / 291 se facturează separat, la bară
+    // de 3,5 m (NeoManager), întreagă sau jumătate (ca la Confort cupru)
+    sinaCupru:      state.finish === 'CUPRU' ? ceilHalf(spec.rail.length / BARA_SINA_CUPRU_MM) : 0,
   };
 }
 
@@ -340,6 +345,9 @@ export const BILLING_LUX = {
     { tip: 'usa',  dim: 'doorWmm', qty: 'usi' },
     // rama pt. uşile cu cel puţin un panou de sticlă (R300, pe lăţimea uşii)
     { tip: 'rama', dim: 'doorWmm', qty: 'usiCuSticla' },
+    // doar la CUPRU (uşa fără şine) — la celelalte culori cantitatea e 0 şi linia se omite
+    { tip: 'sina superioara', dim: 'sinaLenMm', qty: 'sinaCupru' },
+    { tip: 'sina inferioara', dim: 'sinaLenMm', qty: 'sinaCupru' },
     { tip: 'divizare',             dim: 'orizontalMm', qty: 'bareT' },
     { tip: 'divizare aplicata 10', dim: 'innerWmm',    qty: 'bareAplicate10' },
     { tip: 'divizare aplicata 20', dim: 'innerWmm',    qty: 'bareAplicate20' },

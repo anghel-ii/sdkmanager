@@ -19,8 +19,8 @@ export const meta = {
   doorsRange:  USI_LUX,
   suprapuneri: n => SUPRAPUNERI_LUX[n],      // doar şină dublă, fixe pe nr. de uşi
   pal:         true,                         // panourile pot fi PAL sau sticlă
-  // şina = bară de 5,8 m; mânerul = bară de 5,5 m (2 bucăţi din una → uşa max 2750)
-  limits:      { width: [800, 5800], height: [800, 2788] },
+  // şina = bară de 5,8 m; mânerul = bară de 5,5 m (2 bucăţi din una → uşa max 2750, gol max 2790)
+  limits:      { width: [800, 5800], height: [800, 2790] },
   finishes:    FINISAJE_LUX,
 };
 
