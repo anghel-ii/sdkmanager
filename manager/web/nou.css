@@ -167,3 +167,4 @@ body.ui-nou .tab-cate { font-size: 1.15rem; }
 .info-pasi dt.info::before { border-style: dashed; }
 .info-pasi dt.viitor, .info-pasi dd.viitor { opacity: .55; }
 .urmeaza { color: var(--accent); font-weight: 500; }
+body.ui-nou table.lista th { white-space: nowrap; }

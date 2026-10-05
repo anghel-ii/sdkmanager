@@ -484,7 +484,7 @@ const puneClientul = (client, ofertaNr, detalii) => {
       puneClientul({ nume: o.comanda.client_nume, telefon: o.comanda.client_telefon, adresa: o.comanda.client_adresa },
                    o.comanda.oferta_nr, p.config.comanda);
       const n = o.pozitii.length;
-      modFisa = { numar: `${o.comanda.numar_comanda || o.comanda.oferta_nr || o.comanda.numar}${n > 1 ? ` · produsul ${k + 1} din ${n}` : ''}`,
+      modFisa = { numar: `${o.comanda.oferta_nr || o.comanda.numar}${n > 1 ? ` · produsul ${k + 1} din ${n}` : ''}`,
                   debitare: new Map((p.linii.necesar ?? []).filter(x => x.debitare).map(x => [x.cod, x.debitare])) };
     }
   } else if (cosul.activ()) {

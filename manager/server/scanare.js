@@ -44,13 +44,13 @@ function inregistreaza(utilizator, codBrut, opCod) {
 
   const u = db().prepare(`
     SELECT a.id, a.cod_bare, p.eticheta,
-           c.id AS comanda_id, c.tip, c.numar, c.numar_comanda, c.oferta_nr, c.client_nume, c.anulat, c.finalizat_la
+           c.id AS comanda_id, c.tip, c.numar, c.oferta_nr, c.client_nume, c.anulat, c.finalizat_la
       FROM usa a JOIN pozitie p ON p.id = a.pozitie_id JOIN comanda c ON c.id = p.comanda_id
      WHERE UPPER(a.cod_bare) = ?`).get(cod);
   if (!u)        return { ok: false, mesaj: `Codul ${cod} nu există în manager.` };
-  if (u.anulat)  return { ok: false, mesaj: `Comanda ${u.numar_comanda || u.oferta_nr || u.numar} e anulată.` };
+  if (u.anulat)  return { ok: false, mesaj: `Comanda ${u.oferta_nr || u.numar} e anulată.` };
 
-  const ce = `${u.numar_comanda || u.oferta_nr || u.numar} · ${u.eticheta} · ${u.client_nume}`;
+  const ce = `${u.oferta_nr || u.numar} · ${u.eticheta} · ${u.client_nume}`;
 
   const recent = db().prepare(`
     SELECT id FROM scanare WHERE usa_id = ? AND operatie_id = ? AND utilizator_id = ? AND anulat = 0

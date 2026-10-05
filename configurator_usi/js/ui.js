@@ -1178,7 +1178,7 @@ export async function initUI() {
   if (params.get('oferta')) {
     const o = await oferta.incarcaOferta(params.get('oferta'));
     if (o.eroare || !o.pozitii?.length) eroareIncarcare = o.eroare || 'Oferta n-are configuraţie.';
-    else if (o.comanda.tip !== 'oferta') eroareIncarcare = `${o.comanda.numar_comanda || o.comanda.oferta_nr || o.comanda.numar} a fost acceptată — nu se mai modifică.`;
+    else if (o.comanda.tip !== 'oferta') eroareIncarcare = `${o.comanda.oferta_nr || o.comanda.numar} a fost acceptată — nu se mai modifică.`;
     else {
       cos = cosul.dinOferta(o, p => (p.sistem === 'amanunt' ? 'amanunt' : systems[p.sistem]?.meta.family));
       cosul.scrie(cos);
@@ -1220,7 +1220,7 @@ export async function initUI() {
       $('clientTelefon').value = o.comanda.client_telefon ?? '';
       $('clientAdresa').value  = o.comanda.client_adresa ?? '';
       modFisa = {
-        numar:  `${o.comanda.numar_comanda || o.comanda.oferta_nr || o.comanda.numar}${n > 1 ? ` · produsul ${k + 1} din ${n}` : ''}`,
+        numar:  `${o.comanda.oferta_nr || o.comanda.numar}${n > 1 ? ` · produsul ${k + 1} din ${n}` : ''}`,
         coduri: (o.coduri ?? []).map(cod_bare => ({ cod_bare })),
         client: o.comanda.client_nume ?? '',
         bom: (poz.linii?.necesar ?? []).map(l =>

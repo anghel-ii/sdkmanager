@@ -21,9 +21,10 @@ const { anunta, anuntaUtilizator } = require('../evenimente.js');
 //  (oferta se salvează, apoi se cheamă ruta de trecere).
 //  Finalizarea: automat la scanarea „Coletare" (vezi scanare.js) sau manual.
 //
-//  Numerotarea: un singur contor pe an. Oferta OF-2026-0042 devine, la
-//  acceptare, comanda CMD-2026-0042 — aceleaşi cifre, alt prefix. De-aia
-//  codul de bare tipărit rămâne valabil după acceptare.
+//  Numerotarea: un singur contor pe an (OF-2026-0042, intern — codul de bare).
+//  Pe ecran, ofertele ŞI comenzile poartă nr. de ofertă scris de mână (oferta_nr);
+//  numărul de comandă CMD- nu se mai generează (userul, 2026-10-05) — coloana
+//  numar_comanda rămâne doar pt. comenzile acceptate înainte.
 // ═══════════════════════════════════════════════════════════════════════════
 
 // `sticla` = sticla de comandat la furnizor (pagina Comandă sticlă, server/sticla.js)
@@ -268,7 +269,7 @@ function listeaza(ctx) {
   const filtru = FILTRE[tab] ?? FILTRE.oferta;
 
   const randuri = db().prepare(`
-    SELECT c.id, c.numar, c.numar_comanda, c.oferta_nr, c.tip, c.client_nume, c.client_telefon, c.creat_la, c.confirmat_la, c.finalizat_la,
+    SELECT c.id, c.numar, c.oferta_nr, c.tip, c.client_nume, c.client_telefon, c.creat_la, c.confirmat_la, c.finalizat_la,
            c.factura_nr, c.facturat_la, c.plata, c.avans,
            u.nume AS creat_de_nume,
            -- toate produsele ofertei, în ordine: „Ramă 820 + Confort Gamma + Ofertă cu amănuntul"
@@ -342,15 +343,15 @@ function asteaptaPlata(ctx) {
   const c = db().prepare('SELECT * FROM comanda WHERE id = ?').get(id);
   if (!c)                 return eroare(ctx.res, 404, 'Comandă inexistentă.');
   if (c.anulat)           return eroare(ctx.res, 400, 'Oferta e anulată.');
-  if (c.tip !== 'oferta') return eroare(ctx.res, 409, c.tip === 'plata' ? 'Comanda aşteaptă deja plata.' : `Oferta e deja comandă (${c.numar_comanda}).`);
+  if (c.tip !== 'oferta') return eroare(ctx.res, 409, c.tip === 'plata' ? 'Comanda aşteaptă deja plata.' : 'Oferta e deja comandă în lucru.');
   db().prepare("UPDATE comanda SET tip = 'plata', tip_schimbat_la = datetime('now') WHERE id = ?").run(id);
   anunta({ comanda: id });
   json(ctx.res, 200, { comanda: db().prepare('SELECT * FROM comanda WHERE id = ?').get(id) });
 }
 
-// Acceptarea unei oferte (sau „Plată primită" din aşteaptă plata): acelaşi rând, alt tip, plus numărul de comandă cu
-// ACELEAŞI cifre — ca etichetele deja tipărite să rămână valabile. Cere
-// obligatoriu modalitatea de plată; avansul (lei) e opţional, implicit 0.
+// Acceptarea unei oferte (sau „Plată primită" din aşteaptă plata): acelaşi rând,
+// alt tip, acelaşi număr (de ofertă) — etichetele deja tipărite rămân valabile.
+// Cere obligatoriu modalitatea de plată; avansul (lei) e opţional, implicit 0.
 async function accepta(ctx) {
   const id = Number(ctx.params.id);
   const corp = await corpJson(ctx.req);
@@ -358,18 +359,17 @@ async function accepta(ctx) {
 
   if (!c)                  return eroare(ctx.res, 404, 'Comandă inexistentă.');
   if (c.anulat)            return eroare(ctx.res, 400, 'Oferta e anulată.');
-  if (c.tip === 'comanda') return eroare(ctx.res, 409, `Oferta e deja comandă (${c.numar_comanda}).`);
+  if (c.tip === 'comanda') return eroare(ctx.res, 409, 'Oferta e deja comandă în lucru.');
 
   if (!PLATI.includes(corp.plata)) return eroare(ctx.res, 400, 'Alege modalitatea de plată: factură proformă, proformă cu amănuntul, factură fiscală, bon fiscal sau factură de avans.');
   const avans = corp.avans == null || String(corp.avans).trim() === '' ? 0 : Number(String(corp.avans).replace(',', '.'));
   if (!Number.isFinite(avans) || avans < 0) return eroare(ctx.res, 400, 'Avansul trebuie să fie un număr (0 = fără avans).');
 
-  const numarComanda = c.numar.replace(/^OF-/, 'CMD-');
   db().prepare(`
-    UPDATE comanda SET tip = 'comanda', numar_comanda = ?, confirmat_la = datetime('now'), confirmat_de = ?, plata = ?, avans = ?,
+    UPDATE comanda SET tip = 'comanda', confirmat_la = datetime('now'), confirmat_de = ?, plata = ?, avans = ?,
                        tip_schimbat_la = datetime('now')
      WHERE id = ?
-  `).run(numarComanda, ctx.utilizator.id, corp.plata, Math.round(avans * 100) / 100, id);
+  `).run(ctx.utilizator.id, corp.plata, Math.round(avans * 100) / 100, id);
 
   anunta({ comanda: id });
   json(ctx.res, 200, { comanda: db().prepare('SELECT * FROM comanda WHERE id = ?').get(id) });
@@ -378,8 +378,8 @@ async function accepta(ctx) {
 // „Înapoi în ofertă" (userul, 2026-10-05): o ofertă trecută din greşeală în lucru
 // sau la „aşteaptă plata" se întoarce în oferte (de acolo o duci unde trebuia) —
 // doar în primele MINUTE_INAPOI minute şi doar cât nu s-a lucrat pe ea: fără
-// factură, finalizare, sticlă comandată sau scanări. Numărul CMD- se şterge; la
-// o nouă acceptare iese acelaşi (vine din OF-), deci etichetele rămân valabile.
+// factură, finalizare, sticlă comandată sau scanări. (numar_comanda = NULL: şi
+// comenzile vechi, cu CMD-, rămân apoi doar cu nr. de ofertă.)
 const MINUTE_INAPOI = 10;
 function inapoiInOferta(ctx) {
   const id = Number(ctx.params.id);

@@ -56,7 +56,7 @@ function lista(ctx) {
   const randuri = db().prepare(`
     SELECT l.id, l.cod, l.denumire, l.cantitate, l.debitare, l.comandat_la,
            u.nume AS comandat_de_nume,
-           c.id AS comanda_id, COALESCE(c.numar_comanda, c.oferta_nr, c.numar) AS numar, c.client_nume
+           c.id AS comanda_id, COALESCE(c.oferta_nr, c.numar) AS numar, c.client_nume
       FROM pozitie_linie l
       JOIN pozitie p ON p.id = l.pozitie_id
       JOIN comanda c ON c.id = p.comanda_id

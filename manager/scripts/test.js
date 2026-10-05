@@ -324,8 +324,8 @@ async function main() {
   verifica('acceptare → 200', acc.stare === 200);
   verifica('se salvează plata şi avansul', acc.date.comanda?.plata === 'fiscala' && acc.date.comanda?.avans === 1500.5,
     JSON.stringify({ plata: acc.date.comanda?.plata, avans: acc.date.comanda?.avans }));
-  verifica('acelaşi număr, alt prefix',
-    acc.date.comanda?.numar_comanda === oferta.date.comanda.numar.replace('OF-', 'CMD-'),
+  verifica('acceptată: acelaşi număr, fără CMD- (userul, 2026-10-05)',
+    acc.date.comanda?.numar === oferta.date.comanda.numar && acc.date.comanda?.numar_comanda == null,
     acc.date.comanda?.numar_comanda);
   verifica('acceptată de două ori → 409', (await cer('POST', `/api/comenzi/${id}/accepta`, { plata: 'bon' })).stare === 409);
   verifica('a trecut în tabul Comenzi',
@@ -643,18 +643,17 @@ async function main() {
       client: { nume: 'Y' }, pozitii: [pozitie('confortGamma', 'G', 1, 1200)] })).stare === 409);
     verifica('nu se facturează cât aşteaptă plata', (await cer('POST', `/api/comenzi/${pid}/factura`, { numar: 'F1' })).stare === 409);
     const pl = await cer('POST', `/api/comenzi/${pid}/accepta`, { plata: 'proforma', avans: 0 });
-    verifica('plată primită → comandă în lucru', pl.stare === 200 && pl.date.comanda.tip === 'comanda' && /^CMD-/.test(pl.date.comanda.numar_comanda));
+    verifica('plată primită → comandă în lucru', pl.stare === 200 && pl.date.comanda.tip === 'comanda' && pl.date.comanda.numar_comanda == null);
     verifica('… şi a ieşit din Aşteaptă plata', !(await cer('GET', '/api/comenzi?tip=plata')).date.comenzi.length);
     // „Înapoi în ofertă" — 10 minute după trecere, doar cât nu s-a lucrat pe ea
-    const cmd = pl.date.comanda.numar_comanda;
     const ina = await cer('POST', `/api/comenzi/${pid}/inapoi-oferta`);
-    verifica('înapoi în ofertă → 200, e iar ofertă, fără CMD-', ina.stare === 200 && ina.date.comanda.tip === 'oferta'
+    verifica('înapoi în ofertă → 200, e iar ofertă', ina.stare === 200 && ina.date.comanda.tip === 'oferta'
       && ina.date.comanda.numar_comanda === null && ina.date.comanda.confirmat_la === null, JSON.stringify(ina.date));
     verifica('înapoi a doua oară → 409', (await cer('POST', `/api/comenzi/${pid}/inapoi-oferta`)).stare === 409);
     verifica('aşteaptă plata → înapoi în ofertă → 200', (await cer('POST', `/api/comenzi/${pid}/asteapta-plata`)).stare === 200
       && (await cer('POST', `/api/comenzi/${pid}/inapoi-oferta`)).stare === 200);
     const re = await cer('POST', `/api/comenzi/${pid}/accepta`, { plata: 'proforma', avans: 0 });
-    verifica('reacceptată: acelaşi număr CMD-', re.date.comanda.numar_comanda === cmd);
+    verifica('reacceptată: acelaşi nr. de ofertă', re.stare === 200 && re.date.comanda.oferta_nr === 'NM-77');
     db2().prepare("UPDATE comanda SET tip_schimbat_la = datetime('now', '-11 minutes') WHERE id = ?").run(pid);
     verifica('după 10 minute → 409', (await cer('POST', `/api/comenzi/${pid}/inapoi-oferta`)).stare === 409);
     db2().prepare("UPDATE comanda SET tip_schimbat_la = datetime('now') WHERE id = ?").run(pid);

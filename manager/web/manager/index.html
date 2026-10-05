@@ -456,7 +456,7 @@ function randeazaTabel() {
     // fiecare cuvânt trebuie să apară undeva: „andrei 4471" = clientul Andrei cu factura 4471
     .filter(c => q.split(/\s+/).every(cuv => !cuv ||
       // telefonul şi fără spaţii: „0722000111" găseşte „0722 000 111"
-      [c.client_nume, c.sistem, c.factura_nr, c.numar, c.numar_comanda, c.oferta_nr, c.client_telefon,
+      [c.client_nume, c.sistem, c.factura_nr, c.numar, c.oferta_nr, c.client_telefon,
         String(c.client_telefon ?? '').replace(/\D/g, '')].some(v => normal(v).includes(cuv))))
     .sort((a, b) =>
       (ordine(a) - ordine(b)) ||                                                    // căutare: pe stări, în ordinea taburilor
@@ -486,7 +486,7 @@ function randeazaTabel() {
         <tr data-id="${c.id}"${c.fixat ? ' class="fixat"' : ''}>
           <td class="pin" data-c="pin"><button class="btn-pin${c.fixat ? ' activ' : ''}" data-id="${c.id}"
                 title="${c.fixat ? 'Scoate de sus' : 'Fixează sus (doar pentru tine)'}">📌</button></td>
-          <td data-c="client">${esc(c.client_nume)}${c.numar_comanda || (totul && c.client_telefon) ? `<div class="nr-mic mono">${[c.numar_comanda, totul && c.client_telefon].filter(Boolean).map(esc).join(' · ')}</div>` : ''}</td>
+          <td data-c="client">${esc(c.client_nume)}${totul && c.client_telefon ? `<div class="nr-mic mono">${esc(c.client_telefon)}</div>` : ''}</td>
           <td class="mono" data-c="oferta">${esc(c.oferta_nr || c.numar)}</td>
           <td data-c="sistem">${esc(c.sistem ?? '—')}</td>
           ${cuStatus ? `<td data-c="status">${statusHtml(c.status)}</td>` : ''}
@@ -657,10 +657,9 @@ async function renderDetaliu(id) {
     <div class="antet">
       <div>
         <h1>${esc(c.client_nume)}</h1>
-        <div class="mono nr-comanda">${esc(c.numar_comanda || c.oferta_nr || c.numar)}</div>
-        ${c.numar_comanda && c.oferta_nr ? `<div class="dim mic">Nr. ofertă: <strong>${esc(c.oferta_nr)}</strong></div>` : ''}
+        <div class="mono nr-comanda">${esc(c.oferta_nr || c.numar)}</div>
         <div class="dim mic"><span class="stare-pastila ${eOferta ? 'oferta' : ePlata ? 'plata' : c.finalizat_la ? 'gata' : 'lucru'}">${eOferta ? 'Ofertă'
-          : ePlata ? 'Aşteaptă plata' : c.finalizat_la ? 'Comandă finalizată' : 'Comandă în lucru'}</span>${eOferta || ePlata ? '' : ` din oferta ${esc(c.oferta_nr || c.numar)}`}</div>
+          : ePlata ? 'Aşteaptă plata' : c.finalizat_la ? 'Comandă finalizată' : 'Comandă în lucru'}</span></div>
       </div>
       <div class="spatiu"></div>
       ${pozitii.length > 1
