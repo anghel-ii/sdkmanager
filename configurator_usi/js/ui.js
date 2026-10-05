@@ -227,13 +227,14 @@ function renderFinishes() {
 // prin noi (nici livrat, nici adus), clientul şi-l procură singur. Alegi doar
 // GROSIMEA, fiindcă de ea depinde codul de garnitură pe care i-l trimitem.
 
-function grosimeOptionsHtml(selected) {
-  return GROSIMI_CLIENT.map(g =>
+// `grosimi` — LUX are garnitură doar pt. 4 mm, deci acolo doar 4 mm (sticlă şi oglindă)
+function grosimeOptionsHtml(selected, grosimi = GROSIMI_CLIENT) {
+  return grosimi.map(g =>
     `<option value="${g}"${g === selected ? ' selected' : ''}>${clientGeamLabel(g)}</option>`).join('');
 }
 
-function geamOptionsHtml(selectedCod) {
-  const list = [...geamList()].sort((a, b) =>
+function geamOptionsHtml(selectedCod, grosimi = null) {
+  const list = [...geamList()].filter(g => !grosimi || grosimi.includes(g.grosime)).sort((a, b) =>
     a.oglinda - b.oglinda || a.grosime - b.grosime || a.denumire.localeCompare(b.denumire));
   const geamuri = list.filter(g => !g.oglinda);
   const oglinzi = list.filter(g => g.oglinda);
@@ -472,6 +473,8 @@ function renderWheels() {
     return;
   }
   const isConfort = meta?.family === 'confort';
+  // LUX: cardul ca la Confort (amortizări 35 / 60 kg, PAL sau sticlă), fără rândul Role
+  const isLux     = meta?.family === 'lux';
   // UTIL: panourile sunt ale clientului — cardul are doar divizări (profil H) şi
   // opţiunile avansate (înălţimi de panou, divizări aplicate), ca la Confort.
   const isUtil    = meta?.family === 'util';
@@ -536,12 +539,12 @@ function renderWheels() {
           <span class="door-row-label">Sticlă</span>
           <select class="geam-select" data-door="${i}" data-client="${client ? 1 : 0}"${hasGlass ? '' : ' disabled'}>${
             !hasGlass ? '<option>Fără geam — numai PAL</option>'
-              : client ? grosimeOptionsHtml(state.geamClient[i])
-                       : geamOptionsHtml(state.geam[i])
+              : client ? grosimeOptionsHtml(state.geamClient[i], isLux ? [4] : undefined)
+                       : geamOptionsHtml(state.geam[i], isLux ? [4] : null)
           }</select>
         </div>`}
 
-        ${!isConfort && !isUtil ? `
+        ${!isConfort && !isUtil && !isLux ? `
         <div class="door-row door-row-role">
           <span class="door-row-label">Role</span>
           <!-- ca amortizările de la Confort: Stânga/Dreapta deasupra, butoane
@@ -558,7 +561,7 @@ function renderWheels() {
           </div>
         </div>` : ''}
 
-        ${isConfort || isUtil ? `
+        ${isConfort || isUtil || isLux ? `
         <div class="door-row door-row-amortizare">
           <span class="door-row-label">Amortizări</span>
           <div class="amortizare-grup">
@@ -596,7 +599,7 @@ function renderWheels() {
            adevărat. -->
       <div class="door-panels-col">
         ${panels.map((mat, j) => ({ mat, j })).reverse().map(({ mat, j }) => `
-          <button class="panel-chip ${mat}" data-door="${i}" data-panel="${j}">${mat === 'pal' ? (isConfort ? 'PAL' : 'PAL 10mm') : 'St'}</button>`).join('')}
+          <button class="panel-chip ${mat}" data-door="${i}" data-panel="${j}">${mat === 'pal' ? (isConfort || isLux ? 'PAL' : 'PAL 10mm') : 'St'}</button>`).join('')}
       </div>` : ''}
 
       ${deschis ? avansatHtml(i) : ''}

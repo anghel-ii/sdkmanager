@@ -476,8 +476,8 @@ export function deschideFisa(client, oferta = null, salvate = null) {
   // Eticheta modelului fără prefixul de gamă ("Confort Verona" → "Verona") —
   // cerută DOAR pt. Confort deocamdată; familia "suspendata" rămâne cu
   // eticheta întreagă, de discutat separat.
-  const modelScurt = sys.meta.family === 'confort'
-    ? sys.meta.label.replace(/^Confort\s+/i, '')
+  const modelScurt = sys.meta.family === 'confort' || sys.meta.family === 'lux'
+    ? sys.meta.label.replace(/^(Confort|Lux)\s+/i, '')
     : sys.meta.label;
 
   // Capul de pagină — stânga: model/cote/necesar sticlă-PAL; dreapta:

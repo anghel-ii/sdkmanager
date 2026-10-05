@@ -343,7 +343,7 @@ for (const [id, W, H, doors, tracks] of [['confortVerona', 1800, 2100, 2, 2], ['
 // familie. lib/comun/ nu importă din nicio familie. Aşa o schimbare la Confort
 // nu poate atinge suspendatele sau ramele, şi invers.
 const JS = new URL('../js/', import.meta.url);
-const FAMILII = { suspendata: 'suspendata_', confort: 'confort_', rame: 'rama_', util: 'util_' };
+const FAMILII = { suspendata: 'suspendata_', confort: 'confort_', rame: 'rama_', util: 'util_', lux: 'lux_' };
 const incalcari = [];
 
 function verificaImporturi(fisier, permise) {
@@ -370,7 +370,7 @@ if (incalcari.length) {
   console.log(`✗ graniţe între familii: ${incalcari.length} importuri interzise`);
   for (const x of incalcari) console.log(`    ${x}`);
 } else {
-  console.log('✓ graniţe între familii: suspendata / confort / rame / util nu importă una din alta');
+  console.log('✓ graniţe între familii: suspendata / confort / rame / util / lux nu importă una din alta');
 }
 
 if (actualizeaza || !fs.existsSync(FISIER)) {

@@ -18,6 +18,9 @@ import * as rama842 from './rama_842.js';
 import * as utilAtena from './util_atena.js';
 import * as utilRoma  from './util_roma.js';
 import * as utilSoft  from './util_soft.js';
+// Gama LUX (Vent, Breda) — Calculator profile LUX 2025.xlsx (2026-10-05)
+import * as luxVent   from './lux_vent.js';
+import * as luxBreda  from './lux_breda.js';
 
 // Sistem nou:
 //   1) copiază un fişier din js/systems/ ca şablon (secţiunile 1–7)
@@ -47,6 +50,8 @@ export const systems = {
   utilAtena,
   utilRoma,
   utilSoft,
+  luxVent,
+  luxBreda,
 };
 
 export const defaultSystem = 'suspendataA';

@@ -147,6 +147,23 @@
       ]
     },
     {
+      "id": "lux",
+      "label": "Lux",
+      "descriere": "Culisante Vent / Breda, 1–7 uşi, panouri PAL sau sticlă",
+      "implicit": "luxVent",
+      "tabel": false,
+      "modele": [
+        {
+          "id": "luxVent",
+          "label": "Vent"
+        },
+        {
+          "id": "luxBreda",
+          "label": "Breda"
+        }
+      ]
+    },
+    {
       "id": "amanunt",
       "label": "Ofertă cu amănuntul",
       "descriere": "Sertare, mânere, accesorii — produsele de vânzare din NeoManager",

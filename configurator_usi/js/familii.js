@@ -2,6 +2,7 @@ import * as suspendata from './lib/suspendata/index.js';
 import * as confort    from './lib/confort/index.js';
 import * as rame       from './lib/rame/index.js';
 import * as util       from './lib/util/index.js';
+import * as lux        from './lib/lux/index.js';
 
 // ── Familiile de sisteme ─────────────────────────────────────────────────────
 // Fiecare familie (meta.family) îşi are TOT codul de calcul — facturare
@@ -12,7 +13,7 @@ import * as util       from './lib/util/index.js';
 //
 // Stratul comun (builder, UI, fişă) ajunge la o familie doar prin fişierul ei
 // index.js, ales de aici după sistem.
-export const familii = { suspendata, confort, rame, util };
+export const familii = { suspendata, confort, rame, util, lux };
 
 export const familia = sys => familii[sys?.meta?.family];
 

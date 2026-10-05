@@ -346,7 +346,7 @@ async function main() {
   // `cer` parsează singur răspunsurile application/json — game.json vine cu
   // content-type corect, deci `.date` e deja obiect.
   const gj = (await cer('GET', '/configurator/game.json')).date;
-  verifica('game.json se serveşte din dist', gj.game?.length === 5 && gj.game.some(g => g.id === 'util'), typeof gj);
+  verifica('game.json se serveşte din dist', gj.game?.length === 6 && gj.game.some(g => g.id === 'util') && gj.game.some(g => g.id === 'lux'), typeof gj);
   // oferta cu amănuntul n-are modele — are pagina ei (amanunt.html)
   verifica('gamele au sistem implicit',
     gj.game?.every(g => g.id === 'amanunt' || (g.implicit && g.modele?.length)), JSON.stringify(gj.game?.map(g => g.id)));

@@ -6812,6 +6812,2210 @@
       "activ": 1
     }
   ],
+  "luxBreda": [
+    {
+      "cod": "101",
+      "tip": "vertical",
+      "finisaj": "ALUMINIU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Profil maner Breda finisaj aluminiu 5,5 m cod 101 cod 101",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "102",
+      "tip": "orizontal",
+      "finisaj": "ALUMINIU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Orizontal superior/inferior ''L'' 18x5 mm  finisaj aluminiu 3 m cod 102",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "103",
+      "tip": "divizare",
+      "finisaj": "ALUMINIU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Divizare ''T'' latime 5 mm finisaj aluminiu 3 m cod 103",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "104",
+      "tip": "divizare aplicata 10",
+      "finisaj": "ALUMINIU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Divizare aplicata  10x1,4 mm, finisaj aluminiu 3 m cod 104",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "105",
+      "tip": "divizare aplicata 20",
+      "finisaj": "ALUMINIU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Divizare aplicata 20x1,4 mm, finisaj aluminiu 3 m cod 105 cod 105",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "110",
+      "tip": "sina superioara",
+      "finisaj": "SAMPANIE",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Sina dubla superioara, finisaj sampanie lucioasa 5,8 m cod 110",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "111",
+      "tip": "sina inferioara",
+      "finisaj": "SAMPANIE",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Sina dubla inferioara, finisaj sampanie lucioasa 5,8 m cod 111",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "115",
+      "tip": "vertical",
+      "finisaj": "SAMPANIE",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Profil maner Breda finisaj sampanie luciosa 5,5 m cod 115",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "116",
+      "tip": "orizontal",
+      "finisaj": "SAMPANIE",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Orizontal superior/inferior ''L'' 18x5 mm  finisaj sampanie lucioasa 3 m cod 116",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "117",
+      "tip": "divizare",
+      "finisaj": "SAMPANIE",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Divizare ''T'' latime 5 mm finisaj sampanie luciosa 3 m cod 117",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "118",
+      "tip": "divizare aplicata 10",
+      "finisaj": "SAMPANIE",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Divizare aplicata 10x1,4 mm, finisaj sampanie luciosa 3 m cod 118",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "119",
+      "tip": "divizare aplicata 20",
+      "finisaj": "SAMPANIE",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Divizare aplicata 20x1,4 mm, finisaj sampanie lucioasa 3 m cod 119",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "121",
+      "tip": "sina superioara",
+      "finisaj": "CROM",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Sina dubla superioara, finisaj crom lucios 5,8 m cod 121",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "122",
+      "tip": "sina inferioara",
+      "finisaj": "CROM",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Sina dubla inferioara, finisaj crom lucios 5,8 m cod 122",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "126",
+      "tip": "vertical",
+      "finisaj": "CROM",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Profil maner Breda finisaj crom lucios 5,5 m cod 126",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "127",
+      "tip": "orizontal",
+      "finisaj": "CROM",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Orizontal superior/inferior ''L'' 18x5 mm finisaj crom lucios 3 m cod 127",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "128",
+      "tip": "divizare",
+      "finisaj": "CROM",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Divizare ''T'' latime 5 mm finisaj crom lucios 3 m cod 128",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "129",
+      "tip": "divizare aplicata 10",
+      "finisaj": "CROM",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Divizare aplicata  10x1,4 mm, finisaj crom lucios 3 m cod 129",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "130",
+      "tip": "divizare aplicata 20",
+      "finisaj": "CROM",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Divizare aplicata  20x1,4 mm, finisaj crom lucios 3 m cod 130",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "135",
+      "tip": "vertical",
+      "finisaj": "ALB",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Profil maner Breda finisaj alb mat 5,5 m cod 135",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "136",
+      "tip": "orizontal",
+      "finisaj": "ALB",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Orizontal superior/inferior ''L'' 18x5 mm  finisaj alb mat  3 m cod 136",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "137",
+      "tip": "divizare",
+      "finisaj": "ALB",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Divizare ''T'' latime 5 mm finisaj alb mat  3 m cod 137",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "138",
+      "tip": "divizare aplicata 10",
+      "finisaj": "ALB",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Divizare aplicata 10x1,4 mm, finisaj alb mat 3 m cod 138",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "139",
+      "tip": "divizare aplicata 20",
+      "finisaj": "ALB",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Divizare aplicata 20x1,4 mm, alb mat 3 m cod 139",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "146",
+      "tip": "vertical",
+      "finisaj": "NEGRU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Profil maner Breda finisaj negru mat 5,5 m cod 146",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "147",
+      "tip": "orizontal",
+      "finisaj": "NEGRU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Orizontal superior/inferior ''L'' 18x5 mm  finisaj negru mat 3 m cod 147",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "148",
+      "tip": "divizare",
+      "finisaj": "NEGRU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Divizare ''T'' latime 5 mm finisaj negru mat 3 m cod 148",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "149",
+      "tip": "divizare aplicata 10",
+      "finisaj": "NEGRU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Divizare aplicata 10x1,4 mm, finisaj negru mat 3 m cod 149",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "150",
+      "tip": "divizare aplicata 20",
+      "finisaj": "NEGRU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Divizare aplicata 20x1,4 mm, finisaj negru mat 3 m cod 150",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "200",
+      "tip": "sina superioara",
+      "finisaj": "ALUMINIU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Sina superioara dubla Confort/Lux finisaj aluminiu  5,8 m cod 200",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "201",
+      "tip": "sina inferioara",
+      "finisaj": "ALUMINIU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Sina inferioara dubla Confort/Lux finisaj aluminiu 5,8 m cod 201",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "240",
+      "tip": "sina superioara",
+      "finisaj": "ALB",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Sina superioara dubla Confort/Lux finisaj alb mat  5,8 m cod 240",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "241",
+      "tip": "sina inferioara",
+      "finisaj": "ALB",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Sina inferioara dubla Confort/Lux finisaj alb mat 5,8 m cod 241",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "250",
+      "tip": "sina superioara",
+      "finisaj": "NEGRU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Sina superioara dubla Confort/Lux finisaj negru periat 5,8 m cod 250",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "251",
+      "tip": "sina inferioara",
+      "finisaj": "NEGRU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Sina inferioara dubla Confort/Lux finisaj negru periat 5,8 m cod 251",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.005",
+      "tip": "usa",
+      "finisaj": "ALUMINIU",
+      "lmin": 501,
+      "lmax": 600,
+      "denumire": "Usa culisanta Breda Aluminiu 501-600mm Cod B302.005",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.006",
+      "tip": "usa",
+      "finisaj": "ALUMINIU",
+      "lmin": 601,
+      "lmax": 700,
+      "denumire": "Usa culisanta Breda Aluminiu 601-700mm Cod B302.006",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.007",
+      "tip": "usa",
+      "finisaj": "ALUMINIU",
+      "lmin": 701,
+      "lmax": 800,
+      "denumire": "Usa culisanta Breda Aluminiu 701-800mm Cod B302.007",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.008",
+      "tip": "usa",
+      "finisaj": "ALUMINIU",
+      "lmin": 801,
+      "lmax": 900,
+      "denumire": "Usa culisanta Breda Aluminiu 801-900mm Cod B302.008",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.009",
+      "tip": "usa",
+      "finisaj": "ALUMINIU",
+      "lmin": 901,
+      "lmax": 1000,
+      "denumire": "Usa culisanta Breda Aluminiu 901-1000mm Cod B302.009",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.010",
+      "tip": "usa",
+      "finisaj": "ALUMINIU",
+      "lmin": 1001,
+      "lmax": 1100,
+      "denumire": "Usa culisanta Breda Aluminiu 1001-1100mm Cod B302.010",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.011",
+      "tip": "usa",
+      "finisaj": "ALUMINIU",
+      "lmin": 1101,
+      "lmax": 1200,
+      "denumire": "Usa culisanta Breda Aluminiu 1101-1200mm Cod B302.011",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.012",
+      "tip": "usa",
+      "finisaj": "ALUMINIU",
+      "lmin": 1201,
+      "lmax": 1300,
+      "denumire": "Usa culisanta Breda Aluminiu 1201-1300Mm Cod B302.012",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.013",
+      "tip": "usa",
+      "finisaj": "ALUMINIU",
+      "lmin": 1301,
+      "lmax": 1400,
+      "denumire": "Usa culisanta Breda Aluminiu 1301-1400mm Cod B302.013",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.014",
+      "tip": "usa",
+      "finisaj": "ALUMINIU",
+      "lmin": 1401,
+      "lmax": 1500,
+      "denumire": "Usa culisanta Breda Aluminiu 1401-1500mm Cod B302.014",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.015",
+      "tip": "usa",
+      "finisaj": "ALUMINIU",
+      "lmin": 1501,
+      "lmax": 2000,
+      "denumire": "Usa culisanta Breda Aluminiu 1500-2000mm cod B302.015",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.025",
+      "tip": "usa",
+      "finisaj": "SAMPANIE",
+      "lmin": 501,
+      "lmax": 600,
+      "denumire": "Usa culisanta Breda Sampanie lucios 501-600mm Cod B302.025",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.026",
+      "tip": "usa",
+      "finisaj": "SAMPANIE",
+      "lmin": 601,
+      "lmax": 700,
+      "denumire": "Usa culisanta Breda Sampanie lucios 601-700mm Cod B302.026",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.027",
+      "tip": "usa",
+      "finisaj": "SAMPANIE",
+      "lmin": 701,
+      "lmax": 800,
+      "denumire": "Usa culisanta Breda Sampanie lucios 701-800mm Cod B302.027",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.028",
+      "tip": "usa",
+      "finisaj": "SAMPANIE",
+      "lmin": 801,
+      "lmax": 900,
+      "denumire": "Usa culisanta Breda Sampanie lucios 801-900mm Cod B302.028",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.029",
+      "tip": "usa",
+      "finisaj": "SAMPANIE",
+      "lmin": 901,
+      "lmax": 1000,
+      "denumire": "Usa culisanta Breda Sampanie lucios 901-1000mm Cod B302.029",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.035",
+      "tip": "usa",
+      "finisaj": "CROM",
+      "lmin": 501,
+      "lmax": 600,
+      "denumire": "Usa culisanta Breda Crom lucios 501-600mm Cod B302.035",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.036",
+      "tip": "usa",
+      "finisaj": "CROM",
+      "lmin": 601,
+      "lmax": 700,
+      "denumire": "Usa culisanta Breda Crom lucios 601-700mm Cod B302.036",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.037",
+      "tip": "usa",
+      "finisaj": "CROM",
+      "lmin": 701,
+      "lmax": 800,
+      "denumire": "Usa culisanta Breda Crom lucios 701-800mm Cod B302.037",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.038",
+      "tip": "usa",
+      "finisaj": "CROM",
+      "lmin": 801,
+      "lmax": 900,
+      "denumire": "Usa culisanta Breda Crom lucios 801-900mm Cod B302.038",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.039",
+      "tip": "usa",
+      "finisaj": "CROM",
+      "lmin": 901,
+      "lmax": 1000,
+      "denumire": "Usa culisanta Breda Crom lucios 901-1000mm Cod B302.039",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.045",
+      "tip": "usa",
+      "finisaj": "NEGRU",
+      "lmin": 501,
+      "lmax": 600,
+      "denumire": "Usa culisanta Breda Negru 501-600mm Cod B302.045",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.046",
+      "tip": "usa",
+      "finisaj": "NEGRU",
+      "lmin": 601,
+      "lmax": 700,
+      "denumire": "Usa culisanta Breda Negru 601-700mm Cod B302.046",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.047",
+      "tip": "usa",
+      "finisaj": "NEGRU",
+      "lmin": 701,
+      "lmax": 800,
+      "denumire": "Usa culisanta Breda Negru 701-800mm Cod B302.047",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.048",
+      "tip": "usa",
+      "finisaj": "NEGRU",
+      "lmin": 801,
+      "lmax": 900,
+      "denumire": "Usa culisanta Breda Negru 801-900mm Cod B302.048",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.049",
+      "tip": "usa",
+      "finisaj": "NEGRU",
+      "lmin": 901,
+      "lmax": 1000,
+      "denumire": "Usa culisanta Breda Negru 901-1000mm Cod B302.049",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.055",
+      "tip": "usa",
+      "finisaj": "ALB",
+      "lmin": 501,
+      "lmax": 600,
+      "denumire": "Usa culisanta Breda Alb 501-600mm Cod B302.055",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.056",
+      "tip": "usa",
+      "finisaj": "ALB",
+      "lmin": 601,
+      "lmax": 700,
+      "denumire": "Usa culisanta Breda Alb 601-700mm Cod B302.056",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.057",
+      "tip": "usa",
+      "finisaj": "ALB",
+      "lmin": 701,
+      "lmax": 800,
+      "denumire": "Usa culisanta Breda Alb 701-800mm Cod B302.057",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.058",
+      "tip": "usa",
+      "finisaj": "ALB",
+      "lmin": 801,
+      "lmax": 900,
+      "denumire": "Usa culisanta Breda Alb 801-900mm Cod B302.058",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.059",
+      "tip": "usa",
+      "finisaj": "ALB",
+      "lmin": 901,
+      "lmax": 1000,
+      "denumire": "Usa culisanta Breda Alb 901-1000mm Cod B302.059",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.210",
+      "tip": "usa",
+      "finisaj": "SAMPANIE",
+      "lmin": 1001,
+      "lmax": 1100,
+      "denumire": "Usa culisanta Breda Sampanie lucios 1001-1100mm Cod B302.210",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.211",
+      "tip": "usa",
+      "finisaj": "SAMPANIE",
+      "lmin": 1101,
+      "lmax": 1200,
+      "denumire": "Usa culisanta Breda Sampanie lucios 1101-1200mm Cod B302.211",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.212",
+      "tip": "usa",
+      "finisaj": "SAMPANIE",
+      "lmin": 1201,
+      "lmax": 1300,
+      "denumire": "Usa culisanta Breda Sampanie lucios 1201-1300mm Cod B302.212",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.213",
+      "tip": "usa",
+      "finisaj": "SAMPANIE",
+      "lmin": 1301,
+      "lmax": 1400,
+      "denumire": "Usa culisanta Breda Sampanie lucios 1301-1400mm Cod B302.213",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.214",
+      "tip": "usa",
+      "finisaj": "SAMPANIE",
+      "lmin": 1401,
+      "lmax": 1500,
+      "denumire": "Usa culisanta Breda Sampanie lucios 1401-1500mm Cod B302.214",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.215",
+      "tip": "usa",
+      "finisaj": "SAMPANIE",
+      "lmin": 1501,
+      "lmax": 2000,
+      "denumire": "Usa culisanta Breda Sampanie lucios 1500-2000mm cod B302.215",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.310",
+      "tip": "usa",
+      "finisaj": "CROM",
+      "lmin": 1001,
+      "lmax": 1100,
+      "denumire": "Usa culisanta Breda Crom lucios 1001-1100mm Cod B302.310",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.311",
+      "tip": "usa",
+      "finisaj": "CROM",
+      "lmin": 1101,
+      "lmax": 1200,
+      "denumire": "Usa culisanta Breda Crom lucios 1101-1200mm Cod B302.311",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.312",
+      "tip": "usa",
+      "finisaj": "CROM",
+      "lmin": 1201,
+      "lmax": 1300,
+      "denumire": "Usa culisanta Breda Crom lucios 1201-1300mm Cod B302.312",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.313",
+      "tip": "usa",
+      "finisaj": "CROM",
+      "lmin": 1301,
+      "lmax": 1400,
+      "denumire": "Usa culisanta Breda Crom lucios 1301-1400mm Cod B302.313",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.314",
+      "tip": "usa",
+      "finisaj": "CROM",
+      "lmin": 1401,
+      "lmax": 1500,
+      "denumire": "Usa culisanta Breda Crom lucios 1401-1500mm Cod B302.314",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.316",
+      "tip": "usa",
+      "finisaj": "CROM",
+      "lmin": 1501,
+      "lmax": 2000,
+      "denumire": "Usa culisanta Breda Crom lucios 1500-2000mm cod B302.315",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.410",
+      "tip": "usa",
+      "finisaj": "NEGRU",
+      "lmin": 1001,
+      "lmax": 1100,
+      "denumire": "Usa culisanta Breda Negru 1001-1100mm Cod B302.410",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.411",
+      "tip": "usa",
+      "finisaj": "NEGRU",
+      "lmin": 1101,
+      "lmax": 1200,
+      "denumire": "Usa culisanta Breda Negru 1101-1200mm Cod B302.411",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.412",
+      "tip": "usa",
+      "finisaj": "NEGRU",
+      "lmin": 1201,
+      "lmax": 1300,
+      "denumire": "Usa culisanta Breda Negru 1201-1300mm Cod B302.412",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.413",
+      "tip": "usa",
+      "finisaj": "NEGRU",
+      "lmin": 1301,
+      "lmax": 1400,
+      "denumire": "Usa culisanta Breda Negru 1301-1400mm Cod B302.413",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.414",
+      "tip": "usa",
+      "finisaj": "NEGRU",
+      "lmin": 1401,
+      "lmax": 1500,
+      "denumire": "Usa culisanta Breda Negru 1401-1500mm Cod B302.414",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.415",
+      "tip": "usa",
+      "finisaj": "NEGRU",
+      "lmin": 1501,
+      "lmax": 2000,
+      "denumire": "Usa culisanta Breda Negru 1500-2000mm cod B302.415",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.510",
+      "tip": "usa",
+      "finisaj": "ALB",
+      "lmin": 1001,
+      "lmax": 1100,
+      "denumire": "Usa culisanta Breda Alb 1001-1100mm Cod B302.510",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.511",
+      "tip": "usa",
+      "finisaj": "ALB",
+      "lmin": 1101,
+      "lmax": 1200,
+      "denumire": "Usa culisanta Breda Alb 1101-1200mm Cod B302.511",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.512",
+      "tip": "usa",
+      "finisaj": "ALB",
+      "lmin": 1201,
+      "lmax": 1300,
+      "denumire": "Usa culisanta Breda Alb 1201-1300mm Cod B302.512",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.513",
+      "tip": "usa",
+      "finisaj": "ALB",
+      "lmin": 1301,
+      "lmax": 1400,
+      "denumire": "Usa culisanta Breda Alb 1301-1400mm Cod B302.513",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.514",
+      "tip": "usa",
+      "finisaj": "ALB",
+      "lmin": 1401,
+      "lmax": 1500,
+      "denumire": "Usa culisanta Breda Alb 1401-1500mm Cod B302.514",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "B302.515",
+      "tip": "usa",
+      "finisaj": "ALB",
+      "lmin": 1501,
+      "lmax": 2000,
+      "denumire": "Usa culisanta Breda Alb 1500-2000mm cod B302.515",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "R300.005",
+      "tip": "rama",
+      "finisaj": null,
+      "lmin": 501,
+      "lmax": 600,
+      "denumire": "Rame pt usi cu sticla la gama Lux 501-600mm Cod R300.005",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "R300.006",
+      "tip": "rama",
+      "finisaj": null,
+      "lmin": 601,
+      "lmax": 700,
+      "denumire": "Rame pt usi cu sticla la gama Lux 601-700Mm Cod R300.006",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "R300.007",
+      "tip": "rama",
+      "finisaj": null,
+      "lmin": 701,
+      "lmax": 800,
+      "denumire": "Rame pt usi cu sticla la gama Lux 701-800mm Cod R300.007",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "R300.008",
+      "tip": "rama",
+      "finisaj": null,
+      "lmin": 801,
+      "lmax": 900,
+      "denumire": "Rame pt usi cu sticla la gama Lux 801-900mm Cod R300.008",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "R300.009",
+      "tip": "rama",
+      "finisaj": null,
+      "lmin": 901,
+      "lmax": 1000,
+      "denumire": "Rame pt usi cu sticla la gama Lux 901-1000mm Cod R300.009",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "R300.010",
+      "tip": "rama",
+      "finisaj": null,
+      "lmin": 1001,
+      "lmax": 1100,
+      "denumire": "Rame pt usi cu sticla la gama Lux 1001-1100mm Cod R300.010",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "R300.011",
+      "tip": "rama",
+      "finisaj": null,
+      "lmin": 1101,
+      "lmax": 1200,
+      "denumire": "Rame pt usi cu sticla la gama Lux 1101-1200mm Cod R300.011",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "R300.012",
+      "tip": "rama",
+      "finisaj": null,
+      "lmin": 1201,
+      "lmax": 1300,
+      "denumire": "Rame pt usi cu sticla la gama Lux 1201-1300mm Cod R300.012",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "R300.013",
+      "tip": "rama",
+      "finisaj": null,
+      "lmin": 1301,
+      "lmax": 1400,
+      "denumire": "Rame pt usi cu sticla la gama Lux 1301-1400mm Cod R300.013",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "R300.014",
+      "tip": "rama",
+      "finisaj": null,
+      "lmin": 1401,
+      "lmax": 1500,
+      "denumire": "Rame pt usi cu sticla la gama Lux 1401-1500Mm Cod R300.014",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "R300.015",
+      "tip": "rama",
+      "finisaj": null,
+      "lmin": 1501,
+      "lmax": 2000,
+      "denumire": "Rame pt usi cu sticla la gama Lux 1401-1500Mm Cod R300.015",
+      "um": "buc",
+      "activ": 1
+    }
+  ],
+  "luxVent": [
+    {
+      "cod": "100",
+      "tip": "vertical",
+      "finisaj": "ALUMINIU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Profil maner Vent  finisaj aluminiu 5,5 m cod 100 cod 100",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "102",
+      "tip": "orizontal",
+      "finisaj": "ALUMINIU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Orizontal superior/inferior ''L'' 18x5 mm  finisaj aluminiu 3 m cod 102",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "103",
+      "tip": "divizare",
+      "finisaj": "ALUMINIU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Divizare ''T'' latime 5 mm finisaj aluminiu 3 m cod 103",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "104",
+      "tip": "divizare aplicata 10",
+      "finisaj": "ALUMINIU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Divizare aplicata  10x1,4 mm, finisaj aluminiu 3 m cod 104",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "105",
+      "tip": "divizare aplicata 20",
+      "finisaj": "ALUMINIU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Divizare aplicata 20x1,4 mm, finisaj aluminiu 3 m cod 105 cod 105",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "110",
+      "tip": "sina superioara",
+      "finisaj": "SAMPANIE",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Sina dubla superioara, finisaj sampanie lucioasa 5,8 m cod 110",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "111",
+      "tip": "sina inferioara",
+      "finisaj": "SAMPANIE",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Sina dubla inferioara, finisaj sampanie lucioasa 5,8 m cod 111",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "114",
+      "tip": "vertical",
+      "finisaj": "SAMPANIE",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Profil maner Vent  finisaj sampanie luciosa 5,5 m cod 114",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "116",
+      "tip": "orizontal",
+      "finisaj": "SAMPANIE",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Orizontal superior/inferior ''L'' 18x5 mm  finisaj sampanie lucioasa 3 m cod 116",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "117",
+      "tip": "divizare",
+      "finisaj": "SAMPANIE",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Divizare ''T'' latime 5 mm finisaj sampanie luciosa 3 m cod 117",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "118",
+      "tip": "divizare aplicata 10",
+      "finisaj": "SAMPANIE",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Divizare aplicata 10x1,4 mm, finisaj sampanie luciosa 3 m cod 118",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "119",
+      "tip": "divizare aplicata 20",
+      "finisaj": "SAMPANIE",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Divizare aplicata 20x1,4 mm, finisaj sampanie lucioasa 3 m cod 119",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "121",
+      "tip": "sina superioara",
+      "finisaj": "CROM",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Sina dubla superioara, finisaj crom lucios 5,8 m cod 121",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "122",
+      "tip": "sina inferioara",
+      "finisaj": "CROM",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Sina dubla inferioara, finisaj crom lucios 5,8 m cod 122",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "125",
+      "tip": "vertical",
+      "finisaj": "CROM",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Profil maner Vent  finisaj crom lucios 5,5 m cod 125",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "127",
+      "tip": "orizontal",
+      "finisaj": "CROM",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Orizontal superior/inferior ''L'' 18x5 mm finisaj crom lucios 3 m cod 127",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "128",
+      "tip": "divizare",
+      "finisaj": "CROM",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Divizare ''T'' latime 5 mm finisaj crom lucios 3 m cod 128",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "129",
+      "tip": "divizare aplicata 10",
+      "finisaj": "CROM",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Divizare aplicata  10x1,4 mm, finisaj crom lucios 3 m cod 129",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "130",
+      "tip": "divizare aplicata 20",
+      "finisaj": "CROM",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Divizare aplicata  20x1,4 mm, finisaj crom lucios 3 m cod 130",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "134",
+      "tip": "vertical",
+      "finisaj": "ALB",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Profil maner Vent  finisaj alb mat 5,5 m cod 134",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "136",
+      "tip": "orizontal",
+      "finisaj": "ALB",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Orizontal superior/inferior ''L'' 18x5 mm  finisaj alb mat  3 m cod 136",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "137",
+      "tip": "divizare",
+      "finisaj": "ALB",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Divizare ''T'' latime 5 mm finisaj alb mat  3 m cod 137",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "138",
+      "tip": "divizare aplicata 10",
+      "finisaj": "ALB",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Divizare aplicata 10x1,4 mm, finisaj alb mat 3 m cod 138",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "139",
+      "tip": "divizare aplicata 20",
+      "finisaj": "ALB",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Divizare aplicata 20x1,4 mm, alb mat 3 m cod 139",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "145",
+      "tip": "vertical",
+      "finisaj": "NEGRU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Profil maner Vent  finisaj negru mat 5,5 m cod 145",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "147",
+      "tip": "orizontal",
+      "finisaj": "NEGRU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Orizontal superior/inferior ''L'' 18x5 mm  finisaj negru mat 3 m cod 147",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "148",
+      "tip": "divizare",
+      "finisaj": "NEGRU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Divizare ''T'' latime 5 mm finisaj negru mat 3 m cod 148",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "149",
+      "tip": "divizare aplicata 10",
+      "finisaj": "NEGRU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Divizare aplicata 10x1,4 mm, finisaj negru mat 3 m cod 149",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "150",
+      "tip": "divizare aplicata 20",
+      "finisaj": "NEGRU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Divizare aplicata 20x1,4 mm, finisaj negru mat 3 m cod 150",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "153",
+      "tip": "vertical",
+      "finisaj": "AURIU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Profil maner Vent finisaj auriu periat 5,5 m cod 153",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "154",
+      "tip": "orizontal",
+      "finisaj": "AURIU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Orizontal superior/inferior ''L'' 18x5 mm, finisaj auriu periat 3 m cod 154",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "155",
+      "tip": "divizare",
+      "finisaj": "AURIU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Divizare ''T'' latime 5 mm finisaj auriu periat 3 m cod 155",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "156",
+      "tip": "divizare aplicata 10",
+      "finisaj": "AURIU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Divizare aplicata 10x1,4 mm, finisaj auriu periat 3 m cod 156",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "157",
+      "tip": "divizare aplicata 20",
+      "finisaj": "AURIU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Divizare aplicata 20x1,4 mm, finisaj auriu periat 3 m cod 157",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "200",
+      "tip": "sina superioara",
+      "finisaj": "ALUMINIU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Sina superioara dubla Confort/Lux finisaj aluminiu  5,8 m cod 200",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "201",
+      "tip": "sina inferioara",
+      "finisaj": "ALUMINIU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Sina inferioara dubla Confort/Lux finisaj aluminiu 5,8 m cod 201",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "240",
+      "tip": "sina superioara",
+      "finisaj": "ALB",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Sina superioara dubla Confort/Lux finisaj alb mat  5,8 m cod 240",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "241",
+      "tip": "sina inferioara",
+      "finisaj": "ALB",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Sina inferioara dubla Confort/Lux finisaj alb mat 5,8 m cod 241",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "250",
+      "tip": "sina superioara",
+      "finisaj": "NEGRU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Sina superioara dubla Confort/Lux finisaj negru periat 5,8 m cod 250",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "251",
+      "tip": "sina inferioara",
+      "finisaj": "NEGRU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Sina inferioara dubla Confort/Lux finisaj negru periat 5,8 m cod 251",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "260",
+      "tip": "sina superioara",
+      "finisaj": "AURIU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Sina superioara dubla Confort/Lux finisaj auriu periat 5,8 m cod 260",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "261",
+      "tip": "sina inferioara",
+      "finisaj": "AURIU",
+      "lmin": null,
+      "lmax": null,
+      "denumire": "Sina inferioara dubla Confort/Lux finisaj auriu periat 5,8 m cod 261",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "R300.005",
+      "tip": "rama",
+      "finisaj": null,
+      "lmin": 501,
+      "lmax": 600,
+      "denumire": "Rame pt usi cu sticla la gama Lux 501-600mm Cod R300.005",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "R300.006",
+      "tip": "rama",
+      "finisaj": null,
+      "lmin": 601,
+      "lmax": 700,
+      "denumire": "Rame pt usi cu sticla la gama Lux 601-700Mm Cod R300.006",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "R300.007",
+      "tip": "rama",
+      "finisaj": null,
+      "lmin": 701,
+      "lmax": 800,
+      "denumire": "Rame pt usi cu sticla la gama Lux 701-800mm Cod R300.007",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "R300.008",
+      "tip": "rama",
+      "finisaj": null,
+      "lmin": 801,
+      "lmax": 900,
+      "denumire": "Rame pt usi cu sticla la gama Lux 801-900mm Cod R300.008",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "R300.009",
+      "tip": "rama",
+      "finisaj": null,
+      "lmin": 901,
+      "lmax": 1000,
+      "denumire": "Rame pt usi cu sticla la gama Lux 901-1000mm Cod R300.009",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "R300.010",
+      "tip": "rama",
+      "finisaj": null,
+      "lmin": 1001,
+      "lmax": 1100,
+      "denumire": "Rame pt usi cu sticla la gama Lux 1001-1100mm Cod R300.010",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "R300.011",
+      "tip": "rama",
+      "finisaj": null,
+      "lmin": 1101,
+      "lmax": 1200,
+      "denumire": "Rame pt usi cu sticla la gama Lux 1101-1200mm Cod R300.011",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "R300.012",
+      "tip": "rama",
+      "finisaj": null,
+      "lmin": 1201,
+      "lmax": 1300,
+      "denumire": "Rame pt usi cu sticla la gama Lux 1201-1300mm Cod R300.012",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "R300.013",
+      "tip": "rama",
+      "finisaj": null,
+      "lmin": 1301,
+      "lmax": 1400,
+      "denumire": "Rame pt usi cu sticla la gama Lux 1301-1400mm Cod R300.013",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "R300.014",
+      "tip": "rama",
+      "finisaj": null,
+      "lmin": 1401,
+      "lmax": 1500,
+      "denumire": "Rame pt usi cu sticla la gama Lux 1401-1500Mm Cod R300.014",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "R300.015",
+      "tip": "rama",
+      "finisaj": null,
+      "lmin": 1501,
+      "lmax": 2000,
+      "denumire": "Rame pt usi cu sticla la gama Lux 1401-1500Mm Cod R300.015",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.005",
+      "tip": "usa",
+      "finisaj": "ALUMINIU",
+      "lmin": 501,
+      "lmax": 600,
+      "denumire": "Usa culisanta Vent Aluminiu 501-600mm Cod V301.005",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.006",
+      "tip": "usa",
+      "finisaj": "ALUMINIU",
+      "lmin": 601,
+      "lmax": 700,
+      "denumire": "Usa culisanta Vent Aluminiu 601-700mm Cod V301.006",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.007",
+      "tip": "usa",
+      "finisaj": "ALUMINIU",
+      "lmin": 701,
+      "lmax": 800,
+      "denumire": "Usa culisanta Vent Aluminiu 701-800mm Cod V301.007",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.008",
+      "tip": "usa",
+      "finisaj": "ALUMINIU",
+      "lmin": 801,
+      "lmax": 900,
+      "denumire": "Usa culisanta Vent Aluminiu 801-900mm Cod V301.008",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.009",
+      "tip": "usa",
+      "finisaj": "ALUMINIU",
+      "lmin": 901,
+      "lmax": 1000,
+      "denumire": "Usa culisanta Vent Aluminiu 901-1000mm Cod V301.009",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.010",
+      "tip": "usa",
+      "finisaj": "ALUMINIU",
+      "lmin": 1001,
+      "lmax": 1100,
+      "denumire": "Usa culisanta Vent Aluminiu 1001-1100mm Cod V301.010",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.011",
+      "tip": "usa",
+      "finisaj": "ALUMINIU",
+      "lmin": 1101,
+      "lmax": 1200,
+      "denumire": "Usa culisanta Vent Aluminiu 1101-1200mm Cod V301.011",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.012",
+      "tip": "usa",
+      "finisaj": "ALUMINIU",
+      "lmin": 1201,
+      "lmax": 1300,
+      "denumire": "Usa culisanta Vent Aluminiu 1201-1300mm Cod V301.012",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.013",
+      "tip": "usa",
+      "finisaj": "ALUMINIU",
+      "lmin": 1301,
+      "lmax": 1400,
+      "denumire": "Usa culisanta Vent Aluminiu 1301-1400mm Cod V301.013",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.014",
+      "tip": "usa",
+      "finisaj": "ALUMINIU",
+      "lmin": 1401,
+      "lmax": 1500,
+      "denumire": "Usa culisanta Vent Aluminiu 1401-1500mm Cod V301.014",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.015",
+      "tip": "usa",
+      "finisaj": "ALUMINIU",
+      "lmin": 1501,
+      "lmax": 2000,
+      "denumire": "Usa culisanta Vent aluminiu 1500-2000mm cod V301.015",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.025",
+      "tip": "usa",
+      "finisaj": "SAMPANIE",
+      "lmin": 501,
+      "lmax": 600,
+      "denumire": "Usa culisanta Vent Sampanie lucios 501-600mm Cod V301.015",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.026",
+      "tip": "usa",
+      "finisaj": "SAMPANIE",
+      "lmin": 601,
+      "lmax": 700,
+      "denumire": "Usa culisanta Vent Sampanie lucios 601-700mm Cod V301.026",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.027",
+      "tip": "usa",
+      "finisaj": "SAMPANIE",
+      "lmin": 701,
+      "lmax": 800,
+      "denumire": "Usa culisanta Vent Sampanie lucios 701-800mm Cod V301.027",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.028",
+      "tip": "usa",
+      "finisaj": "SAMPANIE",
+      "lmin": 801,
+      "lmax": 900,
+      "denumire": "Usa culisanta Vent Sampanie lucios 801-900mm Cod V301.028",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.029",
+      "tip": "usa",
+      "finisaj": "SAMPANIE",
+      "lmin": 901,
+      "lmax": 1000,
+      "denumire": "Usa culisanta Vent Sampanie lucios 901-100mm Cod V301.029",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.035",
+      "tip": "usa",
+      "finisaj": "CROM",
+      "lmin": 501,
+      "lmax": 600,
+      "denumire": "Usa culisanta Vent Crom lucios 501-600mm Cod V301.035",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.036",
+      "tip": "usa",
+      "finisaj": "CROM",
+      "lmin": 601,
+      "lmax": 700,
+      "denumire": "Usa culisanta Vent Crom lucios 601-700Mm Cod V301.036",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.037",
+      "tip": "usa",
+      "finisaj": "CROM",
+      "lmin": 701,
+      "lmax": 800,
+      "denumire": "Usa culisanta Vent Crom lucios 701-800mm Cod V301.037",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.038",
+      "tip": "usa",
+      "finisaj": "CROM",
+      "lmin": 801,
+      "lmax": 900,
+      "denumire": "Usa culisanta Vent Crom lucios 801-900mm Cod V301.038",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.039",
+      "tip": "usa",
+      "finisaj": "CROM",
+      "lmin": 901,
+      "lmax": 1000,
+      "denumire": "Usa culisanta Vent Crom lucios 901-1000mm Cod V301.039",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.045",
+      "tip": "usa",
+      "finisaj": "NEGRU",
+      "lmin": 501,
+      "lmax": 600,
+      "denumire": "Usa culisanta Vent Negru 501-600mm Cod V301.045",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.046",
+      "tip": "usa",
+      "finisaj": "NEGRU",
+      "lmin": 601,
+      "lmax": 700,
+      "denumire": "Usa culisanta Vent Negru 601-700mm Cod V301.046",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.047",
+      "tip": "usa",
+      "finisaj": "NEGRU",
+      "lmin": 701,
+      "lmax": 800,
+      "denumire": "Usa culisanta Vent Negru 701-800mm Cod V301.047",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.048",
+      "tip": "usa",
+      "finisaj": "NEGRU",
+      "lmin": 801,
+      "lmax": 900,
+      "denumire": "Usa culisanta Vent Negru 801-900mm Cod V301.048",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.049",
+      "tip": "usa",
+      "finisaj": "NEGRU",
+      "lmin": 901,
+      "lmax": 1000,
+      "denumire": "Usa culisanta Vent Negru 901-1000mm Cod V301.049",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.055",
+      "tip": "usa",
+      "finisaj": "ALB",
+      "lmin": 501,
+      "lmax": 600,
+      "denumire": "Usa culisanta Vent Alb 501-600mm Cod V301.055",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.056",
+      "tip": "usa",
+      "finisaj": "ALB",
+      "lmin": 601,
+      "lmax": 700,
+      "denumire": "Usa culisanta Vent Alb 601-700mm Cod V301.056",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.057",
+      "tip": "usa",
+      "finisaj": "ALB",
+      "lmin": 701,
+      "lmax": 800,
+      "denumire": "Usa culisanta Vent Alb 701-800mm Cod V301.057",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.058",
+      "tip": "usa",
+      "finisaj": "ALB",
+      "lmin": 801,
+      "lmax": 900,
+      "denumire": "Usa culisanta Vent Alb 801-900mm Cod V301.058",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.059",
+      "tip": "usa",
+      "finisaj": "ALB",
+      "lmin": 901,
+      "lmax": 1000,
+      "denumire": "Usa culisanta Vent Alb 901-1000mm Cod V301.059",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.065",
+      "tip": "usa",
+      "finisaj": "AURIU",
+      "lmin": 501,
+      "lmax": 600,
+      "denumire": "Usa culisanta Vent Auriu periat 501-600mm cod V301.065",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.066",
+      "tip": "usa",
+      "finisaj": "AURIU",
+      "lmin": 601,
+      "lmax": 700,
+      "denumire": "Usa culisanta Vent Auriu periat 601-700mm cod V301.066",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.067",
+      "tip": "usa",
+      "finisaj": "AURIU",
+      "lmin": 701,
+      "lmax": 800,
+      "denumire": "Usa culisanta Vent Auriu periat 701-800mm cod V301.067",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.068",
+      "tip": "usa",
+      "finisaj": "AURIU",
+      "lmin": 801,
+      "lmax": 900,
+      "denumire": "Usa culisanta Vent Auriu periat 801-900mm cod V301.068",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.069",
+      "tip": "usa",
+      "finisaj": "AURIU",
+      "lmin": 901,
+      "lmax": 1000,
+      "denumire": "Usa culisanta Vent Auriu periat 901-1000mm cod V301.069",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.210",
+      "tip": "usa",
+      "finisaj": "SAMPANIE",
+      "lmin": 1001,
+      "lmax": 1100,
+      "denumire": "Usa culisanta Vent Sampanie lucios 1001-1100mm Cod V301.210",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.211",
+      "tip": "usa",
+      "finisaj": "SAMPANIE",
+      "lmin": 1101,
+      "lmax": 1200,
+      "denumire": "Usa culisanta Vent Sampanie lucios 1101-1200mm Cod V301.211",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.212",
+      "tip": "usa",
+      "finisaj": "SAMPANIE",
+      "lmin": 1201,
+      "lmax": 1300,
+      "denumire": "Usa culisanta Vent Sampanie lucios 1201-1300mm Cod V301.212",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.213",
+      "tip": "usa",
+      "finisaj": "SAMPANIE",
+      "lmin": 1301,
+      "lmax": 1400,
+      "denumire": "Usa culisanta Vent Sampanie lucios 1301-1400mm Cod V301.213",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.214",
+      "tip": "usa",
+      "finisaj": "SAMPANIE",
+      "lmin": 1401,
+      "lmax": 1500,
+      "denumire": "Usa culisanta Vent Sampanie lucios 1401-1500mm Cod V301.214",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.215",
+      "tip": "usa",
+      "finisaj": "SAMPANIE",
+      "lmin": 1501,
+      "lmax": 2000,
+      "denumire": "Usa culisanta Vent sampanie lucios 1500-2000mm cod V301.215",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.310",
+      "tip": "usa",
+      "finisaj": "CROM",
+      "lmin": 1001,
+      "lmax": 1100,
+      "denumire": "Usa culisanta Vent Crom lucios 1001-1100mm Cod 301.310",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.311",
+      "tip": "usa",
+      "finisaj": "CROM",
+      "lmin": 1101,
+      "lmax": 1200,
+      "denumire": "Usa culisanta Vent Crom lucios 1101-1200mm  Cod V301.311",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.312",
+      "tip": "usa",
+      "finisaj": "CROM",
+      "lmin": 1201,
+      "lmax": 1300,
+      "denumire": "Usa culisanta Vent Crom lucios 1201-1300mm Cod V301.312",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.313",
+      "tip": "usa",
+      "finisaj": "CROM",
+      "lmin": 1301,
+      "lmax": 1400,
+      "denumire": "Usa culisanta Vent Crom lucios 1301-1400mm Cod V301.313",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.314",
+      "tip": "usa",
+      "finisaj": "CROM",
+      "lmin": 1401,
+      "lmax": 1500,
+      "denumire": "Usa culisanta Vent Crom lucios 1401-1500mm Cod V301.314",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.315",
+      "tip": "usa",
+      "finisaj": "CROM",
+      "lmin": 1501,
+      "lmax": 2000,
+      "denumire": "Usa culisanta Vent Crom lucios 1500-2000mm cod V301.315",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.410",
+      "tip": "usa",
+      "finisaj": "NEGRU",
+      "lmin": 1001,
+      "lmax": 1100,
+      "denumire": "Usa culisanta Vent Negru 1001-1100mm Cod V301.410",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.411",
+      "tip": "usa",
+      "finisaj": "NEGRU",
+      "lmin": 1101,
+      "lmax": 1200,
+      "denumire": "Usa culisanta Vent Negru 1101-1200mm Cod V301.411",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.412",
+      "tip": "usa",
+      "finisaj": "NEGRU",
+      "lmin": 1201,
+      "lmax": 1300,
+      "denumire": "Usa culisanta Vent Negru 1201-1300mm Cod V301.412",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.413",
+      "tip": "usa",
+      "finisaj": "NEGRU",
+      "lmin": 1301,
+      "lmax": 1400,
+      "denumire": "Usa culisanta Vent Negru 1301-1400mm Cod V301.413",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.414",
+      "tip": "usa",
+      "finisaj": "NEGRU",
+      "lmin": 1401,
+      "lmax": 1500,
+      "denumire": "Usa culisanta Vent Negru 1401-1500mm Cod V301.414",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.415",
+      "tip": "usa",
+      "finisaj": "NEGRU",
+      "lmin": 1501,
+      "lmax": 2000,
+      "denumire": "Usa culisanta Vent Negru 1501-1600mm Cod V301.415",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.510",
+      "tip": "usa",
+      "finisaj": "ALB",
+      "lmin": 1001,
+      "lmax": 1100,
+      "denumire": "Usa culisanta Vent Alb 1001-1100mm Cod V301.510",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.511",
+      "tip": "usa",
+      "finisaj": "ALB",
+      "lmin": 1101,
+      "lmax": 1200,
+      "denumire": "Usa culisanta Vent Alb 1101-1200mm Cod V301.511",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.512",
+      "tip": "usa",
+      "finisaj": "ALB",
+      "lmin": 1201,
+      "lmax": 1300,
+      "denumire": "Usa culisanta Vent Alb 1201-1300mm Cod V301.512",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.513",
+      "tip": "usa",
+      "finisaj": "ALB",
+      "lmin": 1301,
+      "lmax": 1400,
+      "denumire": "Usa culisanta Vent Alb 1301-1400mm Cod V301.513",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.514",
+      "tip": "usa",
+      "finisaj": "ALB",
+      "lmin": 1401,
+      "lmax": 1500,
+      "denumire": "Usa culisanta Vent Alb 1401-1500mm Cod V301.514",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.515",
+      "tip": "usa",
+      "finisaj": "ALB",
+      "lmin": 1501,
+      "lmax": 2000,
+      "denumire": "Usa culisanta Vent Alb 1501-1600mm Cod V301.515",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.610",
+      "tip": "usa",
+      "finisaj": "AURIU",
+      "lmin": 1001,
+      "lmax": 1100,
+      "denumire": "Usa culisanta Vent Auriu periat 1001-1100mm cod V301.610",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.611",
+      "tip": "usa",
+      "finisaj": "AURIU",
+      "lmin": 1101,
+      "lmax": 1200,
+      "denumire": "Usa culisanta Vent Auriu periat 1101-1200mm cod V301.611",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.612",
+      "tip": "usa",
+      "finisaj": "AURIU",
+      "lmin": 1201,
+      "lmax": 1300,
+      "denumire": "Usa culisanta Vent Auriu periat 1201-1300mm cod V301.612",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.613",
+      "tip": "usa",
+      "finisaj": "AURIU",
+      "lmin": 1301,
+      "lmax": 1400,
+      "denumire": "Usa culisanta Vent Auriu periat 1301-1400mm cod V301.613",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.614",
+      "tip": "usa",
+      "finisaj": "AURIU",
+      "lmin": 1401,
+      "lmax": 1500,
+      "denumire": "Usa culisanta Vent Auriu periat 1401-1500mm cod V301.614",
+      "um": "buc",
+      "activ": 1
+    },
+    {
+      "cod": "V301.615",
+      "tip": "usa",
+      "finisaj": "AURIU",
+      "lmin": 1501,
+      "lmax": 2000,
+      "denumire": "Usa culisanta Vent Auriu periat 1501-2000mm cod V301.615",
+      "um": "buc",
+      "activ": 1
+    }
+  ],
   "rame": [
     {
       "cod": "820A 1000x1000",
