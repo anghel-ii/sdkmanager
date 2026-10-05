@@ -163,8 +163,10 @@ const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '
 // ── Enter = câmpul următor ──────────────────────────────────────────────────
 // Câmpurile de completat, în ordinea din pagină: casete de text / număr şi
 // meniuri (cele căutabile prin caseta lor). Fără butoane.
+// `bara` = unde se lucrează: coloana paşilor din configurator (#sidebar) sau
+// pagina ofertei cu amănuntul (<main>).
+let bara = null;
 function campuri() {
-  const bara = document.getElementById('sidebar');
   return [...bara.querySelectorAll('input, select')].filter(el =>
     !el.disabled && !el.hidden && el.offsetParent !== null &&
     !['checkbox', 'radio', 'button', 'submit', 'file', 'hidden'].includes(el.type));
@@ -177,8 +179,10 @@ function mergiLa(i) {
   });
 }
 
-export function activeazaCampuri() {
-  const bara = document.getElementById('sidebar');
+// `cuCautabile` = meniurile lungi devin căutabile (doar în configurator; la amănunt
+// meniurile clientului rămân cum erau — acolo se cere doar Enter).
+export function activeazaCampuri(radacina = document.getElementById('sidebar'), { cuCautabile = true } = {}) {
+  bara = radacina;
   if (!bara) return;
 
   const imbunatateste = () => {
@@ -188,8 +192,10 @@ export function activeazaCampuri() {
       if ([...sel.options].filter(o => o.value).length >= PRAG) faCautabil(sel);
     });
   };
-  imbunatateste();
-  new MutationObserver(imbunatateste).observe(bara, { childList: true, subtree: true });
+  if (cuCautabile) {
+    imbunatateste();
+    new MutationObserver(imbunatateste).observe(bara, { childList: true, subtree: true });
+  }
   // lista stă fixă pe ecran — la derularea barei sau a ferestrei se închide
   const inchideToate = () => cautabile.forEach(c => { if (!c.lista.hidden) c.inchide(); });
   bara.addEventListener('scroll', inchideToate, true);

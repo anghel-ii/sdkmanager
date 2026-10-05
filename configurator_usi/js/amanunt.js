@@ -7,6 +7,7 @@ import { LIVRARE, AGENTI, PLATI, plataText, liniaTransport } from './lib/comun/c
 import { copyRows } from './lib/comun/clipboard.js';
 import { qtyText } from './lib/comun/num.js';
 import { dataRo } from './ora.js';
+import { activeazaCampuri } from './campuri.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  OFERTĂ CU AMĂNUNTUL (amanunt.html) — sertare, mânere, accesorii: produsele
@@ -245,6 +246,14 @@ $('randuri').addEventListener('keydown', e => {
     if (urm?.classList.contains('piesa')) urm.querySelector('.deb-l').focus(); else focus(i + 1, 'produs');
   }
 });
+// Enter pe rândul de produs gol (fără sugestii) = gata cu produsele → numele clientului
+$('randuri').addEventListener('keydown', e => {
+  if (e.key !== 'Enter' || e.defaultPrevented || !e.target.classList.contains('produs') || e.target.value.trim()) return;
+  e.preventDefault();
+  $('clientNume').focus();
+});
+// în rest (client, livrare, plată, agent, nr. ofertă), Enter = câmpul următor — ca în configurator
+activeazaCampuri(document.querySelector('main'), { cuCautabile: false });
 
 // ── Sugestiile (lista de sub câmp) ──────────────────────────────────────────
 
