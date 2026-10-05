@@ -150,7 +150,7 @@
     </label>
     <div class="butoane">
       <button type="button" id="accRenunta">Renunţă</button>
-      <button type="submit" class="primar" id="accOk">Acceptă oferta</button>
+      <button type="submit" class="verde" id="accOk">Acceptă oferta</button>
     </div>
   </form>
 </dialog>
@@ -210,7 +210,7 @@ const facturareHtml = (c, cuCamp = false) => c.factura_nr
   : `<span class="nefacturat">nefacturat</span>${!cuCamp ? '' : `
      <span class="factura-form" data-id="${c.id}">
        <input class="factura-nr" placeholder="nr. factură" autocomplete="off">
-       <button class="mic factura-ok" disabled>Marchează facturat</button>
+       <button class="mic primar factura-ok" disabled>Marchează facturat</button>
      </span>`}`;
 
 // Leagă câmpurile de facturare din `radacina`; după salvare, `dupa()` re-randează.
@@ -261,7 +261,7 @@ const blocSticla = linii => !linii.length ? '' : `<div class="sticla-furnizori">
            title="${f.email ? 'Către ' + esc(f.email) : 'Fără adresă salvată — o completezi în mail'}">✉ Comandă sticla${
            ult ? ` (${bucati(deComandat)} buc rămase)` : ''}</button>`
       : `<span class="sticla-da">✓ comandată</span> <span class="dim mic">· ${dataOra(ult.comandat_la)} · ${esc(ult.comandat_de_nume ?? '')}</span>
-         <button class="mic sticla-anuleaza" data-furnizor="${esc(f.cod)}">Anulează</button>`}
+         <button class="mic rosu-contur sticla-anuleaza" data-furnizor="${esc(f.cod)}">Anulează</button>`}
   </div>`;
 }).join('')}</div>`;
 
@@ -651,13 +651,13 @@ async function renderDetaliu(id) {
       ${pozitii.length > 1
         ? pozitii.map((p, k) => `<button class="fisa-poz" data-poz="${k}" title="Fişa produsului ${k + 1}: ${esc(p.eticheta)}">🖶 Fişa ${k + 1}</button>`).join('')
         : '<button id="fisaDetaliu" title="Deschide fişa comenzii pentru printare">🖶 Printează fişa</button>'}
-      ${minuteInapoi > 0 ? `<button id="inapoiOferta" title="Greşeală? O mai poţi întoarce în oferte ${minuteInapoi} ${minuteInapoi === 1 ? 'minut' : 'minute'}">↩ Înapoi în ofertă</button>` : ''}
+      ${minuteInapoi > 0 ? `<button class="rosu" id="inapoiOferta" title="Greşeală? O mai poţi întoarce în oferte ${minuteInapoi} ${minuteInapoi === 1 ? 'minut' : 'minute'}">↩ Înapoi în ofertă</button>` : ''}
       ${eOferta ? `<button id="modifica">Modifică oferta</button>
-                   <button id="laPlata">Aşteaptă plata</button>
-                   <button class="primar" id="accepta">Acceptă oferta</button>` : ''}
-      ${ePlata ? '<button class="primar" id="accepta">Plată primită</button>' : ''}
-      ${eComanda && !c.finalizat_la ? '<button id="finalizeaza">Marchează finalizată</button>' : ''}
-      ${c.finalizat_la ? '<button id="redeschide">Redeschide</button>' : ''}
+                   <button class="galben-contur" id="laPlata">Aşteaptă plata</button>
+                   <button class="verde" id="accepta">Acceptă oferta</button>` : ''}
+      ${ePlata ? '<button class="verde" id="accepta">Plată primită</button>' : ''}
+      ${eComanda && !c.finalizat_la ? '<button class="verde-contur" id="finalizeaza">Marchează finalizată</button>' : ''}
+      ${c.finalizat_la ? '<button class="galben-contur" id="redeschide">Redeschide</button>' : ''}
     </div>
 
     <!-- stânga: datele clientului; dreapta: paşii comenzii (cine şi când) -->
@@ -684,10 +684,10 @@ async function renderDetaliu(id) {
           <div class="dim mic">${esc(PLATI[c.plata] ?? 'plată nealeasă')} · ${c.avans > 0 ? `avans <strong>${virgulaLei(c.avans)} lei</strong>` : 'fără avans'}</div>`)
           : pas('acum', 'Acceptat', `<span class="urmeaza">Urmează: „${ePlata ? 'Plată primită' : 'Acceptă oferta'}"</span>`)}
         ${eComanda ? pas(c.factura_nr ? 'gata' : 'acum', 'Facturat', c.factura_nr
-          ? `<strong class="mono">${esc(c.factura_nr)}</strong> · ${deCine(c.facturat_de_nume, c.facturat_la)}${poateAnulaFactura() ? ' <button class="mic" id="anuleazaFactura">Anulează</button>' : ''}`
+          ? `<strong class="mono">${esc(c.factura_nr)}</strong> · ${deCine(c.facturat_de_nume, c.facturat_la)}${poateAnulaFactura() ? ' <button class="mic rosu-contur" id="anuleazaFactura">Anulează</button>' : ''}`
           : `<span class="factura-form" data-id="${c.id}">
                <input class="factura-nr" placeholder="nr. factură" autocomplete="off">
-               <button class="mic factura-ok" disabled>Marchează facturat</button>
+               <button class="mic primar factura-ok" disabled>Marchează facturat</button>
              </span>`, 'facturare') : pas('viitor', 'Facturat', '')}
         ${eComanda ? pas('info', 'Sticlă', sticlaLinii.length ? blocSticla(sticlaLinii) : '<span class="dim">— fără sticlă de comandat</span>') : ''}
         ${c.finalizat_la ? pas('gata', 'Finalizat', deCine(c.finalizat_de_nume, c.finalizat_la))

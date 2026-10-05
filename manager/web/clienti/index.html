@@ -102,8 +102,8 @@ async function incarcaPropuneri() {
         <b>${esc(p.tip === 'nou' ? p.propus.nume : p.actual?.nume)}</b>
         <span class="dim mic">de la ${esc(p.agent)} · ${dataOra(p.trimis_la)}</span>
         <span class="spatiu"></span>
-        ${poateAproba() ? `<button class="mic" data-actiune="respinge">Respinge</button>
-          <button class="mic primar" data-actiune="aproba">✓ Aprobă</button>`
+        ${poateAproba() ? `<button class="mic rosu-contur" data-actiune="respinge">Respinge</button>
+          <button class="mic verde" data-actiune="aproba">✓ Aprobă</button>`
           : '<span class="dim mic">aprobă conducerea sau administratorul</span>'}
       </div>
       <table>${randuri || '<tr><td colspan="2" class="dim">nicio schimbare faţă de ce e acum</td></tr>'}</table>
