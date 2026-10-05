@@ -18,6 +18,12 @@ const { DatabaseSync } = require('node:sqlite');
 
 let _db = null;
 
+// „Acum" în SQL: ora exactă (server/ora.js), ca funcţie SQLite `acum()` — dacă
+// Node o permite (≥ 22.13); altfel ceasul serverului, ca înainte. Se foloseşte
+// în SQL ca ${ACUM()} (text fix, fără date de la utilizator).
+let _acum = "datetime('now')";
+const ACUM = () => _acum;
+
 function db() {
   if (!_db) throw new Error('Baza de date nu e deschisă — cheamă deschide() întâi.');
   return _db;
@@ -34,6 +40,10 @@ function deschide() {
   _db.exec('PRAGMA journal_mode = WAL');
   _db.exec('PRAGMA foreign_keys = ON');
   _db.exec('PRAGMA busy_timeout = 5000');
+  if (typeof _db.function === 'function') {
+    _db.function('acum', { deterministic: false }, require('./ora.js').acumSql);
+    _acum = 'acum()';
+  }
 
   migreaza();
   return _db;
@@ -253,4 +263,4 @@ function inchide() {
   if (_db) { _db.close(); _db = null; }
 }
 
-module.exports = { db, deschide, inchide, backup, tranzactie, hashSesiuniInClar, roluriNoi };
+module.exports = { db, deschide, inchide, backup, tranzactie, hashSesiuniInClar, roluriNoi, ACUM };

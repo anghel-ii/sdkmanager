@@ -15,6 +15,7 @@ const evenimente  = require('./evenimente.js');
 const sticla      = require('./sticla.js');
 const actualizare = require('./actualizare.js');
 const clienti     = require('./clienti.js');
+const ora         = require('./ora.js');
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  Serverul managerului de comenzi
@@ -158,6 +159,7 @@ function porneste() {
   zilnic();
   setInterval(zilnic, 24 * 3600 * 1000).unref();
   clienti.porneste();
+  ora.porneste();   // ora exactă de pe internet — momentele nu mai depind de ceasul serverului
 
   // Ctrl+C / systemctl stop. server.close() singur aştepta ca TOATE conexiunile
   // să se închidă — dar fiecare tab al managerului ţine una live (WebSocket), iar

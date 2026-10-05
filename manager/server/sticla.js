@@ -1,4 +1,4 @@
-const { db, tranzactie } = require('./db.js');
+const { db, tranzactie, ACUM } = require('./db.js');
 const { json, eroare, corpJson } = require('./http.js');
 const { anunta } = require('./evenimente.js');
 
@@ -80,7 +80,7 @@ function marcheaza(comandat) {
     const ids = (Array.isArray(corp.ids) ? corp.ids : []).map(Number).filter(Number.isInteger);
     if (!ids.length) return eroare(ctx.res, 400, 'Nicio linie aleasă.');
     const n = tranzactie(d => {
-      const st = d.prepare(`UPDATE pozitie_linie SET comandat_la = ${comandat ? "datetime('now')" : 'NULL'},
+      const st = d.prepare(`UPDATE pozitie_linie SET comandat_la = ${comandat ? ACUM() : 'NULL'},
                               comandat_de = ? WHERE id = ? AND lista = 'sticla'`);
       return ids.reduce((s, id) => s + Number(st.run(comandat ? ctx.utilizator.id : null, id).changes), 0);
     });

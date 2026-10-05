@@ -1,5 +1,6 @@
 const { json, eroare, corpJson } = require('../http.js');
-const { db, tranzactie } = require('../db.js');
+const { db, tranzactie, ACUM } = require('../db.js');
+const { acumMs } = require('../ora.js');
 const { config } = require('../config.js');
 const { anunta, anuntaUtilizator } = require('../evenimente.js');
 
@@ -161,14 +162,14 @@ async function creeaza(ctx) {
   const v = validează(corp);
   if (v.gresit) return eroare(res, 400, v.gresit);
 
-  const an = new Date().getFullYear();
+  const an = new Date(acumMs()).getFullYear();
 
   const rezultat = tranzactie(d => {
     const numar = urmatorulNumar(d, an);
 
     const comandaId = Number(d.prepare(`
-      INSERT INTO comanda (numar, client_nume, client_telefon, client_email, client_adresa, livrare, agent, tip_facturare, oferta_nr, plata, observatii, creat_de)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO comanda (numar, client_nume, client_telefon, client_email, client_adresa, livrare, agent, tip_facturare, oferta_nr, plata, observatii, creat_de, creat_la)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${ACUM()})
     `).run(
       `OF-${an}-${numar}`,
       ...campuriClient(corp.client, corp.detalii, corp.ofertaNr),
@@ -299,6 +300,8 @@ function detaliu(ctx) {
   // cine a făcut fiecare pas — numele, pentru pagina comenzii
   const comanda = db().prepare(`
     SELECT c.*, u.nume AS creat_de_nume, ua.nume AS confirmat_de_nume,
+           -- de cât timp a ieşit din oferte (pt. „Înapoi în ofertă"), după ora exactă a serverului
+           CAST((julianday(${ACUM()}) - julianday(c.tip_schimbat_la)) * 86400 AS INTEGER) AS secunde_schimbat,
            uf.nume AS facturat_de_nume, ufi.nume AS finalizat_de_nume
       FROM comanda c JOIN utilizator u ON u.id = c.creat_de
       LEFT JOIN utilizator ua  ON ua.id  = c.confirmat_de
@@ -344,7 +347,7 @@ function asteaptaPlata(ctx) {
   if (!c)                 return eroare(ctx.res, 404, 'Comandă inexistentă.');
   if (c.anulat)           return eroare(ctx.res, 400, 'Oferta e anulată.');
   if (c.tip !== 'oferta') return eroare(ctx.res, 409, c.tip === 'plata' ? 'Comanda aşteaptă deja plata.' : 'Oferta e deja comandă în lucru.');
-  db().prepare("UPDATE comanda SET tip = 'plata', tip_schimbat_la = datetime('now') WHERE id = ?").run(id);
+  db().prepare(`UPDATE comanda SET tip = 'plata', tip_schimbat_la = ${ACUM()} WHERE id = ?`).run(id);
   anunta({ comanda: id });
   json(ctx.res, 200, { comanda: db().prepare('SELECT * FROM comanda WHERE id = ?').get(id) });
 }
@@ -366,8 +369,8 @@ async function accepta(ctx) {
   if (!Number.isFinite(avans) || avans < 0) return eroare(ctx.res, 400, 'Avansul trebuie să fie un număr (0 = fără avans).');
 
   db().prepare(`
-    UPDATE comanda SET tip = 'comanda', confirmat_la = datetime('now'), confirmat_de = ?, plata = ?, avans = ?,
-                       tip_schimbat_la = datetime('now')
+    UPDATE comanda SET tip = 'comanda', confirmat_la = ${ACUM()}, confirmat_de = ?, plata = ?, avans = ?,
+                       tip_schimbat_la = ${ACUM()}
      WHERE id = ?
   `).run(ctx.utilizator.id, corp.plata, Math.round(avans * 100) / 100, id);
 
@@ -383,7 +386,7 @@ async function accepta(ctx) {
 const MINUTE_INAPOI = 10;
 function inapoiInOferta(ctx) {
   const id = Number(ctx.params.id);
-  const c = db().prepare(`SELECT *, tip_schimbat_la >= datetime('now', '-${MINUTE_INAPOI} minutes') AS la_timp
+  const c = db().prepare(`SELECT *, tip_schimbat_la >= datetime(${ACUM()}, '-${MINUTE_INAPOI} minutes') AS la_timp
                             FROM comanda WHERE id = ?`).get(id);
   if (!c)                   return eroare(ctx.res, 404, 'Comandă inexistentă.');
   if (c.tip === 'oferta')   return eroare(ctx.res, 409, 'E deja ofertă.');
@@ -410,7 +413,7 @@ function schimbaFinalizare(finalizata) {
     const c = db().prepare('SELECT * FROM comanda WHERE id = ?').get(id);
     if (!c)                  return eroare(ctx.res, 404, 'Comandă inexistentă.');
     if (c.tip !== 'comanda') return eroare(ctx.res, 409, 'Doar o comandă acceptată se poate finaliza.');
-    db().prepare(`UPDATE comanda SET finalizat_la = ${finalizata ? "datetime('now')" : 'NULL'}, finalizat_de = ? WHERE id = ?`)
+    db().prepare(`UPDATE comanda SET finalizat_la = ${finalizata ? ACUM() : 'NULL'}, finalizat_de = ? WHERE id = ?`)
       .run(finalizata ? ctx.utilizator.id : null, id);
     anunta({ comanda: id });
   json(ctx.res, 200, { comanda: db().prepare('SELECT * FROM comanda WHERE id = ?').get(id) });
@@ -432,7 +435,7 @@ async function factura(ctx) {
   }
   const numar = String(corp.numar ?? '').trim().slice(0, 40);
   if (!numar && !corp.anuleaza) return eroare(ctx.res, 400, 'Completează numărul facturii.');
-  db().prepare(`UPDATE comanda SET factura_nr = ?, facturat_la = ${numar ? "datetime('now')" : 'NULL'}, facturat_de = ? WHERE id = ?`)
+  db().prepare(`UPDATE comanda SET factura_nr = ?, facturat_la = ${numar ? ACUM() : 'NULL'}, facturat_de = ? WHERE id = ?`)
     .run(numar || null, numar ? ctx.utilizator.id : null, id);
   anunta({ comanda: id });
   json(ctx.res, 200, { comanda: db().prepare('SELECT * FROM comanda WHERE id = ?').get(id) });
@@ -503,6 +506,8 @@ const sumar = ctx => json(ctx.res, 200, {
 module.exports = {
   rute: [
     ['GET',  '/api/sumar',                   { handler: sumar }],
+    // ora exactă (server/ora.js), ms — configuratorul îşi corectează ceasul calculatorului pe fişă
+    ['GET',  '/api/ora',                     { handler: ctx => json(ctx.res, 200, { acum: acumMs() }) }],
     ['GET',  '/api/comenzi',                 { handler: listeaza }],
     ['POST', '/api/comenzi',                 { handler: creeaza }],
     ['GET',  '/api/comenzi/:id',             { handler: detaliu }],

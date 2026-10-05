@@ -40,9 +40,9 @@ async function preia() {
       tranzactie(() => { for (const c of clienti) pune.run(c.id, ...CAMPURI.map(k => c[k] ?? null)); });
       noi += clienti.length;
     }
-    ultimaPreluare = { la: new Date().toISOString(), noi };
+    ultimaPreluare = { la: new Date(require('./ora.js').acumMs()).toISOString(), noi };
   } catch (e) {
-    ultimaPreluare = { la: new Date().toISOString(), eroare: e.message };
+    ultimaPreluare = { la: new Date(require('./ora.js').acumMs()).toISOString(), eroare: e.message };
     console.error('Preluare clienţi eşuată:', e.message);
   }
   if (noi) anunta();

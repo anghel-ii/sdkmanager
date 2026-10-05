@@ -647,8 +647,7 @@ async function renderDetaliu(id) {
   const eComanda = c.tip === 'comanda';
   // „Înapoi în ofertă": 10 minute după ce a ieşit din oferte, cât nu s-a lucrat pe ea
   // (serverul verifică oricum; aici doar nu arătăm butonul degeaba)
-  const ramas = c.tip_schimbat_la && !c.factura_nr && !c.finalizat_la
-    ? 10 * 60e3 - (Date.now() - Date.parse(c.tip_schimbat_la.replace(' ', 'T') + 'Z')) : 0;
+  const ramas = c.tip_schimbat_la && !c.factura_nr && !c.finalizat_la ? 10 * 60e3 - c.secunde_schimbat * 1000 : 0;
   const minuteInapoi = ramas > 0 ? Math.ceil(ramas / 60e3) : 0;
 
   $('continut').innerHTML = `

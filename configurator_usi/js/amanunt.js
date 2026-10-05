@@ -6,6 +6,7 @@ import { initSugestiiClienti } from './sugestii-clienti.js';
 import { LIVRARE, AGENTI, PLATI, plataText, liniaTransport } from './lib/comun/comanda.js';
 import { copyRows } from './lib/comun/clipboard.js';
 import { qtyText } from './lib/comun/num.js';
+import { dataRo } from './ora.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  OFERTĂ CU AMĂNUNTUL (amanunt.html) — sertare, mânere, accesorii: produsele
@@ -443,7 +444,7 @@ function tipareste() {
   const rand = (et, v) => (v ? `<tr><td>${et}</td><td>${esc(v)}</td></tr>` : '');
   $('tipar').innerHTML = `
     <div class="cap"><div><h1>Ofertă cu amănuntul</h1>${modFisa?.numar ? `<strong>${esc(modFisa.numar)}</strong>` : ''}</div>
-      <div>${new Date().toLocaleDateString('ro-RO')}</div></div>
+      <div>${dataRo()}</div></div>
     <table class="perechi">
       ${rand('Client', $('clientNume').value)}${rand('Telefon', $('clientTelefon').value)}${rand('Adresă', $('clientAdresa').value)}
       ${rand('Mod de livrare', comanda.livrare)}${rand('Metodă de plată', plataText(comanda.plata))}${rand('Agent', comanda.agent)}

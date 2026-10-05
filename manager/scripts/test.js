@@ -796,6 +796,23 @@ async function main() {
     config.clientiUrl = config.clientiCheie = '';
   }
 
+  console.log('\nOra exactă (server/ora.js) — ceasul serverului în urmă cu 5 minute');
+  {
+    const ora = require('../server/ora.js');
+    ora._seteaza(5 * 60e3);   // ca şi cum sincronizarea a găsit ceasul în urmă cu 5 minute
+    const o = await cer('POST', '/api/comenzi', { client: { nume: 'Client Ora' }, ofertaNr: 'ORA-1',
+      pozitii: [pozitie('confortGamma', 'Confort Gamma', 1, 1200)] });
+    const creat = Date.parse(db2().prepare('SELECT creat_la FROM comanda WHERE id = ?').get(o.date.comanda.id).creat_la.replace(' ', 'T') + 'Z');
+    verifica('oferta nouă: ora exactă, nu a ceasului serverului', Math.abs(creat - (Date.now() + 5 * 60e3)) < 5000,
+      new Date(creat).toISOString());
+    const acc = await cer('POST', `/api/comenzi/${o.date.comanda.id}/accepta`, { plata: 'proforma', avans: 0 });
+    const conf = Date.parse(acc.date.comanda.confirmat_la.replace(' ', 'T') + 'Z');
+    verifica('acceptarea: ora exactă', Math.abs(conf - (Date.now() + 5 * 60e3)) < 5000);
+    verifica('/api/ora dă ora exactă', Math.abs((await cer('GET', '/api/ora')).date.acum - (Date.now() + 5 * 60e3)) < 2000);
+    verifica('„Înapoi în ofertă" numără după ora exactă', (await cer('POST', `/api/comenzi/${o.date.comanda.id}/inapoi-oferta`)).stare === 200);
+    ora._seteaza(0);
+  }
+
   console.log('\nBackup');
   const dest = require('../server/db.js').backup();
   verifica('backup scris pe disc', fs.existsSync(dest) && fs.statSync(dest).size > 0);

@@ -1,4 +1,5 @@
 import { state } from './state.js';
+import { acumRo } from './ora.js';
 import { systems } from './systems/registry.js';
 import { currentSpec, currentBom, currentBilling, currentClientPanels } from './builder.js';
 import { finishesOf, familia } from './familii.js';
@@ -31,11 +32,8 @@ const esc = t => String(t ?? '').replace(/[&<>"]/g, c =>
 
 const virgula = n => String(n).replace('.', ',');   // aceeaşi convenţie ca-n manager
 
-// data de pe fişă — acelaşi format ca în manager: zz/ll/aaaa hh:mm
-const acum = () => {
-  const d = new Date(), z = n => String(n).padStart(2, '0');
-  return `${z(d.getDate())}/${z(d.getMonth() + 1)}/${d.getFullYear()} ${z(d.getHours())}:${z(d.getMinutes())}`;
-};
+// data de pe fişă — acelaşi format ca în manager: zz/ll/aaaa hh:mm, ora exactă a României (js/ora.js)
+const acum = acumRo;
 
 const amortizareLabel = v => (v === 'fara' || !v ? 'Fără' : v);
 

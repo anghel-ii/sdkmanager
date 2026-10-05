@@ -1,4 +1,4 @@
-const { db } = require('./db.js');
+const { db, ACUM } = require('./db.js');
 const auth = require('./auth.js');
 const { json, redirect } = require('./http.js');
 const { anunta } = require('./evenimente.js');
@@ -54,15 +54,15 @@ function inregistreaza(utilizator, codBrut, opCod) {
 
   const recent = db().prepare(`
     SELECT id FROM scanare WHERE usa_id = ? AND operatie_id = ? AND utilizator_id = ? AND anulat = 0
-       AND moment >= datetime('now', '-30 seconds')`).get(u.id, op.id, utilizator.id);
+       AND moment >= datetime(${ACUM()}, '-30 seconds')`).get(u.id, op.id, utilizator.id);
   if (!recent) {
-    db().prepare('INSERT INTO scanare (usa_id, operatie_id, utilizator_id) VALUES (?, ?, ?)')
+    db().prepare(`INSERT INTO scanare (usa_id, operatie_id, utilizator_id, moment) VALUES (?, ?, ?, ${ACUM()})`)
       .run(u.id, op.id, utilizator.id);
   }
   // „Coletare" = ultima etapă: comanda (acceptată) trece la finalizate
   let finalizata = false;
   if (op.cod === 'COLETARE' && u.tip === 'comanda' && !u.finalizat_la) {
-    db().prepare("UPDATE comanda SET finalizat_la = datetime('now'), finalizat_de = ? WHERE id = ?").run(utilizator.id, u.comanda_id);
+    db().prepare(`UPDATE comanda SET finalizat_la = ${ACUM()}, finalizat_de = ? WHERE id = ?`).run(utilizator.id, u.comanda_id);
     finalizata = true;
   }
   if (!recent) anunta({ comanda: u.comanda_id });
