@@ -1009,7 +1009,7 @@ async function trimiteOferta(unde = 'oferta') {
   // care se printează de obicei imediat după. CLEAR PAGE resetează tot.
   // dacă trecerea mai departe (comandă / aşteaptă plata) eşuează, rămâi aici şi
   // butoanele lucrează pe ACEEAŞI ofertă — o nouă apăsare n-o dublează
-  Object.assign(cos, clientPtCos(), { ofertaEditata: r.comanda.id, numar: r.comanda.numar });
+  Object.assign(cos, clientPtCos(), { ofertaEditata: r.comanda.id, numar: ofertaNr || r.comanda.numar });
   cosul.scrie(cos);
 
   // după salvare: direct pe pagina comenzii din manager (userul, 2026-09-28); coşul s-a golit
@@ -1019,7 +1019,7 @@ async function trimiteOferta(unde = 'oferta') {
   const t = await oferta.treceIn(r.comanda.id, unde, plata ?? {});
   if (t.eroare) {
     gata();
-    return mesajOferta(`Oferta <strong>${esc(r.comanda.numar)}</strong> s-a salvat, dar ${unde === 'comanda'
+    return mesajOferta(`Oferta <strong>${esc(ofertaNr || r.comanda.numar)}</strong> s-a salvat, dar ${unde === 'comanda'
       ? 'nu a devenit comandă' : 'nu a trecut la „Aşteaptă plata"'}: ${esc(t.eroare)}`, 'eroare');
   }
   laComanda();
@@ -1158,7 +1158,7 @@ export async function initUI() {
   if (params.get('oferta')) {
     const o = await oferta.incarcaOferta(params.get('oferta'));
     if (o.eroare || !o.pozitii?.length) eroareIncarcare = o.eroare || 'Oferta n-are configuraţie.';
-    else if (o.comanda.tip !== 'oferta') eroareIncarcare = `${o.comanda.numar_comanda || o.comanda.numar} a fost acceptată — nu se mai modifică.`;
+    else if (o.comanda.tip !== 'oferta') eroareIncarcare = `${o.comanda.numar_comanda || o.comanda.oferta_nr || o.comanda.numar} a fost acceptată — nu se mai modifică.`;
     else {
       cos = cosul.dinOferta(o, p => (p.sistem === 'amanunt' ? 'amanunt' : systems[p.sistem]?.meta.family));
       cosul.scrie(cos);
@@ -1200,7 +1200,7 @@ export async function initUI() {
       $('clientTelefon').value = o.comanda.client_telefon ?? '';
       $('clientAdresa').value  = o.comanda.client_adresa ?? '';
       modFisa = {
-        numar:  `${o.comanda.numar_comanda || o.comanda.numar}${n > 1 ? ` · produsul ${k + 1} din ${n}` : ''}`,
+        numar:  `${o.comanda.numar_comanda || o.comanda.oferta_nr || o.comanda.numar}${n > 1 ? ` · produsul ${k + 1} din ${n}` : ''}`,
         coduri: (o.coduri ?? []).map(cod_bare => ({ cod_bare })),
         client: o.comanda.client_nume ?? '',
         bom: (poz.linii?.necesar ?? []).map(l =>

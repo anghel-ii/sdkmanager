@@ -99,7 +99,7 @@ export function dinOferta(o, gamaDin) {
     client: { nume: o.comanda.client_nume ?? '', telefon: o.comanda.client_telefon ?? '', adresa: o.comanda.client_adresa ?? '' },
     ofertaNr: o.comanda.oferta_nr ?? '',
     comanda: { livrare: o.comanda.livrare ?? null, plata: o.comanda.plata ?? null, agent: o.comanda.agent ?? null },
-    ofertaEditata: o.comanda.id, numar: o.comanda.numar };
+    ofertaEditata: o.comanda.id, numar: o.comanda.oferta_nr || o.comanda.numar };
 }
 
 // ── Cardul „Adaugă la ofertă" ───────────────────────────────────────────────

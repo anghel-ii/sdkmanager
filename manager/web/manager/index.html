@@ -510,7 +510,7 @@ function randeazaTabel() {
         <tr data-id="${c.id}"${c.fixat ? ' class="fixat"' : ''}>
           <td class="pin" data-c="pin"><button class="btn-pin${c.fixat ? ' activ' : ''}" data-id="${c.id}"
                 title="${c.fixat ? 'Scoate de sus' : 'Fixează sus (doar pentru tine)'}">📌</button></td>
-          <td data-c="client">${esc(c.client_nume)}<div class="nr-mic mono">${esc(c.numar_comanda || c.numar)}${c.oferta_nr ? ` · nr. ofertă ${esc(c.oferta_nr)}` : ''}${totul && c.client_telefon ? ` · ${esc(c.client_telefon)}` : ''}</div></td>
+          <td data-c="client">${esc(c.client_nume)}<div class="nr-mic mono">${esc(c.numar_comanda || c.oferta_nr || c.numar)}${c.numar_comanda && c.oferta_nr ? ` · nr. ofertă ${esc(c.oferta_nr)}` : ''}${totul && c.client_telefon ? ` · ${esc(c.client_telefon)}` : ''}</div></td>
           <td data-c="sistem">${esc(c.sistem ?? '—')}</td>
           ${cuStatus ? `<td data-c="status">${statusHtml(c.status)}</td>` : ''}
           ${cuSticla ? `<td class="facturare" data-c="sticla">${sticlaHtml(c.sticla)}</td>` : ''}
@@ -656,9 +656,9 @@ async function renderDetaliu(id) {
     <div class="antet">
       <div>
         <h1>${esc(c.client_nume)}</h1>
-        <div class="mono nr-comanda">${esc(c.numar_comanda || c.numar)}</div>
-        ${c.oferta_nr ? `<div class="dim mic">Nr. ofertă: <strong>${esc(c.oferta_nr)}</strong></div>` : ''}
-        <div class="dim mic">${eOferta ? 'Ofertă' : ePlata ? 'Aşteaptă plata' : `Comandă${c.finalizat_la ? ' finalizată' : ''} · din oferta ${esc(c.numar)}`}</div>
+        <div class="mono nr-comanda">${esc(c.numar_comanda || c.oferta_nr || c.numar)}</div>
+        ${c.numar_comanda && c.oferta_nr ? `<div class="dim mic">Nr. ofertă: <strong>${esc(c.oferta_nr)}</strong></div>` : ''}
+        <div class="dim mic">${eOferta ? 'Ofertă' : ePlata ? 'Aşteaptă plata' : `Comandă${c.finalizat_la ? ' finalizată' : ''} · din oferta ${esc(c.oferta_nr || c.numar)}`}</div>
       </div>
       <div class="spatiu"></div>
       ${pozitii.length > 1

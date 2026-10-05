@@ -396,14 +396,14 @@ async function trimite(unde) {
   });
   if (r.eroare) { gata(); return mesaj(esc(r.eroare), 'eroare'); }
   // o nouă apăsare lucrează pe ACEEAŞI ofertă (coşul o ţine minte); gata → coşul se goleşte
-  Object.assign(cos, clientPtCos(), { ofertaEditata: r.comanda.id, numar: r.comanda.numar });
+  Object.assign(cos, clientPtCos(), { ofertaEditata: r.comanda.id, numar: ofertaNr || r.comanda.numar });
   cosul.scrie(cos);
   const laComanda = () => { cosul.goleste(); location.href = '/#comanda/' + r.comanda.id; };
   if (unde === 'oferta') return laComanda();
   const t = await manager.treceIn(r.comanda.id, unde, plata ?? {});
   if (t.eroare) {
     gata();
-    return mesaj(`Oferta <strong>${esc(r.comanda.numar)}</strong> s-a salvat, dar ${unde === 'comanda'
+    return mesaj(`Oferta <strong>${esc(ofertaNr || r.comanda.numar)}</strong> s-a salvat, dar ${unde === 'comanda'
       ? 'nu a devenit comandă' : 'nu a trecut la „Aşteaptă plata"'}: ${esc(t.eroare)}`, 'eroare');
   }
   laComanda();
@@ -462,7 +462,7 @@ const puneClientul = (client, ofertaNr, detalii) => {
       puneClientul({ nume: o.comanda.client_nume, telefon: o.comanda.client_telefon, adresa: o.comanda.client_adresa },
                    o.comanda.oferta_nr, p.config.comanda);
       const n = o.pozitii.length;
-      modFisa = { numar: `${o.comanda.numar_comanda || o.comanda.numar}${n > 1 ? ` · produsul ${k + 1} din ${n}` : ''}`,
+      modFisa = { numar: `${o.comanda.numar_comanda || o.comanda.oferta_nr || o.comanda.numar}${n > 1 ? ` · produsul ${k + 1} din ${n}` : ''}`,
                   debitare: new Map((p.linii.necesar ?? []).filter(x => x.debitare).map(x => [x.cod, x.debitare])) };
     }
   } else if (cosul.activ()) {
