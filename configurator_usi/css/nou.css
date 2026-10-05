@@ -196,3 +196,9 @@ body.ui-nou #groupClient .oferta-client:not(.comanda-detalii) > :last-child { fl
 /* paşii au mereu aceeaşi lăţime (până la 900px) — în bara laterală (flex pe
    coloană) marginile auto îi făceau cât conţinutul, deci se schimbau la taburi */
 body.ui-nou #nouPasi { width: 100%; box-sizing: border-box; }
+
+/* butoanele clientului pe un rând separat, dedesubt: câmpurile au toată lăţimea
+   (altfel „Mod de livrare" / „Metodă de plată" se tăiau) */
+body.ui-nou #groupClient { grid-template-columns: minmax(0, 1fr); }
+body.ui-nou #groupClient .client-butoane { grid-column: 1; grid-row: 3; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+body.ui-nou #groupClient .client-butoane button { width: 100%; }

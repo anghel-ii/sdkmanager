@@ -472,6 +472,8 @@ function randeazaTabel() {
   btnSort.style.display = cuFacturare && !totul ? '' : 'none';
   $('unde').firstElementChild.textContent = 'Doar în ' + TABURI.find(([t]) => t === tabCurent)[1];
   for (const b of $('unde').children) b.classList.toggle('active', (b.dataset.unde === 'toate') === pesteTot);
+  // „Doar în … / În toate secţiunile" contează doar cât se caută — fără text părea o setare pornită
+  $('unde').style.visibility = q ? '' : 'hidden';
   btnSort.textContent = sortare === 'facturare' ? '⇅ Nefacturate primele' : '⇅ Cele mai noi primele';
   btnSort.classList.toggle('activ', sortare === 'facturare');
 

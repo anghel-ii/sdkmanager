@@ -112,7 +112,7 @@ export function initCard(el, cos, { curenta, client, gamaEcran, transport, factu
   // produsul de pe ecran intră în coş (dacă e început) — înainte de orice plecare din pagină
   const pune = () => {
     const c = curenta();
-    if (c?.eroare) { mesaj(`Produsul de pe ecran nu e gata: ${c.eroare} Termină-l sau goleşte-l (CLEAR PAGE) înainte să treci la altul.`); return false; }
+    if (c?.eroare) { mesaj(`Produsul de pe ecran nu e gata: ${c.eroare} Termină-l sau goleşte-l („Goleşte pagina") înainte să treci la altul.`); return false; }
     if (c) { if (cos.curent != null) cos.pozitii[cos.curent] = c; else cos.pozitii.push(c); }
     cos.curent = null;
     Object.assign(cos, client());

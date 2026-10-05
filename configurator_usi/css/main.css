@@ -104,7 +104,7 @@ canvas    { display: block; }
   width: 100%;
   background: var(--panel-2);
   border: 1px solid var(--line);
-  color: var(--text-dim);
+  color: var(--text);
   font-family: 'Inter', sans-serif;
   font-size: 20px;
   font-weight: 700;

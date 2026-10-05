@@ -239,15 +239,17 @@ function actualizeaza() {
   };
   if (rame) PASI[2].titlu = 'Rânduri şi opţiuni';
 
-  let curent = null;
-  PASI.forEach((p, i) => {
+  let curent = null, nr = 0;
+  PASI.forEach(p => {
     const s = document.querySelector(`.pas[data-pas="${p.id}"]`);
     if (!s) return;
     s.querySelector('.pas-titlu').textContent = p.titlu;
     // pasul 4 dispare la rame (n-au carduri de uşă) şi până apar cardurile
     s.hidden = p.id === 'usi' ? !vizibil($('groupUsi')) : p.id === 'oferta' ? !meta : false;
     s.classList.toggle('gata', gata[p.id]);
-    s.querySelector('.pas-nr').textContent = gata[p.id] ? '✓' : String(i + 1);
+    // numerotare doar pe paşii vizibili (fără 4 lipsă când n-are uşi)
+    if (!s.hidden) nr++;
+    s.querySelector('.pas-nr').textContent = gata[p.id] ? '✓' : String(nr);
     s.querySelector('.pas-rez').innerHTML = gata[p.id] || p.id === 'oferta' ? rezumat[p.id] : '';
     if (!curent && !gata[p.id] && !s.hidden && p.id !== 'cos') curent = p.id;
     s.classList.remove('curent');

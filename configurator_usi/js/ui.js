@@ -916,7 +916,7 @@ function renderOferta() {
     <div class="oferta-cine dim mic">${esc(utilizator.nume)}</div>
     ${!state.system && cos.pozitii.length ? ''   // nimic pe ecran, dar coşul are produse — se salvează ele
       : p.eroare
-      ? `<div class="oferta-msg eroare">${esc(p.eroare)}</div>`
+      ? `<div class="oferta-msg eroare">${esc(ceLipseste() || p.eroare)}</div>`
       : `<div class="oferta-sumar">
            <strong>${esc(p.pozitie.eticheta)}</strong>
            <div class="dim mic">${p.pozitie.latime}×${p.pozitie.inaltime} mm ·
@@ -1073,6 +1073,16 @@ export function configuratieCompleta() {
   if (!meta || !state.finish) return false;
   if (meta.rame) return (currentSpec()?.nrRame ?? 0) > 0;
   return latimeAtinsa && inaltimeAtinsa && (!meta.doorsRange || state.doors > 0);
+}
+
+// „Mai alege: culoarea, lăţimea." — în loc de „Configuraţia nu e gata." fără detalii
+function ceLipseste() {
+  const meta = systems[state.system]?.meta;
+  const lipsa = [!meta && 'modelul', !state.finish && 'culoarea'];
+  if (!meta?.rame) lipsa.push(!inaltimeAtinsa && 'înălţimea golului', !latimeAtinsa && 'lăţimea golului',
+    meta?.doorsRange && !state.doors && 'numărul de uşi');
+  const l = lipsa.filter(Boolean);
+  return l.length ? `Mai alege: ${l.join(', ')}.` : '';
 }
 
 const currentGama = () => systems[state.system]?.meta.family ?? gamaActiva;
