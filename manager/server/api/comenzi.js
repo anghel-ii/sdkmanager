@@ -270,7 +270,7 @@ function listeaza(ctx) {
   const filtru = FILTRE[tab] ?? FILTRE.oferta;
 
   const randuri = db().prepare(`
-    SELECT c.id, c.numar, c.oferta_nr, c.tip, c.client_nume, c.client_telefon, c.creat_la, c.confirmat_la, c.finalizat_la,
+    SELECT c.id, c.numar, c.oferta_nr, c.tip, c.client_nume, c.client_telefon, c.creat_la, c.confirmat_la, c.finalizat_la, c.tip_schimbat_la,
            c.factura_nr, c.facturat_la, c.plata, c.avans,
            u.nume AS creat_de_nume,
            -- toate produsele ofertei, în ordine: „Ramă 820 + Confort Gamma + Ofertă cu amănuntul"

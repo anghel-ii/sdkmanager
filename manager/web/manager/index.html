@@ -451,7 +451,11 @@ function randeazaTabel() {
   btnSort.textContent = sortare === 'facturare' ? '⇅ Nefacturate primele' : '⇅ Cele mai noi primele';
   btnSort.classList.toggle('activ', sortare === 'facturare');
 
-  const dataRand = c => (tabRand(c) === 'finalizata' ? c.finalizat_la : c.creat_la) || c.creat_la;
+  // momentul fiecărui tab (userul, 2026-10-05: o comandă acceptată acum arăta ora ofertei, „în urmă"):
+  // ofertat · trimis la plată · acceptat · finalizat
+  const dataRand = c => ({ oferta: c.creat_la, plata: c.tip_schimbat_la, comanda: c.confirmat_la,
+                           finalizata: c.finalizat_la }[tabRand(c)] || c.creat_la);
+  const titluData = totul ? 'Data' : { oferta: 'Ofertat', plata: 'Trimis la plată', comanda: 'Acceptat', finalizata: 'Finalizat' }[tabCurent];
   const randuri = lista
     // fiecare cuvânt trebuie să apară undeva: „andrei 4471" = clientul Andrei cu factura 4471
     .filter(c => q.split(/\s+/).every(cuv => !cuv ||
@@ -480,7 +484,7 @@ function randeazaTabel() {
     <table class="lista">
       <thead><tr>
         <th></th><th>Client</th><th>Nr. ofertă</th><th>Sistem</th>${cuStatus ? '<th>Status</th>' : ''}${cuSticla ? '<th>Sticlă</th>' : ''}${cuFacturare ? '<th>Plată</th><th class="num">Avans</th><th>Facturare</th>' : ''}
-        <th>Creat de</th><th>Data</th><th></th>
+        <th>Creat de</th><th>${titluData}</th><th></th>
       </tr></thead>
       <tbody>${randuri.map((c, i) => `${titluGrup(c, i)}
         <tr data-id="${c.id}"${c.fixat ? ' class="fixat"' : ''}>
