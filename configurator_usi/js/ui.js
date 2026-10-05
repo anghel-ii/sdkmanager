@@ -439,11 +439,27 @@ function refreshAvansat() {
   }
 }
 
+// ── Uşi identice / diferite (userul, 2026-10-05) ────────────────────────────
+// Identice (implicit): un singur card; ce alegi pe el se copiază la toate uşile.
+// Diferite: câte un card pe uşă, pornind de la ce era ales pe cardul comun.
+// Ofertele de dinainte (fără alegerea salvată în config): identice doar dacă
+// uşile chiar sunt la fel — altfel nu le stricăm.
+const PER_USA = ['divisions', 'wheels', 'assembly', 'geam', 'geamClient', 'hPanouri', 'divProfil', 'panels', 'amortizare', 'divAplicate'];
+const toateLaFel = () => PER_USA.every(k => (state[k] ?? []).every(x => JSON.stringify(x) === JSON.stringify(state[k][0])));
+const usiIdentice = () => (state.usiIdentice ??= toateLaFel());
+function aliniazaUsile() {
+  if (state.doors < 2 || !usiIdentice()) return;
+  for (const k of PER_USA) {
+    if (Array.isArray(state[k])) for (let i = 1; i < state[k].length; i++) state[k][i] = structuredClone(state[k][0]);
+  }
+}
+
 function renderWheels() {
   const box = $('wheelsUI');
   const groupUsi = $('groupUsi');
   if (!box) return;
   syncDoors();
+  aliniazaUsile();   // uşile noi (nr. de uşi crescut) iau opţiunile cardului comun
 
   // Tipul de divizor Confort/H e specific familiei Confort — uşile suspendate
   // (A-F) au un singur tip (H), deci nu arătăm alegerea (n-are sens un selector
@@ -475,19 +491,19 @@ function renderWheels() {
   }
   if (groupUsi) groupUsi.style.display = '';
 
-  // „Cine asamblează toate uşile" — doar la mai multe uşi; butonul e activ când
-  // toate uşile au aceeaşi alegere (la alegeri amestecate, niciunul)
-  const toti = state.assembly.every(a => a === state.assembly[0]) ? state.assembly[0] : null;
-  const toateUsile = state.wheels.length > 1 ? `
+  // Uşi identice / diferite — doar la mai multe uşi (înlocuieşte „Cine asamblează toate uşile")
+  const mai = state.wheels.length > 1, identice = mai && usiIdentice();
+  const comutator = mai ? `
     <div class="door-row toate-usi">
-      <span class="toate-usi-label">Cine asamblează toate uşile</span>
-      <div class="segmented mini" data-toate-assembly="1">
-        <button data-v="noi"${toti === 'noi' ? ' class="active"' : ''}>Noi</button>
-        <button data-v="client"${toti === 'client' ? ' class="active"' : ''}>Client</button>
+      <div class="segmented mini" data-usi-identice="1">
+        <button data-v="1"${identice ? ' class="active"' : ''}>Uşi identice</button>
+        <button data-v="0"${identice ? '' : ' class="active"'}>Uşi diferite</button>
       </div>
+      ${identice ? `<span class="toate-usi-nota">un singur card pentru toate cele ${state.wheels.length} uşi</span>` : ''}
     </div>` : '';
 
-  box.innerHTML = toateUsile + state.wheels.map((w, i) => {
+  box.innerHTML = comutator + state.wheels.map((w, i) => {
+    if (identice && i > 0) return '';   // uşi identice: doar cardul comun (al uşii 1)
     const panels   = state.panels[i];
     const hasGlass = panels.some(mat => mat !== 'pal');
     const client   = state.assembly[i] === 'client';
@@ -500,7 +516,7 @@ function renderWheels() {
       <!-- coloana stângă: restul câmpurilor -->
       <div class="door-fields-col">
         <div class="door-row">
-          <span class="door-row-label">Uşa ${i + 1}</span>
+          <span class="door-row-label">${identice ? 'Toate uşile' : `Uşa ${i + 1}`}</span>
           <div class="segmented mini" data-door="${i}" data-assembly="1">
             <button data-v="noi"${state.assembly[i] === 'noi' ? ' class="active"' : ''}>Noi</button>
             <button data-v="client"${state.assembly[i] === 'client' ? ' class="active"' : ''}>Client</button>
@@ -687,9 +703,13 @@ function renderWheels() {
     });
   });
 
-  box.querySelectorAll('[data-toate-assembly] button').forEach(btn => {
+  box.querySelectorAll('[data-usi-identice] button').forEach(btn => {
     btn.addEventListener('click', () => {
-      state.assembly = state.assembly.map(() => btn.dataset.v);
+      const da = btn.dataset.v === '1';
+      if (da === usiIdentice()) return;
+      // înapoi la identice: celelalte uşi iau opţiunile uşii 1 — întrebăm dacă diferă
+      if (da && !toateLaFel() && !confirm('Toate uşile iau opţiunile uşii 1. Continui?')) return;
+      state.usiIdentice = da;
       renderWheels();
       rebuild();
     });
@@ -830,6 +850,7 @@ function applyLimits() {
 // ── Rebuild ─────────────────────────────────────────────────────────────────
 
 function rebuild() {
+  aliniazaUsile();   // uşi identice: ce s-a schimbat pe cardul comun ajunge la toate uşile
   buildConfig(); refreshAvansat(); refreshRame(); renderReadout(); renderOferta();
   document.dispatchEvent(new Event('configurator:rebuild'));   // interfaţa nouă (ui_nou.js) îşi actualizează paşii
 }
@@ -1197,6 +1218,7 @@ export async function initUI() {
     cos.curent = x && x.gama !== 'amanunt' ? k : null;
     if (cos.curent != null) {
       Object.assign(state, structuredClone(x.pozitie.config));
+      state.usiIdentice = x.pozitie.config.usiIdentice;   // lipsă (oferte vechi) → se deduce din uşi
       gamaActiva = systems[state.system]?.meta.family ?? null;
     }
     state.comanda = { ...cos.comanda };
@@ -1218,6 +1240,7 @@ export async function initUI() {
     if (o.eroare || !poz?.config) eroareIncarcare = o.eroare || 'Comanda n-are configuraţie.';
     else {
       Object.assign(state, structuredClone(poz.config));
+      state.usiIdentice = poz.config.usiIdentice;   // lipsă (oferte vechi) → se deduce din uşi
       gamaActiva = systems[state.system]?.meta.family ?? null;
       $('clientNume').value    = o.comanda.client_nume ?? '';
       $('clientTelefon').value = o.comanda.client_telefon ?? '';
