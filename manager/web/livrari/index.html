@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Organizează livrări</title>
+<link rel="stylesheet" href="/comun.css">
+<link rel="stylesheet" href="/nou.css">
+<!-- harta: Leaflet + OpenStreetMap, încărcate în browser (serverul nu iese pe internet pt. ele) -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="/dialog.js"></script>
+<script src="/data.js"></script>
+<script src="/live.js"></script>
+<style>
+  #continut { padding: 20px 24px 40px; max-width: 1500px; margin: 0 auto; }
+  h1 { margin-bottom: 4px; }
+  .sub { color: var(--text-dim); font-size: .88rem; margin-bottom: 16px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+  .card > h2 { font-size: .74rem; text-transform: uppercase; letter-spacing: .05em; color: var(--text-dim); margin-bottom: 10px; }
+
+  /* judeţele cu comenzi — butoane comutabile */
+  .judete { display: flex; flex-wrap: wrap; gap: 8px; }
+  .judete button { padding: 7px 12px; font-size: .88rem; border-radius: 999px; }
+  .judete button .nr { display: inline-block; min-width: 1.6em; margin-left: 6px; padding: 0 6px; border-radius: 999px;
+                       background: var(--panel-2); color: var(--text-dim); font-size: .78rem; text-align: center; }
+  .judete button.activ { background: var(--accent-dim); border-color: var(--accent); color: #fff; }
+  .judete button.activ .nr { background: rgba(255,255,255,.2); color: #fff; }
+  .judete button.fara { border-style: dashed; color: #e5b45a; }
+
+  .plan[hidden] { display: none; }
+  .plan { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(380px, 1fr); gap: 16px; align-items: start; }
+  @media (max-width: 1150px) { .plan { grid-template-columns: 1fr; } }
+  .harta-card { position: sticky; top: 70px; }
+
+  table.lst { width: 100%; border-collapse: collapse; font-size: .88rem; }
+  table.lst th { text-align: left; font-size: .7rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase;
+                 color: var(--text-dim); padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  table.lst td { padding: 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  table.lst tr.debifat td:not(.bifa) { opacity: .45; }
+  table.lst td.bifa, table.lst th.bifa { width: 28px; }
+  table.lst input[type=checkbox] { width: auto; }
+  td.ordine { width: 26px; text-align: center; }
+  .bulina { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; font-size: .75rem; font-weight: 700;
+            background: var(--accent-dim); color: #fff; }
+  .client { font-weight: 600; }
+  .mic-dim { color: var(--text-dim); font-size: .78rem; }
+  .produse div { white-space: nowrap; }
+  select.judet { width: auto; padding: 3px 6px; font-size: .78rem; margin-top: 4px; }
+  select.judet.lipsa { border-color: #d4a24c; color: #e5b45a; }
+  input.incasat { width: 110px; padding: 6px 8px; text-align: right; font-family: 'JetBrains Mono', ui-monospace, monospace; }
+  input.incasat.salvat { border-color: var(--ok); }
+  .fara-punct { color: #e5b45a; font-size: .78rem; }
+  button.mic { padding: 4px 9px; font-size: .78rem; }
+  a.buton { display: inline-block; padding: 5px 10px; font-size: .8rem; border: 1px solid var(--accent-dim); border-radius: 6px;
+            color: var(--accent); background: rgba(77, 163, 255, .08); text-decoration: none; white-space: nowrap; }
+  a.buton:hover { background: rgba(77, 163, 255, .18); }
+
+  .confirma { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+  .confirma .total { flex: 1; color: var(--text-dim); }
+  .confirma .total strong { color: var(--text); }
+  .confirma input[type=date] { width: auto; }
+
+  #harta { height: 520px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel-2); }
+  .leaflet-tile { filter: brightness(.8) saturate(.85); }
+  .marcaj { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; font-weight: 700; font-size: 12px;
+            background: #1f6fd1; color: #fff; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.5); }
+  .marcaj.gri { background: #6b7280; width: 18px; height: 18px; font-size: 0; }
+  .marcaj.plecare { background: #237a46; }
+  .harta-unelte { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 10px; }
+  .harta-unelte .info { color: var(--text-dim); font-size: .82rem; flex: 1; }
+  .plecare { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+  .plecare input { flex: 1; }
+  .stare-geo { color: var(--text-dim); font-size: .8rem; margin-top: 6px; min-height: 1.2em; }
+
+  .livrare { border: 1px solid var(--line); border-radius: 10px; padding: 14px; margin-bottom: 12px; background: var(--panel-2); }
+  .livrare .cap { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+  .livrare .cap h3 { font-size: 1rem; }
+  .livrare .cap .spatiu { flex: 1; }
+  details.trecute > summary { cursor: pointer; color: var(--text-dim); margin: 6px 0 10px; }
+  .gol { text-align: center; padding: 30px; color: var(--text-dim); }
+
+  /* foaia de livrare pt. şofer — doar cardul ales, pe alb */
+  @media print {
+    body * { visibility: hidden; }
+    .de-tiparit, .de-tiparit * { visibility: visible; }
+    .de-tiparit { position: absolute; left: 0; top: 0; width: 100%; background: #fff; color: #000; border: none; }
+    .de-tiparit button { display: none; }
+    .de-tiparit table.lst td, .de-tiparit table.lst th { color: #000; border-color: #999; }
+  }
+</style>
+</head>
+<body class="ui-nou">
+
+<div id="bara"></div>
+<script src="/bara.js"></script>
+
+<div id="continut">
+  <h1>Organizează livrări</h1>
+  <div class="sub">Comenzile în lucru sau finalizate care se livrează cu maşina noastră şi nu sunt încă într-o livrare.</div>
+
+  <div class="card">
+    <h2>1 · Alege judeţele</h2>
+    <div class="judete" id="judete">Se încarcă…</div>
+  </div>
+
+  <div class="plan" id="plan" hidden>
+    <div class="card">
+      <h2>2 · Comenzile de livrat</h2>
+      <div id="tabel"></div>
+      <div class="confirma">
+        <span class="total" id="total"></span>
+        <label class="mic-dim" for="dataLivrare">Data livrării</label>
+        <input type="date" id="dataLivrare">
+        <button class="verde" id="confirma">Confirmă livrarea</button>
+      </div>
+    </div>
+    <div class="card harta-card">
+      <h2>Harta şi traseul</h2>
+      <div class="plecare" id="plecare"></div>
+      <div id="harta"></div>
+      <div class="stare-geo" id="stareGeo"></div>
+      <div class="harta-unelte">
+        <span id="linkuriMaps"></span>
+        <span class="info" id="infoTraseu"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Livrări programate</h2>
+    <div id="programate">Se încarcă…</div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+//  Organizează livrări (server/livrari.js). Alegi judeţele → comenzile lor, toate
+//  bifate; pe hartă (Leaflet + OpenStreetMap) apar punctele, iar lista stă mereu în
+//  ordinea celui mai scurt traseu (de la locul de plecare şi înapoi); „Confirmă
+//  livrarea" + data → livrare programată, cu traseul în Google Maps şi foaie de tipar.
+//  Adresele se caută pe hartă în browser (Nominatim, o cerere pe secundă) şi se
+//  ţin minte pe comandă — data viitoare nu se mai caută.
+// ═══════════════════════════════════════════════════════════════════════════
+const $ = id => document.getElementById(id);
+const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const lei = n => `${Number(n).toLocaleString('ro-RO', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} lei`;
+const data = s => dataOra(s).slice(0, 10);
+const PLATI = { proforma: 'Proformă', proforma_amanunt: 'Proformă amănunt', fiscala: 'Factură fiscală', bon: 'Bon fiscal', avans: 'Factură de avans' };
+
+async function api(cale, optiuni = {}) {
+  const r = await fetch(cale, { headers: { 'Content-Type': 'application/json' }, ...optiuni });
+  if (r.status === 401) { location.href = '/login?redirect=' + encodeURIComponent(location.pathname); return null; }
+  return r;
+}
+const eroareDin = async r => (await r.json().catch(() => ({}))).eroare || 'Operaţia a eşuat.';
+
+// ── Starea paginii ──
+let comenzi = [], judete = [], livrari = [], plecare = null;
+let alese = new Set();              // judeţele alese ('' = fără judeţ)
+try { alese = new Set(JSON.parse(localStorage.getItem('livrariJudete') ?? '[]')); } catch {}
+const debifate = new Set();         // comenzile debifate (implicit toate bifate)
+let ordine = [];                    // id-urile, în ordinea traseului
+let punePeHarta = null;             // id-ul comenzii care aşteaptă un clic pe hartă
+
+const vizibile = () => comenzi.filter(c => alese.has(c.judet ?? ''));
+const inOrdine = () => { const v = vizibile(), p = new Map(ordine.map((id, k) => [id, k]));
+  return v.sort((a, b) => (p.get(a.id) ?? 1e9) - (p.get(b.id) ?? 1e9)); };
+const bifate = () => inOrdine().filter(c => !debifate.has(c.id));
+// Lista stă MEREU în ordinea celui mai scurt traseu (userul nu trebuie să apese nimic):
+// bifatele cu punct pe hartă — în ordinea traseului, apoi bifatele fără punct, apoi nebifatele.
+function reordoneaza() {
+  const cu = bifate().filter(c => c.lat != null);
+  const drum = cu.length > 1 ? ordineOptima(cu.map(c => [c.lat, c.lon]), plecare ? [plecare.lat, plecare.lon] : null).map(i => cu[i]) : cu;
+  const rest = inOrdine().filter(c => !drum.includes(c));
+  ordine = [...drum, ...rest.filter(c => !debifate.has(c.id)), ...rest.filter(c => debifate.has(c.id))].map(c => c.id)
+    .concat(ordine.filter(id => !vizibile().some(c => c.id === id)));
+}
+
+async function incarca() {
+  const [rc, rl, rp] = await Promise.all([api('/api/livrari/candidati'), api('/api/livrari'), api('/api/livrari/plecare')]);
+  if (!rc || !rl || !rp) return;
+  ({ comenzi, judete } = await rc.json());
+  ({ livrari } = await rl.json());
+  ({ plecare } = await rp.json());
+  // ordinea: cea de până acum, apoi cele noi după judeţ şi dată
+  const noi = comenzi.filter(c => !ordine.includes(c.id))
+    .sort((a, b) => (a.judet ?? '').localeCompare(b.judet ?? '') || a.creat_la.localeCompare(b.creat_la)).map(c => c.id);
+  ordine = [...ordine.filter(id => comenzi.some(c => c.id === id)), ...noi];
+  randeazaJudete(); randeazaPlan(); randeazaProgramate();
+  cautaPeHarta();
+}
+
+// ── 1. Judeţele cu comenzi ──
+function randeazaJudete() {
+  const nr = new Map();
+  for (const c of comenzi) nr.set(c.judet ?? '', (nr.get(c.judet ?? '') ?? 0) + 1);
+  if (!comenzi.length) {
+    $('judete').innerHTML = '<span class="dim">Nicio comandă de livrat cu maşina noastră. Apar aici comenzile acceptate cu „Cu maşina noastră" la modul de livrare.</span>';
+    return;
+  }
+  const lista = [...nr.keys()].filter(j => j).sort((a, b) => a.localeCompare(b, 'ro'));
+  $('judete').innerHTML = lista.map(j => `<button data-j="${esc(j)}" class="${alese.has(j) ? 'activ' : ''}">${esc(j)}<span class="nr">${nr.get(j)}</span></button>`).join('')
+    + (nr.has('') ? `<button data-j="" class="fara${alese.has('') ? ' activ' : ''}" title="Adresa nu spune judeţul — alege-l în listă">Fără judeţ<span class="nr">${nr.get('')}</span></button>` : '');
+  $('judete').querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+    const j = b.dataset.j;
+    if (alese.has(j)) alese.delete(j); else alese.add(j);
+    try { localStorage.setItem('livrariJudete', JSON.stringify([...alese])); } catch {}
+    randeazaJudete(); randeazaPlan();
+  }));
+}
+
+// ── 2. Tabelul + harta ──
+function randeazaPlan() {
+  reordoneaza();
+  const v = inOrdine();
+  $('plan').hidden = !v.length;
+  if (!v.length) return;
+  let k = 0;
+  $('tabel').innerHTML = `<table class="lst">
+    <thead><tr><th class="bifa"><input type="checkbox" id="toate" ${v.every(c => !debifate.has(c.id)) ? 'checked' : ''}></th><th></th>
+      <th>Client</th><th>Produse</th><th>Adresă</th><th>Ofertă</th><th>De încasat</th></tr></thead>
+    <tbody>${v.map(c => {
+      const bif = !debifate.has(c.id);
+      const nr = bif ? ++k : null;
+      return `<tr data-id="${c.id}" class="${bif ? '' : 'debifat'}">
+        <td class="bifa"><input type="checkbox" class="rand" ${bif ? 'checked' : ''}></td>
+        <td class="ordine">${nr ? `<span class="bulina">${nr}</span>` : ''}</td>
+        <td><div class="client">${esc(c.client_nume)}</div>
+            <div class="mic-dim">${esc(c.client_telefon ?? '')}${c.client_telefon ? ' · ' : ''}<span class="mono">${esc(c.numar)}</span></div></td>
+        <td class="produse">${c.produse.map(p => `<div>${esc(p)}</div>`).join('') || '<span class="dim">—</span>'}</td>
+        <td>${esc(c.client_adresa ?? '—')}
+            <div><select class="judet${c.judet ? '' : ' lipsa'}" title="Judeţul livrării">
+              ${c.judet ? '' : '<option value="" selected>— alege judeţul —</option>'}
+              ${judete.map(j => `<option${j === c.judet ? ' selected' : ''}>${esc(j)}</option>`).join('')}</select>
+            ${c.lat == null ? ` <span class="fara-punct">nu e pe hartă</span> <button class="mic pune">📍 Pune pe hartă</button>` : ''}</div></td>
+        <td>${data(c.creat_la)}<div class="mic-dim">${c.finalizat_la ? 'finalizată' : 'în lucru'}</div></td>
+        <td><input class="incasat" inputmode="decimal" placeholder="0" value="${c.de_incasat ?? ''}">
+            <div class="mic-dim">${esc(PLATI[c.plata] ?? '')}${c.avans > 0 ? ` · avans ${lei(c.avans)}` : ''}</div></td>
+      </tr>`; }).join('')}</tbody></table>`;
+
+  $('toate').addEventListener('change', e => { v.forEach(c => (e.target.checked ? debifate.delete(c.id) : debifate.add(c.id))); randeazaPlan(); });
+  $('tabel').querySelectorAll('tbody tr').forEach(tr => {
+    const id = +tr.dataset.id, c = comenzi.find(x => x.id === id);
+    tr.querySelector('.rand').addEventListener('change', e => { if (e.target.checked) debifate.delete(id); else debifate.add(id); randeazaPlan(); });
+    tr.querySelector('select.judet').addEventListener('change', async e => {
+      const r = await api(`/api/livrari/comanda/${id}`, { method: 'PUT', body: JSON.stringify({ judet: e.target.value }) });
+      if (r && !r.ok) return alerta(await eroareDin(r));
+      alese.add(e.target.value);   // rămâne la vedere şi în judeţul ales
+      try { localStorage.setItem('livrariJudete', JSON.stringify([...alese])); } catch {}
+      incarca();
+    });
+    const inp = tr.querySelector('input.incasat');
+    inp.addEventListener('change', async () => {
+      const r = await api(`/api/livrari/comanda/${id}`, { method: 'PUT', body: JSON.stringify({ de_incasat: inp.value }) });
+      if (r && !r.ok) { inp.value = c.de_incasat ?? ''; return alerta(await eroareDin(r)); }
+      c.de_incasat = inp.value.trim() === '' ? null : Number(inp.value.replace(',', '.'));
+      inp.classList.add('salvat'); setTimeout(() => inp.classList.remove('salvat'), 1200);
+      randeazaTotal();
+    });
+    tr.querySelector('.pune')?.addEventListener('click', () => {
+      punePeHarta = id;
+      $('stareGeo').textContent = `Dă clic pe hartă unde e ${c.client_nume}.`;
+    });
+  });
+  randeazaTotal();
+  randeazaHarta();
+}
+
+function randeazaTotal() {
+  const b = bifate();
+  const suma = b.reduce((s, c) => s + (Number(c.de_incasat) || 0), 0);
+  $('total').innerHTML = `<strong>${b.length}</strong> ${b.length === 1 ? 'comandă bifată' : 'comenzi bifate'} · de încasat <strong>${lei(suma)}</strong>`;
+}
+
+// ── Harta ──
+let harta = null, strat = null;
+const areHarta = () => !!window.L;
+function initHarta() {
+  if (harta || !areHarta()) return;
+  harta = L.map('harta').setView([45.9, 24.9], 7);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '&copy; OpenStreetMap' }).addTo(harta);
+  strat = L.layerGroup().addTo(harta);
+  harta.on('click', async e => {
+    if (!punePeHarta) return;
+    const c = comenzi.find(x => x.id === punePeHarta);
+    punePeHarta = null;
+    await salveazaPunct(c, e.latlng.lat, e.latlng.lng);
+    $('stareGeo').textContent = '';
+  });
+}
+const marcaj = (text, cls = '') => L.divIcon({ className: '', html: `<div class="marcaj ${cls}">${text}</div>`, iconSize: [26, 26], iconAnchor: [13, 13] });
+
+function randeazaHarta() {
+  if (!areHarta()) { $('harta').innerHTML = '<div class="gol">Harta nu s-a putut încărca (fără internet?). Restul paginii merge.</div>'; return; }
+  initHarta();
+  setTimeout(() => harta.invalidateSize(), 0);
+  strat.clearLayers();
+  const b = bifate().filter(c => c.lat != null);
+  const pct = [];
+  if (plecare) { L.marker([plecare.lat, plecare.lon], { icon: marcaj('⌂', 'plecare'), title: 'Plecare: ' + plecare.adresa }).addTo(strat); pct.push([plecare.lat, plecare.lon]); }
+  b.forEach((c, k) => {
+    const m = L.marker([c.lat, c.lon], { icon: marcaj(k + 1), draggable: true, title: c.client_nume }).addTo(strat)
+      .bindPopup(`<b>${esc(c.client_nume)}</b><br>${esc(c.client_adresa ?? '')}`);
+    m.on('dragend', () => salveazaPunct(c, m.getLatLng().lat, m.getLatLng().lng));   // punct greşit → îl muţi
+    pct.push([c.lat, c.lon]);
+  });
+  inOrdine().filter(c => debifate.has(c.id) && c.lat != null)
+    .forEach(c => L.marker([c.lat, c.lon], { icon: marcaj('', 'gri'), title: c.client_nume + ' (nebifată)' }).addTo(strat));
+  if (plecare && b.length) pct.push([plecare.lat, plecare.lon]);   // înapoi la plecare
+  if (pct.length > 1) L.polyline(pct, { color: '#4da3ff', weight: 3, opacity: .8 }).addTo(strat);
+  if (pct.length) harta.fitBounds(L.latLngBounds(pct).pad(0.15), { maxZoom: 12 });
+
+  const km = lungime(pct);
+  const faraPunct = bifate().filter(c => c.lat == null).length;
+  $('infoTraseu').textContent = b.length ? `Cel mai scurt traseu: ~${Math.round(km)} km în linie dreaptă${plecare ? ' (dus-întors)' : ''}`
+    + (faraPunct ? ` · ${faraPunct} fără punct pe hartă` : '') : '';
+  $('linkuriMaps').innerHTML = linkuriMaps(pct);
+  randeazaPlecare();
+}
+
+async function salveazaPunct(c, lat, lon, { tabel = true } = {}) {
+  const r = await api(`/api/livrari/comanda/${c.id}`, { method: 'PUT', body: JSON.stringify({ lat, lon, geo_adresa: cheieGeo(c) }) });
+  if (r && !r.ok) return alerta(await eroareDin(r));
+  Object.assign(c, { lat, lon, geo_adresa: cheieGeo(c) });
+  if (tabel) randeazaPlan(); else if (!$('plan').hidden) randeazaHarta();
+}
+// cât scrie omul într-un câmp, tabelul nu se redesenează (ar pierde ce scrie)
+const scrieCineva = () => document.activeElement?.matches?.('#plan input, #plan select');
+
+// Google Maps — max. 10 opriri pe link; mai multe → mai multe linkuri, legate cap la cap
+function linkuriMaps(pct) {
+  if (pct.length < 2) return '';
+  const bucati = [];
+  for (let i = 0; i < pct.length - 1; i += 9) bucati.push(pct.slice(i, i + 10));
+  return bucati.map((b, k) => `<a class="buton" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/${b.map(p => p.join(',')).join('/')}">Google Maps${bucati.length > 1 ? ` ${k + 1}/${bucati.length}` : ''}</a>`).join(' ');
+}
+
+// ── Traseul ──
+const RAD = Math.PI / 180;
+const dist = (a, b) => { const dLat = (b[0] - a[0]) * RAD, dLon = (b[1] - a[1]) * RAD;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a[0] * RAD) * Math.cos(b[0] * RAD) * Math.sin(dLon / 2) ** 2;
+  return 2 * 6371 * Math.asin(Math.sqrt(h)); };
+const lungime = pct => pct.slice(1).reduce((s, p, k) => s + dist(pct[k], p), 0);
+
+// Ordinea opririlor. Până la 12: EXACT (programare dinamică Held-Karp — cea mai scurtă
+// dintre toate ordinile, sub o secundă); peste 12: cel mai apropiat vecin + 2-opt
+// (aproape optim). Cu loc de plecare: pleacă şi se întoarce acolo; fără — drum liber.
+function ordineOptima(pct, start) {
+  const n = pct.length;
+  const d0 = j => (start ? dist(start, pct[j]) : 0);   // fără plecare: capetele nu costă
+  if (n <= 12) {
+    const N = 1 << n, cost = new Float64Array(N * n).fill(Infinity), prev = new Int8Array(N * n).fill(-1);
+    for (let j = 0; j < n; j++) cost[(1 << j) * n + j] = d0(j);
+    for (let m = 1; m < N; m++) for (let j = 0; j < n; j++) {
+      const c = cost[m * n + j];
+      if (!(m & (1 << j)) || c === Infinity) continue;
+      for (let k = 0; k < n; k++) {
+        if (m & (1 << k)) continue;
+        const m2 = m | (1 << k), v = c + dist(pct[j], pct[k]);
+        if (v < cost[m2 * n + k]) { cost[m2 * n + k] = v; prev[m2 * n + k] = j; }
+      }
+    }
+    let m = N - 1, j = 0;
+    for (let k = 1; k < n; k++) if (cost[m * n + k] + d0(k) < cost[m * n + j] + d0(j)) j = k;
+    const ord = [];
+    while (j >= 0) { ord.unshift(j); const pj = prev[m * n + j]; m &= ~(1 << j); j = pj; }
+    return ord;
+  }
+  // mulţi: cel mai apropiat vecin, apoi 2-opt
+  let rest = [...pct.keys()], ord = [], cur = start;
+  if (!cur) { ord.push(rest.shift()); cur = pct[ord[0]]; }
+  while (rest.length) {
+    let k = 0;
+    rest.forEach((x, i) => { if (dist(cur, pct[x]) < dist(cur, pct[rest[k]])) k = i; });
+    ord.push(rest[k]); cur = pct[rest[k]]; rest.splice(k, 1);
+  }
+  const lung = o => lungime([...(start ? [start] : []), ...o.map(i => pct[i]), ...(start ? [start] : [])]);
+  for (let bun = true; bun;) {
+    bun = false;
+    for (let i = 0; i < ord.length - 1; i++) for (let j = i + 1; j < ord.length; j++) {
+      const nou = [...ord.slice(0, i), ...ord.slice(i, j + 1).reverse(), ...ord.slice(j + 1)];
+      if (lung(nou) + 1e-9 < lung(ord)) { ord = nou; bun = true; }
+    }
+  }
+  return ord;
+}
+
+// ── Locul de plecare (depozitul) ──
+function randeazaPlecare() {
+  if ($('plecare').contains(document.activeElement)) return;   // scrie adresa — nu-i stric câmpul
+  $('plecare').innerHTML = plecare && !$('plecare').dataset.editez
+    ? `<span class="mic-dim">Plecare: <b>${esc(plecare.adresa)}</b></span> <button class="mic" id="schimbaPlecare">schimbă</button>`
+    : `<input id="adresaPlecare" placeholder="Adresa de plecare (depozitul) — de aici porneşte traseul" value="${esc(plecare?.adresa ?? '')}">
+       <button class="mic primar" id="salveazaPlecare">Salvează</button>`;
+  $('schimbaPlecare')?.addEventListener('click', () => { $('plecare').dataset.editez = '1'; randeazaPlecare(); });
+  $('salveazaPlecare')?.addEventListener('click', async () => {
+    const adresa = $('adresaPlecare').value.trim();
+    if (!adresa) return;
+    const g = await geocodeaza(adresa);
+    if (!g) return alerta('Nu am găsit adresa pe hartă — scrie şi localitatea şi judeţul.');
+    const r = await api('/api/livrari/plecare', { method: 'PUT', body: JSON.stringify({ adresa, ...g }) });
+    if (r && !r.ok) return alerta(await eroareDin(r));
+    plecare = { adresa, ...g };
+    delete $('plecare').dataset.editez;
+    randeazaPlan();
+  });
+}
+
+// ── Căutarea adreselor pe hartă (Nominatim / OpenStreetMap, în browser) ──
+const pauza = ms => new Promise(r => setTimeout(r, ms));
+let ultimaCerere = 0;
+const fara = t => String(t ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+async function nominatim(q) {
+  const asteapta = ultimaCerere + 1100 - Date.now();   // regula Nominatim: max. o cerere pe secundă
+  if (asteapta > 0) await pauza(asteapta);
+  ultimaCerere = Date.now();
+  try {
+    const r = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=ro&addressdetails=1&accept-language=ro&q=${encodeURIComponent(q)}`);
+    const [g] = r.ok ? await r.json() : [];
+    // judeţul punctului (Bucureşti n-are „county" — e oraşul / regiunea)
+    return g ? { lat: Number(g.lat), lon: Number(g.lon), unde: fara([g.address?.county, g.address?.city, g.address?.state].join(' ')) } : null;
+  } catch { return null; }
+}
+// Adresa întreagă, apoi doar ultimele două bucăţi (localitate, judeţ). Cu judeţ: punctul
+// se acceptă DOAR dacă e în judeţul ăla — o adresă fără localitate („Strada Florilor 7")
+// s-ar potrivi oriunde în ţară. Rezultatul: { lat, lon } sau null.
+async function geocodeaza(adresa, judet = '') {
+  const bucati = String(adresa).split(',').map(s => s.trim()).filter(Boolean);
+  const j = fara(judet).replace(/-/g, ' ');
+  for (const q of [[adresa, judet].filter(Boolean).join(', '), [...bucati.slice(-2), judet].filter(Boolean).join(', ')]) {
+    if (!q) continue;
+    const g = await nominatim(q + ', România');
+    if (g && (!j || g.unde.replace(/-/g, ' ').includes(j))) return { lat: g.lat, lon: g.lon };
+  }
+  return null;
+}
+// cheia căutării: adresa + judeţul — alt judeţ ales de mână = se caută din nou
+const cheieGeo = c => `${c.client_adresa ?? ''}|${c.judet ?? ''}`;
+let cautare = false;
+async function cautaPeHarta() {
+  if (cautare || !areHarta()) return;
+  cautare = true;
+  try {
+    // doar cu judeţ cunoscut (fără el, punctul îl pune omul cu „Pune pe hartă")
+    const deCautat = comenzi.filter(c => c.client_adresa && c.judet && (c.lat == null || c.geo_adresa !== cheieGeo(c)) && !c.cautataDegeaba);
+    let k = 0;
+    for (const c of deCautat) {
+      $('stareGeo').textContent = `Caut adresele pe hartă… ${++k}/${deCautat.length}`;
+      const g = await geocodeaza(c.client_adresa, c.judet ?? '');
+      if (g) await salveazaPunct(c, g.lat, g.lon, { tabel: false }); else c.cautataDegeaba = true;
+    }
+  } finally {
+    cautare = false;
+    if (!scrieCineva()) randeazaPlan();
+    if ($('stareGeo').textContent.startsWith('Caut')) $('stareGeo').textContent = '';
+  }
+}
+
+// ── „Confirmă livrarea" ──
+$('confirma').addEventListener('click', async () => {
+  const b = bifate();
+  if (!b.length) return alerta('Bifează cel puţin o comandă.');
+  const zi = $('dataLivrare').value;
+  if (!zi) { $('dataLivrare').focus(); return alerta('Alege data livrării.'); }
+  if (!(await confirma(`Programezi livrarea din ${ziua(zi)} cu ${b.length} ${b.length === 1 ? 'comandă' : 'comenzi'}?`))) return;
+  const r = await api('/api/livrari', { method: 'POST', body: JSON.stringify({ data: zi, comenzi: b.map(c => c.id) }) });
+  if (r && !r.ok) return alerta(await eroareDin(r));
+  b.forEach(c => debifate.delete(c.id));
+  incarca();
+});
+const ziua = zi => new Date(zi + 'T12:00:00').toLocaleDateString('ro-RO', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
+// implicit mâine
+{ const m = new Date(Date.now() + 864e5); $('dataLivrare').value = `${m.getFullYear()}-${String(m.getMonth() + 1).padStart(2, '0')}-${String(m.getDate()).padStart(2, '0')}`; }
+
+// ── Livrări programate ──
+function cardLivrare(l) {
+  const judeteL = [...new Set(l.comenzi.map(c => c.judet).filter(Boolean))].join(', ');
+  const suma = l.comenzi.reduce((s, c) => s + (Number(c.de_incasat) || 0), 0);
+  const pct = [...(plecare ? [[plecare.lat, plecare.lon]] : []), ...l.comenzi.filter(c => c.lat != null).map(c => [c.lat, c.lon]),
+               ...(plecare ? [[plecare.lat, plecare.lon]] : [])];
+  return `<div class="livrare" data-id="${l.id}">
+    <div class="cap">
+      <h3>${esc(ziua(l.data))}</h3>
+      <span class="mic-dim">${l.comenzi.length} ${l.comenzi.length === 1 ? 'comandă' : 'comenzi'}${judeteL ? ` · ${esc(judeteL)}` : ''} · de încasat <b>${lei(suma)}</b></span>
+      <span class="spatiu"></span>
+      ${linkuriMaps(pct)}
+      <button class="mic tipar">🖶 Foaia de livrare</button>
+      <button class="mic rosu-contur anuleaza">Anulează livrarea</button>
+    </div>
+    <table class="lst">
+      <thead><tr><th></th><th>Client</th><th>Telefon</th><th>Adresă</th><th>Produse</th><th>De încasat</th></tr></thead>
+      <tbody>${l.comenzi.map((c, k) => `<tr>
+        <td class="ordine"><span class="bulina">${k + 1}</span></td>
+        <td><div class="client">${esc(c.client_nume)}</div><div class="mic-dim mono">${esc(c.numar)}</div></td>
+        <td>${esc(c.client_telefon ?? '—')}</td>
+        <td>${esc(c.client_adresa ?? '—')}${c.judet ? `<div class="mic-dim">${esc(c.judet)}</div>` : ''}</td>
+        <td class="produse">${c.produse.map(p => `<div>${esc(p)}</div>`).join('')}</td>
+        <td>${c.de_incasat ? lei(c.de_incasat) : '<span class="dim">—</span>'}</td>
+      </tr>`).join('')}</tbody>
+    </table>
+  </div>`;
+}
+
+function randeazaProgramate() {
+  const azi = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Bucharest' });   // AAAA-LL-ZZ, ora României
+  const viitoare = livrari.filter(l => l.data >= azi), trecute = livrari.filter(l => l.data < azi).reverse();
+  $('programate').innerHTML = (viitoare.length ? viitoare.map(cardLivrare).join('') : '<div class="gol">Nicio livrare programată.</div>')
+    + (trecute.length ? `<details class="trecute"><summary>Livrări trecute (${trecute.length})</summary>${trecute.map(cardLivrare).join('')}</details>` : '');
+  $('programate').querySelectorAll('.livrare').forEach(card => {
+    const id = +card.dataset.id;
+    card.querySelector('.anuleaza').addEventListener('click', async () => {
+      if (!(await confirma('Anulezi livrarea? Comenzile ei se întorc în lista de organizat.'))) return;
+      const r = await api(`/api/livrari/${id}`, { method: 'DELETE' });
+      if (r && !r.ok) return alerta(await eroareDin(r));
+      incarca();
+    });
+    card.querySelector('.tipar').addEventListener('click', () => {
+      card.classList.add('de-tiparit');
+      window.addEventListener('afterprint', () => card.classList.remove('de-tiparit'), { once: true });
+      window.print();
+    });
+  });
+}
+
+// ── Pornire + actualizare live (nu în timp ce scrii o sumă) ──
+let deReimprospatat = false;
+const reimprospateaza = () => {
+  if (document.activeElement?.matches?.('input, select')) { deReimprospatat = true; return; }
+  deReimprospatat = false; incarca();
+};
+document.addEventListener('focusout', () => { if (deReimprospatat) setTimeout(reimprospateaza, 0); });
+(async () => {
+  if (!(await api('/api/eu'))) return;
+  await incarca();
+  urmareste(reimprospateaza);
+})();
+</script>
+</body>
+</html>
