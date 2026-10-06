@@ -159,27 +159,6 @@ const MIGRATII = [
   // aşteaptă plata) — „Înapoi în ofertă" merge doar câteva minute după (userul).
   // Comenzile de dinainte: NULL, deci nu se mai pot întoarce.
   d => d.exec('ALTER TABLE comanda ADD COLUMN tip_schimbat_la TEXT'),
-  // v14 → v15 (2026-10-06): „Organizează livrări" (server/livrari.js). Pe comandă:
-  // judeţul (NULL = recunoscut din adresă), suma de încasat la livrare (o trec
-  // colegii) şi coordonatele adresei (găsite în browser, ca harta să nu le caute
-  // din nou; geo_adresa = adresa pt. care sunt — altă adresă = se caută iar).
-  // O livrare = o zi + comenzile ei, în ordinea traseului; o comandă — o singură livrare.
-  d => {
-    for (const col of ['judet TEXT', 'de_incasat REAL', 'lat REAL', 'lon REAL', 'geo_adresa TEXT']) d.exec(`ALTER TABLE comanda ADD COLUMN ${col}`);
-    d.exec(`
-      CREATE TABLE livrare (
-        id        INTEGER PRIMARY KEY,
-        data      TEXT NOT NULL,                         -- ziua livrării, AAAA-LL-ZZ
-        creat_la  TEXT NOT NULL,
-        creat_de  INTEGER REFERENCES utilizator(id)
-      );
-      CREATE TABLE livrare_comanda (
-        livrare_id INTEGER NOT NULL REFERENCES livrare(id) ON DELETE CASCADE,
-        comanda_id INTEGER NOT NULL UNIQUE REFERENCES comanda(id) ON DELETE CASCADE,
-        ordine     INTEGER NOT NULL,
-        PRIMARY KEY (livrare_id, comanda_id)
-      );`);
-  },
 ];
 
 // Exportată pt. test.

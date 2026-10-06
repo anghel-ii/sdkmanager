@@ -41,7 +41,6 @@
       <a href="/" class="nume">Manager comenzi</a>
       <button type="button" id="ofertaNoua" class="primar">+ OFERTĂ NOUĂ</button>
       <a href="/sticla" class="buton${activ('/sticla')}" id="linkSticla">Comandă sticlă <span class="insigna" id="nrSticla"></span></a>
-      <a href="/livrari" class="buton${activ('/livrari')}" id="linkLivrari">Organizează livrări</a>
       <a href="/clienti" class="buton${activ('/clienti')}" id="linkClienti" hidden title="Clienţii; numărul = trimise de agenţi, de aprobat">Clienţi <span class="insigna" id="nrClienti"></span></a>
       <a href="/admin" class="buton${activ('/admin')}" id="linkAdmin" hidden>Utilizatori</a>
       <span class="spatiu"></span>

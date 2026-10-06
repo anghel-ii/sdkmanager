@@ -174,7 +174,6 @@ async function main() {
     ['butonul OFERTĂ NOUĂ', 'id="ofertaNoua"'],
     ['linkul spre sticlă',  'href="/sticla"'],
     ['linkul Acasă',        'href="/"'],
-    ['Organizează livrări', 'href="/livrari"'],
   ]) verifica(`bara comună are ${ce}`, bara.includes(bucata), bucata);
 
   const mg = String((await cer('GET', '/comenzi')).date);
@@ -463,7 +462,7 @@ async function main() {
     const idVechi = Number(db2().prepare("INSERT INTO utilizator (nume, user, parola_hash, parola_salt, rol) VALUES ('Vechi', 'vechi', 'x', 'x', 'operator')").run().lastInsertRowid);
     require('../server/db.js').roluriNoi(db2());
     verifica('migraţie: operator → birou', db2().prepare('SELECT rol FROM utilizator WHERE id = ?').get(idVechi).rol === 'birou');
-    verifica('schema la versiunea 15', db2().prepare('PRAGMA user_version').get().user_version === 15);
+    verifica('schema la versiunea 14', db2().prepare('PRAGMA user_version').get().user_version === 14);
   }
 
   console.log('\nFixare şi sortare — per utilizator');
@@ -797,60 +796,6 @@ async function main() {
     fals.close();
     verifica('Cloudflare căzut → 502 cu mesaj', (await cer('GET', '/api/agenti')).stare === 502);
     config.clientiUrl = config.clientiCheie = '';
-  }
-
-  console.log('\nOrganizează livrări (server/livrari.js)');
-  {
-    const { judetDin } = require('../server/livrari.js');
-    for (const [adresa, j] of [
-      ['Str. Mihai Eminescu nr. 5, Pascani, Iasi', 'Iași'], ['Str. Iaşi 12, Bacău', 'Bacău'],
-      ['Sat Valea Mare, com. X, jud. Bistrita-Nasaud', 'Bistrița-Năsăud'], ['Bd. Unirii 3, Sector 3', 'București'],
-      ['Strada Florilor 1', null], ['Satu Mare, str. Libertatii', 'Satu Mare'], ['Str. Voltaire 2, Cluj-Napoca, Cluj', 'Cluj'],
-    ]) verifica(`judeţul din „${adresa}" → ${j}`, judetDin(adresa) === j, judetDin(adresa));
-
-    const noua = async (nume, livrare, adresa) => (await cer('POST', '/api/comenzi', {
-      client: { nume, telefon: '0722', adresa }, detalii: { livrare }, ofertaNr: 'LV-' + nume,
-      pozitii: [pozitie('confortGamma', 'Confort Gamma', 2, 2000)] })).date.comanda.id;
-    const iasi  = await noua('Livr Iasi', 'Cu masina noastra', 'Str. Lunga 1, Pascani, Iasi');
-    const vaslui = await noua('Livr Vaslui', 'Cu masina noastra', 'Str. Scurta 2, Barlad, Vaslui');
-    const curier = await noua('Livr Curier', 'Curier ramburs', 'Str. X, Iasi');
-    const faraJ = await noua('Livr FaraJudet', 'Cu masina noastra', 'Strada Florilor 1');
-    const oferta = await noua('Livr Oferta', 'Cu masina noastra', 'Str. Y, Iasi');   // rămâne ofertă
-    for (const id of [iasi, vaslui, curier, faraJ]) await cer('POST', `/api/comenzi/${id}/accepta`, { plata: 'proforma', avans: 0 });
-    const cand = async () => (await cer('GET', '/api/livrari/candidati')).date.comenzi;
-    let c = await cand();
-    const id = x => c.find(k => k.id === x);
-    verifica('livrări: doar comenzile acceptate, cu maşina noastră', id(iasi) && id(vaslui) && id(faraJ) && !id(curier) && !id(oferta),
-      JSON.stringify(c.map(k => k.client_nume)));
-    verifica('livrări: judeţul recunoscut din adresă', id(iasi).judet === 'Iași' && id(vaslui).judet === 'Vaslui' && id(faraJ).judet === null);
-    verifica('livrări: produsele comenzii', id(iasi).produse[0] === 'Confort Gamma · 2 uşi', JSON.stringify(id(iasi).produse));
-    verifica('livrări: judeţ ales de mână', (await cer('PUT', `/api/livrari/comanda/${faraJ}`, { judet: 'Neamț' })).stare === 200);
-    verifica('livrări: judeţ necunoscut → 400', (await cer('PUT', `/api/livrari/comanda/${faraJ}`, { judet: 'Atlantida' })).stare === 400);
-    verifica('livrări: suma de încasat (virgulă) se salvează', (await cer('PUT', `/api/livrari/comanda/${iasi}`, { de_incasat: '1250,5' })).stare === 200);
-    verifica('livrări: sumă negativă → 400', (await cer('PUT', `/api/livrari/comanda/${iasi}`, { de_incasat: '-3' })).stare === 400);
-    verifica('livrări: coordonate în afara României → 400', (await cer('PUT', `/api/livrari/comanda/${iasi}`, { lat: 51.5, lon: -0.1 })).stare === 400);
-    verifica('livrări: coordonatele din România se salvează', (await cer('PUT', `/api/livrari/comanda/${iasi}`, { lat: 47.24, lon: 26.72, geo_adresa: 'x' })).stare === 200);
-    c = await cand();
-    verifica('livrări: suma + judeţul + punctul se văd în listă', id(iasi).de_incasat === 1250.5 && id(faraJ).judet === 'Neamț' && id(iasi).lat === 47.24);
-
-    verifica('livrări: fără dată → 400', (await cer('POST', '/api/livrari', { comenzi: [iasi] })).stare === 400);
-    verifica('livrări: comandă cu curier → 400', (await cer('POST', '/api/livrari', { data: '2026-10-09', comenzi: [curier] })).stare === 400);
-    const l = await cer('POST', '/api/livrari', { data: '2026-10-09', comenzi: [vaslui, iasi] });
-    verifica('livrări: livrare programată → 201', l.stare === 201, JSON.stringify(l.date));
-    c = await cand();
-    verifica('livrări: comenzile programate ies din listă', !id(iasi) && !id(vaslui) && id(faraJ));
-    verifica('livrări: aceeaşi comandă de două ori → 409', (await cer('POST', '/api/livrari', { data: '2026-10-10', comenzi: [iasi] })).stare === 409);
-    const ls = (await cer('GET', '/api/livrari')).date.livrari;
-    const prog = ls.find(x => x.id === l.date.id);
-    verifica('livrări: ordinea traseului se păstrează', prog?.data === '2026-10-09' && prog.comenzi.map(x => x.id).join() === [vaslui, iasi].join(),
-      JSON.stringify(prog));
-    verifica('livrări: anulare → 200', (await cer('DELETE', `/api/livrari/${l.date.id}`)).stare === 200);
-    c = await cand();
-    verifica('livrări: după anulare comenzile se întorc în listă', !!id(iasi) && !!id(vaslui));
-    verifica('livrări: plecarea fără coordonate → 400', (await cer('PUT', '/api/livrari/plecare', { adresa: 'Depozit' })).stare === 400);
-    verifica('livrări: plecarea se salvează', (await cer('PUT', '/api/livrari/plecare', { adresa: 'Depozit, Iasi', lat: 47.16, lon: 27.58 })).stare === 200
-      && (await cer('GET', '/api/livrari/plecare')).date.plecare?.adresa === 'Depozit, Iasi');
-    verifica('pagina /livrari se serveşte', String((await cer('GET', '/livrari')).date).includes('Organizează livrări'));
   }
 
   console.log('\nOra exactă (server/ora.js) — ceasul serverului în urmă cu 5 minute');
