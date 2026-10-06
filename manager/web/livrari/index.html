@@ -67,8 +67,9 @@
             background: #1f6fd1; color: #fff; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.5); }
   .marcaj.gri { background: #6b7280; width: 18px; height: 18px; font-size: 0; }
   .marcaj.plecare { background: #237a46; }
-  .harta-unelte { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 10px; }
-  .harta-unelte .info { color: var(--text-dim); font-size: .82rem; flex: 1; }
+  /* harta de pe foaia de livrare: lăţimea unei foi A4, culorile reale */
+  .harta-tipar { width: 680px; height: 560px; margin-top: 12px; break-inside: avoid; }
+  .harta-tipar .leaflet-tile { filter: none; }
   .plecare { margin-bottom: 10px; }
   .stare-geo { color: var(--text-dim); font-size: .8rem; margin-top: 6px; min-height: 1.2em; }
 
@@ -82,10 +83,12 @@
   /* foaia de livrare pt. şofer — doar cardul ales, pe alb */
   @media print {
     body * { visibility: hidden; }
+    :has(.de-tiparit) > :not(:has(.de-tiparit)):not(.de-tiparit) { display: none; }   /* restul paginii nu mai ocupă foi goale */
     .de-tiparit, .de-tiparit * { visibility: visible; }
     .de-tiparit { position: absolute; left: 0; top: 0; width: 100%; background: #fff; color: #000; border: none; }
     .de-tiparit button { display: none; }
     .de-tiparit table.lst td, .de-tiparit table.lst th { color: #000; border-color: #999; }
+    .de-tiparit, .de-tiparit * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }   /* bulinele numerotate */
   }
 </style>
 </head>
@@ -119,10 +122,6 @@
       <div class="plecare mic-dim">Plecare: <b>sediul — Str. Odobeşti 53, Cluj-Napoca</b></div>
       <div id="harta"></div>
       <div class="stare-geo" id="stareGeo"></div>
-      <div class="harta-unelte">
-        <span id="linkuriMaps"></span>
-        <span class="info" id="infoTraseu"></span>
-      </div>
     </div>
   </div>
 
@@ -137,7 +136,7 @@
 //  Organizează livrări (server/livrari.js). Alegi judeţele → comenzile lor, toate
 //  bifate; pe hartă (Leaflet + OpenStreetMap) apar punctele, iar lista stă mereu în
 //  ordinea celui mai scurt traseu (de la locul de plecare şi înapoi); „Confirmă
-//  livrarea" + data → livrare programată, cu traseul în Google Maps şi foaie de tipar.
+//  livrarea" + data → livrare programată, cu foaie de tipar (lista + harta numerotată).
 //  Adresele se caută pe hartă în browser (Photon / Nominatim, o cerere pe secundă) şi se
 //  ţin minte pe comandă — data viitoare nu se mai caută.
 // ═══════════════════════════════════════════════════════════════════════════
@@ -275,11 +274,12 @@ function randeazaTotal() {
 
 // ── Harta ──
 let harta = null, strat = null;
+const OSM = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 const areHarta = () => !!window.L;
 function initHarta() {
   if (harta || !areHarta()) return;
   harta = L.map('harta').setView([45.9, 24.9], 7);
-  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '&copy; OpenStreetMap' }).addTo(harta);
+  L.tileLayer(OSM, { maxZoom: 18, attribution: '&copy; OpenStreetMap' }).addTo(harta);
   strat = L.layerGroup().addTo(harta);
   harta.on('click', async e => {
     if (!punePeHarta) return;
@@ -311,12 +311,6 @@ function randeazaHarta() {
   if (b.length) pct.push([plecare.lat, plecare.lon]);   // înapoi la plecare
   if (pct.length > 1) L.polyline(pct, { color: '#4da3ff', weight: 3, opacity: .8 }).addTo(strat);
   if (pct.length) harta.fitBounds(L.latLngBounds(pct).pad(0.15), { maxZoom: 12 });
-
-  const km = lungime(pct);
-  const faraPunct = bifate().filter(c => c.lat == null).length;
-  $('infoTraseu').textContent = b.length ? `Cel mai scurt traseu: ~${Math.round(km)} km în linie dreaptă (dus-întors)`
-    + (faraPunct ? ` · ${faraPunct} fără punct pe hartă` : '') : '';
-  $('linkuriMaps').innerHTML = linkuriMaps(pct);
 }
 
 async function salveazaPunct(c, lat, lon, { tabel = true } = {}) {
@@ -327,14 +321,6 @@ async function salveazaPunct(c, lat, lon, { tabel = true } = {}) {
 }
 // cât scrie omul într-un câmp, tabelul nu se redesenează (ar pierde ce scrie)
 const scrieCineva = () => document.activeElement?.matches?.('#plan input, #plan select');
-
-// Google Maps — max. 10 opriri pe link; mai multe → mai multe linkuri, legate cap la cap
-function linkuriMaps(pct) {
-  if (pct.length < 2) return '';
-  const bucati = [];
-  for (let i = 0; i < pct.length - 1; i += 9) bucati.push(pct.slice(i, i + 10));
-  return bucati.map((b, k) => `<a class="buton" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/${b.map(p => p.join(',')).join('/')}">Google Maps${bucati.length > 1 ? ` ${k + 1}/${bucati.length}` : ''}</a>`).join(' ');
-}
 
 // ── Traseul ──
 const RAD = Math.PI / 180;
@@ -481,13 +467,11 @@ const ziua = zi => new Date(zi + 'T12:00:00').toLocaleDateString('ro-RO', { week
 function cardLivrare(l) {
   const judeteL = [...new Set(l.comenzi.map(c => c.judet).filter(Boolean))].join(', ');
   const suma = l.comenzi.reduce((s, c) => s + (Number(c.de_incasat) || 0), 0);
-  const pct = [[plecare.lat, plecare.lon], ...l.comenzi.filter(c => c.lat != null).map(c => [c.lat, c.lon]), [plecare.lat, plecare.lon]];
   return `<div class="livrare" data-id="${l.id}">
     <div class="cap">
       <h3>${esc(ziua(l.data))}</h3>
       <span class="mic-dim">${l.comenzi.length} ${l.comenzi.length === 1 ? 'comandă' : 'comenzi'}${judeteL ? ` · ${esc(judeteL)}` : ''} · de încasat <b>${lei(suma)}</b></span>
       <span class="spatiu"></span>
-      ${linkuriMaps(pct)}
       <button class="mic tipar">🖶 Foaia de livrare</button>
       <button class="mic rosu-contur anuleaza">Anulează livrarea</button>
     </div>
@@ -505,6 +489,32 @@ function cardLivrare(l) {
   </div>`;
 }
 
+// Foaia de livrare: lista + harta cu opririle numerotate 1, 2, 3… (aceleaşi numere ca în listă).
+// Harta se face doar pt. tipar şi se tipăreşte după ce s-au încărcat bucăţile ei.
+function tipareste(card, l) {
+  const cu = l.comenzi.map((c, k) => [c, k + 1]).filter(([c]) => c.lat != null);
+  const div = document.createElement('div');
+  let h = null;
+  const tipar = () => {
+    card.classList.add('de-tiparit');
+    window.addEventListener('afterprint', () => { card.classList.remove('de-tiparit'); h?.remove(); div.remove(); }, { once: true });
+    window.print();
+  };
+  if (!areHarta() || !cu.length) return tipar();
+  const d = card.closest('details'); if (d) d.open = true;   // trecutele stau strânse — harta are nevoie de loc
+  div.className = 'harta-tipar'; card.append(div);
+  h = L.map(div, { zoomControl: false });
+  const plec = [plecare.lat, plecare.lon], pct = [plec, ...cu.map(([c]) => [c.lat, c.lon]), plec];
+  L.polyline(pct, { color: '#1f6fd1', weight: 3 }).addTo(h);
+  L.marker(plec, { icon: marcaj('⌂', 'plecare') }).addTo(h);
+  cu.forEach(([c, nr]) => L.marker([c.lat, c.lon], { icon: marcaj(nr) }).addTo(h));
+  h.fitBounds(L.latLngBounds(pct).pad(0.1));
+  let gata = false;
+  const odata = () => { if (!gata) { gata = true; tipar(); } };
+  L.tileLayer(OSM, { attribution: '&copy; OpenStreetMap' }).once('load', odata).addTo(h);
+  setTimeout(odata, 6000);   // hartă care nu se încarcă (fără internet) — tipăresc oricum
+}
+
 function randeazaProgramate() {
   const azi = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Bucharest' });   // AAAA-LL-ZZ, ora României
   const viitoare = livrari.filter(l => l.data >= azi), trecute = livrari.filter(l => l.data < azi).reverse();
@@ -518,11 +528,7 @@ function randeazaProgramate() {
       if (r && !r.ok) return alerta(await eroareDin(r));
       incarca();
     });
-    card.querySelector('.tipar').addEventListener('click', () => {
-      card.classList.add('de-tiparit');
-      window.addEventListener('afterprint', () => card.classList.remove('de-tiparit'), { once: true });
-      window.print();
-    });
+    card.querySelector('.tipar').addEventListener('click', () => tipareste(card, livrari.find(l => l.id === id)));
   });
 }
 
