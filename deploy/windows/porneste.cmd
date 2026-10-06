@@ -9,6 +9,8 @@ set "MANAGER_DB=%RADACINA%\date\manager.sqlite"
 set "MANAGER_BACKUP=%RADACINA%\date\backup"
 rem setari.cmd (scris de instalare, in afara codului): NODE, MANAGER_PORT, MANAGER_BACKUP
 if exist "%RADACINA%\setari.cmd" call "%RADACINA%\setari.cmd"
+rem Node lipsa la calea din setari (2026-10-06: carantina antivirus) -> cel portabil din <radacina>\node
+if not exist "%NODE%" if exist "%RADACINA%\node\node.exe" set "NODE=%RADACINA%\node\node.exe"
 cd /d "%RADACINA%\cod\manager"
 rem ponytail: jurnalul creste fara limita; de rotit daca ajunge mare
 "%NODE%" "%RADACINA%\cod\manager\server\index.js" >> "%RADACINA%\date\server.log" 2>&1

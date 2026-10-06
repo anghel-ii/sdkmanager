@@ -22,6 +22,7 @@ $vechi = $null
 try {
   Cere-Admin
   Scrie "`n=== Update manager de comenzi — $(Get-Date -Format 'yyyy-MM-dd HH:mm') ===`n" 'White'
+  Asigura-Paza   # şi la serverele instalate înainte de paza (2026-10-06)
 
   Scrie '[1/5] Caut versiune nouă pe GitHub'
   Ruleaza 'git' @('-C', $cod, 'fetch', '--quiet', 'origin', 'main')

@@ -40,7 +40,25 @@ function Citeste-Setari([string]$radacina) {
   if (Test-Path $f) {
     foreach ($l in Get-Content $f) { if ($l -match '^set "([A-Z_]+)=(.*)"$') { $s[$Matches[1]] = $Matches[2] } }
   }
+  # Node lipsă la calea din setari.cmd (2026-10-06: antivirusul l-a pus în carantină) ->
+  # cel portabil din <rădăcină>\node, dacă există (acelaşi ocol ca în porneste.cmd)
+  $portabil = Join-Path $radacina 'node\node.exe'
+  if (-not (Test-Path $s.NODE) -and (Test-Path $portabil)) { $s.NODE = $portabil }
   return $s
+}
+
+# Paza: pe lângă pornirea odată cu serverul, sarcina managerului se declanşează şi la
+# fiecare 5 minute. Cât managerul rulează, declanşarea se ignoră (o singură instanţă —
+# implicit la New-ScheduledTaskSettingsSet); dacă s-a oprit, porneşte din nou în max. 5 minute.
+# Idempotentă — se cheamă la instalare şi la fiecare update (rulează ca SYSTEM / admin).
+function Asigura-Paza {
+  $t = Get-ScheduledTask -TaskName $NumeSarcina -ErrorAction SilentlyContinue
+  if (-not $t) { return }
+  if ($t.Triggers | Where-Object { $_.Repetition.Interval -eq 'PT5M' }) { return }
+  $paza = New-ScheduledTaskTrigger -Once -At (Get-Date).Date `
+    -RepetitionInterval (New-TimeSpan -Minutes 5) -RepetitionDuration (New-TimeSpan -Days 3650)
+  Set-ScheduledTask -TaskName $NumeSarcina -Trigger @((New-ScheduledTaskTrigger -AtStartup), $paza) | Out-Null
+  Scrie '  paza: managerul e repornit singur în max. 5 minute dacă se opreşte' 'Green'
 }
 
 # npm ci + build + testele (configurator şi manager). $true = totul a trecut.

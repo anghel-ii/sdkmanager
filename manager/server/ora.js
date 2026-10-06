@@ -2,18 +2,21 @@
 // Userul (2026-10-05): „orele nu prea sunt ok… eşti în urmă cu câteva minute".
 // Momentele (ofertat, acceptat, facturat…) se scriau cu ceasul calculatorului pe
 // care rulează serverul — dacă el nu se sincronizează (Windows Time oprit, NTP
-// blocat de firewall), rămâne în urmă. Aşa că nu ne bazăm pe el: la pornire şi
-// din oră în oră citim ora din antetul `Date` al unor servere mari (HTTPS merge
-// oricum — managerul trage deja de pe Cloudflare / GitHub) şi ţinem diferenţa.
+// blocat de firewall), rămâne în urmă. Aşa că nu ne bazăm pe el: la pornire şi la
+// câteva ore citim ora din antetul `Date` al bazei de clienţi de pe Cloudflare — o
+// adresă pe care managerul o foloseşte oricum (server/clienti.js), deci fără trafic
+// spre site-uri noi. (2026-10-06: Kaspersky a pus node.exe în carantină a doua zi după
+// ce verificarea întreba din oră în oră Google / Cloudflare / Microsoft — n-o mai face.)
 // Fără internet rămâne ultima diferenţă ştiută (la început 0 = ceasul serverului).
 
-const SURSE = ['https://www.cloudflare.com', 'https://www.google.com', 'https://www.microsoft.com'];
-const LA_O_ORA = 60 * 60 * 1000;
+const { config } = require('./config.js');
+const SURSE = () => (config.clientiUrl ? [config.clientiUrl] : []);
+const LA_6_ORE = 6 * 60 * 60 * 1000;
 
 let diferenta = 0;   // ms: ora exactă − ceasul serverului
 
 async function sincronizeaza() {
-  for (const url of SURSE) {
+  for (const url of SURSE()) {
     try {
       const t0 = Date.now();
       const r = await fetch(url, { method: 'HEAD', signal: AbortSignal.timeout(5000) });
@@ -35,7 +38,7 @@ async function sincronizeaza() {
 let temporizator = null;
 function porneste() {
   sincronizeaza();
-  temporizator = setInterval(sincronizeaza, LA_O_ORA);
+  temporizator = setInterval(sincronizeaza, LA_6_ORE);
   temporizator.unref();   // nu ţine procesul în viaţă (teste, oprire)
 }
 

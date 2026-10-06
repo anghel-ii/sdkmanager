@@ -194,6 +194,7 @@ try {
     -RestartCount 999 -RestartInterval (New-TimeSpan -Minutes 1) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
   Register-ScheduledTask -TaskName $NumeSarcina -Action $actiune -Trigger $declansator -Principal $cine `
     -Settings $setariSarcina -Description 'Managerul de comenzi (Node). Porneşte odată cu serverul.' -Force | Out-Null
+  Asigura-Paza
 
   # sarcina de update, fără declanşator: o porneşte serverul din /admin (tot SYSTEM),
   # ca update-ul să se poată face din browser, fără cont de administrator pe Windows
