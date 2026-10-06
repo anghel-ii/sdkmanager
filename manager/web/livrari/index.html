@@ -69,8 +69,7 @@
   .marcaj.plecare { background: #237a46; }
   .harta-unelte { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 10px; }
   .harta-unelte .info { color: var(--text-dim); font-size: .82rem; flex: 1; }
-  .plecare { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
-  .plecare input { flex: 1; }
+  .plecare { margin-bottom: 10px; }
   .stare-geo { color: var(--text-dim); font-size: .8rem; margin-top: 6px; min-height: 1.2em; }
 
   .livrare { border: 1px solid var(--line); border-radius: 10px; padding: 14px; margin-bottom: 12px; background: var(--panel-2); }
@@ -117,7 +116,7 @@
     </div>
     <div class="card harta-card">
       <h2>Harta şi traseul</h2>
-      <div class="plecare" id="plecare"></div>
+      <div class="plecare mic-dim">Plecare: <b>sediul — Str. Odobeşti 53, Cluj-Napoca</b></div>
       <div id="harta"></div>
       <div class="stare-geo" id="stareGeo"></div>
       <div class="harta-unelte">
@@ -156,7 +155,9 @@ async function api(cale, optiuni = {}) {
 const eroareDin = async r => (await r.json().catch(() => ({}))).eroare || 'Operaţia a eşuat.';
 
 // ── Starea paginii ──
-let comenzi = [], judete = [], livrari = [], plecare = null;
+let comenzi = [], judete = [], livrari = [];
+// sediul firmei — de aici pleacă şi aici se întoarce maşina (fix, nu se modifică din pagină)
+const plecare = { adresa: 'Str. Odobeşti 53, Cluj-Napoca', lat: 46.8004944, lon: 23.60057 };
 let alese = new Set();              // judeţele alese ('' = fără judeţ)
 try { alese = new Set(JSON.parse(localStorage.getItem('livrariJudete') ?? '[]')); } catch {}
 const debifate = new Set();         // comenzile debifate (implicit toate bifate)
@@ -171,18 +172,17 @@ const bifate = () => inOrdine().filter(c => !debifate.has(c.id));
 // bifatele cu punct pe hartă — în ordinea traseului, apoi bifatele fără punct, apoi nebifatele.
 function reordoneaza() {
   const cu = bifate().filter(c => c.lat != null);
-  const drum = cu.length > 1 ? ordineOptima(cu.map(c => [c.lat, c.lon]), plecare ? [plecare.lat, plecare.lon] : null).map(i => cu[i]) : cu;
+  const drum = cu.length > 1 ? ordineOptima(cu.map(c => [c.lat, c.lon]), [plecare.lat, plecare.lon]).map(i => cu[i]) : cu;
   const rest = inOrdine().filter(c => !drum.includes(c));
   ordine = [...drum, ...rest.filter(c => !debifate.has(c.id)), ...rest.filter(c => debifate.has(c.id))].map(c => c.id)
     .concat(ordine.filter(id => !vizibile().some(c => c.id === id)));
 }
 
 async function incarca() {
-  const [rc, rl, rp] = await Promise.all([api('/api/livrari/candidati'), api('/api/livrari'), api('/api/livrari/plecare')]);
-  if (!rc || !rl || !rp) return;
+  const [rc, rl] = await Promise.all([api('/api/livrari/candidati'), api('/api/livrari')]);
+  if (!rc || !rl) return;
   ({ comenzi, judete } = await rc.json());
   ({ livrari } = await rl.json());
-  ({ plecare } = await rp.json());
   // ordinea: cea de până acum, apoi cele noi după judeţ şi dată
   const noi = comenzi.filter(c => !ordine.includes(c.id))
     .sort((a, b) => (a.judet ?? '').localeCompare(b.judet ?? '') || a.creat_la.localeCompare(b.creat_la)).map(c => c.id);
@@ -298,7 +298,8 @@ function randeazaHarta() {
   strat.clearLayers();
   const b = bifate().filter(c => c.lat != null);
   const pct = [];
-  if (plecare) { L.marker([plecare.lat, plecare.lon], { icon: marcaj('⌂', 'plecare'), title: 'Plecare: ' + plecare.adresa }).addTo(strat); pct.push([plecare.lat, plecare.lon]); }
+  L.marker([plecare.lat, plecare.lon], { icon: marcaj('⌂', 'plecare'), title: 'Plecare: ' + plecare.adresa }).addTo(strat);
+  pct.push([plecare.lat, plecare.lon]);
   b.forEach((c, k) => {
     const m = L.marker([c.lat, c.lon], { icon: marcaj(k + 1), draggable: true, title: c.client_nume }).addTo(strat)
       .bindPopup(`<b>${esc(c.client_nume)}</b><br>${esc(c.client_adresa ?? '')}`);
@@ -307,16 +308,15 @@ function randeazaHarta() {
   });
   inOrdine().filter(c => debifate.has(c.id) && c.lat != null)
     .forEach(c => L.marker([c.lat, c.lon], { icon: marcaj('', 'gri'), title: c.client_nume + ' (nebifată)' }).addTo(strat));
-  if (plecare && b.length) pct.push([plecare.lat, plecare.lon]);   // înapoi la plecare
+  if (b.length) pct.push([plecare.lat, plecare.lon]);   // înapoi la plecare
   if (pct.length > 1) L.polyline(pct, { color: '#4da3ff', weight: 3, opacity: .8 }).addTo(strat);
   if (pct.length) harta.fitBounds(L.latLngBounds(pct).pad(0.15), { maxZoom: 12 });
 
   const km = lungime(pct);
   const faraPunct = bifate().filter(c => c.lat == null).length;
-  $('infoTraseu').textContent = b.length ? `Cel mai scurt traseu: ~${Math.round(km)} km în linie dreaptă${plecare ? ' (dus-întors)' : ''}`
+  $('infoTraseu').textContent = b.length ? `Cel mai scurt traseu: ~${Math.round(km)} km în linie dreaptă (dus-întors)`
     + (faraPunct ? ` · ${faraPunct} fără punct pe hartă` : '') : '';
   $('linkuriMaps').innerHTML = linkuriMaps(pct);
-  randeazaPlecare();
 }
 
 async function salveazaPunct(c, lat, lon, { tabel = true } = {}) {
@@ -345,10 +345,10 @@ const lungime = pct => pct.slice(1).reduce((s, p, k) => s + dist(pct[k], p), 0);
 
 // Ordinea opririlor. Până la 12: EXACT (programare dinamică Held-Karp — cea mai scurtă
 // dintre toate ordinile, sub o secundă); peste 12: cel mai apropiat vecin + 2-opt
-// (aproape optim). Cu loc de plecare: pleacă şi se întoarce acolo; fără — drum liber.
+// (aproape optim). Pleacă de la `start` (sediul) şi se întoarce acolo.
 function ordineOptima(pct, start) {
   const n = pct.length;
-  const d0 = j => (start ? dist(start, pct[j]) : 0);   // fără plecare: capetele nu costă
+  const d0 = j => dist(start, pct[j]);
   if (n <= 12) {
     const N = 1 << n, cost = new Float64Array(N * n).fill(Infinity), prev = new Int8Array(N * n).fill(-1);
     for (let j = 0; j < n; j++) cost[(1 << j) * n + j] = d0(j);
@@ -369,13 +369,12 @@ function ordineOptima(pct, start) {
   }
   // mulţi: cel mai apropiat vecin, apoi 2-opt
   let rest = [...pct.keys()], ord = [], cur = start;
-  if (!cur) { ord.push(rest.shift()); cur = pct[ord[0]]; }
   while (rest.length) {
     let k = 0;
     rest.forEach((x, i) => { if (dist(cur, pct[x]) < dist(cur, pct[rest[k]])) k = i; });
     ord.push(rest[k]); cur = pct[rest[k]]; rest.splice(k, 1);
   }
-  const lung = o => lungime([...(start ? [start] : []), ...o.map(i => pct[i]), ...(start ? [start] : [])]);
+  const lung = o => lungime([start, ...o.map(i => pct[i]), start]);
   for (let bun = true; bun;) {
     bun = false;
     for (let i = 0; i < ord.length - 1; i++) for (let j = i + 1; j < ord.length; j++) {
@@ -386,117 +385,6 @@ function ordineOptima(pct, start) {
   return ord;
 }
 
-// ── Locul de plecare (depozitul) ──
-function randeazaPlecare() {
-  if ($('plecare').contains(document.activeElement)) return;   // scrie adresa — nu-i stric câmpul
-  $('plecare').innerHTML = plecare && !$('plecare').dataset.editez
-    ? `<span class="mic-dim">Plecare: <b>${esc(plecare.adresa)}</b></span> <button class="mic" id="schimbaPlecare">schimbă</button>`
-    : `<input id="adresaPlecare" placeholder="Adresa de plecare (depozitul) — de aici porneşte traseul" value="${esc(plecare?.adresa ?? '')}">
-       <button class="mic primar" id="salveazaPlecare">Salvează</button>`;
-  $('schimbaPlecare')?.addEventListener('click', () => { $('plecare').dataset.editez = '1'; randeazaPlecare(); });
-  $('salveazaPlecare')?.addEventListener('click', async () => {
-    const adresa = $('adresaPlecare').value.trim();
-    if (!adresa) return;
-    let g;
-    try { g = await geocodeaza(adresa); }
-    catch (e) { if (e instanceof Limitat) return alerta('Serviciul de hărţi e ocupat — mai încearcă peste un minut.'); throw e; }
-    if (!g) return alerta('Nu am găsit adresa pe hartă — scrie şi localitatea şi judeţul.');
-    const r = await api('/api/livrari/plecare', { method: 'PUT', body: JSON.stringify({ adresa, ...g }) });
-    if (r && !r.ok) return alerta(await eroareDin(r));
-    plecare = { adresa, ...g };
-    delete $('plecare').dataset.editez;
-    randeazaPlan();
-  });
-}
-
-// ── Căutarea adreselor pe hartă (date OpenStreetMap, în browser) ──
-// Photon (komoot) întâi, Nominatim de rezervă — amândouă gratuite, cu limită de folosire:
-// o cerere pe secundă, iar dacă tot ne opresc (HTTP 429 — „prea multe cereri", se
-// întâmplă când toată firma iese pe acelaşi IP) aşteptăm un minut şi reîncercăm.
-// „Negăsit" ≠ „limitat": doar negăsitele rămân pt. „Pune pe hartă".
-const pauza = ms => new Promise(r => setTimeout(r, ms));
-const fara = t => String(t ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
-class Limitat extends Error {}
-let ultimaCerere = 0;
-async function cere(url) {
-  const asteapta = ultimaCerere + 1100 - Date.now();
-  if (asteapta > 0) await pauza(asteapta);
-  ultimaCerere = Date.now();
-  let r;
-  try { r = await fetch(url); } catch { throw new Limitat(); }   // fără reţea / blocat
-  if (r.status === 429 || r.status >= 500) throw new Limitat();
-  return r.ok ? r.json() : null;
-}
-const ROMANIA = '20.2,43.6,29.8,48.3';   // bbox: doar România
-async function photon(q) {
-  const f = (await cere(`https://photon.komoot.io/api/?limit=1&lang=default&bbox=${ROMANIA}&q=${encodeURIComponent(q)}`))?.features?.[0];   // lang=default: numele locale („Bucureşti"), nu în limba browserului („Bucharest")
-  const p = f?.properties ?? {};
-  return f ? { lat: f.geometry.coordinates[1], lon: f.geometry.coordinates[0], unde: fara([p.county, p.city, p.state, p.name].join(' ')) } : null;
-}
-async function nominatim(q) {
-  const [g] = (await cere(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=ro&addressdetails=1&accept-language=ro&q=${encodeURIComponent(q + ', România')}`)) ?? [];
-  // judeţul punctului (Bucureşti n-are „county" — e oraşul / regiunea)
-  return g ? { lat: Number(g.lat), lon: Number(g.lon), unde: fara([g.address?.county, g.address?.city, g.address?.state].join(' ')) } : null;
-}
-// Adresa întreagă, apoi doar ultimele două bucăţi (localitate, judeţ). Cu judeţ: punctul
-// se acceptă DOAR dacă e în judeţul ăla — o adresă fără localitate („Strada Florilor 7")
-// s-ar potrivi oriunde în ţară. → { lat, lon } | null (negăsit); Limitat dacă n-am putut întreba.
-async function geocodeaza(adresa, judet = '') {
-  const bucati = String(adresa).split(',').map(s => s.trim()).filter(Boolean);
-  const j = fara(judet).replace(/-/g, ' ');
-  let limitat = false;
-  for (const q of [[adresa, judet].filter(Boolean).join(', '), [...bucati.slice(-2), judet].filter(Boolean).join(', ')]) {
-    if (!q) continue;
-    for (const sursa of [photon, nominatim]) {
-      try {
-        const g = await sursa(q);
-        if (g && (!j || g.unde.replace(/-/g, ' ').includes(j))) return { lat: g.lat, lon: g.lon };
-      } catch (e) { if (e instanceof Limitat) limitat = true; else throw e; }
-    }
-  }
-  if (limitat) throw new Limitat();
-  return null;
-}
-// cheia căutării: adresa + judeţul — alt judeţ ales de mână = se caută din nou
-const cheieGeo = c => `${c.client_adresa ?? ''}|${c.judet ?? ''}`;
-let cautare = false, dinNou = false, reincerc = null;
-async function cautaPeHarta() {
-  if (!areHarta()) return;
-  if (cautare) { dinNou = true; return; }   // alte judeţe alese între timp → încă o tură la final
-  cautare = true; dinNou = false;
-  clearTimeout(reincerc);
-  try {
-    // doar judeţele alese şi doar cu judeţ cunoscut (fără el, punctul îl pune omul)
-    const deCautat = vizibile().filter(c => c.client_adresa && c.judet && (c.lat == null || c.geo_adresa !== cheieGeo(c)) && !c.cautataDegeaba);
-    let k = 0, amanate = 0;
-    for (const c of deCautat) {
-      $('stareGeo').textContent = `Caut adresele pe hartă… ${++k}/${deCautat.length}`;
-      let g;
-      try { g = await geocodeaza(c.client_adresa, c.judet); }
-      catch (e) { if (e instanceof Limitat) { amanate++; continue; } throw e; }   // o reiau mai târziu
-      if (g) await salveazaPunct(c, g.lat, g.lon, { tabel: false }); else c.cautataDegeaba = true;
-    }
-    $('stareGeo').textContent = amanate ? `${amanate} adrese aşteaptă serviciul de hărţi (ocupat) — reîncerc singur peste un minut.` : '';
-    if (amanate) reincerc = setTimeout(cautaPeHarta, 60000);
-  } finally {
-    cautare = false;
-    if (!scrieCineva() && !$('plan').hidden) randeazaPlan();
-    if (dinNou) cautaPeHarta();
-  }
-}
-
-// ── „Confirmă livrarea" ──
-$('confirma').addEventListener('click', async () => {
-  const b = bifate();
-  if (!b.length) return alerta('Bifează cel puţin o comandă.');
-  const zi = $('dataLivrare').value;
-  if (!zi) { $('dataLivrare').focus(); return alerta('Alege data livrării.'); }
-  if (!(await confirma(`Programezi livrarea din ${ziua(zi)} cu ${b.length} ${b.length === 1 ? 'comandă' : 'comenzi'}?`))) return;
-  const r = await api('/api/livrari', { method: 'POST', body: JSON.stringify({ data: zi, comenzi: b.map(c => c.id) }) });
-  if (r && !r.ok) return alerta(await eroareDin(r));
-  b.forEach(c => debifate.delete(c.id));
-  incarca();
-});
 const ziua = zi => new Date(zi + 'T12:00:00').toLocaleDateString('ro-RO', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
 // implicit mâine
 { const m = new Date(Date.now() + 864e5); $('dataLivrare').value = `${m.getFullYear()}-${String(m.getMonth() + 1).padStart(2, '0')}-${String(m.getDate()).padStart(2, '0')}`; }
@@ -505,8 +393,7 @@ const ziua = zi => new Date(zi + 'T12:00:00').toLocaleDateString('ro-RO', { week
 function cardLivrare(l) {
   const judeteL = [...new Set(l.comenzi.map(c => c.judet).filter(Boolean))].join(', ');
   const suma = l.comenzi.reduce((s, c) => s + (Number(c.de_incasat) || 0), 0);
-  const pct = [...(plecare ? [[plecare.lat, plecare.lon]] : []), ...l.comenzi.filter(c => c.lat != null).map(c => [c.lat, c.lon]),
-               ...(plecare ? [[plecare.lat, plecare.lon]] : [])];
+  const pct = [[plecare.lat, plecare.lon], ...l.comenzi.filter(c => c.lat != null).map(c => [c.lat, c.lon]), [plecare.lat, plecare.lon]];
   return `<div class="livrare" data-id="${l.id}">
     <div class="cap">
       <h3>${esc(ziua(l.data))}</h3>

@@ -150,23 +150,6 @@ function anuleaza(ctx) {
   json(ctx.res, 200, { ok: true });
 }
 
-// Locul de plecare (depozitul) — punctul de start al traseului: { adresa, lat, lon }.
-const CHEIE_PLECARE = 'livrari_plecare';
-function plecare(ctx) {
-  const v = db().prepare('SELECT valoare FROM setare WHERE cheie = ?').get(CHEIE_PLECARE)?.valoare;
-  json(ctx.res, 200, { plecare: v ? JSON.parse(v) : null });
-}
-async function salveazaPlecare(ctx) {
-  const corp = await corpJson(ctx.req);
-  const adresa = String(corp.adresa ?? '').trim().slice(0, 300);
-  const lat = Number(corp.lat), lon = Number(corp.lon);
-  if (!adresa || !(lat > 43 && lat < 48.6 && lon > 20 && lon < 30.5)) return eroare(ctx.res, 400, 'Adresa de plecare nu a fost găsită pe hartă.');
-  db().prepare(`INSERT INTO setare (cheie, valoare) VALUES (?, ?) ON CONFLICT(cheie) DO UPDATE SET valoare = excluded.valoare`)
-    .run(CHEIE_PLECARE, JSON.stringify({ adresa, lat, lon }));
-  anunta({ livrari: true });
-  json(ctx.res, 200, { ok: true });
-}
-
 module.exports = {
   judetDin, JUDETE,
   rute: [
@@ -175,7 +158,5 @@ module.exports = {
     ['GET',    '/api/livrari',              { handler: livrari }],
     ['POST',   '/api/livrari',              { handler: creeaza }],
     ['DELETE', '/api/livrari/:id',          { handler: anuleaza }],
-    ['GET',    '/api/livrari/plecare',      { handler: plecare }],
-    ['PUT',    '/api/livrari/plecare',      { handler: salveazaPlecare }],
   ],
 };

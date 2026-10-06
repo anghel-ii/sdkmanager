@@ -847,9 +847,6 @@ async function main() {
     verifica('livrări: anulare → 200', (await cer('DELETE', `/api/livrari/${l.date.id}`)).stare === 200);
     c = await cand();
     verifica('livrări: după anulare comenzile se întorc în listă', !!id(iasi) && !!id(vaslui));
-    verifica('livrări: plecarea fără coordonate → 400', (await cer('PUT', '/api/livrari/plecare', { adresa: 'Depozit' })).stare === 400);
-    verifica('livrări: plecarea se salvează', (await cer('PUT', '/api/livrari/plecare', { adresa: 'Depozit, Iasi', lat: 47.16, lon: 27.58 })).stare === 200
-      && (await cer('GET', '/api/livrari/plecare')).date.plecare?.adresa === 'Depozit, Iasi');
     verifica('pagina /livrari se serveşte', String((await cer('GET', '/livrari')).date).includes('Organizează livrări'));
   }
 
