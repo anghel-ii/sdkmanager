@@ -847,7 +847,10 @@ async function main() {
     verifica('livrări: anulare → 200', (await cer('DELETE', `/api/livrari/${l.date.id}`)).stare === 200);
     c = await cand();
     verifica('livrări: după anulare comenzile se întorc în listă', !!id(iasi) && !!id(vaslui));
-    verifica('pagina /livrari se serveşte', String((await cer('GET', '/livrari')).date).includes('Organizează livrări'));
+    const pagLiv = String((await cer('GET', '/livrari')).date);
+    verifica('pagina /livrari se serveşte', pagLiv.includes('Organizează livrări'));
+    // butonul are handler şi căutarea pe hartă există (le-am şters o dată din greşeală)
+    verifica('pagina /livrari: „Confirmă livrarea" + căutarea pe hartă', pagLiv.includes("$('confirma').addEventListener") && pagLiv.includes('async function cautaPeHarta'));
   }
 
   console.log('\nOra exactă (server/ora.js) — ceasul serverului în urmă cu 5 minute');

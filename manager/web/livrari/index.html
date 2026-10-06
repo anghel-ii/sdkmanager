@@ -385,6 +385,94 @@ function ordineOptima(pct, start) {
   return ord;
 }
 
+// ── Căutarea adreselor pe hartă (date OpenStreetMap, în browser) ──
+// Photon (komoot) întâi, Nominatim de rezervă — amândouă gratuite, cu limită de folosire:
+// o cerere pe secundă, iar dacă tot ne opresc (HTTP 429 — „prea multe cereri", se
+// întâmplă când toată firma iese pe acelaşi IP) aşteptăm un minut şi reîncercăm.
+// „Negăsit" ≠ „limitat": doar negăsitele rămân pt. „Pune pe hartă".
+const pauza = ms => new Promise(r => setTimeout(r, ms));
+const fara = t => String(t ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+class Limitat extends Error {}
+let ultimaCerere = 0;
+async function cere(url) {
+  const asteapta = ultimaCerere + 1100 - Date.now();
+  if (asteapta > 0) await pauza(asteapta);
+  ultimaCerere = Date.now();
+  let r;
+  try { r = await fetch(url); } catch { throw new Limitat(); }   // fără reţea / blocat
+  if (r.status === 429 || r.status >= 500) throw new Limitat();
+  return r.ok ? r.json() : null;
+}
+const ROMANIA = '20.2,43.6,29.8,48.3';   // bbox: doar România
+async function photon(q) {
+  const f = (await cere(`https://photon.komoot.io/api/?limit=1&lang=default&bbox=${ROMANIA}&q=${encodeURIComponent(q)}`))?.features?.[0];   // lang=default: numele locale („Bucureşti"), nu în limba browserului („Bucharest")
+  const p = f?.properties ?? {};
+  return f ? { lat: f.geometry.coordinates[1], lon: f.geometry.coordinates[0], unde: fara([p.county, p.city, p.state, p.name].join(' ')) } : null;
+}
+async function nominatim(q) {
+  const [g] = (await cere(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=ro&addressdetails=1&accept-language=ro&q=${encodeURIComponent(q + ', România')}`)) ?? [];
+  // judeţul punctului (Bucureşti n-are „county" — e oraşul / regiunea)
+  return g ? { lat: Number(g.lat), lon: Number(g.lon), unde: fara([g.address?.county, g.address?.city, g.address?.state].join(' ')) } : null;
+}
+// Adresa întreagă, apoi doar ultimele două bucăţi (localitate, judeţ). Cu judeţ: punctul
+// se acceptă DOAR dacă e în judeţul ăla — o adresă fără localitate („Strada Florilor 7")
+// s-ar potrivi oriunde în ţară. → { lat, lon } | null (negăsit); Limitat dacă n-am putut întreba.
+async function geocodeaza(adresa, judet = '') {
+  const bucati = String(adresa).split(',').map(s => s.trim()).filter(Boolean);
+  const j = fara(judet).replace(/-/g, ' ');
+  let limitat = false;
+  for (const q of [[adresa, judet].filter(Boolean).join(', '), [...bucati.slice(-2), judet].filter(Boolean).join(', ')]) {
+    if (!q) continue;
+    for (const sursa of [photon, nominatim]) {
+      try {
+        const g = await sursa(q);
+        if (g && (!j || g.unde.replace(/-/g, ' ').includes(j))) return { lat: g.lat, lon: g.lon };
+      } catch (e) { if (e instanceof Limitat) limitat = true; else throw e; }
+    }
+  }
+  if (limitat) throw new Limitat();
+  return null;
+}
+// cheia căutării: adresa + judeţul — alt judeţ ales de mână = se caută din nou
+const cheieGeo = c => `${c.client_adresa ?? ''}|${c.judet ?? ''}`;
+let cautare = false, dinNou = false, reincerc = null;
+async function cautaPeHarta() {
+  if (!areHarta()) return;
+  if (cautare) { dinNou = true; return; }   // alte judeţe alese între timp → încă o tură la final
+  cautare = true; dinNou = false;
+  clearTimeout(reincerc);
+  try {
+    // doar judeţele alese şi doar cu judeţ cunoscut (fără el, punctul îl pune omul)
+    const deCautat = vizibile().filter(c => c.client_adresa && c.judet && (c.lat == null || c.geo_adresa !== cheieGeo(c)) && !c.cautataDegeaba);
+    let k = 0, amanate = 0;
+    for (const c of deCautat) {
+      $('stareGeo').textContent = `Caut adresele pe hartă… ${++k}/${deCautat.length}`;
+      let g;
+      try { g = await geocodeaza(c.client_adresa, c.judet); }
+      catch (e) { if (e instanceof Limitat) { amanate++; continue; } throw e; }   // o reiau mai târziu
+      if (g) await salveazaPunct(c, g.lat, g.lon, { tabel: false }); else c.cautataDegeaba = true;
+    }
+    $('stareGeo').textContent = amanate ? `${amanate} adrese aşteaptă serviciul de hărţi (ocupat) — reîncerc singur peste un minut.` : '';
+    if (amanate) reincerc = setTimeout(cautaPeHarta, 60000);
+  } finally {
+    cautare = false;
+    if (!scrieCineva() && !$('plan').hidden) randeazaPlan();
+    if (dinNou) cautaPeHarta();
+  }
+}
+
+// ── „Confirmă livrarea" ──
+$('confirma').addEventListener('click', async () => {
+  const b = bifate();
+  if (!b.length) return alerta('Bifează cel puţin o comandă.');
+  const zi = $('dataLivrare').value;
+  if (!zi) { $('dataLivrare').focus(); return alerta('Alege data livrării.'); }
+  if (!(await confirma(`Programezi livrarea din ${ziua(zi)} cu ${b.length} ${b.length === 1 ? 'comandă' : 'comenzi'}?`))) return;
+  const r = await api('/api/livrari', { method: 'POST', body: JSON.stringify({ data: zi, comenzi: b.map(c => c.id) }) });
+  if (r && !r.ok) return alerta(await eroareDin(r));
+  b.forEach(c => debifate.delete(c.id));
+  incarca();
+});
 const ziua = zi => new Date(zi + 'T12:00:00').toLocaleDateString('ro-RO', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
 // implicit mâine
 { const m = new Date(Date.now() + 864e5); $('dataLivrare').value = `${m.getFullYear()}-${String(m.getMonth() + 1).padStart(2, '0')}-${String(m.getDate()).padStart(2, '0')}`; }
