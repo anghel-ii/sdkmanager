@@ -34,7 +34,7 @@ export const liniaTransport = state => {
 // („Salvează comanda") şi telefonul + adresa (în manager le cere fereastra de
 // acceptare). → [{ id, text }], în ordinea câmpurilor din pagină. Doar în browser.
 export function campuriLipsa({ laAcceptare = false } = {}) {
-  const v = id => document.getElementById(id)?.value?.trim();
+  const v = id => /** @type {HTMLInputElement | null} */ (document.getElementById(id))?.value?.trim();
   return [['clientNume', 'numele clientului'],
           ...(laAcceptare ? [['clientTelefon', 'telefonul'], ['clientAdresa', 'adresa']] : []),
           ['comandaLivrare', 'modul de livrare'], ['comandaAgent', 'agentul'], ['ofertaNr', 'numărul ofertei']]
