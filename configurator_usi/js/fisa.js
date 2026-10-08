@@ -877,20 +877,22 @@ export function deschideFisa(client, oferta = null, salvate = null) {
       });
     }
 
-    // Verso (uşi): schiţele pornesc mari (un rând de uşi ≈ toată foaia) şi se micşorează
-    // cât e nevoie ca versoul să rămână pe o foaie. Se pleacă de la înălţimea DESENATĂ
-    // (lăţimea coloanei o poate limita înaintea lui --hmax); câteva treceri, pt. că
-    // textul de sub desene se reaşază la altă lăţime.
+    // Verso (uşi): schiţele cât mai mari, dar versoul pe o singură foaie — cea mai mare
+    // --hmax care încape, prin înjumătăţire (la mărimi mari coloanele se pot muta pe alt
+    // rând, deci nu se poate calcula direct din cât depăşeşte).
     var desene = document.querySelector('.spate .desene');
     if (desene) {
       var foaie = 297 * PX * 0.98, sp = document.querySelector('.spate');
-      var randuri = Math.ceil(desene.children.length / parseInt(getComputedStyle(desene).getPropertyValue('--n')));
-      var hmax = 250;
-      var setH = function (v) { hmax = Math.max(25, v); desene.style.setProperty('--hmax', hmax + 'mm'); };
-      setH(hmax);
-      for (var k = 0; k < 8 && sp.offsetHeight > foaie; k++) {
-        var svgH = desene.querySelector('svg').getBoundingClientRect().height / PX;
-        setH(Math.min(hmax, svgH) - (sp.offsetHeight - foaie) / PX / randuri - 0.5);
+      var setH = function (v) { desene.style.setProperty('--hmax', v + 'mm'); };
+      var lo = 25, hi = 250;
+      setH(hi);
+      if (sp.offsetHeight > foaie) {
+        for (var k = 0; k < 12; k++) {
+          var mij = (lo + hi) / 2;
+          setH(mij);
+          if (sp.offsetHeight > foaie) hi = mij; else lo = mij;
+        }
+        setH(lo);
       }
     }
 
