@@ -1,5 +1,5 @@
 import catalog from '../../catalog/catalog.generated.json';
-import { garnituraCod, GARNITURA_DENUMIRE, FOLIE_COD, folieCantitate, glassPerDoor } from './geam.js';
+import { garnituraCod, GARNITURA_DENUMIRE, FOLIE_COD, folieCantitate, glassPerDoor, geamPermisLux } from './geam.js';
 import { ceilHalf } from './num.js';
 // catalog = { "<family>": [ {articol}, ... ] } — un tabel per familie de sisteme
 
@@ -150,6 +150,9 @@ export function billingLines(system, state, spec) {
       errors.push(`geam/oglindă neselectat(ă) pentru uşa ${g.i + 1} — alege un model în panoul UŞI.`);
       continue;
     }
+
+    if (!g.client && !geamPermisLux(g.geam))
+      errors.push(`uşa ${g.i + 1}: la LUX se pune doar geam prin care nu se vede (satinat, lacobel, oglindă) — ales „${g.geam.denumire}".`);
 
     if (!g.client) {
       const e = byGeam.get(g.geam.cod) ?? { geam: g.geam, areaM2: 0 };

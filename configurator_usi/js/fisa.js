@@ -508,6 +508,8 @@ export function deschideFisa(client, oferta = null, salvate = null) {
   const factura = salvate?.factura ?? currentBilling();
   // nr. ofertei (scris de mână) — rând în tabelul cu livrarea / plata / agentul, la toate gamele (userul, 2026-10-08)
   const nrOferta = document.getElementById('ofertaNr')?.value.trim() || oferta?.numar || '—';
+  // observaţiile produsului (pasul „Observaţii" din configurator) — pe faţă, sub cap, la toate gamele
+  const obsText = String(state.observatii ?? '').trim();
   // cale absolută — fereastra nouă porneşte de la about:blank, o cale
   // relativă la sketch (ex. 'assets/verona.jpeg') nu s-ar rezolva acolo
   const sketch  = sys.meta.sketch ? new URL(sys.meta.sketch, location.href).href : null;
@@ -724,6 +726,10 @@ export function deschideFisa(client, oferta = null, salvate = null) {
   .fata.intinde { min-height: 296mm; display: flex; flex-direction: column; }
   .fata.intinde .jos { flex: 1; }
   .spate { padding: 6mm; }
+  /* rame 820 / 822 / 824: schiţa de găurire trasă în configurator — pagina 3, cât încape */
+  .pagina3 { page-break-before: always; break-before: page; padding: 6mm; }
+  .pagina3 .antet-mic { font-size: 13px; color: #555; margin-bottom: 4mm; }
+  .pagina3 img { display: block; max-width: 100%; max-height: 270mm; margin: 0 auto; object-fit: contain; }
   /* necesar 75% din lăţime, câmpurile de atelier 25% (userul, 2026-09-21) */
   .jos { align-items: stretch; gap: 3mm; }
   .jos table.necesar-materiale { align-self: flex-start; flex: 0 0 calc(75% - 1.5mm); width: calc(75% - 1.5mm); }
@@ -796,6 +802,8 @@ export function deschideFisa(client, oferta = null, salvate = null) {
   .fata.intinde .jos:has(+ .obs-rame) { flex: 0 0 auto; }
   .obs-camp { flex: 1; min-height: 12mm; border: 1.5px solid #000; border-radius: 2mm; padding: 1.5mm 2.5mm; }
   .obs-et { font-size: 14px; font-weight: 700; letter-spacing: .05em; }
+  .obs-text { border: 1.5px solid #000; border-radius: 2mm; padding: 2mm 3mm; margin: 0 0 3mm;
+              font-size: 13px; line-height: 1.35; white-space: pre-wrap; overflow-wrap: break-word; }
 
 </style></head>
 <body>
@@ -819,6 +827,8 @@ export function deschideFisa(client, oferta = null, salvate = null) {
       ${montaj}
     </div>
   </div>
+
+  ${obsText ? `<div class="obs-text"><b>Observaţii:</b> ${esc(obsText)}</div>` : ''}
 
   ${util ? tabel(['PAL (clientul)', 'Dimensiuni', 'Cant.'], panouriClient.map(r =>
         `<tr><td>${esc(r.label)}</td><td>${esc(r.cut)}</td><td class="num">${r.qty} buc</td></tr>`))
@@ -846,6 +856,12 @@ export function deschideFisa(client, oferta = null, salvate = null) {
 
     ${rame ? necesarSP : schite + notaSchite(sys, spec, factura)}
   </div>
+
+  ${rame?.schita && spec.m?.grup === '820' ? `
+  <div class="pagina3">
+    <div class="antet-mic"><strong>Schiţă de găurire — ${esc(modelScurt)}</strong> · ${esc(client || '—')} · ofertă ${esc(nrOferta)}</div>
+    <img src="${rame.schita}" alt="Schiţa de găurire">
+  </div>` : ''}
 
 <script>
   // După ce se încarcă schiţa (altfel nu i se ştie înălţimea):

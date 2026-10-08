@@ -30,6 +30,8 @@ const PASI = [
   { id: 'culoare', titlu: 'Culoare',    el: () => [grupul($('colorSwatches'))] },
   { id: 'dim',     titlu: 'Dimensiuni', el: () => [$('groupHeight'), $('groupWidth'), $('groupDoorsTracks'), $('groupRame'), $('groupUtil')] },
   { id: 'usi',     titlu: 'Uşi',        el: () => [$('groupUsi')] },
+  // observaţiile produsului, tipărite pe fişă — opţional (userul, 2026-10-08)
+  { id: 'obs',     titlu: 'Observaţii', el: () => [$('groupObservatii')], optional: true },
   // mai multe produse pe o ofertă (js/cos.js) — opţional: fără număr, nu e niciodată „pasul următor"
   { id: 'cos',     titlu: 'Adaugă alt produs la ofertă', el: () => [$('groupCos')], optional: true },
   // datele clientului — pas propriu (userul, 2026-10-05), nu bară lipită jos

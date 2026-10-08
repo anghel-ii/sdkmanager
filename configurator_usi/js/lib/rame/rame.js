@@ -229,6 +229,8 @@ export const stareRameGoala = () => ({
   balama: null, placuta: null, manson: true,
   maner: { randuri: [randManerGol()] },
   ral: '', vopsitCant: 0,
+  // 820 / 822 / 824: poza schiţei de găurire (data URL JPEG), tipărită pe pagina 3 a fişei
+  schita: /** @type {string | null} */ (null),
   livrare: null, agent: null, plata: null,
 });
 

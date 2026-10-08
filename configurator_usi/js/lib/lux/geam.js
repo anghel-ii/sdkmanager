@@ -31,6 +31,10 @@ export const folieCantitate = ariaMp => ceil2((ariaMp / 25) * 1.15);
 // şi-l procură singur, noi trimitem şi facturăm doar restul pieselor. Din el
 // ne interesează exclusiv GROSIMEA, fiindcă de ea depinde codul de garnitură.
 export const GROSIMI_CLIENT = [4];   // LUX: doar sticlă de 4 mm (garnitura Lux)
+// Ce geam se poate pune la LUX: doar de 4 mm şi doar prin care NU se vede — satinat / sablat,
+// lacobel, oglindă (userul, 2026-10-08). Transparentul, colorat-transparentul, reflexivul şi
+// riglatul nu apar în listă.
+export const geamPermisLux = g => !!g && g.grosime === 4 && (!!g.oglinda || /satinat|sablat|lacobel/i.test(g.denumire));
 export const clientGeamLabel = g => `Clientul asamblează cu geam de ${g}mm`;
 
 // ── Situaţia geamului, uşă cu uşă ──────────────────────────────────────

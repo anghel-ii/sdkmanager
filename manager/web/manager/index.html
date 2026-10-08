@@ -299,6 +299,8 @@ function leagaSticla(linii, dupa) {
 const deCine = (nume, cand) => (nume ? `${esc(nume)} · ` : '') + dataOra(cand);
 
 // (op / factura = modalităţi vechi, doar pt. comenzile de dinainte de 2026-09-28)
+// modurile de livrare — aceleaşi ca în configurator (configurator_usi/js/lib/comun/comanda.js LIVRARE)
+const LIVRARI = ['Ridicare personala', 'Curier ramburs', 'Curier op avans', 'Curier op la termen', 'Cu masina noastra'];
 const PLATI = { proforma: 'Factură proformă', proforma_amanunt: 'Factură proformă cu amănuntul', fiscala: 'Factură fiscală',
                 bon: 'Bon fiscal', avans: 'Factură de avans', op: 'OP (ordin de plată)', factura: 'Factură' };
 const PLATI_SCURT = { ...PLATI, proforma_amanunt: 'Proformă amănunt', op: 'OP' };   // în coloana din listă
@@ -696,7 +698,8 @@ async function renderDetaliu(id) {
           ${c.client_email ? `<dt>E-mail</dt><dd>${esc(c.client_email)}</dd>` : ''}
         </dl>
         ${c.livrare || c.agent || c.tip_facturare || c.plata ? `<dl class="perechi info-detalii">
-          <dt>Livrare</dt><dd>${esc(c.livrare ?? '—')}</dd>
+          <dt>Livrare</dt><dd id="livrareDd">${esc(c.livrare ?? '—')}${(eComanda || ePlata) && !c.finalizat_la
+            ? ' <button class="mic" id="schimbaLivrare" title="Schimbă modul de livrare">schimbă</button>' : ''}</dd>
           <dt>Metodă de plată</dt><dd>${esc(PLATI[c.plata] ?? '—')}</dd>
           ${c.tip_facturare ? `<dt>Tip factură</dt><dd>${esc(c.tip_facturare)}</dd>` : ''}
           <dt>Agent</dt><dd>${esc(c.agent ?? '—')}</dd></dl>` : ''}
@@ -750,6 +753,25 @@ async function renderDetaliu(id) {
       renderDetaliu(id);
     });
   }
+  // modul de livrare la comenzile în lucru / care aşteaptă plata (userul, 2026-10-08)
+  $('schimbaLivrare')?.addEventListener('click', () => {
+    $('livrareDd').innerHTML = `<select id="livrareNoua">${LIVRARI.map(v =>
+      `<option${v === c.livrare ? ' selected' : ''}>${esc(v)}</option>`).join('')}</select>
+      <button class="mic primar" id="salveazaLivrare">Salvează</button> <button class="mic" id="renuntaLivrare">Renunţă</button>`;
+    $('renuntaLivrare').addEventListener('click', () => renderDetaliu(id));
+    $('salveazaLivrare').addEventListener('click', async () => {
+      const livrare = $('livrareNoua').value;
+      if (livrare === c.livrare) return renderDetaliu(id);
+      // transportul se facturează la orice livrare în afară de ridicarea personală
+      const transport = (livrare === 'Ridicare personala') !== (c.livrare === 'Ridicare personala');
+      if (transport && !(await confirma(`Livrarea devine „${livrare}" — ${livrare === 'Ridicare personala'
+        ? 'linia de transport se scoate din facturare' : 'se adaugă linia de transport în facturare'}.${c.factura_nr
+        ? ' Atenţie: comanda e deja facturată — verifică factura.' : ''} Continui?`))) return;
+      const rr = await api(`/api/comenzi/${id}/livrare`, { method: 'POST', body: JSON.stringify({ livrare }) });
+      if (rr && !rr.ok) alerta((await rr.json().catch(() => ({}))).eroare || 'Operaţia a eşuat.');
+      renderDetaliu(id);
+    });
+  });
   // butonul dispare singur când trec cele 10 minute
   if (minuteInapoi > 0) setTimeout(() => $('inapoiOferta')?.remove(), ramas);
   leagaFacturare($('continut'), () => renderDetaliu(id));

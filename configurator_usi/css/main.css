@@ -666,6 +666,11 @@ input[type="range"]::-moz-range-thumb {
 
 /* ── Rame (gama „rame") — tabel de rânduri + câmpurile formularului ── */
 .rame-nota { font-size: 11px; color: var(--text-dim); margin: 0 0 6px; line-height: 1.35; }
+/* schiţa de găurire trasă de om (820 / 822 / 824) */
+.rame-schita { border: 1.5px dashed var(--line); border-radius: 8px; padding: 10px; text-align: center; cursor: pointer;
+               font-size: 12px; color: var(--text-dim); display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.rame-schita.peste { border-color: var(--accent); background: var(--accent-dim); color: var(--text); }
+.rame-schita img { max-width: 100%; max-height: 180px; background: #fff; border-radius: 4px; }
 .rame-tabel { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 6px; }
 .rame-tabel th { font-size: 10.5px; font-weight: 500; color: var(--text-dim); text-align: left; padding: 0 3px 4px; }
 .rame-tabel td { padding: 2px 3px; vertical-align: middle; }

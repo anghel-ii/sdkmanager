@@ -363,7 +363,7 @@ function curenta() {
   return { gama: 'amanunt', pozitie: {
     sistem: 'amanunt', eticheta: 'Ofertă cu amănuntul', finisaj: '',
     latime: 0, inaltime: 0, nrUsi: 1,
-    config: { system: 'amanunt', amanunt: linii.filter(l => l.cod), comanda: { ...comanda } },
+    config: { system: 'amanunt', amanunt: linii.filter(l => l.cod), comanda: { ...comanda }, observatii: $('observatii').value },
     // necesarul = produsele cu debitare (lungimile de tăiat), pt. depozit şi fişă
     linii: { facturare: f.lines, client: [], sticla: [], necesar: linii.filter(l => l.cod && deb(l)).map(l =>
       ({ cod: l.cod, denumire: l.denumire, um: l.um, cantitate: cantitate(l), debitare: textDebitare(l) })) },
@@ -464,7 +464,7 @@ function tipareste() {
     <table class="perechi">
       ${rand('Client', $('clientNume').value)}${rand('Telefon', $('clientTelefon').value)}${rand('Adresă', $('clientAdresa').value)}
       ${rand('Mod de livrare', comanda.livrare)}${rand('Metodă de plată', plataText(comanda.plata))}${rand('Agent', comanda.agent)}
-      ${rand('Număr ofertă', $('ofertaNr').value.trim())}
+      ${rand('Număr ofertă', $('ofertaNr').value.trim())}${rand('Observaţii', $('observatii').value.trim())}
     </table>
     <table>
       <thead><tr><th>#</th><th>Cod</th><th>Produs</th><th>Cant.</th><th>✓</th></tr></thead>
@@ -501,6 +501,7 @@ const puneClientul = (client, ofertaNr, detalii) => {
       linii = p.linii.facturare.map(l => ({ cod: l.cod, denumire: l.denumire, um: l.um, cantitate: l.cantitate }));
       puneClientul({ nume: o.comanda.client_nume, telefon: o.comanda.client_telefon, adresa: o.comanda.client_adresa },
                    o.comanda.oferta_nr, p.config.comanda);
+      $('observatii').value = p.config.observatii ?? '';
       const n = o.pozitii.length;
       modFisa = { numar: `${o.comanda.oferta_nr || o.comanda.numar}${n > 1 ? ` · produsul ${k + 1} din ${n}` : ''}`,
                   debitare: new Map((p.linii.necesar ?? []).filter(x => x.debitare).map(x => [x.cod, x.debitare])) };
@@ -509,7 +510,10 @@ const puneClientul = (client, ofertaNr, detalii) => {
     puneClientul(cos.client, cos.ofertaNr, cos.comanda);
     const k = params.has('poz') ? +params.get('poz') : null;
     cos.curent = cos.pozitii[k]?.gama === 'amanunt' ? k : null;
-    if (cos.curent != null) linii = (cos.pozitii[k].pozitie.config.amanunt ?? []).map(l => ({ ...l, debitare: l.debitare?.map(p => ({ ...p })) }));
+    if (cos.curent != null) {
+      linii = (cos.pozitii[k].pozitie.config.amanunt ?? []).map(l => ({ ...l, debitare: l.debitare?.map(p => ({ ...p })) }));
+      $('observatii').value = cos.pozitii[k].pozitie.config.observatii ?? '';
+    }
     cosul.scrie(cos);
   }
   if (!modFisa) {

@@ -662,6 +662,19 @@ async function main() {
     await cer('POST', `/api/comenzi/${pid}/factura`, { numar: 'F-INAPOI' });
     verifica('facturată → nu se mai întoarce (409)', (await cer('POST', `/api/comenzi/${pid}/inapoi-oferta`)).stare === 409);
     await cer('POST', `/api/comenzi/${pid}/factura`, { numar: '', anuleaza: true });
+    // modul de livrare la o comandă în lucru (userul, 2026-10-08): transportul şi configuraţia se potrivesc
+    const transport = () => db2().prepare(`SELECT count(*) n FROM pozitie_linie l JOIN pozitie p ON p.id = l.pozitie_id
+      WHERE p.comanda_id = ? AND l.lista = 'facturare' AND l.cod = 'CHLTTRMANIP'`).get(pid).n;
+    const livr = v => cer('POST', `/api/comenzi/${pid}/livrare`, { livrare: v });
+    verifica('livrare: valoare necunoscută → 400', (await livr('Posta')).stare === 400);
+    verifica('livrare → Curier ramburs: 200 + o linie de transport', (await livr('Curier ramburs')).stare === 200 && transport() === 1);
+    verifica('… → Cu masina noastra: tot o singură linie, comanda şi configuraţia schimbate',
+      (await livr('Cu masina noastra')).stare === 200 && transport() === 1
+      && db2().prepare('SELECT livrare FROM comanda WHERE id = ?').get(pid).livrare === 'Cu masina noastra'
+      && JSON.parse(db2().prepare('SELECT config_json FROM pozitie WHERE comanda_id = ?').get(pid).config_json).comanda.livrare === 'Cu masina noastra');
+    verifica('… → Ridicare personala: transportul iese din facturare', (await livr('Ridicare personala')).stare === 200 && transport() === 0);
+    verifica('livrarea unei oferte → 409 (se schimbă din „Modifică oferta")',
+      (await cer('POST', `/api/comenzi/${oc.date.comanda.id}/livrare`, { livrare: 'Curier ramburs' })).stare === 409);
     const cate = async tip => (await cer('GET', '/api/comenzi?tip=' + tip)).date.comenzi.length;
     const peTaburi = await cate('oferta') + await cate('plata') + await cate('comanda') + await cate('finalizata');
     verifica('căutarea globală: tip=toate = cele patru taburi la un loc', peTaburi > 1 && await cate('toate') === peTaburi, `${peTaburi}`);

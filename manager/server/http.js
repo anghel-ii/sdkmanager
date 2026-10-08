@@ -5,7 +5,7 @@ const path = require('node:path');
 // Un router minimal peste node:http. Nu folosim Express fiindcă tot ce ne
 // trebuie încape aici, iar proiectul n-are nicio dependenţă de runtime.
 
-const LIMITA_CORP = 2 * 1024 * 1024;   // 2 MB — o ofertă cu multe poziţii e mult sub
+const LIMITA_CORP = 8 * 1024 * 1024;   // 8 MB — o ofertă cu multe poziţii + pozele schiţelor de găurire (rame 820, ~0,5 MB fiecare)
 
 function json(res, cod, date, antete = {}) {
   const corp = JSON.stringify(date);

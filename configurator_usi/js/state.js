@@ -62,4 +62,6 @@ export const state = {
   manerAplicat: ['fara'],
   // detaliile comenzii — la toate gamele (js/lib/comun/comanda.js)
   comanda: { livrare: null, agent: null, plata: null },
+  // observaţiile produsului — se tipăresc pe fişă (userul, 2026-10-08)
+  observatii: '',
 };

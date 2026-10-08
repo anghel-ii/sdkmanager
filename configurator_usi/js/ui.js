@@ -9,6 +9,7 @@ import catalog from './catalog/catalog.generated.json';
 import * as oferta from './oferta.js';
 import { deschideFisa } from './fisa.js';
 import { suprapuneriConfort, suprapuneriEfective, areCodH, areSinaSimpla } from './lib/confort/index.js';
+import { geamPermisLux } from './lib/lux/index.js';
 import gameJson from './systems/game.json';
 import { renderRame, syncRame, refreshRame } from './ui_rame.js';
 import { activeazaCampuri } from './campuri.js';
@@ -233,8 +234,9 @@ function grosimeOptionsHtml(selected, grosimi = GROSIMI_CLIENT) {
     `<option value="${g}"${g === selected ? ' selected' : ''}>${clientGeamLabel(g)}</option>`).join('');
 }
 
-function geamOptionsHtml(selectedCod, grosimi = null) {
-  const list = [...geamList()].filter(g => !grosimi || grosimi.includes(g.grosime)).sort((a, b) =>
+// `permis(g)` — ce modele are voie gama (LUX: doar 4 mm, prin care nu se vede)
+function geamOptionsHtml(selectedCod, permis = null) {
+  const list = [...geamList()].filter(g => !permis || permis(g)).sort((a, b) =>
     a.oglinda - b.oglinda || a.grosime - b.grosime || a.denumire.localeCompare(b.denumire));
   const geamuri = list.filter(g => !g.oglinda);
   const oglinzi = list.filter(g => g.oglinda);
@@ -548,7 +550,7 @@ function renderWheels() {
           <select class="geam-select" data-door="${i}" data-client="${client ? 1 : 0}"${hasGlass ? '' : ' disabled'}>${
             !hasGlass ? '<option>Fără geam — numai PAL</option>'
               : client ? grosimeOptionsHtml(state.geamClient[i], isLux ? [4] : undefined)
-                       : geamOptionsHtml(state.geam[i], isLux ? [4] : null)
+                       : geamOptionsHtml(state.geam[i], isLux ? geamPermisLux : null)
           }</select>
         </div>`}
 
@@ -1338,6 +1340,9 @@ export async function initUI() {
   $('btnComanda')?.addEventListener('click', () => trimiteOferta('comanda'));
   $('btnPlata')?.addEventListener('click', () => trimiteOferta('plata'));
   initDetaliiComanda();
+  // observaţiile produsului (în config → se salvează cu el şi ajung pe fişă)
+  const obs = /** @type {HTMLTextAreaElement | null} */ ($('observatii'));
+  if (obs) { obs.value = state.observatii ?? ''; obs.addEventListener('input', () => { state.observatii = obs.value; }); }
   // la alegerea unui client din listă, agentul lui trece în selectorul de agent
   initSugestiiClienti(agent => { $('comandaAgent').value = agent; state.comanda.agent = agent; rebuild(); });
   // CLEAR PAGE — configuraţie nouă de la zero: reîncărcarea paginii (cu acelaşi

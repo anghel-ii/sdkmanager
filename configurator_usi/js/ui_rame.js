@@ -114,6 +114,20 @@ function tabelCrescator(tbody, { lista, coloane, gol, idCod, laSchimbare, redese
   tbody.querySelectorAll('tr').forEach(leaga);
 }
 
+// Schiţa de găurire trasă de om (820 / 822 / 824, userul 2026-10-08) — poza se micşorează
+// (max. 2000 px pe latura lungă, JPEG) şi stă în configuraţie, deci se salvează cu oferta şi
+// se tipăreşte pe pagina 3 a fişei.
+async function pozaSchita(f) {
+  const img = await createImageBitmap(f);
+  const k = Math.min(1, 2000 / Math.max(img.width, img.height));
+  const c = document.createElement('canvas');
+  c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+  const g = /** @type {CanvasRenderingContext2D} */ (c.getContext('2d'));
+  g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);   // PNG transparent → fundal alb
+  g.drawImage(img, 0, 0, c.width, c.height);
+  return c.toDataURL('image/jpeg', 0.85);
+}
+
 // ── Panoul ───────────────────────────────────────────────────────────────────
 export function renderRame(box, { rebuild, geamOptionsHtml }) {
   const meta = systems[state.system]?.meta;
@@ -168,7 +182,11 @@ export function renderRame(box, { rebuild, geamOptionsHtml }) {
     ${faraGaurire ? '' : `${camp('Balama', `<select class="rame-sel" data-c="balama">${
       optiuni([[FARA_BALAMALE, FARA_BALAMALE], ...BALAMALE[model]], x.balama, 'Alege balama')}</select>`)}
     ${camp('Plăcuţă', `<select class="rame-sel" data-c="placuta">${
-      optiuni([[FARA_PLACUTE, FARA_PLACUTE], ...PLACUTE[model]], x.placuta, 'Alege placuta')}</select>`)}`}` : `
+      optiuni([[FARA_PLACUTE, FARA_PLACUTE], ...PLACUTE[model]], x.placuta, 'Alege placuta')}</select>`)}`}
+    ${camp('Schiţă de găurire', `<div class="rame-schita" id="rameSchita">${x.schita
+      ? `<img src="${x.schita}" alt="Schiţa de găurire"><button type="button" class="rame-schita-sterge">Şterge schiţa</button>`
+      : '<span>Trage aici poza schiţei (JPG / PNG) sau apasă ca s-o alegi — se tipăreşte pe pagina 3 a fişei</span>'}
+      <input type="file" accept="image/png,image/jpeg,image/webp" hidden></div>`)}` : `
     ${x.gaurire === 'Gaurire Standard' ? camp('Manşon', `<div class="segmented mini rame-seg" data-c="manson">
       <button data-v="1"${x.manson ? ' class="active"' : ''}>Cu manşon</button>
       <button data-v="0"${!x.manson ? ' class="active"' : ''}>Fara manson</button></div>`) : ''}`}
@@ -193,6 +211,22 @@ export function renderRame(box, { rebuild, geamOptionsHtml }) {
     x[sel.dataset.c] = sel.value;
     redeseneaza();
   }));
+  const zona = box.querySelector('#rameSchita');
+  if (zona) {
+    const fisier = /** @type {HTMLInputElement} */ (zona.querySelector('input[type=file]'));
+    const ia = async (/** @type {File | undefined} */ f) => {
+      if (!f) return;
+      if (!f.type.startsWith('image/')) { alert('Trage o poză a schiţei (JPG sau PNG).'); return; }
+      x.schita = await pozaSchita(f);
+      redeseneaza();
+    };
+    zona.addEventListener('click', e => { if (!(/** @type {Element} */ (e.target)).closest('.rame-schita-sterge')) fisier.click(); });
+    fisier.addEventListener('change', () => ia(fisier.files?.[0]));
+    zona.addEventListener('dragover', e => { e.preventDefault(); zona.classList.add('peste'); });
+    zona.addEventListener('dragleave', () => zona.classList.remove('peste'));
+    zona.addEventListener('drop', e => { e.preventDefault(); zona.classList.remove('peste'); ia(/** @type {DragEvent} */ (e).dataTransfer?.files[0]); });
+    zona.querySelector('.rame-schita-sterge')?.addEventListener('click', () => { x.schita = null; redeseneaza(); });
+  }
   box.querySelectorAll('input.rame-text').forEach(inp => inp.addEventListener('change', () => {
     x[inp.dataset.c] = inp.dataset.c === 'vopsitCant' ? Math.max(0, +inp.value || 0) : inp.value.trim();
     rebuild();

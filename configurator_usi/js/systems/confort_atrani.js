@@ -26,7 +26,7 @@ export const meta = {
   pal:         true,             // panourile pot fi PAL (18mm)
   sketch:      'assets/atrani.jpeg',
   limits:      { width: [800, 5800], height: [800, 3400] },   // date de user, 2026-09-17
-  limitsFinisaj: { CUPRU: { width: [800, 3500] } },   // CUPRU: lăţime max mai mică
+  limitsFinisaj: { CUPRU: { width: [800, 3500], height: [800, 3000] } },   // CUPRU: max 3500 × 3000 (userul, 2026-10-08)
   finishes:    FINISAJE_CONFORT,
 };
 

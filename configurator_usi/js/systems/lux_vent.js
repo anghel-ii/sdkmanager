@@ -21,7 +21,7 @@ export const meta = {
   pal:         true,                         // panourile pot fi PAL sau sticlă
   // şina = bară de 5,8 m; mânerul = bară de 5,5 m (2 bucăţi din una → uşa max 2750, gol max 2790)
   limits:      { width: [800, 5800], height: [800, 2790] },
-  limitsFinisaj: { CUPRU: { width: [800, 3500] } },   // şina de cupru e bară de 3,5 m
+  limitsFinisaj: { CUPRU: { width: [800, 3500], height: [800, 3000] } },   // şina de cupru e bară de 3,5 m; înălţime max 3000 (userul, 2026-10-08)
   finishes:    FINISAJE_LUX,
 };
 

@@ -341,6 +341,45 @@ function detaliu(ctx) {
 
 // Oferta trece în „aşteaptă plata" — încă nu e comandă (fără CMD-, fără sticlă
 // de comandat, fără facturare); iese de acolo cu „Plată primită" = accepta.
+// Modul de livrare al unei comenzi în lucru / care aşteaptă plata (userul, 2026-10-08); la ofertă
+// se schimbă din „Modifică oferta". Odată cu el se potrivesc: linia de transport din facturare
+// (o dată pe comandă, pe prima poziţie — ca în configurator, cos.js transportOData; la „Ridicare
+// personala" nu se facturează) şi livrarea din configuraţiile salvate (de acolo o ia fişa).
+const LIVRARI = ['Ridicare personala', 'Curier ramburs', 'Curier op avans', 'Curier op la termen', 'Cu masina noastra'];
+const TRANSPORT = { cod: 'CHLTTRMANIP', denumire: 'Cheltuieli de Transport si Manipulare', um: 'buc', cantitate: 1 };
+async function schimbaLivrare(ctx) {
+  const id = Number(ctx.params.id);
+  const { livrare } = await corpJson(ctx.req);
+  const c = db().prepare('SELECT * FROM comanda WHERE id = ?').get(id);
+  if (!c)                 return eroare(ctx.res, 404, 'Comandă inexistentă.');
+  if (c.anulat)           return eroare(ctx.res, 400, 'Comanda e anulată.');
+  if (c.tip === 'oferta') return eroare(ctx.res, 409, 'La o ofertă livrarea se schimbă din „Modifică oferta".');
+  if (c.finalizat_la)     return eroare(ctx.res, 409, 'Comanda e finalizată.');
+  if (!LIVRARI.includes(livrare)) return eroare(ctx.res, 400, 'Alege modul de livrare.');
+  tranzactie(d => {
+    d.prepare('UPDATE comanda SET livrare = ? WHERE id = ?').run(livrare, id);
+    const poz = d.prepare('SELECT id, config_json FROM pozitie WHERE comanda_id = ? ORDER BY idx').all(id);
+    for (const p of poz) {
+      const cfg = JSON.parse(p.config_json);
+      cfg.comanda = { ...cfg.comanda, livrare };
+      if (cfg.rame && 'livrare' in cfg.rame) cfg.rame.livrare = livrare;   // ofertele vechi de rame o ţineau aici
+      d.prepare('UPDATE pozitie SET config_json = ? WHERE id = ?').run(JSON.stringify(cfg), p.id);
+    }
+    if (!poz.length) return;
+    const ids = poz.map(p => p.id), semne = ids.map(() => '?').join(',');
+    const are = d.prepare(`SELECT 1 FROM pozitie_linie WHERE lista = 'facturare' AND cod = ? AND pozitie_id IN (${semne})`).get(TRANSPORT.cod, ...ids);
+    const trebuie = livrare !== 'Ridicare personala';
+    if (are && !trebuie) d.prepare(`DELETE FROM pozitie_linie WHERE lista = 'facturare' AND cod = ? AND pozitie_id IN (${semne})`).run(TRANSPORT.cod, ...ids);
+    if (!are && trebuie) {
+      const idx = (d.prepare("SELECT MAX(idx) AS m FROM pozitie_linie WHERE pozitie_id = ? AND lista = 'facturare'").get(ids[0]).m ?? 0) + 1;
+      d.prepare(`INSERT INTO pozitie_linie (pozitie_id, lista, idx, cod, denumire, um, cantitate) VALUES (?, 'facturare', ?, ?, ?, ?, ?)`)
+        .run(ids[0], idx, TRANSPORT.cod, TRANSPORT.denumire, TRANSPORT.um, TRANSPORT.cantitate);
+    }
+  });
+  anunta({ comanda: id });
+  json(ctx.res, 200, { comanda: db().prepare('SELECT * FROM comanda WHERE id = ?').get(id) });
+}
+
 function asteaptaPlata(ctx) {
   const id = Number(ctx.params.id);
   const c = db().prepare('SELECT * FROM comanda WHERE id = ?').get(id);
@@ -518,6 +557,7 @@ module.exports = {
     ['PUT',  '/api/comenzi/:id',             { handler: modifica }],
     ['POST', '/api/comenzi/:id/accepta',     { handler: accepta }],
     ['POST', '/api/comenzi/:id/asteapta-plata', { handler: asteaptaPlata }],
+    ['POST', '/api/comenzi/:id/livrare',        { handler: schimbaLivrare }],
     ['POST', '/api/comenzi/:id/inapoi-oferta',  { handler: inapoiInOferta }],
     ['POST', '/api/comenzi/:id/finalizeaza', { handler: schimbaFinalizare(true) }],
     ['POST', '/api/comenzi/:id/redeschide',  { handler: schimbaFinalizare(false) }],
