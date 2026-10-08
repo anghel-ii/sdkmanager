@@ -236,20 +236,27 @@ function textSubDesen(sys, spec, i) {
 
 // `usi` = ce uşi se desenează (indicii lor; implicit toate), `desen(i)` = desenul uneia
 function blocDesene(sys, spec, usi = [...Array(spec.door.count || 0).keys()], desen = null) {
-  const n = usi.length;
-  if (!n) return '';
+  if (!usi.length) return '';
   const margH = (spec.glass?.panels ?? []).some(p => p.profil?.includes('H')) ? 110 : 0;
-  const coloane = usi.map(i => {
+  // uşile identice (acelaşi desen, cine asamblează, aceleaşi detalii) — o singură schiţă,
+  // cu nr. uşilor şi bucăţile deasupra (userul, 2026-10-08)
+  const grupuri = new Map();
+  for (const i of usi) {
     const { svg, raport } = desen ? desen(i) : desenUsa(sys, spec, i, margH);
     const cine = state.assembly?.[i] === 'client' ? 'CLIENTUL ASAMBLEAZĂ' : 'NOI ASAMBLĂM';
-    return `
-      <div class="usa-col" style="--r:${raport.toFixed(4)}">
-        <div class="usa-cap"><span class="usa-nr">Uşa ${i + 1}</span> <span class="usa-cine">${cine}</span></div>
-        ${svg}
-        <div class="usa-sub">${textSubDesen(sys, spec, i)}</div>
-      </div>`;
-  }).join('');
-  return `<div class="desene" style="--n:${Math.min(n, 4)}">${coloane}</div>`;   // max. 4 pe rând — mai puţin înghesuite
+    const sub = textSubDesen(sys, spec, i);
+    const cheie = cine + svg + sub;
+    if (grupuri.has(cheie)) grupuri.get(cheie).usi.push(i + 1);
+    else grupuri.set(cheie, { usi: [i + 1], svg, raport, cine, sub });
+  }
+  const coloane = [...grupuri.values()].map(g => `
+      <div class="usa-col" style="--r:${g.raport.toFixed(4)}">
+        <div class="usa-cap"><span class="usa-nr">${g.usi.length > 1 ? `Uşile ${g.usi.join(', ')} — <b>${g.usi.length} buc</b>` : `Uşa ${g.usi[0]}`}</span>
+          <span class="usa-cine">${g.cine}</span></div>
+        ${g.svg}
+        <div class="usa-sub">${g.sub}</div>
+      </div>`).join('');
+  return `<div class="desene" style="--n:${Math.min(grupuri.size, 4)}">${coloane}</div>`;   // max. 4 pe rând — mai puţin înghesuite
 }
 
 // ── Debitare rame — toate laturile din profilul modelului; EXCEPŢIE 842: doar
@@ -655,6 +662,7 @@ export function deschideFisa(client, oferta = null, salvate = null) {
                  margin: 0 auto; font-family: Arial, sans-serif; }
   .usa-cap { text-align: center; margin-bottom: 2px; line-height: 1.15; }
   .usa-nr { display: block; font-size: 10px; color: #555; }
+  .usa-nr b { color: #000; font-size: 13px; }
   .usa-cine { display: block; font-size: 15px; font-weight: 700; letter-spacing: .02em; line-height: 1.1; }
   .usa-sub { font-size: 10.5px; line-height: 1.3; margin-top: 3px; overflow-wrap: break-word; }
   .sub-et { color: #555; }
