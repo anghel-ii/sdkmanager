@@ -62,3 +62,15 @@ CREATE TABLE IF NOT EXISTS propunere (
   creat_la  TEXT NOT NULL,          -- ultima trimitere a agentului
   UNIQUE (client_id)                -- o singură modificare în aşteptare pe client (NULL-urile nu se ciocnesc)
 );
+
+-- Pagina /admin (userul, 2026-10-08): update la serverul din firmă şi când nu eşti acolo.
+-- Serverul nu primeşte nimic din internet — la 20 s îşi trimite aici starea şi ia
+-- cererea lăsată de pe pagină (manager/server/actualizare.js, raporteaza). Un singur rând.
+CREATE TABLE IF NOT EXISTS server (
+  id          INTEGER PRIMARY KEY CHECK (id = 1),
+  raport_json TEXT,       -- ultima stare trimisă de manager: versiune, jurnal, noutăţi…
+  raportat_la TEXT,
+  cerere      TEXT,       -- 'verifica' | 'actualizeaza' — o ia managerul la următoarea raportare
+  cerere_la   TEXT,
+  esecuri     TEXT        -- JSON: momentele parolelor greşite din ultimele 15 minute
+);

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Server SDK — admin</title>
+<style>
+  :root { --bg: #14171c; --panel: #1d2127; --panel-2: #23282f; --line: #2e343d; --text: #e6e8eb; --dim: #9aa3ad;
+          --accent: #4da3ff; --accent-dim: #1f6fd1; --ok: #4caf7d; --danger: #e5605a; --astept: #f0c65a; }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--bg); color: var(--text); font: 15px/1.45 system-ui, sans-serif; }
+  [hidden] { display: none !important; }
+  main { max-width: 760px; margin: 0 auto; padding: 24px 16px 40px; }
+  h1 { font-size: 1.25rem; margin-bottom: 16px; }
+  .dim { color: var(--dim); font-size: .88rem; }
+  input, button { font: inherit; }
+  input { padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--text); width: 100%; }
+  button { font-weight: 600; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line);
+           background: var(--panel); color: var(--text); cursor: pointer; }
+  button:disabled { opacity: .5; cursor: default; }
+  button.primar { background: var(--accent-dim); border-color: var(--accent-dim); color: #fff; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin-bottom: 14px; }
+  .card h2 { font-size: .74rem; text-transform: uppercase; letter-spacing: .05em; color: var(--dim); margin-bottom: 10px; }
+  #fLogin { display: grid; gap: 12px; max-width: 360px; }
+  .eroare { color: var(--danger); }
+  .ok { color: var(--ok); }
+  .astept { color: var(--astept); }
+  dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; }
+  dt { color: var(--dim); }
+  .butoane { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+  ul { padding-left: 18px; }
+  pre { white-space: pre-wrap; word-break: break-word; font: 12px/1.5 ui-monospace, monospace; color: var(--dim);
+        max-height: 420px; overflow: auto; background: var(--bg); padding: 10px; border-radius: 8px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Serverul SDK din firmă</h1>
+
+  <form id="fLogin" hidden>
+    <div class="dim">Parola de admin pusă pe Cloudflare.</div>
+    <input type="password" id="parola" autocomplete="current-password" required>
+    <button class="primar">Intră</button>
+    <div id="mesajLogin" class="eroare"></div>
+  </form>
+
+  <div id="pagina" hidden>
+    <div class="card">
+      <h2>Stare</h2>
+      <dl>
+        <dt>Serverul</dt><dd id="legatura"></dd>
+        <dt>Versiunea</dt><dd id="versiune"></dd>
+        <dt>Update</dt><dd id="mod"></dd>
+      </dl>
+      <div class="butoane">
+        <button id="verifica">Verifică ce e nou</button>
+        <button class="primar" id="actualizeaza">Actualizează acum</button>
+        <button id="iesire" style="margin-left:auto">Ieşi</button>
+      </div>
+      <div id="mesaj" class="dim" style="margin-top:10px"></div>
+    </div>
+    <div class="card" id="cardNoutati" hidden><h2>Ce e nou pe GitHub</h2><div id="noutati"></div></div>
+    <div class="card"><h2>Jurnalul update-ului</h2><pre id="jurnal"></pre></div>
+  </div>
+</main>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+//  Update la serverul din firmă de oriunde (userul, 2026-10-08). Pagina doar LASĂ
+//  o cerere (functions/api/server/admin.js); serverul o ia la următoarea raportare
+//  (≤ 20 s) şi îşi trimite starea: versiunea, jurnalul, ce e nou.
+// ═══════════════════════════════════════════════════════════════════════════
+const $ = id => document.getElementById(id);
+const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+let parola = '';
+try { parola = sessionStorage.getItem('parolaAdmin') ?? ''; } catch {}
+
+async function api(metoda, corp) {
+  const r = await fetch('/api/server/admin', { method: metoda, body: corp && JSON.stringify(corp),
+    headers: { 'Content-Type': 'application/json', 'X-Parola': encodeURIComponent(parola) } });
+  const d = await r.json().catch(() => ({}));
+  if (r.status === 401 || r.status === 429 || r.status === 503) { iesi(d.eroare); return null; }
+  if (!r.ok) { $('mesaj').innerHTML = `<span class="eroare">${esc(d.eroare || 'Eroare ' + r.status)}</span>`; return null; }
+  return d;
+}
+
+function iesi(mesaj = '') {
+  parola = '';
+  try { sessionStorage.removeItem('parolaAdmin'); } catch {}
+  $('pagina').hidden = true; $('fLogin').hidden = false;
+  $('mesajLogin').textContent = mesaj;
+}
+
+const durata = s => s < 60 ? `${s} s` : s < 3600 ? `${Math.round(s / 60)} min` : s < 86400 ? `${Math.round(s / 3600)} ore` : `${Math.round(s / 86400)} zile`;
+let cererePeDrum = false;
+
+async function incarca() {
+  const d = await api('GET');
+  if (!d) return false;
+  $('fLogin').hidden = true; $('pagina').hidden = false;
+  const r = d.raport, viu = d.secunde != null && d.secunde < 90;
+  $('legatura').innerHTML = d.secunde == null ? '<span class="eroare">n-a raportat niciodată — are versiunea nouă a managerului?</span>'
+    : viu ? `<span class="ok">● conectat</span> <span class="dim">(acum ${durata(d.secunde)})</span>`
+    : `<span class="eroare">● nu răspunde de ${durata(d.secunde)}</span> <span class="dim">— oprit, fără internet sau în repornire</span>`;
+  $('versiune').textContent = r?.versiune || '—';
+  $('mod').innerHTML = !r ? '—' : !r.disponibil ? '<span class="eroare">nu se poate de aici (managerul nu rulează pe Windows)</span>'
+    : r.ruleaza ? '<span class="astept">în curs…</span>'
+    : r.mod === 'cheie' ? 'pachetul de pe GitHub (cheia GitHub e pusă)' : 'sarcina „SDK Actualizare" (ca administrator)';
+  cererePeDrum = !!d.cerere;
+  $('verifica').disabled = $('actualizeaza').disabled = cererePeDrum || !viu || !!r?.ruleaza || !r?.disponibil;
+  $('mesaj').innerHTML = d.cerere
+    ? `<span class="astept">Cerere trimisă (${d.cerere === 'verifica' ? 'verifică' : 'actualizează'}) — serverul o preia în cel mult 20 s.</span>`
+    : r?.eroare ? `<span class="eroare">${esc(r.eroare)}</span>` : '';
+  $('cardNoutati').hidden = !r?.noutati;
+  if (r?.noutati) $('noutati').innerHTML = r.noutati.length
+    ? `<ul>${r.noutati.map(n => `<li>${esc(n)}</li>`).join('')}</ul>` : '<span class="ok">Serverul are deja ultima versiune.</span>';
+  $('jurnal').textContent = r?.jurnal || '(gol)';
+  return true;
+}
+
+$('fLogin').addEventListener('submit', async e => {
+  e.preventDefault();
+  parola = $('parola').value;
+  if (await incarca()) { try { sessionStorage.setItem('parolaAdmin', parola); } catch {} $('parola').value = ''; }
+});
+$('verifica').addEventListener('click', async () => { if (await api('POST', { cerere: 'verifica' })) incarca(); });
+$('actualizeaza').addEventListener('click', async () => {
+  if (!confirm('Actualizezi serverul din firmă acum? Managerul se reporneşte (câteva secunde în care colegii nu-l pot folosi).')) return;
+  if (await api('POST', { cerere: 'actualizeaza' })) incarca();
+});
+$('iesire').addEventListener('click', () => iesi());
+
+(async () => {
+  if (!parola || !(await incarca())) $('fLogin').hidden = false;
+  setInterval(() => { if (parola && !document.hidden) incarca(); }, 5000);
+})();
+</script>
+</body>
+</html>

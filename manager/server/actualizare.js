@@ -107,33 +107,37 @@ async function commituri(dela, nou) {
   } catch { return unu; }
 }
 
-async function stare(ctx) {
+async function dateStare() {
   const fara = faraAdmin();
-  json(ctx.res, 200, {
+  return {
     disponibil: fara || peWindows,
     mod: fara ? 'cheie' : 'sarcina',
     areCheie: !!cheieGithub(),
     versiune: textVersiune(await versiuneLocala()),
     ruleaza: fara ? inCurs : await sarcinaRuleaza(),
     jurnal: coadaJurnal(fara ? JURNAL_FARA_ADMIN : JURNAL),
-  });
+  };
 }
+const stare = async ctx => json(ctx.res, 200, await dateStare());
 
-// Ce e nou pe GitHub faţă de versiunea care rulează.
-async function verifica(ctx) {
+// Ce e nou pe GitHub faţă de versiunea care rulează → listă de commituri (aruncă dacă nu se poate).
+async function noutati() {
   try {
     if (!faraAdmin()) {
       await git('fetch', '--quiet', 'origin', 'main');
       const log = await git('log', '--format=%h — %s', 'HEAD..origin/main');
-      return json(ctx.res, 200, { noutati: log ? log.split('\n') : [] });
+      return log ? log.split('\n') : [];
     }
     const nou = JSON.parse(await descarca('versiune.json'));
     const local = await versiuneLocala();
-    json(ctx.res, 200, { noutati: local?.sha === nou.sha ? [] : await commituri(local?.sha, nou) });
+    return local?.sha === nou.sha ? [] : await commituri(local?.sha, nou);
   } catch (e) {
-    eroare(ctx.res, 502, `Nu am putut întreba GitHub: ${e.message}${faraAdmin() ? ''
-      : ' — dacă managerul nu rulează ca administrator, pune mai jos cheia GitHub (doar citire).'}`);
+    throw new Error(`Nu am putut întreba GitHub: ${e.message}${faraAdmin() ? ''
+      : ' — dacă managerul nu rulează ca administrator, pune în /admin cheia GitHub (doar citire).'}`);
   }
+}
+async function verifica(ctx) {
+  try { json(ctx.res, 200, { noutati: await noutati() }); } catch (e) { eroare(ctx.res, 502, e.message); }
 }
 
 // ── Update fără admin: pachetul de pe GitHub peste codul de acum ─────────────
@@ -182,22 +186,51 @@ async function aplicaPachet() {
   setTimeout(() => process.emit('SIGTERM'), 500);   // oprirea curată din index.js (închide baza)
 }
 
-async function porneste(ctx) {
+// Porneşte update-ul (din /admin sau de pe pagina de pe Cloudflare); aruncă { cod, message } dacă nu se poate.
+const nuSePoate = (cod, mesaj) => Object.assign(new Error(mesaj), { cod });
+async function pornesteUpdate() {
   if (faraAdmin()) {
-    if (inCurs) return eroare(ctx.res, 409, 'O actualizare e deja în curs.');
+    if (inCurs) throw nuSePoate(409, 'O actualizare e deja în curs.');
     inCurs = true;
-    json(ctx.res, 202, { ok: true });
     aplicaPachet().catch(e => { scrieJurnal(`UPDATE-UL S-A OPRIT: ${e.message} Serverul a rămas pe versiunea de acum.`); inCurs = false; });
     return;
   }
-  if (!peWindows) return eroare(ctx.res, 400, 'Actualizarea din pagină merge doar pe serverul Windows.');
-  if (await sarcinaRuleaza()) return eroare(ctx.res, 409, 'O actualizare e deja în curs.');
+  if (!peWindows) throw nuSePoate(400, 'Actualizarea din pagină merge doar pe serverul Windows.');
+  if (await sarcinaRuleaza()) throw nuSePoate(409, 'O actualizare e deja în curs.');
   try {
     await ruleaza('schtasks', ['/run', '/tn', SARCINA]);
-    json(ctx.res, 202, { ok: true });
   } catch (e) {
-    eroare(ctx.res, 500, `Nu am putut porni sarcina „${SARCINA}" (rulează din nou instalarea): ${e.message}`);
+    throw nuSePoate(500, `Nu am putut porni sarcina „${SARCINA}" (rulează din nou instalarea): ${e.message}`);
   }
+}
+async function porneste(ctx) {
+  try { await pornesteUpdate(); json(ctx.res, 202, { ok: true }); } catch (e) { eroare(ctx.res, e.cod ?? 500, e.message); }
+}
+
+// ── Update şi când nu eşti la firmă (userul, 2026-10-08) ─────────────────────
+// Serverul nu primeşte nimic din internet, deci pagina /admin de pe Cloudflare
+// (clienti-agenti, functions/api/server) nu-l poate chema. El întreabă: la 20 s
+// trimite acolo starea (versiunea, jurnalul, noutăţile) cu cheia managerului şi
+// primeşte înapoi ce s-a cerut de pe pagină — „verifica" sau „actualizeaza".
+let laDistanta = { noutati: null, eroare: null, la: null };   // rezultatul ultimei cereri de pe pagină
+async function raporteaza() {
+  const { laCF, activ } = require('./clienti.js');
+  if (!activ()) return;
+  const trimite = async () => laCF('POST', '/api/server', JSON.stringify({ ...(await dateStare()), ...laDistanta }));
+  const r = await trimite();
+  const cerere = r.stare === 200 ? r.date?.cerere : null;
+  if (!cerere) return;
+  laDistanta = { noutati: null, eroare: null, la: new Date(acumMs()).toISOString() };
+  try {
+    if (cerere === 'verifica') laDistanta.noutati = await noutati();
+    else if (cerere === 'actualizeaza') { await pornesteUpdate(); if (faraAdmin()) scrieJurnal('(pornit de pe pagina de pe Cloudflare)'); }
+  } catch (e) { laDistanta.eroare = e.message; }
+  await trimite();   // rezultatul pe pagină imediat, nu peste 20 s
+}
+function pornesteRaportarea() {
+  const tura = () => raporteaza().catch(e => console.error('Raportarea spre Cloudflare:', e.message));
+  tura();
+  setInterval(tura, 20 * 1000).unref();
 }
 
 // Cheia GitHub (fine-grained, doar citire, doar repository-ul ăsta) — se verifică
@@ -215,6 +248,7 @@ async function puneCheie(ctx) {
 }
 
 module.exports = {
+  raporteaza, pornesteRaportarea,
   rute: [
     ['GET',  '/api/actualizare',          { rol: 'admin', handler: stare }],
     ['POST', '/api/actualizare/verifica', { rol: 'admin', handler: verifica }],

@@ -716,6 +716,7 @@ async function main() {
     // GET ?dupa=<versiune> → ce s-a schimbat după ea, în ordinea versiunii, câte `pagina`
     let versiune = 0, pagina = 2, primitAgent = null;
     const externi = new Map();
+    const rapoarte = [], deCerut = [];
     const propuse = new Map([[7, { id: 7, tip: 'nou', agent: 'Ion', trimis_la: '2026-10-01 10:00:00', propus: { nume: 'Propus SRL' }, actual: null }],
                              [8, { id: 8, tip: 'nou', agent: 'Ion', trimis_la: '2026-10-01 10:01:00', propus: { nume: 'Respins SRL' }, actual: null }]]);
     const schimba = c => externi.set(c.id, { ...externi.get(c.id), ...c, versiune: ++versiune });
@@ -726,6 +727,11 @@ async function main() {
       if (q.headers.authorization !== 'Bearer cheie-test') { r.writeHead(401); return r.end('{}'); }
       if (q.url === '/api/agenti/intra') return r.end(JSON.stringify({ url: 'https://agenti.test/api/intra?t=bilet' }));
       // propunerile agenţilor (clienti-agenti/functions/api/propuneri): aprobarea scrie clientul
+      // pagina /admin de pe Cloudflare (functions/api/server): managerul raportează, primeşte cererea
+      if (q.url === '/api/server' && q.method === 'POST') {
+        let corp = ''; q.on('data', b => corp += b);
+        return q.on('end', () => { rapoarte.push(JSON.parse(corp)); r.end(JSON.stringify({ cerere: deCerut.shift() ?? null })); });
+      }
       if (q.url === '/api/propuneri') return r.end(JSON.stringify({ propuneri: [...propuse.values()] }));
       const pr = q.url.match(/^\/api\/propuneri\/(\d+)\/(aproba|respinge)$/);
       if (pr && q.method === 'POST') {
@@ -807,6 +813,16 @@ async function main() {
     verifica('insigna scade la 0 după aprobare / respingere', (await cer('GET', '/api/sumar')).date.deAprobat === 0);
     cookie = null;
     await cer('POST', '/api/login', { user: 'admin', parola: 'parola-admin-1' });
+    {
+      // update de oriunde: starea pleacă spre Cloudflare, cererea de acolo se execută şi rezultatul pleacă imediat
+      const { raporteaza } = require('../server/actualizare.js');
+      deCerut.push('actualizeaza');
+      await raporteaza();
+      verifica('raportul spre /admin de pe Cloudflare: versiunea + jurnalul', rapoarte.some(x => 'versiune' in x && 'jurnal' in x && 'mod' in x),
+        JSON.stringify(rapoarte[0]));
+      verifica('cererea de pe pagină se execută, rezultatul pleacă imediat (aici: nu e Windows)',
+        rapoarte.some(x => /Windows/.test(x.eroare ?? '')), JSON.stringify(rapoarte.map(x => x.eroare)));
+    }
     fals.close();
     verifica('Cloudflare căzut → 502 cu mesaj', (await cer('GET', '/api/agenti')).stare === 502);
     config.clientiUrl = config.clientiCheie = '';
