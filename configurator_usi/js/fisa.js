@@ -259,6 +259,28 @@ function blocDesene(sys, spec, usi = [...Array(spec.door.count || 0).keys()], de
   return `<div class="desene" style="--n:${Math.min(grupuri.size, 4)}">${coloane}</div>`;   // max. 4 pe rând — mai puţin înghesuite
 }
 
+// Sub schiţe: ce înseamnă X-ul din colţ şi periile uşilor (userul, 2026-10-08).
+// Peria laterală — la fiecare uşă, pe ambele laturi (2 × înălţimea uşii, la toate gamele).
+// Peria spate — doar unde se facturează (Verona / Atrani, LUX, UTIL): o bucată cât uşa la
+// fiecare suprapunere, pe uşile din FAŢĂ, pe marginea care se suprapune; care uşi stau în
+// faţă nu se ştie dinainte (montajul e liber).
+const ICON_AMORTIZARE = '<svg class="ic" viewBox="0 0 10 10"><rect x=".5" y=".5" width="9" height="9" fill="#fff" stroke="#000"/><path d="M.5 .5l9 9M9.5 .5l-9 9" stroke="#000"/></svg>';
+function notaSchite(sys, spec, factura) {
+  const usi = [...Array(spec.door?.count ?? spec.n ?? 0).keys()];
+  const H = spec.door?.h ?? spec.doorH;
+  const supr = sys.meta.family === 'util' ? spec.supr
+    : sys.meta.family === 'lux' ? familia(sys).suprapuneriLux(usi.length)
+    : sys.meta.doorsRange ? suprapuneriEfective(state.doors, sys.meta.suprapuneriObligatorii ? 2 : state.tracks) : 0;
+  const perieSpate = supr > 0 && factura.lines.some(l => /perie spate/i.test(l.denumire ?? ''));
+  const randuri = [
+    ...(usi.some(i => { const a = amortizareUsa(sys, i); return a.st || a.dr; })
+      ? [`${ICON_AMORTIZARE} <b>Amortizare</b> — pe partea marcată (sus, în colţ)`] : []),
+    `<b>Perie laterală</b> — la fiecare uşă, stânga + dreapta (${usi.length * 2} buc × ${Math.round(H)} mm)`,
+    ...(perieSpate ? [`<b>Perie spate</b> — ${supr} buc × ${Math.round(H)} mm, pe uşile din faţă, pe marginea care se suprapune`] : []),
+  ];
+  return `<div class="nota-schite">${randuri.map(r => `<div>${r}</div>`).join('')}</div>`;
+}
+
 // ── Debitare rame — toate laturile din profilul modelului; EXCEPŢIE 842: doar
 // O verticală / ramă e profil 842, cealaltă verticală şi cele 2 orizontale se
 // taie din profil 841 (userul, 2026-09-21).
@@ -667,6 +689,8 @@ export function deschideFisa(client, oferta = null, salvate = null) {
   .usa-sub { font-size: 10.5px; line-height: 1.3; margin-top: 3px; overflow-wrap: break-word; }
   .sub-et { color: #555; }
   .mostra { width: 7mm; height: 1.2mm; vertical-align: middle; }
+  .nota-schite { margin-top: 4mm; font-size: 12px; line-height: 1.6; border-top: 1px solid #999; padding-top: 2mm; }
+  .nota-schite .ic { width: 3.6mm; height: 3.6mm; vertical-align: -0.6mm; }
   body.nivel-1 table.necesar-materiale td { padding: 2px 5px; }
   body.nivel-3 .cap { margin-bottom: 8px; }
   body.nivel-3 table.cote { font-size: 11px; }
@@ -820,7 +844,7 @@ export function deschideFisa(client, oferta = null, salvate = null) {
     ${!factura.lines.length && !factura.errors.length
         ? '<div class="nota">Nicio linie de facturare pt. configuraţia asta.</div>' : ''}
 
-    ${rame ? necesarSP : schite}
+    ${rame ? necesarSP : schite + notaSchite(sys, spec, factura)}
   </div>
 
 <script>
