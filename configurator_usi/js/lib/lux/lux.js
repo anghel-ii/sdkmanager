@@ -6,15 +6,16 @@
 //  Formulele din Excel (Hgol/Lgol = golul, Nusi, Nsup = suprapuneri):
 //    Husa = Hgol − 40 (userul, 2026-10-05; Excel zice −38)   Lusa = (Lgol + 8 × Nsup − 2) / Nusi
 //    PAL:     H = Husa − 2,  L = Lusa − 3     sticlă: H = Husa − 4, L = Lusa − 5
-//    fiecare profil de divizare „T" scade 2 mm din înălţime (nota din Excel)
+//    fiecare divizare „T" şi fiecare intermediar de ramă scade 1 mm din înălţime (userul, 2026-10-08)
 //    şina sus + jos = Lgol (dublă, 1 buc fiecare)
 //    mâner vertical = Husa (2 / uşă), orizontal „L" sus + jos = Lusa − 13 (Vent) / − 11 (Breda)
-//    rama (uşile cu sticlă): vertical = Husa − 2, orizontal / intermediar = Lsticlă − 66
+//    rama — DOAR în dreptul sticlei: vertical = sticlele + intermediarii + 2 (uşă doar cu sticlă:
+//    Husa − 2, ca în Excel), orizontal / intermediar = Lsticlă − 66; 4 şuruburi + 2 / intermediar
 //    rotile: inferioare K100 2 / uşă, superioare Vent K8 / Breda K9 2 / uşă; opritor 1 / uşă
 //    perie laterală 5×5 = 2 × Husa × Nusi
 //  Facturarea (ca la Confort): uşa culisantă ÎNTREAGĂ pe lăţimea uşii (Vent V301 /
 //  Breda B302 — preţul include şinele, profilele, roţile, opritorii), plus ce se
-//  alege în plus: rama pt. sticlă (R300), divizările T şi aplicate (bare de 3 m),
+//  alege în plus: ramele pt. sticlă (R300), divizările T şi aplicate (bare de 3 m),
 //  peria spate, amortizările, sticla + garnitura Lux.
 //  Totul stă aici, în familia „lux" — nu importă din alte familii.
 // ═══════════════════════════════════════════════════════════════════════════
@@ -78,16 +79,14 @@ export function topRailLux(group, { length, H, doorH, mat, track }) {
 // PAL–sticlă; între sticlă şi sticlă — profilul intermediar al ramei (171), nu T.
 export const tipBara = (jos, sus) => (jos === 'sticla' && sus === 'sticla' ? 'R' : 'T');
 // Un panou nedivizat: PAL Husa − 2, sticlă Husa − 4 (Excel). Cu divizări: fiecare
-// profil T mai scade 2 mm (nota din Excel), iar marginile de sus/jos ale stivei iau
+// bară (T sau intermediar) mai scade 1 mm (userul, 2026-10-08), iar marginile de sus/jos ale stivei iau
 // jumătate din deducerea materialului panoului de acolo — ca la Confort, aşa că la
 // un singur material rezultatul e exact formula din Excel. Panourile automate
 // împart egal ce rămâne după cele fixate (opţiuni avansate).
 const DEDUCERE_H = { pal: 2, sticla: 4 };   // Husa − …, panou nedivizat
 const DEDUCERE_L = { pal: 3, sticla: 5 };   // Lusa − …
-export const DEDUCERE_T = 2;
-// ⚠ intermediarul ramei (sticlă–sticlă): cât scade din înălţime nu e în Excel — presupus
-// tot 2 mm, ca T; de confirmat cu userul
-export const DEDUCERE_INTERMEDIAR = 2;
+export const DEDUCERE_T = 1;
+export const DEDUCERE_INTERMEDIAR = 1;
 
 function panouriUsa(doorH, mats, fixe) {
   const n = mats.length;
@@ -126,8 +125,22 @@ export function glazingLux({ doorW, doorH, divisionsPerDoor, panelsPerDoor, inal
   };
 }
 
-// Uşile care au cel puţin un panou de sticlă — au nevoie de ramă (R300 / profilele 170-171).
-export const usiCuSticla = glass => (glass?.panels ?? []).filter(p => p.glassPanes > 0);
+// Ramele — DOAR în dreptul sticlei (userul, 2026-10-08): fiecare şir de panouri de sticlă
+// vecine pe o uşă = o ramă (R300), cu intermediarul 171 între sticle. Verticala ramei =
+// sticlele + intermediarii + 2 mm — la uşa doar cu sticlă iese Husa − 2, ca în Excel.
+// → [{ intermediari, vertical }]
+export function rameLux(glass) {
+  const rame = [];
+  for (const p of glass?.panels ?? []) {
+    let r = null;
+    p.mats.forEach((m, k) => {
+      if (m === 'pal') { r = null; return; }
+      if (!r) rame.push(r = { intermediari: -1, h: 0 });
+      r.intermediari++; r.h += p.heights[k];
+    });
+  }
+  return rame.map(({ intermediari, h }) => ({ intermediari, vertical: Math.round(h + intermediari * DEDUCERE_INTERMEDIAR + 2) }));
+}
 const nrBare = (glass, tip) => (glass?.panels ?? []).reduce((s, p) => s + p.profil.filter(x => x === tip).length, 0);
 
 // Mânerul aplicat — opţional pe uşă: stânga, dreapta sau ambele (userul, 2026-10-05).
@@ -141,6 +154,9 @@ export function segmenteAplicate(spec, state) {
   const { panels = [], glassW = 0, palW = glassW } = spec.glass ?? {};
   const out = [];
   panels.forEach((p, i) => {
+    // la fiecare intermediar de ramă (sticlă–sticlă) — obligatoriu o divizare aplicată de
+    // 10 mm, pe lăţimea sticlei (userul, 2026-10-08)
+    p.profil?.forEach(x => { if (x === 'R') out.push({ latime: '10', lungime: Math.round(glassW) }); });
     const da = state.divAplicate?.[i];
     if (!da || da.latime === 'fara') return;
     const fete = da.parte === 'ambele' ? 2 : 1;
@@ -178,7 +194,7 @@ export function luxBill(spec, state) {
     bareT:          bare3m(Array(nrT).fill(spec.orizontalMm)).nr,
     bareAplicate10: bare3m(seg.filter(s => s.latime === '10').map(s => s.lungime)).nr,
     bareAplicate20: bare3m(seg.filter(s => s.latime === '20').map(s => s.lungime)).nr,
-    usiCuSticla:    usiCuSticla(spec.glass).length,
+    rame:           rameLux(spec.glass).length,
     // perie spate antipraf: suprapuneri × Husa (ca la Confort Verona / Atrani)
     perieSpateM:    ceilHalf(suprapuneriLux(spec.door.count) * spec.door.h / 1000),
     // CUPRU (doar Vent): uşa vine FĂRĂ şine — 290 / 291 se facturează separat, la bară
@@ -221,16 +237,19 @@ export function luxAplicateRows(cat, spec, state) {
   return rows;
 }
 
-// Rama uşilor cu sticlă (Excel: vertical Husa − 2, orizontal + intermediar Lsticlă − 66)
-// — profile de aluminiu 170 / 171, indiferent de culoare. Orizontalele: sus + jos +
-// intermediarul dintre două sticle (userul, 2026-10-05).
+// Ramele (vezi rameLux) — profile de aluminiu 170 / 171, indiferent de culoare.
+// Fiecare ramă: 2 verticale, sus + jos + intermediarii (orizontal Lsticlă − 66, Excel),
+// 4 şuruburi + 2 la fiecare intermediar (userul, 2026-10-08).
 export function luxRamaRows(spec) {
-  const usi = usiCuSticla(spec.glass);
-  if (!usi.length) return [];
-  const oriz = usi.reduce((s, p) => s + 2 + p.profil.filter(x => x === 'R').length, 0);
+  const rame = rameLux(spec.glass);
+  if (!rame.length) return [];
+  const verticale = new Map();
+  for (const r of rame) verticale.set(r.vertical, (verticale.get(r.vertical) ?? 0) + 2);
+  const intermediari = rame.reduce((s, r) => s + r.intermediari, 0);
   return [
-    line('170', 'Profil vertical pentru rama la modelul Lux finisaj aluminiu 5,5 m cod 170', 2 * usi.length, 'buc', `${spec.door.h - 2} mm`),
-    line('171', 'Profil orizontal pentru rama la modelul Lux finisaj aluminiu 5,8 m cod 171', oriz, 'buc', `${Math.round(spec.glass.glassW - 66)} mm`),
+    ...[...verticale].map(([L, buc]) => line('170', 'Profil vertical pentru rama la modelul Lux finisaj aluminiu 5,5 m cod 170', buc, 'buc', `${L} mm`)),
+    line('171', 'Profil orizontal pentru rama la modelul Lux finisaj aluminiu 5,8 m cod 171', 2 * rame.length + intermediari, 'buc', `${Math.round(spec.glass.glassW - 66)} mm`),
+    line('DIN7504N', 'Surub autoforant cu cap bombat 3.5x13mm pt rama Lux', 4 * rame.length + 2 * intermediari, 'buc'),
   ];
 }
 
@@ -361,8 +380,8 @@ export const BILLING_LUX = {
   mode: 'complet',
   linii: [
     { tip: 'usa',  dim: 'doorWmm', qty: 'usi' },
-    // rama pt. uşile cu cel puţin un panou de sticlă (R300, pe lăţimea uşii)
-    { tip: 'rama', dim: 'doorWmm', qty: 'usiCuSticla' },
+    // rama — una pe fiecare zonă de sticlă (R300, pe lăţimea uşii)
+    { tip: 'rama', dim: 'doorWmm', qty: 'rame' },
     // doar la CUPRU (uşa fără şine) — la celelalte culori cantitatea e 0 şi linia se omite
     { tip: 'sina superioara', dim: 'sinaLenMm', qty: 'sinaCupru' },
     { tip: 'sina inferioara', dim: 'sinaLenMm', qty: 'sinaCupru' },
