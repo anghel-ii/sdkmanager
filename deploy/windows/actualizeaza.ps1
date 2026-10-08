@@ -38,6 +38,8 @@ try {
 
   Scrie '[3/5] Aduc codul nou'
   Ruleaza 'git' @('-C', $cod, 'reset', '--hard', '--quiet', $nou)
+  # versiunea scrisă de update-ul fără admin (server/actualizare.js) nu mai e valabilă — de acum o dă git
+  Remove-Item (Join-Path $cod 'VERSIUNE.json') -ErrorAction SilentlyContinue
 
   Scrie '[4/5] Construire şi teste'
   if (-not (Construieste-Si-Testeaza $cod)) {

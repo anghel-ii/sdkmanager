@@ -1,9 +1,12 @@
 const path = require('node:path');
 const fs   = require('node:fs');
-const { execFile } = require('node:child_process');
+const zlib = require('node:zlib');
+const { execFile, spawn } = require('node:child_process');
 const { promisify } = require('node:util');
-const { json, eroare } = require('./http.js');
+const { json, eroare, corpJson } = require('./http.js');
 const { config } = require('./config.js');
+const { db, backup } = require('./db.js');
+const { acumMs } = require('./ora.js');
 
 // ── Actualizarea aplicaţiei din pagina /admin ───────────────────────────────
 // Pe serverul Windows, update-ul (deploy/windows/actualizeaza.ps1) are nevoie
@@ -12,14 +15,33 @@ const { config } = require('./config.js');
 // (tot SYSTEM) doar o porneşte — deci adminul aplicaţiei poate face update din
 // browser fără să fie administrator pe Windows. Sarcina e separată de
 // „SDK Manager" ca să supravieţuiască opririi serverului în timpul update-ului.
+//
+// FĂRĂ drepturi de administrator (userul, 2026-10-08): când managerul rulează sub
+// contul unui utilizator obişnuit (ex. pornit cu porneste-manager.vbs) nu poate citi
+// cheia de deploy, deci nici git, nici sarcina SYSTEM. Atunci: CI pune după fiecare
+// push pe main un pachet GATA CONSTRUIT în release-ul „ultima" de pe GitHub
+// (deploy/pachet.mjs), iar serverul îl descarcă cu o cheie GitHub doar de citire,
+// lipită o dată în /admin. Cu cheia pusă, butoanele din /admin merg pe drumul ăsta:
+//   1. backup la bază + copie la codul de acum (<date>/update/inainte)
+//   2. fişierele noi peste cod (manager/, configurator_usi/dist/, deploy/windows/) + VERSIUNE.json
+//   3. deploy/windows/reporneste.js (proces separat) porneşte serverul nou după ce ăsta
+//      se opreşte; dacă nu răspunde în 60 s, pune înapoi codul de dinainte.
 
 const SARCINA = 'SDK Actualizare';
 const COD = path.resolve(config.radacina, '..');                          // clona git
-const JURNAL = path.join(path.dirname(config.db), 'actualizari.log');     // scris de actualizeaza.ps1
+const DATE = path.dirname(config.db);
+const JURNAL = path.join(DATE, 'actualizari.log');                         // scris de actualizeaza.ps1 / de aici
+const FISIER_VERSIUNE = path.join(COD, 'VERSIUNE.json');                   // scris de update-ul fără admin
 const peWindows = process.platform === 'win32';
 
 const ruleaza = async (exe, args) => (await promisify(execFile)(exe, args, { windowsHide: true })).stdout.trim();
 const git = (...args) => ruleaza('git', ['-C', COD, ...args]);
+
+const REPO = 'anghel-ii/sdkmanager';
+const cheieGithub = () => db().prepare("SELECT valoare FROM setare WHERE cheie = 'github_cheie'").get()?.valoare || '';
+const SURSA_LOCALA = process.env.MANAGER_PACHET_URL;   // probă / teste: pachetul de la o adresă locală, fără GitHub
+const faraAdmin = () => !!(SURSA_LOCALA || cheieGithub());
+let inCurs = false;
 
 async function sarcinaRuleaza() {
   if (!peWindows) return false;
@@ -36,12 +58,59 @@ function coadaJurnal(linii = 60) {
   const text = buf[0] === 0xff && buf[1] === 0xfe ? buf.toString('utf16le') : buf.toString('utf8');
   return text.split(/\r?\n/).slice(-linii).join('\n');
 }
+const scrieJurnal = t => fs.appendFileSync(JURNAL,
+  `${new Date(acumMs()).toLocaleString('ro-RO', { timeZone: 'Europe/Bucharest' })}  ${t}\n`);
+
+// Versiunea care rulează: VERSIUNE.json (după un update fără admin), altfel git.
+async function versiuneLocala() {
+  try { return JSON.parse(fs.readFileSync(FISIER_VERSIUNE, 'utf8')); } catch { /* n-a fost update fără admin */ }
+  const [sha, mesaj, data] = (await git('log', '-1', '--format=%H%n%s%n%cd', '--date=format:%d.%m.%Y %H:%M').catch(() => '')).split('\n');
+  return sha ? { sha, scurt: sha.slice(0, 7), mesaj, data } : null;
+}
+const textVersiune = v => (v ? `${v.scurt} — ${v.mesaj} (${v.data})` : '');
+
+// Un fişier din release-ul „ultima" (versiune.json / sdk.json.gz).
+const antet = cheie => ({ Authorization: `Bearer ${cheie}`, 'X-GitHub-Api-Version': '2022-11-28', 'User-Agent': 'sdk-manager' });
+async function descarca(nume, cheie = cheieGithub()) {
+  if (SURSA_LOCALA) {
+    const r = await fetch(`${SURSA_LOCALA}/${nume}`);
+    if (!r.ok) throw new Error(`${nume}: ${r.status}`);
+    return Buffer.from(await r.arrayBuffer());
+  }
+  const gh = (url, accept) => fetch(url, { redirect: 'manual', headers: { ...antet(cheie), Accept: accept }, signal: AbortSignal.timeout(60000) });
+  const rel = await gh(`https://api.github.com/repos/${REPO}/releases/tags/ultima`, 'application/vnd.github+json');
+  if (rel.status === 401 || rel.status === 403) throw new Error('GitHub refuză cheia (greşită sau expirată).');
+  if (rel.status === 404) throw new Error('Nu găsesc pachetul pe GitHub — fie cheia n-are acces la repository, fie nu s-a făcut încă (apare după primul push pe main).');
+  if (!rel.ok) throw new Error(`GitHub a răspuns ${rel.status}.`);
+  const fisier = (await rel.json()).assets?.find(a => a.name === nume);
+  if (!fisier) throw new Error(`Pachetul „${nume}" nu e încă pe GitHub.`);
+  let r = await gh(fisier.url, 'application/octet-stream');
+  // GitHub dă fişierul de pe alt domeniu, printr-un link semnat — acolo fără cheie
+  if (r.status >= 300 && r.status < 400) r = await fetch(r.headers.get('location'), { signal: AbortSignal.timeout(180000) });
+  if (!r.ok) throw new Error(`Descărcarea „${nume}" a eşuat (${r.status}).`);
+  return Buffer.from(await r.arrayBuffer());
+}
+
+// Commit-urile dintre versiunea care rulează şi cea nouă (cele mai noi întâi).
+async function commituri(dela, nou) {
+  const unu = [`${nou.scurt} — ${nou.mesaj}`];
+  if (!dela || SURSA_LOCALA) return unu;
+  try {
+    const r = await fetch(`https://api.github.com/repos/${REPO}/compare/${dela}...${nou.sha}`,
+      { headers: { ...antet(cheieGithub()), Accept: 'application/vnd.github+json' }, signal: AbortSignal.timeout(30000) });
+    const c = r.ok ? (await r.json()).commits ?? [] : [];
+    return c.length ? c.reverse().map(x => `${x.sha.slice(0, 7)} — ${x.commit.message.split('\n')[0]}`) : unu;
+  } catch { return unu; }
+}
 
 async function stare(ctx) {
+  const fara = faraAdmin();
   json(ctx.res, 200, {
-    disponibil: peWindows,
-    versiune: await git('log', '-1', '--format=%h — %s (%cd)', '--date=format:%d.%m.%Y %H:%M').catch(() => ''),
-    ruleaza: await sarcinaRuleaza(),
+    disponibil: fara || peWindows,
+    mod: fara ? 'cheie' : 'sarcina',
+    areCheie: !!cheieGithub(),
+    versiune: textVersiune(await versiuneLocala()),
+    ruleaza: fara ? inCurs : await sarcinaRuleaza(),
     jurnal: coadaJurnal(),
   });
 }
@@ -49,15 +118,67 @@ async function stare(ctx) {
 // Ce e nou pe GitHub faţă de versiunea care rulează.
 async function verifica(ctx) {
   try {
-    await git('fetch', '--quiet', 'origin', 'main');
-    const log = await git('log', '--format=%h — %s', 'HEAD..origin/main');
-    json(ctx.res, 200, { noutati: log ? log.split('\n') : [] });
+    if (!faraAdmin()) {
+      await git('fetch', '--quiet', 'origin', 'main');
+      const log = await git('log', '--format=%h — %s', 'HEAD..origin/main');
+      return json(ctx.res, 200, { noutati: log ? log.split('\n') : [] });
+    }
+    const nou = JSON.parse(await descarca('versiune.json'));
+    const local = await versiuneLocala();
+    json(ctx.res, 200, { noutati: local?.sha === nou.sha ? [] : await commituri(local?.sha, nou) });
   } catch (e) {
-    eroare(ctx.res, 502, `Nu am putut întreba GitHub: ${e.message}`);
+    eroare(ctx.res, 502, `Nu am putut întreba GitHub: ${e.message}${faraAdmin() ? ''
+      : ' — dacă managerul nu rulează ca administrator, pune mai jos cheia GitHub (doar citire).'}`);
   }
 }
 
+// ── Update fără admin: pachetul de pe GitHub peste codul de acum ─────────────
+const PARTI = ['manager', 'configurator_usi/dist', 'deploy/windows'];
+const NU_E_COD = new Set(['date', 'certs', 'node_modules']);   // manager/date (baza, la instalări vechi) etc. — nu se copiază
+async function aplicaPachet() {
+  scrieJurnal('=== Update din /admin (fără drepturi de administrator pe Windows) ===');
+  scrieJurnal('Descarc pachetul de pe GitHub…');
+  const p = JSON.parse(zlib.gunzipSync(await descarca('sdk.json.gz')).toString('utf8'));
+  const fisiere = Object.entries(p.fisiere ?? {});
+  if (!fisiere.length || !fisiere.every(([f]) => PARTI.some(x => f.startsWith(x + '/')) && !f.split('/').includes('..')))
+    throw new Error('pachetul are căi neaşteptate — nu îl aplic.');
+  scrieJurnal(`Versiunea nouă: ${textVersiune(p.versiune)} — ${fisiere.length} fişiere`);
+  scrieJurnal(`Backup la bază: ${backup()}`);
+
+  const inainte = path.join(DATE, 'update', 'inainte');
+  fs.rmSync(inainte, { recursive: true, force: true });
+  for (const x of PARTI) {
+    const sursa = path.join(COD, x);
+    if (fs.existsSync(sursa)) fs.cpSync(sursa, path.join(inainte, x), { recursive: true, filter: s => !NU_E_COD.has(path.basename(s)) });
+  }
+  if (fs.existsSync(FISIER_VERSIUNE)) fs.copyFileSync(FISIER_VERSIUNE, path.join(inainte, 'VERSIUNE.json'));
+  scrieJurnal(`Copia codului de acum: ${inainte}`);
+
+  for (const [f, b64] of fisiere) {
+    const dest = path.join(COD, f);
+    fs.mkdirSync(path.dirname(dest), { recursive: true });
+    fs.writeFileSync(dest, Buffer.from(b64, 'base64'));
+  }
+  fs.writeFileSync(FISIER_VERSIUNE, JSON.stringify(p.versiune));
+  scrieJurnal('Fişierele noi sunt la locul lor. Repornesc serverul…');
+
+  // repornirea — proces separat, care trăieşte după ce ăsta se opreşte
+  spawn(process.execPath, [path.join(COD, 'deploy', 'windows', 'reporneste.js')], {
+    detached: true, stdio: 'ignore', windowsHide: true,
+    env: { ...process.env, SDK_COD: COD, SDK_INAINTE: inainte, SDK_JURNAL: JURNAL, SDK_LOG: path.join(DATE, 'server.log'),
+      SDK_URL: `${config.https ? 'https' : 'http'}://127.0.0.1:${config.port}/login` },
+  }).unref();
+  setTimeout(() => process.emit('SIGTERM'), 500);   // oprirea curată din index.js (închide baza)
+}
+
 async function porneste(ctx) {
+  if (faraAdmin()) {
+    if (inCurs) return eroare(ctx.res, 409, 'O actualizare e deja în curs.');
+    inCurs = true;
+    json(ctx.res, 202, { ok: true });
+    aplicaPachet().catch(e => { scrieJurnal(`UPDATE-UL S-A OPRIT: ${e.message} Serverul a rămas pe versiunea de acum.`); inCurs = false; });
+    return;
+  }
   if (!peWindows) return eroare(ctx.res, 400, 'Actualizarea din pagină merge doar pe serverul Windows.');
   if (await sarcinaRuleaza()) return eroare(ctx.res, 409, 'O actualizare e deja în curs.');
   try {
@@ -68,10 +189,25 @@ async function porneste(ctx) {
   }
 }
 
+// Cheia GitHub (fine-grained, doar citire, doar repository-ul ăsta) — se verifică
+// pe loc; goală = se şterge (înapoi la update-ul cu sarcina SYSTEM).
+async function puneCheie(ctx) {
+  const cheie = String((await corpJson(ctx.req)).cheie ?? '').trim();
+  if (!cheie) {
+    db().prepare("DELETE FROM setare WHERE cheie = 'github_cheie'").run();
+    return json(ctx.res, 200, { areCheie: false });
+  }
+  try { await descarca('versiune.json', cheie); } catch (e) { return eroare(ctx.res, 400, e.message); }
+  db().prepare(`INSERT INTO setare (cheie, valoare) VALUES ('github_cheie', ?)
+    ON CONFLICT(cheie) DO UPDATE SET valoare = excluded.valoare`).run(cheie);
+  json(ctx.res, 200, { areCheie: true });
+}
+
 module.exports = {
   rute: [
     ['GET',  '/api/actualizare',          { rol: 'admin', handler: stare }],
     ['POST', '/api/actualizare/verifica', { rol: 'admin', handler: verifica }],
     ['POST', '/api/actualizare',          { rol: 'admin', handler: porneste }],
+    ['PUT',  '/api/actualizare/cheie',    { rol: 'admin', handler: puneCheie }],
   ],
 };

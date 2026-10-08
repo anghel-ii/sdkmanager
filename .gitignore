@@ -67,3 +67,4 @@ graphify-out/
 /Livrare_MASINA*.xlsx
 # fişierul de test al cititorului de Excel are doar date inventate
 !clienti-agenti/test/test-clienti.xlsx
+pachet/

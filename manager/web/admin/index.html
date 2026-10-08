@@ -103,8 +103,9 @@
       văd doar clienţii cu numele lor în coloana Agent. Parola se vede o singură dată, aici — trimite-o agentului.</div>
   </div>
 
-  <!-- Update din GitHub fără drepturi de administrator pe Windows: serverul
-       porneşte sarcina „SDK Actualizare" (SYSTEM) — vezi server/actualizare.js -->
+  <!-- Update din GitHub fără drepturi de administrator pe Windows: serverul porneşte
+       sarcina „SDK Actualizare" (SYSTEM) sau, cu cheia GitHub pusă mai jos, descarcă singur
+       pachetul gata construit de CI — vezi server/actualizare.js -->
   <div class="panou">
     <h2>Actualizare aplicaţie</h2>
     <div>Versiunea care rulează: <span class="mono" id="versiune">…</span></div>
@@ -116,6 +117,18 @@
     <div class="dim mic" style="margin-top:10px">Fă update-ul când nu lucrează nimeni: serverul se opreşte ~1 minut.
       Dacă testele sau pornirea pică, revine singur la versiunea de dinainte.</div>
     <pre id="jurnal" class="mono" hidden></pre>
+    <div style="margin-top:14px">
+      <div><strong>Update fără administrator pe Windows</strong> — <span id="modUpdate" class="dim">…</span></div>
+      <div class="dim mic" style="margin:4px 0 8px">Când serverul nu rulează ca administrator, update-ul se ia de pe GitHub cu o cheie
+        doar de citire: github.com → Settings → Developer settings → Fine-grained tokens → Generate new token;
+        Repository access: <span class="mono">anghel-ii/sdkmanager</span>; Permissions: Contents — Read-only.</div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap">
+        <input id="cheieGithub" type="password" autocomplete="off" placeholder="github_pat_…" style="flex:1; min-width:260px">
+        <button class="mic primar" id="btnCheieGithub">Salvează cheia</button>
+        <button class="mic" id="btnStergeCheie" hidden>Şterge cheia</button>
+      </div>
+      <div id="mesajCheie" class="mic" style="margin-top:6px"></div>
+    </div>
   </div>
 </div>
 
@@ -301,6 +314,9 @@ async function stareActualizare() {
   $('btnActualizeaza').disabled = !s.disponibil || s.ruleaza;
   $('btnActualizeaza').textContent = s.ruleaza ? 'Actualizare în curs…' : 'Actualizează acum';
   if (!s.disponibil) $('btnActualizeaza').title = 'Merge doar pe serverul Windows';
+  $('modUpdate').textContent = s.areCheie ? 'cheia GitHub e pusă — update-ul merge fără administrator'
+    : 'fără cheie — update-ul are nevoie ca serverul să ruleze ca administrator (SYSTEM)';
+  $('btnStergeCheie').hidden = !s.areCheie;
   if (s.jurnal) { $('jurnal').hidden = false; $('jurnal').textContent = s.jurnal; $('jurnal').scrollTop = 1e9; }
   if (s.ruleaza && !urmarire) urmarire = setInterval(stareActualizare, 3000);
   if (!s.ruleaza && urmarire) { clearInterval(urmarire); urmarire = null; }
@@ -316,6 +332,18 @@ $('btnVerifica').addEventListener('click', async () => {
     ? `Schimbări noi:<ul class="mono">${noutati.map(n => `<li>${esc(n)}</li>`).join('')}</ul>`
     : '<span class="stare-activ">Aplicaţia e la zi.</span>';
 });
+
+async function trimiteCheie(cheie) {
+  $('mesajCheie').textContent = cheie ? 'Verific cheia la GitHub…' : '';
+  const r = await api('/api/actualizare/cheie', { method: 'PUT', body: JSON.stringify({ cheie }) });
+  if (!r) return;
+  if (!r.ok) { $('mesajCheie').innerHTML = `<div class="mesaj eroare">${esc(await eroareDin(r))}</div>`; return; }
+  $('cheieGithub').value = '';
+  $('mesajCheie').innerHTML = cheie ? '<span class="stare-activ">Cheia merge — acum poţi face update fără administrator.</span>' : 'Cheia a fost ştearsă.';
+  stareActualizare();
+}
+$('btnCheieGithub').addEventListener('click', () => { const c = $('cheieGithub').value.trim(); if (c) trimiteCheie(c); });
+$('btnStergeCheie').addEventListener('click', async () => { if (await confirma('Ştergi cheia GitHub?', 'Şterge')) trimiteCheie(''); });
 
 $('btnActualizeaza').addEventListener('click', async () => {
   if (!await confirma('Actualizezi aplicaţia acum?\n\nServerul se opreşte pentru ~1 minut; cine lucrează în aplicaţie pierde ce n-a salvat.', 'Actualizează')) return;

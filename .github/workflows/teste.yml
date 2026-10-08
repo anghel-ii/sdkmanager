@@ -7,6 +7,9 @@ on:
 jobs:
   teste:
     runs-on: ubuntu-latest
+    # „contents: write" doar pt. pachetul de update de la final (release „ultima")
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -30,3 +33,16 @@ jobs:
       - name: Baza de clienţi — cititorul de Excel
         working-directory: clienti-agenti
         run: node test/xlsx.test.mjs
+
+      # Update fără admin pe Windows (deploy/pachet.mjs, manager/server/actualizare.js): doar pe main,
+      # doar dacă au trecut toate testele de mai sus — pachetul gata construit ajunge în release-ul „ultima".
+      - name: Pachetul de update (release „ultima")
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node deploy/pachet.mjs
+          gh release view ultima >/dev/null 2>&1 || gh release create ultima --title "Ultima versiune de pe main" \
+            --notes "Pachetul pentru Actualizare din /admin (fără admin pe Windows). Îl rescrie CI la fiecare push pe main."
+          gh release upload ultima pachet/sdk.json.gz --clobber
+          gh release upload ultima pachet/versiune.json --clobber
