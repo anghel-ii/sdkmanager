@@ -453,6 +453,14 @@ $('btnPlata').addEventListener('click', () => trimite('plata'));
 
 // ── Tipar: lista de produse pe o foaie (şi „Fişă" din manager) ──────────────
 
+// textul debitării („2 × 1200 mm, 1 × 800 mm → 2 bare de 3000 mm" — textDebitare, sau cel îngheţat
+// în comandă) → bucăţile, câte una pe rând în celulă, şi lungimea barei
+function bucatiDebitare(text) {
+  if (!text) return null;
+  const [bucati, bare] = String(text).split(' → ');
+  return { bucati: bucati.split(', ').filter(Boolean), bara: bare?.match(/de (\d+) mm/)?.[1] ?? null };
+}
+
 function tipareste() {
   const { lines } = facturare();
   // debitarea fiecărei linii: la fişă din necesarul îngheţat, altfel din rândurile de pe ecran
@@ -467,10 +475,11 @@ function tipareste() {
       ${rand('Număr ofertă', $('ofertaNr').value.trim())}${rand('Observaţii', $('observatii').value.trim())}
     </table>
     <table>
-      <thead><tr><th>#</th><th>Cod</th><th>Produs</th><th>Cant.</th><th>✓</th></tr></thead>
-      <tbody>${lines.map((l, k) => `<tr><td>${k + 1}</td><td>${esc(l.cod)}</td><td>${esc(l.denumire)}${peCod.get(l.cod)
-        ? `<div class="deb-tipar">Debitare: ${esc(peCod.get(l.cod))}</div>` : ''}</td>
-        <td class="num">${virgula(l.cantitate)} ${esc(l.um)}</td><td class="bifa"></td></tr>`).join('')}</tbody>
+      <thead><tr><th>#</th><th>Cod</th><th>Produs</th><th>Debitare</th><th>Cant.</th><th>✓</th></tr></thead>
+      <tbody>${lines.map((l, k) => { const d = bucatiDebitare(peCod.get(l.cod)); return `<tr><td>${k + 1}</td><td>${esc(l.cod)}</td>
+        <td class="produs">${esc(l.denumire)}</td>
+        <td class="deb-col">${d ? d.bucati.map(b => `<div>${esc(b)}</div>`).join('') + (d.bara ? `<div class="bara-de">din bare de ${d.bara} mm</div>` : '') : ''}</td>
+        <td class="num">${virgula(l.cantitate)} ${d ? (+l.cantitate === 1 ? 'bară' : 'bare') : esc(l.um)}</td><td class="bifa"></td></tr>`; }).join('')}</tbody>
     </table>`;
   window.print();
 }
