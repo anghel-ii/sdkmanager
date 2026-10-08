@@ -35,7 +35,8 @@ const actualizeaza = process.argv.includes('--actualizeaza');
 initBuilder(new THREE.Group(), { target: { set() {} } });
 
 // ── Starea unei configuraţii (ce face ui.js → syncDoors, fără DOM) ─────────
-const GEAM_4   = 'GG004';    // geam float 4mm
+const GEAM_4_FLOAT   = 'GG004';    // geam float 4mm
+const GEAM_SATINAT_4 = 'GG009';    // geam satinat alb 4mm (LUX)
 const OGLINDA  = (catalog.geam ?? []).find(g => g.oglinda)?.cod;
 const PERUSA   = (n, f) => Array.from({ length: n }, (_, i) => f(i));
 
@@ -48,6 +49,8 @@ function stareUsi(sys, { W, H, finish, doors, tracks, varianta }) {
   const m = sys.meta;
   const n = m.doorsRange ? doors : (m.doors ?? 1);
   const pal = !!m.pal;
+  // LUX: doar geam prin care nu se vede (satinat, lacobel, oglindă — userul, 2026-10-08)
+  const GEAM_4 = m.family === 'lux' ? GEAM_SATINAT_4 : GEAM_4_FLOAT;
   Object.assign(state, { system: m.id, width: W, height: H, finish, doors: n, tracks });
 
   // A = totul „noi", sticlă, 1 divizare, geam 4mm
@@ -103,7 +106,7 @@ function stareRame(sys, { finish, varianta, randuri }) {
                                : { randuri: [{ model: 'L32', lungime: 1200, buc: 2 }, { model: 'Neo', lungime: 800, buc: 3 }] }
       : { randuri: [{ model: null, lungime: null, buc: 1 }] },
     asamblare: varianta === 'client' ? 'client' : 'noi',
-    geam: varianta === 'oglinda' ? OGLINDA : GEAM_4,
+    geam: varianta === 'oglinda' ? OGLINDA : GEAM_4_FLOAT,
     gaurire: varianta === 'fara-gaurire' ? 'Fara gaurire' : grup820 ? '100 mm sus/jos si la mijloc' : 'Gaurire Standard',
     balama: varianta === 'fara-gaurire' ? null : grup820 ? (varianta === 'client' ? 'Fara balamale de la noi' : sys.meta.id === 'rama820' ? '71B3550 NICHEL' : '9072524') : null,
     placuta: varianta === 'fara-gaurire' ? null : grup820 ? (varianta === 'client' ? 'Fara placute de la noi' : sys.meta.id === 'rama820' ? '173H7100 NICHEL' : '9071576') : null,

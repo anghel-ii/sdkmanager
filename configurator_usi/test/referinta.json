@@ -78722,7 +78722,7 @@
   "F R300.007 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 2 m",
-  "F GG004 | 0.6 mp",
+  "F GG009 | 0.6 mp",
   "F 163 | 5 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 800 mm",
@@ -78733,7 +78733,7 @@
   "N 170 | 2 buc | 758 mm",
   "N 171 | 3 buc | 727 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 378x793 | 2"
+  "S GG009 | 378x793 | 2"
  ],
  "luxVent | ALUMINIU | 800x800 | 1u/1s | B": [
   "F V301.007 | 1 buc",
@@ -78786,7 +78786,7 @@
  "luxVent | ALUMINIU | 5800x2790 | 1u/1s | A": [
   "F 104 | 2 buc",
   "F 164 | 5.5 m",
-  "F GG004 | 15.91 mp",
+  "F GG009 | 15.91 mp",
   "F 163 | 29 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 5800 mm",
@@ -78798,7 +78798,7 @@
   "N 170 | 2 buc | 2748 mm",
   "N 171 | 3 buc | 5727 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1373x5793 | 2",
+  "S GG009 | 1373x5793 | 2",
   "E lipsă cod: usa · ALUMINIU · 5798 mm",
   "E lipsă cod: rama · ALUMINIU · 5798 mm"
  ],
@@ -78855,7 +78855,7 @@
   "F R300.010 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.25 mp",
+  "F GG009 | 2.25 mp",
   "F 163 | 8.5 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1100 mm",
@@ -78866,7 +78866,7 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 1027 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1093 | 2"
+  "S GG009 | 1028x1093 | 2"
  ],
  "luxVent | ALUMINIU | 1100x2100 | 1u/1s | B": [
   "F V301.010 | 1 buc",
@@ -78921,7 +78921,7 @@
   "F R300.007 | 1 buc",
   "F 118 | 1 buc",
   "F 164 | 2 m",
-  "F GG004 | 0.6 mp",
+  "F GG009 | 0.6 mp",
   "F 163 | 5 m",
   "F Manopera 1 | 1 buc",
   "N 110 | 1 buc | 800 mm",
@@ -78932,7 +78932,7 @@
   "N 170 | 2 buc | 758 mm",
   "N 171 | 3 buc | 727 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 378x793 | 2"
+  "S GG009 | 378x793 | 2"
  ],
  "luxVent | SAMPANIE | 800x800 | 1u/1s | B": [
   "F V301.027 | 1 buc",
@@ -78985,7 +78985,7 @@
  "luxVent | SAMPANIE | 5800x2790 | 1u/1s | A": [
   "F 118 | 2 buc",
   "F 164 | 5.5 m",
-  "F GG004 | 15.91 mp",
+  "F GG009 | 15.91 mp",
   "F 163 | 29 m",
   "F Manopera 1 | 1 buc",
   "N 110 | 1 buc | 5800 mm",
@@ -78997,7 +78997,7 @@
   "N 170 | 2 buc | 2748 mm",
   "N 171 | 3 buc | 5727 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1373x5793 | 2",
+  "S GG009 | 1373x5793 | 2",
   "E lipsă cod: usa · SAMPANIE · 5798 mm",
   "E lipsă cod: rama · SAMPANIE · 5798 mm"
  ],
@@ -79054,7 +79054,7 @@
   "F R300.010 | 1 buc",
   "F 118 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.25 mp",
+  "F GG009 | 2.25 mp",
   "F 163 | 8.5 m",
   "F Manopera 1 | 1 buc",
   "N 110 | 1 buc | 1100 mm",
@@ -79065,7 +79065,7 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 1027 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1093 | 2"
+  "S GG009 | 1028x1093 | 2"
  ],
  "luxVent | SAMPANIE | 1100x2100 | 1u/1s | B": [
   "F V301.210 | 1 buc",
@@ -79120,7 +79120,7 @@
   "F R300.007 | 1 buc",
   "F 129 | 1 buc",
   "F 164 | 2 m",
-  "F GG004 | 0.6 mp",
+  "F GG009 | 0.6 mp",
   "F 163 | 5 m",
   "F Manopera 1 | 1 buc",
   "N 121 | 1 buc | 800 mm",
@@ -79131,7 +79131,7 @@
   "N 170 | 2 buc | 758 mm",
   "N 171 | 3 buc | 727 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 378x793 | 2"
+  "S GG009 | 378x793 | 2"
  ],
  "luxVent | CROM | 800x800 | 1u/1s | B": [
   "F V301.037 | 1 buc",
@@ -79184,7 +79184,7 @@
  "luxVent | CROM | 5800x2790 | 1u/1s | A": [
   "F 129 | 2 buc",
   "F 164 | 5.5 m",
-  "F GG004 | 15.91 mp",
+  "F GG009 | 15.91 mp",
   "F 163 | 29 m",
   "F Manopera 1 | 1 buc",
   "N 121 | 1 buc | 5800 mm",
@@ -79196,7 +79196,7 @@
   "N 170 | 2 buc | 2748 mm",
   "N 171 | 3 buc | 5727 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1373x5793 | 2",
+  "S GG009 | 1373x5793 | 2",
   "E lipsă cod: usa · CROM · 5798 mm",
   "E lipsă cod: rama · CROM · 5798 mm"
  ],
@@ -79253,7 +79253,7 @@
   "F R300.010 | 1 buc",
   "F 129 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.25 mp",
+  "F GG009 | 2.25 mp",
   "F 163 | 8.5 m",
   "F Manopera 1 | 1 buc",
   "N 121 | 1 buc | 1100 mm",
@@ -79264,7 +79264,7 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 1027 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1093 | 2"
+  "S GG009 | 1028x1093 | 2"
  ],
  "luxVent | CROM | 1100x2100 | 1u/1s | B": [
   "F V301.310 | 1 buc",
@@ -79319,7 +79319,7 @@
   "F R300.007 | 1 buc",
   "F 138 | 1 buc",
   "F 164 | 2 m",
-  "F GG004 | 0.6 mp",
+  "F GG009 | 0.6 mp",
   "F 163 | 5 m",
   "F Manopera 1 | 1 buc",
   "N 240 | 1 buc | 800 mm",
@@ -79330,7 +79330,7 @@
   "N 170 | 2 buc | 758 mm",
   "N 171 | 3 buc | 727 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 378x793 | 2"
+  "S GG009 | 378x793 | 2"
  ],
  "luxVent | ALB | 800x800 | 1u/1s | B": [
   "F V301.057 | 1 buc",
@@ -79383,7 +79383,7 @@
  "luxVent | ALB | 5800x2790 | 1u/1s | A": [
   "F 138 | 2 buc",
   "F 164 | 5.5 m",
-  "F GG004 | 15.91 mp",
+  "F GG009 | 15.91 mp",
   "F 163 | 29 m",
   "F Manopera 1 | 1 buc",
   "N 240 | 1 buc | 5800 mm",
@@ -79395,7 +79395,7 @@
   "N 170 | 2 buc | 2748 mm",
   "N 171 | 3 buc | 5727 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1373x5793 | 2",
+  "S GG009 | 1373x5793 | 2",
   "E lipsă cod: usa · ALB · 5798 mm",
   "E lipsă cod: rama · ALB · 5798 mm"
  ],
@@ -79452,7 +79452,7 @@
   "F R300.010 | 1 buc",
   "F 138 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.25 mp",
+  "F GG009 | 2.25 mp",
   "F 163 | 8.5 m",
   "F Manopera 1 | 1 buc",
   "N 240 | 1 buc | 1100 mm",
@@ -79463,7 +79463,7 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 1027 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1093 | 2"
+  "S GG009 | 1028x1093 | 2"
  ],
  "luxVent | ALB | 1100x2100 | 1u/1s | B": [
   "F V301.510 | 1 buc",
@@ -79518,7 +79518,7 @@
   "F R300.007 | 1 buc",
   "F 149 | 1 buc",
   "F 164 | 2 m",
-  "F GG004 | 0.6 mp",
+  "F GG009 | 0.6 mp",
   "F 163 | 5 m",
   "F Manopera 1 | 1 buc",
   "N 250 | 1 buc | 800 mm",
@@ -79529,7 +79529,7 @@
   "N 170 | 2 buc | 758 mm",
   "N 171 | 3 buc | 727 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 378x793 | 2"
+  "S GG009 | 378x793 | 2"
  ],
  "luxVent | NEGRU | 800x800 | 1u/1s | B": [
   "F V301.047 | 1 buc",
@@ -79582,7 +79582,7 @@
  "luxVent | NEGRU | 5800x2790 | 1u/1s | A": [
   "F 149 | 2 buc",
   "F 164 | 5.5 m",
-  "F GG004 | 15.91 mp",
+  "F GG009 | 15.91 mp",
   "F 163 | 29 m",
   "F Manopera 1 | 1 buc",
   "N 250 | 1 buc | 5800 mm",
@@ -79594,7 +79594,7 @@
   "N 170 | 2 buc | 2748 mm",
   "N 171 | 3 buc | 5727 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1373x5793 | 2",
+  "S GG009 | 1373x5793 | 2",
   "E lipsă cod: usa · NEGRU · 5798 mm",
   "E lipsă cod: rama · NEGRU · 5798 mm"
  ],
@@ -79651,7 +79651,7 @@
   "F R300.010 | 1 buc",
   "F 149 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.25 mp",
+  "F GG009 | 2.25 mp",
   "F 163 | 8.5 m",
   "F Manopera 1 | 1 buc",
   "N 250 | 1 buc | 1100 mm",
@@ -79662,7 +79662,7 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 1027 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1093 | 2"
+  "S GG009 | 1028x1093 | 2"
  ],
  "luxVent | NEGRU | 1100x2100 | 1u/1s | B": [
   "F V301.410 | 1 buc",
@@ -79717,7 +79717,7 @@
   "F R300.007 | 1 buc",
   "F 156 | 1 buc",
   "F 164 | 2 m",
-  "F GG004 | 0.6 mp",
+  "F GG009 | 0.6 mp",
   "F 163 | 5 m",
   "F Manopera 1 | 1 buc",
   "N 260 | 1 buc | 800 mm",
@@ -79728,7 +79728,7 @@
   "N 170 | 2 buc | 758 mm",
   "N 171 | 3 buc | 727 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 378x793 | 2"
+  "S GG009 | 378x793 | 2"
  ],
  "luxVent | AURIU | 800x800 | 1u/1s | B": [
   "F V301.067 | 1 buc",
@@ -79781,7 +79781,7 @@
  "luxVent | AURIU | 5800x2790 | 1u/1s | A": [
   "F 156 | 2 buc",
   "F 164 | 5.5 m",
-  "F GG004 | 15.91 mp",
+  "F GG009 | 15.91 mp",
   "F 163 | 29 m",
   "F Manopera 1 | 1 buc",
   "N 260 | 1 buc | 5800 mm",
@@ -79793,7 +79793,7 @@
   "N 170 | 2 buc | 2748 mm",
   "N 171 | 3 buc | 5727 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1373x5793 | 2",
+  "S GG009 | 1373x5793 | 2",
   "E lipsă cod: usa · AURIU · 5798 mm",
   "E lipsă cod: rama · AURIU · 5798 mm"
  ],
@@ -79850,7 +79850,7 @@
   "F R300.010 | 1 buc",
   "F 156 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.25 mp",
+  "F GG009 | 2.25 mp",
   "F 163 | 8.5 m",
   "F Manopera 1 | 1 buc",
   "N 260 | 1 buc | 1100 mm",
@@ -79861,7 +79861,7 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 1027 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1093 | 2"
+  "S GG009 | 1028x1093 | 2"
  ],
  "luxVent | AURIU | 1100x2100 | 1u/1s | B": [
   "F V301.610 | 1 buc",
@@ -79918,7 +79918,7 @@
   "F 291 | 0.5 buc",
   "F 182 | 1 buc",
   "F 164 | 2 m",
-  "F GG004 | 0.6 mp",
+  "F GG009 | 0.6 mp",
   "F 163 | 5 m",
   "F Manopera 1 | 1 buc",
   "N 290 | 1 buc | 800 mm",
@@ -79929,7 +79929,7 @@
   "N 170 | 2 buc | 758 mm",
   "N 171 | 3 buc | 727 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 378x793 | 2"
+  "S GG009 | 378x793 | 2"
  ],
  "luxVent | CUPRU | 800x800 | 1u/1s | B": [
   "F V301.077 | 1 buc",
@@ -79988,7 +79988,7 @@
   "F 291 | 2 buc",
   "F 182 | 2 buc",
   "F 164 | 5.5 m",
-  "F GG004 | 15.91 mp",
+  "F GG009 | 15.91 mp",
   "F 163 | 29 m",
   "F Manopera 1 | 1 buc",
   "N 290 | 1 buc | 5800 mm",
@@ -80000,7 +80000,7 @@
   "N 170 | 2 buc | 2748 mm",
   "N 171 | 3 buc | 5727 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1373x5793 | 2",
+  "S GG009 | 1373x5793 | 2",
   "E lipsă cod: usa · CUPRU · 5798 mm",
   "E lipsă cod: rama · CUPRU · 5798 mm"
  ],
@@ -80063,7 +80063,7 @@
   "F 291 | 0.5 buc",
   "F 182 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.25 mp",
+  "F GG009 | 2.25 mp",
   "F 163 | 8.5 m",
   "F Manopera 1 | 1 buc",
   "N 290 | 1 buc | 1100 mm",
@@ -80074,7 +80074,7 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 1027 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1093 | 2"
+  "S GG009 | 1028x1093 | 2"
  ],
  "luxVent | CUPRU | 1100x2100 | 1u/1s | B": [
   "F V301.710 | 1 buc",
@@ -80133,7 +80133,7 @@
   "F R300.009 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 1.94 mp",
+  "F GG009 | 1.94 mp",
   "F 163 | 8 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 950 mm",
@@ -80144,14 +80144,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 877 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x943 | 2"
+  "S GG009 | 1028x943 | 2"
  ],
  "luxVent | ALUMINIU | 960x2100 | 1u/1s | A": [
   "F V301.009 | 1 buc",
   "F R300.009 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 1.96 mp",
+  "F GG009 | 1.96 mp",
   "F 163 | 8 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 960 mm",
@@ -80162,14 +80162,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 887 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x953 | 2"
+  "S GG009 | 1028x953 | 2"
  ],
  "luxVent | ALUMINIU | 970x2100 | 1u/1s | A": [
   "F V301.009 | 1 buc",
   "F R300.009 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 1.98 mp",
+  "F GG009 | 1.98 mp",
   "F 163 | 8 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 970 mm",
@@ -80180,14 +80180,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 897 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x963 | 2"
+  "S GG009 | 1028x963 | 2"
  ],
  "luxVent | ALUMINIU | 980x2100 | 1u/1s | A": [
   "F V301.009 | 1 buc",
   "F R300.009 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2 mp",
+  "F GG009 | 2 mp",
   "F 163 | 8.5 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 980 mm",
@@ -80198,14 +80198,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 907 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x973 | 2"
+  "S GG009 | 1028x973 | 2"
  ],
  "luxVent | ALUMINIU | 990x2100 | 1u/1s | A": [
   "F V301.009 | 1 buc",
   "F R300.009 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.03 mp",
+  "F GG009 | 2.03 mp",
   "F 163 | 8.5 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 990 mm",
@@ -80216,14 +80216,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 917 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x983 | 2"
+  "S GG009 | 1028x983 | 2"
  ],
  "luxVent | ALUMINIU | 1000x2100 | 1u/1s | A": [
   "F V301.009 | 1 buc",
   "F R300.009 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.05 mp",
+  "F GG009 | 2.05 mp",
   "F 163 | 8.5 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1000 mm",
@@ -80234,14 +80234,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 927 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x993 | 2"
+  "S GG009 | 1028x993 | 2"
  ],
  "luxVent | ALUMINIU | 1010x2100 | 1u/1s | A": [
   "F V301.010 | 1 buc",
   "F R300.010 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.07 mp",
+  "F GG009 | 2.07 mp",
   "F 163 | 8.5 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1010 mm",
@@ -80252,14 +80252,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 937 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1003 | 2"
+  "S GG009 | 1028x1003 | 2"
  ],
  "luxVent | ALUMINIU | 1020x2100 | 1u/1s | A": [
   "F V301.010 | 1 buc",
   "F R300.010 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.09 mp",
+  "F GG009 | 2.09 mp",
   "F 163 | 8.5 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1020 mm",
@@ -80270,14 +80270,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 947 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1013 | 2"
+  "S GG009 | 1028x1013 | 2"
  ],
  "luxVent | ALUMINIU | 1030x2100 | 1u/1s | A": [
   "F V301.010 | 1 buc",
   "F R300.010 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.11 mp",
+  "F GG009 | 2.11 mp",
   "F 163 | 8.5 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1030 mm",
@@ -80288,14 +80288,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 957 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1023 | 2"
+  "S GG009 | 1028x1023 | 2"
  ],
  "luxVent | ALUMINIU | 1040x2100 | 1u/1s | A": [
   "F V301.010 | 1 buc",
   "F R300.010 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.13 mp",
+  "F GG009 | 2.13 mp",
   "F 163 | 8.5 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1040 mm",
@@ -80306,14 +80306,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 967 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1033 | 2"
+  "S GG009 | 1028x1033 | 2"
  ],
  "luxVent | ALUMINIU | 1050x2100 | 1u/1s | A": [
   "F V301.010 | 1 buc",
   "F R300.010 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.15 mp",
+  "F GG009 | 2.15 mp",
   "F 163 | 8.5 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1050 mm",
@@ -80324,14 +80324,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 977 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1043 | 2"
+  "S GG009 | 1028x1043 | 2"
  ],
  "luxVent | ALUMINIU | 1060x2100 | 1u/1s | A": [
   "F V301.010 | 1 buc",
   "F R300.010 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.17 mp",
+  "F GG009 | 2.17 mp",
   "F 163 | 8.5 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1060 mm",
@@ -80342,14 +80342,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 987 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1053 | 2"
+  "S GG009 | 1028x1053 | 2"
  ],
  "luxVent | ALUMINIU | 1070x2100 | 1u/1s | A": [
   "F V301.010 | 1 buc",
   "F R300.010 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.19 mp",
+  "F GG009 | 2.19 mp",
   "F 163 | 8.5 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1070 mm",
@@ -80360,14 +80360,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 997 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1063 | 2"
+  "S GG009 | 1028x1063 | 2"
  ],
  "luxVent | ALUMINIU | 1080x2100 | 1u/1s | A": [
   "F V301.010 | 1 buc",
   "F R300.010 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.21 mp",
+  "F GG009 | 2.21 mp",
   "F 163 | 8.5 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1080 mm",
@@ -80378,14 +80378,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 1007 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1073 | 2"
+  "S GG009 | 1028x1073 | 2"
  ],
  "luxVent | ALUMINIU | 1090x2100 | 1u/1s | A": [
   "F V301.010 | 1 buc",
   "F R300.010 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.23 mp",
+  "F GG009 | 2.23 mp",
   "F 163 | 8.5 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1090 mm",
@@ -80396,14 +80396,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 1017 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1083 | 2"
+  "S GG009 | 1028x1083 | 2"
  ],
  "luxVent | ALUMINIU | 1110x2100 | 1u/1s | A": [
   "F V301.011 | 1 buc",
   "F R300.011 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.27 mp",
+  "F GG009 | 2.27 mp",
   "F 163 | 9 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1110 mm",
@@ -80414,14 +80414,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 1037 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1103 | 2"
+  "S GG009 | 1028x1103 | 2"
  ],
  "luxVent | ALUMINIU | 1120x2100 | 1u/1s | A": [
   "F V301.011 | 1 buc",
   "F R300.011 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.29 mp",
+  "F GG009 | 2.29 mp",
   "F 163 | 9 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1120 mm",
@@ -80432,14 +80432,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 1047 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1113 | 2"
+  "S GG009 | 1028x1113 | 2"
  ],
  "luxVent | ALUMINIU | 1130x2100 | 1u/1s | A": [
   "F V301.011 | 1 buc",
   "F R300.011 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.31 mp",
+  "F GG009 | 2.31 mp",
   "F 163 | 9 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1130 mm",
@@ -80450,14 +80450,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 1057 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1123 | 2"
+  "S GG009 | 1028x1123 | 2"
  ],
  "luxVent | ALUMINIU | 1140x2100 | 1u/1s | A": [
   "F V301.011 | 1 buc",
   "F R300.011 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.33 mp",
+  "F GG009 | 2.33 mp",
   "F 163 | 9 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1140 mm",
@@ -80468,14 +80468,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 1067 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1133 | 2"
+  "S GG009 | 1028x1133 | 2"
  ],
  "luxVent | ALUMINIU | 1150x2100 | 1u/1s | A": [
   "F V301.011 | 1 buc",
   "F R300.011 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.35 mp",
+  "F GG009 | 2.35 mp",
   "F 163 | 9 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1150 mm",
@@ -80486,14 +80486,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 1077 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1143 | 2"
+  "S GG009 | 1028x1143 | 2"
  ],
  "luxVent | ALUMINIU | 1160x2100 | 1u/1s | A": [
   "F V301.011 | 1 buc",
   "F R300.011 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.37 mp",
+  "F GG009 | 2.37 mp",
   "F 163 | 9 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1160 mm",
@@ -80504,14 +80504,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 1087 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1153 | 2"
+  "S GG009 | 1028x1153 | 2"
  ],
  "luxVent | ALUMINIU | 1170x2100 | 1u/1s | A": [
   "F V301.011 | 1 buc",
   "F R300.011 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.39 mp",
+  "F GG009 | 2.39 mp",
   "F 163 | 9 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1170 mm",
@@ -80522,14 +80522,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 1097 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1163 | 2"
+  "S GG009 | 1028x1163 | 2"
  ],
  "luxVent | ALUMINIU | 1180x2100 | 1u/1s | A": [
   "F V301.011 | 1 buc",
   "F R300.011 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.42 mp",
+  "F GG009 | 2.42 mp",
   "F 163 | 9 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1180 mm",
@@ -80540,14 +80540,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 1107 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1173 | 2"
+  "S GG009 | 1028x1173 | 2"
  ],
  "luxVent | ALUMINIU | 1190x2100 | 1u/1s | A": [
   "F V301.011 | 1 buc",
   "F R300.011 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.44 mp",
+  "F GG009 | 2.44 mp",
   "F 163 | 9 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1190 mm",
@@ -80558,14 +80558,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 1117 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1183 | 2"
+  "S GG009 | 1028x1183 | 2"
  ],
  "luxVent | ALUMINIU | 1200x2100 | 1u/1s | A": [
   "F V301.011 | 1 buc",
   "F R300.011 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.46 mp",
+  "F GG009 | 2.46 mp",
   "F 163 | 9 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1200 mm",
@@ -80576,14 +80576,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 1127 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1193 | 2"
+  "S GG009 | 1028x1193 | 2"
  ],
  "luxVent | ALUMINIU | 1210x2100 | 1u/1s | A": [
   "F V301.012 | 1 buc",
   "F R300.012 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.48 mp",
+  "F GG009 | 2.48 mp",
   "F 163 | 9 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1210 mm",
@@ -80594,14 +80594,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 1137 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1203 | 2"
+  "S GG009 | 1028x1203 | 2"
  ],
  "luxVent | ALUMINIU | 1220x2100 | 1u/1s | A": [
   "F V301.012 | 1 buc",
   "F R300.012 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.5 mp",
+  "F GG009 | 2.5 mp",
   "F 163 | 9 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1220 mm",
@@ -80612,14 +80612,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 1147 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1213 | 2"
+  "S GG009 | 1028x1213 | 2"
  ],
  "luxVent | ALUMINIU | 1230x2100 | 1u/1s | A": [
   "F V301.012 | 1 buc",
   "F R300.012 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.52 mp",
+  "F GG009 | 2.52 mp",
   "F 163 | 9.5 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1230 mm",
@@ -80630,14 +80630,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 1157 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1223 | 2"
+  "S GG009 | 1028x1223 | 2"
  ],
  "luxVent | ALUMINIU | 1240x2100 | 1u/1s | A": [
   "F V301.012 | 1 buc",
   "F R300.012 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.54 mp",
+  "F GG009 | 2.54 mp",
   "F 163 | 9.5 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1240 mm",
@@ -80648,14 +80648,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 1167 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1233 | 2"
+  "S GG009 | 1028x1233 | 2"
  ],
  "luxVent | ALUMINIU | 1250x2100 | 1u/1s | A": [
   "F V301.012 | 1 buc",
   "F R300.012 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.56 mp",
+  "F GG009 | 2.56 mp",
   "F 163 | 9.5 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1250 mm",
@@ -80666,13 +80666,13 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 1177 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1243 | 2"
+  "S GG009 | 1028x1243 | 2"
  ],
  "luxVent | ALUMINIU | 800x800 | 2u/1s | A": [
   "F 104 | 1 buc",
   "F 164 | 3.5 m",
   "F 275 | 1 m",
-  "F GG004 | 0.61 mp",
+  "F GG009 | 0.61 mp",
   "F 163 | 6.5 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 800 mm",
@@ -80683,7 +80683,7 @@
   "N 170 | 4 buc | 758 mm",
   "N 171 | 6 buc | 332 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 378x398 | 4",
+  "S GG009 | 378x398 | 4",
   "E lipsă cod: usa · ALUMINIU · 403 mm",
   "E lipsă cod: rama · ALUMINIU · 403 mm"
  ],
@@ -80753,7 +80753,7 @@
   "F 104 | 2 buc",
   "F 164 | 11 m",
   "F 275 | 3 m",
-  "F GG004 | 15.92 mp",
+  "F GG009 | 15.92 mp",
   "F 163 | 34.5 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 5800 mm",
@@ -80764,7 +80764,7 @@
   "N 170 | 4 buc | 2748 mm",
   "N 171 | 6 buc | 2832 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1373x2898 | 4",
+  "S GG009 | 1373x2898 | 4",
   "E lipsă cod: usa · ALUMINIU · 2903 mm",
   "E lipsă cod: rama · ALUMINIU · 2903 mm"
  ],
@@ -80836,7 +80836,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.11 mp",
+  "F GG009 | 4.11 mp",
   "F 163 | 16.5 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 2000 mm",
@@ -80847,7 +80847,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 932 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x998 | 4"
+  "S GG009 | 1028x998 | 4"
  ],
  "luxVent | ALUMINIU | 2000x2100 | 2u/1s | B": [
   "F V301.010 | 2 buc",
@@ -80915,7 +80915,7 @@
   "F 118 | 1 buc",
   "F 164 | 3.5 m",
   "F 275 | 1 m",
-  "F GG004 | 0.61 mp",
+  "F GG009 | 0.61 mp",
   "F 163 | 6.5 m",
   "F Manopera 1 | 2 buc",
   "N 110 | 1 buc | 800 mm",
@@ -80926,7 +80926,7 @@
   "N 170 | 4 buc | 758 mm",
   "N 171 | 6 buc | 332 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 378x398 | 4",
+  "S GG009 | 378x398 | 4",
   "E lipsă cod: usa · SAMPANIE · 403 mm",
   "E lipsă cod: rama · SAMPANIE · 403 mm"
  ],
@@ -80996,7 +80996,7 @@
   "F 118 | 2 buc",
   "F 164 | 11 m",
   "F 275 | 3 m",
-  "F GG004 | 15.92 mp",
+  "F GG009 | 15.92 mp",
   "F 163 | 34.5 m",
   "F Manopera 1 | 2 buc",
   "N 110 | 1 buc | 5800 mm",
@@ -81007,7 +81007,7 @@
   "N 170 | 4 buc | 2748 mm",
   "N 171 | 6 buc | 2832 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1373x2898 | 4",
+  "S GG009 | 1373x2898 | 4",
   "E lipsă cod: usa · SAMPANIE · 2903 mm",
   "E lipsă cod: rama · SAMPANIE · 2903 mm"
  ],
@@ -81079,7 +81079,7 @@
   "F 118 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.11 mp",
+  "F GG009 | 4.11 mp",
   "F 163 | 16.5 m",
   "F Manopera 1 | 2 buc",
   "N 110 | 1 buc | 2000 mm",
@@ -81090,7 +81090,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 932 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x998 | 4"
+  "S GG009 | 1028x998 | 4"
  ],
  "luxVent | SAMPANIE | 2000x2100 | 2u/1s | B": [
   "F V301.210 | 2 buc",
@@ -81158,7 +81158,7 @@
   "F 129 | 1 buc",
   "F 164 | 3.5 m",
   "F 275 | 1 m",
-  "F GG004 | 0.61 mp",
+  "F GG009 | 0.61 mp",
   "F 163 | 6.5 m",
   "F Manopera 1 | 2 buc",
   "N 121 | 1 buc | 800 mm",
@@ -81169,7 +81169,7 @@
   "N 170 | 4 buc | 758 mm",
   "N 171 | 6 buc | 332 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 378x398 | 4",
+  "S GG009 | 378x398 | 4",
   "E lipsă cod: usa · CROM · 403 mm",
   "E lipsă cod: rama · CROM · 403 mm"
  ],
@@ -81239,7 +81239,7 @@
   "F 129 | 2 buc",
   "F 164 | 11 m",
   "F 275 | 3 m",
-  "F GG004 | 15.92 mp",
+  "F GG009 | 15.92 mp",
   "F 163 | 34.5 m",
   "F Manopera 1 | 2 buc",
   "N 121 | 1 buc | 5800 mm",
@@ -81250,7 +81250,7 @@
   "N 170 | 4 buc | 2748 mm",
   "N 171 | 6 buc | 2832 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1373x2898 | 4",
+  "S GG009 | 1373x2898 | 4",
   "E lipsă cod: usa · CROM · 2903 mm",
   "E lipsă cod: rama · CROM · 2903 mm"
  ],
@@ -81322,7 +81322,7 @@
   "F 129 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.11 mp",
+  "F GG009 | 4.11 mp",
   "F 163 | 16.5 m",
   "F Manopera 1 | 2 buc",
   "N 121 | 1 buc | 2000 mm",
@@ -81333,7 +81333,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 932 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x998 | 4"
+  "S GG009 | 1028x998 | 4"
  ],
  "luxVent | CROM | 2000x2100 | 2u/1s | B": [
   "F V301.310 | 2 buc",
@@ -81401,7 +81401,7 @@
   "F 138 | 1 buc",
   "F 164 | 3.5 m",
   "F 275 | 1 m",
-  "F GG004 | 0.61 mp",
+  "F GG009 | 0.61 mp",
   "F 163 | 6.5 m",
   "F Manopera 1 | 2 buc",
   "N 240 | 1 buc | 800 mm",
@@ -81412,7 +81412,7 @@
   "N 170 | 4 buc | 758 mm",
   "N 171 | 6 buc | 332 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 378x398 | 4",
+  "S GG009 | 378x398 | 4",
   "E lipsă cod: usa · ALB · 403 mm",
   "E lipsă cod: rama · ALB · 403 mm"
  ],
@@ -81482,7 +81482,7 @@
   "F 138 | 2 buc",
   "F 164 | 11 m",
   "F 275 | 3 m",
-  "F GG004 | 15.92 mp",
+  "F GG009 | 15.92 mp",
   "F 163 | 34.5 m",
   "F Manopera 1 | 2 buc",
   "N 240 | 1 buc | 5800 mm",
@@ -81493,7 +81493,7 @@
   "N 170 | 4 buc | 2748 mm",
   "N 171 | 6 buc | 2832 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1373x2898 | 4",
+  "S GG009 | 1373x2898 | 4",
   "E lipsă cod: usa · ALB · 2903 mm",
   "E lipsă cod: rama · ALB · 2903 mm"
  ],
@@ -81565,7 +81565,7 @@
   "F 138 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.11 mp",
+  "F GG009 | 4.11 mp",
   "F 163 | 16.5 m",
   "F Manopera 1 | 2 buc",
   "N 240 | 1 buc | 2000 mm",
@@ -81576,7 +81576,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 932 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x998 | 4"
+  "S GG009 | 1028x998 | 4"
  ],
  "luxVent | ALB | 2000x2100 | 2u/1s | B": [
   "F V301.510 | 2 buc",
@@ -81644,7 +81644,7 @@
   "F 149 | 1 buc",
   "F 164 | 3.5 m",
   "F 275 | 1 m",
-  "F GG004 | 0.61 mp",
+  "F GG009 | 0.61 mp",
   "F 163 | 6.5 m",
   "F Manopera 1 | 2 buc",
   "N 250 | 1 buc | 800 mm",
@@ -81655,7 +81655,7 @@
   "N 170 | 4 buc | 758 mm",
   "N 171 | 6 buc | 332 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 378x398 | 4",
+  "S GG009 | 378x398 | 4",
   "E lipsă cod: usa · NEGRU · 403 mm",
   "E lipsă cod: rama · NEGRU · 403 mm"
  ],
@@ -81725,7 +81725,7 @@
   "F 149 | 2 buc",
   "F 164 | 11 m",
   "F 275 | 3 m",
-  "F GG004 | 15.92 mp",
+  "F GG009 | 15.92 mp",
   "F 163 | 34.5 m",
   "F Manopera 1 | 2 buc",
   "N 250 | 1 buc | 5800 mm",
@@ -81736,7 +81736,7 @@
   "N 170 | 4 buc | 2748 mm",
   "N 171 | 6 buc | 2832 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1373x2898 | 4",
+  "S GG009 | 1373x2898 | 4",
   "E lipsă cod: usa · NEGRU · 2903 mm",
   "E lipsă cod: rama · NEGRU · 2903 mm"
  ],
@@ -81808,7 +81808,7 @@
   "F 149 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.11 mp",
+  "F GG009 | 4.11 mp",
   "F 163 | 16.5 m",
   "F Manopera 1 | 2 buc",
   "N 250 | 1 buc | 2000 mm",
@@ -81819,7 +81819,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 932 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x998 | 4"
+  "S GG009 | 1028x998 | 4"
  ],
  "luxVent | NEGRU | 2000x2100 | 2u/1s | B": [
   "F V301.410 | 2 buc",
@@ -81887,7 +81887,7 @@
   "F 156 | 1 buc",
   "F 164 | 3.5 m",
   "F 275 | 1 m",
-  "F GG004 | 0.61 mp",
+  "F GG009 | 0.61 mp",
   "F 163 | 6.5 m",
   "F Manopera 1 | 2 buc",
   "N 260 | 1 buc | 800 mm",
@@ -81898,7 +81898,7 @@
   "N 170 | 4 buc | 758 mm",
   "N 171 | 6 buc | 332 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 378x398 | 4",
+  "S GG009 | 378x398 | 4",
   "E lipsă cod: usa · AURIU · 403 mm",
   "E lipsă cod: rama · AURIU · 403 mm"
  ],
@@ -81967,7 +81967,7 @@
   "F 156 | 2 buc",
   "F 164 | 11 m",
   "F 275 | 3 m",
-  "F GG004 | 15.92 mp",
+  "F GG009 | 15.92 mp",
   "F 163 | 34.5 m",
   "F Manopera 1 | 2 buc",
   "N 260 | 1 buc | 5800 mm",
@@ -81978,7 +81978,7 @@
   "N 170 | 4 buc | 2748 mm",
   "N 171 | 6 buc | 2832 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1373x2898 | 4",
+  "S GG009 | 1373x2898 | 4",
   "E lipsă cod: usa · AURIU · 2903 mm",
   "E lipsă cod: rama · AURIU · 2903 mm"
  ],
@@ -82049,7 +82049,7 @@
   "F 156 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.11 mp",
+  "F GG009 | 4.11 mp",
   "F 163 | 16.5 m",
   "F Manopera 1 | 2 buc",
   "N 260 | 1 buc | 2000 mm",
@@ -82060,7 +82060,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 932 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x998 | 4"
+  "S GG009 | 1028x998 | 4"
  ],
  "luxVent | AURIU | 2000x2100 | 2u/1s | B": [
   "F V301.610 | 2 buc",
@@ -82129,7 +82129,7 @@
   "F 182 | 1 buc",
   "F 164 | 3.5 m",
   "F 275 | 1 m",
-  "F GG004 | 0.61 mp",
+  "F GG009 | 0.61 mp",
   "F 163 | 6.5 m",
   "F Manopera 1 | 2 buc",
   "N 290 | 1 buc | 800 mm",
@@ -82140,7 +82140,7 @@
   "N 170 | 4 buc | 758 mm",
   "N 171 | 6 buc | 332 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 378x398 | 4",
+  "S GG009 | 378x398 | 4",
   "E lipsă cod: usa · CUPRU · 403 mm",
   "E lipsă cod: rama · CUPRU · 403 mm"
  ],
@@ -82215,7 +82215,7 @@
   "F 182 | 2 buc",
   "F 164 | 11 m",
   "F 275 | 3 m",
-  "F GG004 | 15.92 mp",
+  "F GG009 | 15.92 mp",
   "F 163 | 34.5 m",
   "F Manopera 1 | 2 buc",
   "N 290 | 1 buc | 5800 mm",
@@ -82226,7 +82226,7 @@
   "N 170 | 4 buc | 2748 mm",
   "N 171 | 6 buc | 2832 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1373x2898 | 4",
+  "S GG009 | 1373x2898 | 4",
   "E lipsă cod: usa · CUPRU · 2903 mm",
   "E lipsă cod: rama · CUPRU · 2903 mm"
  ],
@@ -82303,7 +82303,7 @@
   "F 182 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.11 mp",
+  "F GG009 | 4.11 mp",
   "F 163 | 16.5 m",
   "F Manopera 1 | 2 buc",
   "N 290 | 1 buc | 2000 mm",
@@ -82314,7 +82314,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 932 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x998 | 4"
+  "S GG009 | 1028x998 | 4"
  ],
  "luxVent | CUPRU | 2000x2100 | 2u/1s | B": [
   "F V301.710 | 2 buc",
@@ -82387,7 +82387,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 3.8 mp",
+  "F GG009 | 3.8 mp",
   "F 163 | 16 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 1850 mm",
@@ -82398,7 +82398,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 857 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x923 | 4"
+  "S GG009 | 1028x923 | 4"
  ],
  "luxVent | ALUMINIU | 1860x2100 | 2u/1s | A": [
   "F V301.009 | 2 buc",
@@ -82406,7 +82406,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 3.82 mp",
+  "F GG009 | 3.82 mp",
   "F 163 | 16 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 1860 mm",
@@ -82417,7 +82417,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 862 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x928 | 4"
+  "S GG009 | 1028x928 | 4"
  ],
  "luxVent | ALUMINIU | 1870x2100 | 2u/1s | A": [
   "F V301.009 | 2 buc",
@@ -82425,7 +82425,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 3.84 mp",
+  "F GG009 | 3.84 mp",
   "F 163 | 16 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 1870 mm",
@@ -82436,7 +82436,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 867 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x933 | 4"
+  "S GG009 | 1028x933 | 4"
  ],
  "luxVent | ALUMINIU | 1880x2100 | 2u/1s | A": [
   "F V301.009 | 2 buc",
@@ -82444,7 +82444,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 3.86 mp",
+  "F GG009 | 3.86 mp",
   "F 163 | 16 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 1880 mm",
@@ -82455,7 +82455,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 872 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x938 | 4"
+  "S GG009 | 1028x938 | 4"
  ],
  "luxVent | ALUMINIU | 1890x2100 | 2u/1s | A": [
   "F V301.009 | 2 buc",
@@ -82463,7 +82463,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 3.88 mp",
+  "F GG009 | 3.88 mp",
   "F 163 | 16 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 1890 mm",
@@ -82474,7 +82474,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 877 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x943 | 4"
+  "S GG009 | 1028x943 | 4"
  ],
  "luxVent | ALUMINIU | 1900x2100 | 2u/1s | A": [
   "F V301.009 | 2 buc",
@@ -82482,7 +82482,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 3.9 mp",
+  "F GG009 | 3.9 mp",
   "F 163 | 16 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 1900 mm",
@@ -82493,7 +82493,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 882 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x948 | 4"
+  "S GG009 | 1028x948 | 4"
  ],
  "luxVent | ALUMINIU | 1910x2100 | 2u/1s | A": [
   "F V301.009 | 2 buc",
@@ -82501,7 +82501,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 3.92 mp",
+  "F GG009 | 3.92 mp",
   "F 163 | 16 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 1910 mm",
@@ -82512,7 +82512,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 887 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x953 | 4"
+  "S GG009 | 1028x953 | 4"
  ],
  "luxVent | ALUMINIU | 1920x2100 | 2u/1s | A": [
   "F V301.009 | 2 buc",
@@ -82520,7 +82520,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 3.94 mp",
+  "F GG009 | 3.94 mp",
   "F 163 | 16 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 1920 mm",
@@ -82531,7 +82531,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 892 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x958 | 4"
+  "S GG009 | 1028x958 | 4"
  ],
  "luxVent | ALUMINIU | 1930x2100 | 2u/1s | A": [
   "F V301.009 | 2 buc",
@@ -82539,7 +82539,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 3.96 mp",
+  "F GG009 | 3.96 mp",
   "F 163 | 16 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 1930 mm",
@@ -82550,7 +82550,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 897 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x963 | 4"
+  "S GG009 | 1028x963 | 4"
  ],
  "luxVent | ALUMINIU | 1940x2100 | 2u/1s | A": [
   "F V301.009 | 2 buc",
@@ -82558,7 +82558,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 3.98 mp",
+  "F GG009 | 3.98 mp",
   "F 163 | 16 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 1940 mm",
@@ -82569,7 +82569,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 902 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x968 | 4"
+  "S GG009 | 1028x968 | 4"
  ],
  "luxVent | ALUMINIU | 1950x2100 | 2u/1s | A": [
   "F V301.009 | 2 buc",
@@ -82577,7 +82577,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4 mp",
+  "F GG009 | 4 mp",
   "F 163 | 16.5 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 1950 mm",
@@ -82588,7 +82588,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 907 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x973 | 4"
+  "S GG009 | 1028x973 | 4"
  ],
  "luxVent | ALUMINIU | 1960x2100 | 2u/1s | A": [
   "F V301.009 | 2 buc",
@@ -82596,7 +82596,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.02 mp",
+  "F GG009 | 4.02 mp",
   "F 163 | 16.5 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 1960 mm",
@@ -82607,7 +82607,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 912 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x978 | 4"
+  "S GG009 | 1028x978 | 4"
  ],
  "luxVent | ALUMINIU | 1970x2100 | 2u/1s | A": [
   "F V301.009 | 2 buc",
@@ -82615,7 +82615,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.05 mp",
+  "F GG009 | 4.05 mp",
   "F 163 | 16.5 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 1970 mm",
@@ -82626,7 +82626,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 917 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x983 | 4"
+  "S GG009 | 1028x983 | 4"
  ],
  "luxVent | ALUMINIU | 1980x2100 | 2u/1s | A": [
   "F V301.009 | 2 buc",
@@ -82634,7 +82634,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.07 mp",
+  "F GG009 | 4.07 mp",
   "F 163 | 16.5 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 1980 mm",
@@ -82645,7 +82645,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 922 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x988 | 4"
+  "S GG009 | 1028x988 | 4"
  ],
  "luxVent | ALUMINIU | 1990x2100 | 2u/1s | A": [
   "F V301.009 | 2 buc",
@@ -82653,7 +82653,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.09 mp",
+  "F GG009 | 4.09 mp",
   "F 163 | 16.5 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 1990 mm",
@@ -82664,7 +82664,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 927 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x993 | 4"
+  "S GG009 | 1028x993 | 4"
  ],
  "luxVent | ALUMINIU | 2010x2100 | 2u/1s | A": [
   "F V301.010 | 2 buc",
@@ -82672,7 +82672,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.13 mp",
+  "F GG009 | 4.13 mp",
   "F 163 | 16.5 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 2010 mm",
@@ -82683,7 +82683,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 937 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x1003 | 4"
+  "S GG009 | 1028x1003 | 4"
  ],
  "luxVent | ALUMINIU | 2020x2100 | 2u/1s | A": [
   "F V301.010 | 2 buc",
@@ -82691,7 +82691,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.15 mp",
+  "F GG009 | 4.15 mp",
   "F 163 | 16.5 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 2020 mm",
@@ -82702,7 +82702,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 942 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x1008 | 4"
+  "S GG009 | 1028x1008 | 4"
  ],
  "luxVent | ALUMINIU | 2030x2100 | 2u/1s | A": [
   "F V301.010 | 2 buc",
@@ -82710,7 +82710,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.17 mp",
+  "F GG009 | 4.17 mp",
   "F 163 | 16.5 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 2030 mm",
@@ -82721,7 +82721,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 947 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x1013 | 4"
+  "S GG009 | 1028x1013 | 4"
  ],
  "luxVent | ALUMINIU | 2040x2100 | 2u/1s | A": [
   "F V301.010 | 2 buc",
@@ -82729,7 +82729,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.19 mp",
+  "F GG009 | 4.19 mp",
   "F 163 | 16.5 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 2040 mm",
@@ -82740,7 +82740,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 952 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x1018 | 4"
+  "S GG009 | 1028x1018 | 4"
  ],
  "luxVent | ALUMINIU | 2050x2100 | 2u/1s | A": [
   "F V301.010 | 2 buc",
@@ -82748,7 +82748,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.21 mp",
+  "F GG009 | 4.21 mp",
   "F 163 | 16.5 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 2050 mm",
@@ -82759,7 +82759,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 957 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x1023 | 4"
+  "S GG009 | 1028x1023 | 4"
  ],
  "luxVent | ALUMINIU | 2060x2100 | 2u/1s | A": [
   "F V301.010 | 2 buc",
@@ -82767,7 +82767,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.23 mp",
+  "F GG009 | 4.23 mp",
   "F 163 | 16.5 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 2060 mm",
@@ -82778,7 +82778,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 962 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x1028 | 4"
+  "S GG009 | 1028x1028 | 4"
  ],
  "luxVent | ALUMINIU | 2070x2100 | 2u/1s | A": [
   "F V301.010 | 2 buc",
@@ -82786,7 +82786,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.25 mp",
+  "F GG009 | 4.25 mp",
   "F 163 | 16.5 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 2070 mm",
@@ -82797,7 +82797,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 967 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x1033 | 4"
+  "S GG009 | 1028x1033 | 4"
  ],
  "luxVent | ALUMINIU | 2080x2100 | 2u/1s | A": [
   "F V301.010 | 2 buc",
@@ -82805,7 +82805,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.27 mp",
+  "F GG009 | 4.27 mp",
   "F 163 | 17 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 2080 mm",
@@ -82816,7 +82816,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 972 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x1038 | 4"
+  "S GG009 | 1028x1038 | 4"
  ],
  "luxVent | ALUMINIU | 2090x2100 | 2u/1s | A": [
   "F V301.010 | 2 buc",
@@ -82824,7 +82824,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.29 mp",
+  "F GG009 | 4.29 mp",
   "F 163 | 17 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 2090 mm",
@@ -82835,7 +82835,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 977 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x1043 | 4"
+  "S GG009 | 1028x1043 | 4"
  ],
  "luxVent | ALUMINIU | 2100x2100 | 2u/1s | A": [
   "F V301.010 | 2 buc",
@@ -82843,7 +82843,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.31 mp",
+  "F GG009 | 4.31 mp",
   "F 163 | 17 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 2100 mm",
@@ -82854,7 +82854,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 982 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x1048 | 4"
+  "S GG009 | 1028x1048 | 4"
  ],
  "luxVent | ALUMINIU | 2110x2100 | 2u/1s | A": [
   "F V301.010 | 2 buc",
@@ -82862,7 +82862,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.33 mp",
+  "F GG009 | 4.33 mp",
   "F 163 | 17 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 2110 mm",
@@ -82873,7 +82873,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 987 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x1053 | 4"
+  "S GG009 | 1028x1053 | 4"
  ],
  "luxVent | ALUMINIU | 2120x2100 | 2u/1s | A": [
   "F V301.010 | 2 buc",
@@ -82881,7 +82881,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.35 mp",
+  "F GG009 | 4.35 mp",
   "F 163 | 17 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 2120 mm",
@@ -82892,7 +82892,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 992 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x1058 | 4"
+  "S GG009 | 1028x1058 | 4"
  ],
  "luxVent | ALUMINIU | 2130x2100 | 2u/1s | A": [
   "F V301.010 | 2 buc",
@@ -82900,7 +82900,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.37 mp",
+  "F GG009 | 4.37 mp",
   "F 163 | 17 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 2130 mm",
@@ -82911,7 +82911,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 997 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x1063 | 4"
+  "S GG009 | 1028x1063 | 4"
  ],
  "luxVent | ALUMINIU | 2140x2100 | 2u/1s | A": [
   "F V301.010 | 2 buc",
@@ -82919,7 +82919,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.39 mp",
+  "F GG009 | 4.39 mp",
   "F 163 | 17 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 2140 mm",
@@ -82930,7 +82930,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 1002 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x1068 | 4"
+  "S GG009 | 1028x1068 | 4"
  ],
  "luxVent | ALUMINIU | 2150x2100 | 2u/1s | A": [
   "F V301.010 | 2 buc",
@@ -82938,7 +82938,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.42 mp",
+  "F GG009 | 4.42 mp",
   "F 163 | 17 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 2150 mm",
@@ -82949,13 +82949,13 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 1007 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x1073 | 4"
+  "S GG009 | 1028x1073 | 4"
  ],
  "luxVent | ALUMINIU | 800x800 | 3u/2s | A": [
   "F 104 | 1 buc",
   "F 164 | 5 m",
   "F 275 | 2 m",
-  "F GG004 | 0.61 mp",
+  "F GG009 | 0.61 mp",
   "F 163 | 8 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 800 mm",
@@ -82966,7 +82966,7 @@
   "N 170 | 6 buc | 758 mm",
   "N 171 | 9 buc | 200 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 378x266 | 6",
+  "S GG009 | 378x266 | 6",
   "E lipsă cod: usa · ALUMINIU · 271 mm",
   "E lipsă cod: rama · ALUMINIU · 271 mm"
  ],
@@ -83039,7 +83039,7 @@
   "F 104 | 3 buc",
   "F 164 | 16.5 m",
   "F 275 | 5.5 m",
-  "F GG004 | 15.92 mp",
+  "F GG009 | 15.92 mp",
   "F 163 | 40 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 5800 mm",
@@ -83050,7 +83050,7 @@
   "N 170 | 6 buc | 2748 mm",
   "N 171 | 9 buc | 1867 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1373x1933 | 6"
+  "S GG009 | 1373x1933 | 6"
  ],
  "luxVent | ALUMINIU | 5800x2790 | 3u/2s | B": [
   "F V301.015 | 3 buc",
@@ -83121,7 +83121,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 5.96 mp",
+  "F GG009 | 5.96 mp",
   "F 163 | 24 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2900 mm",
@@ -83132,7 +83132,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 900 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x966 | 6"
+  "S GG009 | 1028x966 | 6"
  ],
  "luxVent | ALUMINIU | 2900x2100 | 3u/2s | B": [
   "F V301.009 | 3 buc",
@@ -83201,7 +83201,7 @@
   "F 118 | 1 buc",
   "F 164 | 5 m",
   "F 275 | 2 m",
-  "F GG004 | 0.61 mp",
+  "F GG009 | 0.61 mp",
   "F 163 | 8 m",
   "F Manopera 1 | 3 buc",
   "N 110 | 1 buc | 800 mm",
@@ -83212,7 +83212,7 @@
   "N 170 | 6 buc | 758 mm",
   "N 171 | 9 buc | 200 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 378x266 | 6",
+  "S GG009 | 378x266 | 6",
   "E lipsă cod: usa · SAMPANIE · 271 mm",
   "E lipsă cod: rama · SAMPANIE · 271 mm"
  ],
@@ -83285,7 +83285,7 @@
   "F 118 | 3 buc",
   "F 164 | 16.5 m",
   "F 275 | 5.5 m",
-  "F GG004 | 15.92 mp",
+  "F GG009 | 15.92 mp",
   "F 163 | 40 m",
   "F Manopera 1 | 3 buc",
   "N 110 | 1 buc | 5800 mm",
@@ -83296,7 +83296,7 @@
   "N 170 | 6 buc | 2748 mm",
   "N 171 | 9 buc | 1867 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1373x1933 | 6"
+  "S GG009 | 1373x1933 | 6"
  ],
  "luxVent | SAMPANIE | 5800x2790 | 3u/2s | B": [
   "F V301.215 | 3 buc",
@@ -83367,7 +83367,7 @@
   "F 118 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 5.96 mp",
+  "F GG009 | 5.96 mp",
   "F 163 | 24 m",
   "F Manopera 1 | 3 buc",
   "N 110 | 1 buc | 2900 mm",
@@ -83378,7 +83378,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 900 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x966 | 6"
+  "S GG009 | 1028x966 | 6"
  ],
  "luxVent | SAMPANIE | 2900x2100 | 3u/2s | B": [
   "F V301.029 | 3 buc",
@@ -83447,7 +83447,7 @@
   "F 129 | 1 buc",
   "F 164 | 5 m",
   "F 275 | 2 m",
-  "F GG004 | 0.61 mp",
+  "F GG009 | 0.61 mp",
   "F 163 | 8 m",
   "F Manopera 1 | 3 buc",
   "N 121 | 1 buc | 800 mm",
@@ -83458,7 +83458,7 @@
   "N 170 | 6 buc | 758 mm",
   "N 171 | 9 buc | 200 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 378x266 | 6",
+  "S GG009 | 378x266 | 6",
   "E lipsă cod: usa · CROM · 271 mm",
   "E lipsă cod: rama · CROM · 271 mm"
  ],
@@ -83531,7 +83531,7 @@
   "F 129 | 3 buc",
   "F 164 | 16.5 m",
   "F 275 | 5.5 m",
-  "F GG004 | 15.92 mp",
+  "F GG009 | 15.92 mp",
   "F 163 | 40 m",
   "F Manopera 1 | 3 buc",
   "N 121 | 1 buc | 5800 mm",
@@ -83542,7 +83542,7 @@
   "N 170 | 6 buc | 2748 mm",
   "N 171 | 9 buc | 1867 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1373x1933 | 6"
+  "S GG009 | 1373x1933 | 6"
  ],
  "luxVent | CROM | 5800x2790 | 3u/2s | B": [
   "F V301.315 | 3 buc",
@@ -83613,7 +83613,7 @@
   "F 129 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 5.96 mp",
+  "F GG009 | 5.96 mp",
   "F 163 | 24 m",
   "F Manopera 1 | 3 buc",
   "N 121 | 1 buc | 2900 mm",
@@ -83624,7 +83624,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 900 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x966 | 6"
+  "S GG009 | 1028x966 | 6"
  ],
  "luxVent | CROM | 2900x2100 | 3u/2s | B": [
   "F V301.039 | 3 buc",
@@ -83693,7 +83693,7 @@
   "F 138 | 1 buc",
   "F 164 | 5 m",
   "F 275 | 2 m",
-  "F GG004 | 0.61 mp",
+  "F GG009 | 0.61 mp",
   "F 163 | 8 m",
   "F Manopera 1 | 3 buc",
   "N 240 | 1 buc | 800 mm",
@@ -83704,7 +83704,7 @@
   "N 170 | 6 buc | 758 mm",
   "N 171 | 9 buc | 200 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 378x266 | 6",
+  "S GG009 | 378x266 | 6",
   "E lipsă cod: usa · ALB · 271 mm",
   "E lipsă cod: rama · ALB · 271 mm"
  ],
@@ -83777,7 +83777,7 @@
   "F 138 | 3 buc",
   "F 164 | 16.5 m",
   "F 275 | 5.5 m",
-  "F GG004 | 15.92 mp",
+  "F GG009 | 15.92 mp",
   "F 163 | 40 m",
   "F Manopera 1 | 3 buc",
   "N 240 | 1 buc | 5800 mm",
@@ -83788,7 +83788,7 @@
   "N 170 | 6 buc | 2748 mm",
   "N 171 | 9 buc | 1867 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1373x1933 | 6"
+  "S GG009 | 1373x1933 | 6"
  ],
  "luxVent | ALB | 5800x2790 | 3u/2s | B": [
   "F V301.515 | 3 buc",
@@ -83859,7 +83859,7 @@
   "F 138 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 5.96 mp",
+  "F GG009 | 5.96 mp",
   "F 163 | 24 m",
   "F Manopera 1 | 3 buc",
   "N 240 | 1 buc | 2900 mm",
@@ -83870,7 +83870,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 900 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x966 | 6"
+  "S GG009 | 1028x966 | 6"
  ],
  "luxVent | ALB | 2900x2100 | 3u/2s | B": [
   "F V301.059 | 3 buc",
@@ -83939,7 +83939,7 @@
   "F 149 | 1 buc",
   "F 164 | 5 m",
   "F 275 | 2 m",
-  "F GG004 | 0.61 mp",
+  "F GG009 | 0.61 mp",
   "F 163 | 8 m",
   "F Manopera 1 | 3 buc",
   "N 250 | 1 buc | 800 mm",
@@ -83950,7 +83950,7 @@
   "N 170 | 6 buc | 758 mm",
   "N 171 | 9 buc | 200 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 378x266 | 6",
+  "S GG009 | 378x266 | 6",
   "E lipsă cod: usa · NEGRU · 271 mm",
   "E lipsă cod: rama · NEGRU · 271 mm"
  ],
@@ -84023,7 +84023,7 @@
   "F 149 | 3 buc",
   "F 164 | 16.5 m",
   "F 275 | 5.5 m",
-  "F GG004 | 15.92 mp",
+  "F GG009 | 15.92 mp",
   "F 163 | 40 m",
   "F Manopera 1 | 3 buc",
   "N 250 | 1 buc | 5800 mm",
@@ -84034,7 +84034,7 @@
   "N 170 | 6 buc | 2748 mm",
   "N 171 | 9 buc | 1867 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1373x1933 | 6"
+  "S GG009 | 1373x1933 | 6"
  ],
  "luxVent | NEGRU | 5800x2790 | 3u/2s | B": [
   "F V301.415 | 3 buc",
@@ -84105,7 +84105,7 @@
   "F 149 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 5.96 mp",
+  "F GG009 | 5.96 mp",
   "F 163 | 24 m",
   "F Manopera 1 | 3 buc",
   "N 250 | 1 buc | 2900 mm",
@@ -84116,7 +84116,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 900 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x966 | 6"
+  "S GG009 | 1028x966 | 6"
  ],
  "luxVent | NEGRU | 2900x2100 | 3u/2s | B": [
   "F V301.049 | 3 buc",
@@ -84185,7 +84185,7 @@
   "F 156 | 1 buc",
   "F 164 | 5 m",
   "F 275 | 2 m",
-  "F GG004 | 0.61 mp",
+  "F GG009 | 0.61 mp",
   "F 163 | 8 m",
   "F Manopera 1 | 3 buc",
   "N 260 | 1 buc | 800 mm",
@@ -84196,7 +84196,7 @@
   "N 170 | 6 buc | 758 mm",
   "N 171 | 9 buc | 200 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 378x266 | 6",
+  "S GG009 | 378x266 | 6",
   "E lipsă cod: usa · AURIU · 271 mm",
   "E lipsă cod: rama · AURIU · 271 mm"
  ],
@@ -84268,7 +84268,7 @@
   "F 156 | 3 buc",
   "F 164 | 16.5 m",
   "F 275 | 5.5 m",
-  "F GG004 | 15.92 mp",
+  "F GG009 | 15.92 mp",
   "F 163 | 40 m",
   "F Manopera 1 | 3 buc",
   "N 260 | 1 buc | 5800 mm",
@@ -84279,7 +84279,7 @@
   "N 170 | 6 buc | 2748 mm",
   "N 171 | 9 buc | 1867 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1373x1933 | 6"
+  "S GG009 | 1373x1933 | 6"
  ],
  "luxVent | AURIU | 5800x2790 | 3u/2s | B": [
   "F V301.615 | 3 buc",
@@ -84349,7 +84349,7 @@
   "F 156 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 5.96 mp",
+  "F GG009 | 5.96 mp",
   "F 163 | 24 m",
   "F Manopera 1 | 3 buc",
   "N 260 | 1 buc | 2900 mm",
@@ -84360,7 +84360,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 900 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x966 | 6"
+  "S GG009 | 1028x966 | 6"
  ],
  "luxVent | AURIU | 2900x2100 | 3u/2s | B": [
   "F V301.069 | 3 buc",
@@ -84430,7 +84430,7 @@
   "F 182 | 1 buc",
   "F 164 | 5 m",
   "F 275 | 2 m",
-  "F GG004 | 0.61 mp",
+  "F GG009 | 0.61 mp",
   "F 163 | 8 m",
   "F Manopera 1 | 3 buc",
   "N 290 | 1 buc | 800 mm",
@@ -84441,7 +84441,7 @@
   "N 170 | 6 buc | 758 mm",
   "N 171 | 9 buc | 200 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 378x266 | 6",
+  "S GG009 | 378x266 | 6",
   "E lipsă cod: usa · CUPRU · 271 mm",
   "E lipsă cod: rama · CUPRU · 271 mm"
  ],
@@ -84518,7 +84518,7 @@
   "F 182 | 3 buc",
   "F 164 | 16.5 m",
   "F 275 | 5.5 m",
-  "F GG004 | 15.92 mp",
+  "F GG009 | 15.92 mp",
   "F 163 | 40 m",
   "F Manopera 1 | 3 buc",
   "N 290 | 1 buc | 5800 mm",
@@ -84529,7 +84529,7 @@
   "N 170 | 6 buc | 2748 mm",
   "N 171 | 9 buc | 1867 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1373x1933 | 6",
+  "S GG009 | 1373x1933 | 6",
   "E lipsă cod: usa · CUPRU · 1938 mm"
  ],
  "luxVent | CUPRU | 5800x2790 | 3u/2s | B": [
@@ -84606,7 +84606,7 @@
   "F 182 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 5.96 mp",
+  "F GG009 | 5.96 mp",
   "F 163 | 24 m",
   "F Manopera 1 | 3 buc",
   "N 290 | 1 buc | 2900 mm",
@@ -84617,7 +84617,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 900 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x966 | 6"
+  "S GG009 | 1028x966 | 6"
  ],
  "luxVent | CUPRU | 2900x2100 | 3u/2s | B": [
   "F V301.079 | 3 buc",
@@ -84691,7 +84691,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 5.65 mp",
+  "F GG009 | 5.65 mp",
   "F 163 | 23.5 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2750 mm",
@@ -84702,7 +84702,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 850 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x916 | 6"
+  "S GG009 | 1028x916 | 6"
  ],
  "luxVent | ALUMINIU | 2760x2100 | 3u/2s | A": [
   "F V301.009 | 3 buc",
@@ -84710,7 +84710,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 5.68 mp",
+  "F GG009 | 5.68 mp",
   "F 163 | 23.5 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2760 mm",
@@ -84721,7 +84721,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 854 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x920 | 6"
+  "S GG009 | 1028x920 | 6"
  ],
  "luxVent | ALUMINIU | 2770x2100 | 3u/2s | A": [
   "F V301.009 | 3 buc",
@@ -84729,7 +84729,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 5.7 mp",
+  "F GG009 | 5.7 mp",
   "F 163 | 23.5 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2770 mm",
@@ -84740,7 +84740,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 857 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x923 | 6"
+  "S GG009 | 1028x923 | 6"
  ],
  "luxVent | ALUMINIU | 2780x2100 | 3u/2s | A": [
   "F V301.009 | 3 buc",
@@ -84748,7 +84748,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 5.71 mp",
+  "F GG009 | 5.71 mp",
   "F 163 | 23.5 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2780 mm",
@@ -84759,7 +84759,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 860 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x926 | 6"
+  "S GG009 | 1028x926 | 6"
  ],
  "luxVent | ALUMINIU | 2790x2100 | 3u/2s | A": [
   "F V301.009 | 3 buc",
@@ -84767,7 +84767,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 5.74 mp",
+  "F GG009 | 5.74 mp",
   "F 163 | 23.5 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2790 mm",
@@ -84778,7 +84778,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 864 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x930 | 6"
+  "S GG009 | 1028x930 | 6"
  ],
  "luxVent | ALUMINIU | 2800x2100 | 3u/2s | A": [
   "F V301.009 | 3 buc",
@@ -84786,7 +84786,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 5.76 mp",
+  "F GG009 | 5.76 mp",
   "F 163 | 24 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2800 mm",
@@ -84797,7 +84797,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 867 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x933 | 6"
+  "S GG009 | 1028x933 | 6"
  ],
  "luxVent | ALUMINIU | 2810x2100 | 3u/2s | A": [
   "F V301.009 | 3 buc",
@@ -84805,7 +84805,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 5.78 mp",
+  "F GG009 | 5.78 mp",
   "F 163 | 24 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2810 mm",
@@ -84816,7 +84816,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 870 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x936 | 6"
+  "S GG009 | 1028x936 | 6"
  ],
  "luxVent | ALUMINIU | 2820x2100 | 3u/2s | A": [
   "F V301.009 | 3 buc",
@@ -84824,7 +84824,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 5.8 mp",
+  "F GG009 | 5.8 mp",
   "F 163 | 24 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2820 mm",
@@ -84835,7 +84835,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 874 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x940 | 6"
+  "S GG009 | 1028x940 | 6"
  ],
  "luxVent | ALUMINIU | 2830x2100 | 3u/2s | A": [
   "F V301.009 | 3 buc",
@@ -84843,7 +84843,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 5.82 mp",
+  "F GG009 | 5.82 mp",
   "F 163 | 24 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2830 mm",
@@ -84854,7 +84854,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 877 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x943 | 6"
+  "S GG009 | 1028x943 | 6"
  ],
  "luxVent | ALUMINIU | 2840x2100 | 3u/2s | A": [
   "F V301.009 | 3 buc",
@@ -84862,7 +84862,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 5.84 mp",
+  "F GG009 | 5.84 mp",
   "F 163 | 24 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2840 mm",
@@ -84873,7 +84873,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 880 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x946 | 6"
+  "S GG009 | 1028x946 | 6"
  ],
  "luxVent | ALUMINIU | 2850x2100 | 3u/2s | A": [
   "F V301.009 | 3 buc",
@@ -84881,7 +84881,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 5.86 mp",
+  "F GG009 | 5.86 mp",
   "F 163 | 24 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2850 mm",
@@ -84892,7 +84892,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 884 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x950 | 6"
+  "S GG009 | 1028x950 | 6"
  ],
  "luxVent | ALUMINIU | 2860x2100 | 3u/2s | A": [
   "F V301.009 | 3 buc",
@@ -84900,7 +84900,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 5.88 mp",
+  "F GG009 | 5.88 mp",
   "F 163 | 24 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2860 mm",
@@ -84911,7 +84911,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 887 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x953 | 6"
+  "S GG009 | 1028x953 | 6"
  ],
  "luxVent | ALUMINIU | 2870x2100 | 3u/2s | A": [
   "F V301.009 | 3 buc",
@@ -84919,7 +84919,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 5.9 mp",
+  "F GG009 | 5.9 mp",
   "F 163 | 24 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2870 mm",
@@ -84930,7 +84930,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 890 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x956 | 6"
+  "S GG009 | 1028x956 | 6"
  ],
  "luxVent | ALUMINIU | 2880x2100 | 3u/2s | A": [
   "F V301.009 | 3 buc",
@@ -84938,7 +84938,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 5.92 mp",
+  "F GG009 | 5.92 mp",
   "F 163 | 24 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2880 mm",
@@ -84949,7 +84949,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 894 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x960 | 6"
+  "S GG009 | 1028x960 | 6"
  ],
  "luxVent | ALUMINIU | 2890x2100 | 3u/2s | A": [
   "F V301.009 | 3 buc",
@@ -84957,7 +84957,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 5.94 mp",
+  "F GG009 | 5.94 mp",
   "F 163 | 24 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2890 mm",
@@ -84968,7 +84968,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 897 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x963 | 6"
+  "S GG009 | 1028x963 | 6"
  ],
  "luxVent | ALUMINIU | 2910x2100 | 3u/2s | A": [
   "F V301.009 | 3 buc",
@@ -84976,7 +84976,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 5.99 mp",
+  "F GG009 | 5.99 mp",
   "F 163 | 24 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2910 mm",
@@ -84987,7 +84987,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 904 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x970 | 6"
+  "S GG009 | 1028x970 | 6"
  ],
  "luxVent | ALUMINIU | 2920x2100 | 3u/2s | A": [
   "F V301.009 | 3 buc",
@@ -84995,7 +84995,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 6 mp",
+  "F GG009 | 6 mp",
   "F 163 | 24.5 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2920 mm",
@@ -85006,7 +85006,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 907 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x973 | 6"
+  "S GG009 | 1028x973 | 6"
  ],
  "luxVent | ALUMINIU | 2930x2100 | 3u/2s | A": [
   "F V301.009 | 3 buc",
@@ -85014,7 +85014,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 6.02 mp",
+  "F GG009 | 6.02 mp",
   "F 163 | 24.5 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2930 mm",
@@ -85025,7 +85025,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 910 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x976 | 6"
+  "S GG009 | 1028x976 | 6"
  ],
  "luxVent | ALUMINIU | 2940x2100 | 3u/2s | A": [
   "F V301.009 | 3 buc",
@@ -85033,7 +85033,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 6.05 mp",
+  "F GG009 | 6.05 mp",
   "F 163 | 24.5 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2940 mm",
@@ -85044,7 +85044,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 914 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x980 | 6"
+  "S GG009 | 1028x980 | 6"
  ],
  "luxVent | ALUMINIU | 2950x2100 | 3u/2s | A": [
   "F V301.009 | 3 buc",
@@ -85052,7 +85052,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 6.07 mp",
+  "F GG009 | 6.07 mp",
   "F 163 | 24.5 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2950 mm",
@@ -85063,7 +85063,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 917 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x983 | 6"
+  "S GG009 | 1028x983 | 6"
  ],
  "luxVent | ALUMINIU | 2960x2100 | 3u/2s | A": [
   "F V301.009 | 3 buc",
@@ -85071,7 +85071,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 6.08 mp",
+  "F GG009 | 6.08 mp",
   "F 163 | 24.5 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2960 mm",
@@ -85082,7 +85082,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 920 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x986 | 6"
+  "S GG009 | 1028x986 | 6"
  ],
  "luxVent | ALUMINIU | 2970x2100 | 3u/2s | A": [
   "F V301.009 | 3 buc",
@@ -85090,7 +85090,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 6.11 mp",
+  "F GG009 | 6.11 mp",
   "F 163 | 24.5 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2970 mm",
@@ -85101,7 +85101,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 924 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x990 | 6"
+  "S GG009 | 1028x990 | 6"
  ],
  "luxVent | ALUMINIU | 2980x2100 | 3u/2s | A": [
   "F V301.009 | 3 buc",
@@ -85109,7 +85109,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 6.13 mp",
+  "F GG009 | 6.13 mp",
   "F 163 | 24.5 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2980 mm",
@@ -85120,7 +85120,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 927 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x993 | 6"
+  "S GG009 | 1028x993 | 6"
  ],
  "luxVent | ALUMINIU | 2990x2100 | 3u/2s | A": [
   "F V301.010 | 3 buc",
@@ -85128,7 +85128,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 6.15 mp",
+  "F GG009 | 6.15 mp",
   "F 163 | 24.5 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2990 mm",
@@ -85139,7 +85139,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 930 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x996 | 6"
+  "S GG009 | 1028x996 | 6"
  ],
  "luxVent | ALUMINIU | 3000x2100 | 3u/2s | A": [
   "F V301.010 | 3 buc",
@@ -85147,7 +85147,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 6.17 mp",
+  "F GG009 | 6.17 mp",
   "F 163 | 24.5 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 3000 mm",
@@ -85158,7 +85158,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 934 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x1000 | 6"
+  "S GG009 | 1028x1000 | 6"
  ],
  "luxVent | ALUMINIU | 3010x2100 | 3u/2s | A": [
   "F V301.010 | 3 buc",
@@ -85166,7 +85166,7 @@
   "F 104 | 2 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 6.19 mp",
+  "F GG009 | 6.19 mp",
   "F 163 | 24.5 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 3010 mm",
@@ -85177,7 +85177,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 937 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x1003 | 6"
+  "S GG009 | 1028x1003 | 6"
  ],
  "luxVent | ALUMINIU | 3020x2100 | 3u/2s | A": [
   "F V301.010 | 3 buc",
@@ -85185,7 +85185,7 @@
   "F 104 | 2 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 6.21 mp",
+  "F GG009 | 6.21 mp",
   "F 163 | 24.5 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 3020 mm",
@@ -85196,7 +85196,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 940 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x1006 | 6"
+  "S GG009 | 1028x1006 | 6"
  ],
  "luxVent | ALUMINIU | 3030x2100 | 3u/2s | A": [
   "F V301.010 | 3 buc",
@@ -85204,7 +85204,7 @@
   "F 104 | 2 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 6.23 mp",
+  "F GG009 | 6.23 mp",
   "F 163 | 24.5 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 3030 mm",
@@ -85215,7 +85215,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 944 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x1010 | 6"
+  "S GG009 | 1028x1010 | 6"
  ],
  "luxVent | ALUMINIU | 3040x2100 | 3u/2s | A": [
   "F V301.010 | 3 buc",
@@ -85223,7 +85223,7 @@
   "F 104 | 2 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 6.25 mp",
+  "F GG009 | 6.25 mp",
   "F 163 | 24.5 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 3040 mm",
@@ -85234,7 +85234,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 947 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x1013 | 6"
+  "S GG009 | 1028x1013 | 6"
  ],
  "luxVent | ALUMINIU | 3050x2100 | 3u/2s | A": [
   "F V301.010 | 3 buc",
@@ -85242,7 +85242,7 @@
   "F 104 | 2 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 6.27 mp",
+  "F GG009 | 6.27 mp",
   "F 163 | 25 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 3050 mm",
@@ -85253,13 +85253,13 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 950 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x1016 | 6"
+  "S GG009 | 1028x1016 | 6"
  ],
  "luxVent | ALUMINIU | 800x800 | 5u/2s | A": [
   "F 104 | 1 buc",
   "F 164 | 8 m",
   "F 275 | 3.5 m",
-  "F GG004 | 0.61 mp",
+  "F GG009 | 0.61 mp",
   "F 163 | 11 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 800 mm",
@@ -85270,7 +85270,7 @@
   "N 170 | 10 buc | 758 mm",
   "N 171 | 15 buc | 95 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 378x161 | 10",
+  "S GG009 | 378x161 | 10",
   "E lipsă cod: usa · ALUMINIU · 166 mm",
   "E lipsă cod: rama · ALUMINIU · 166 mm"
  ],
@@ -85345,7 +85345,7 @@
   "F 104 | 3 buc",
   "F 164 | 27.5 m",
   "F 275 | 11 m",
-  "F GG004 | 15.94 mp",
+  "F GG009 | 15.94 mp",
   "F 163 | 51 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 5800 mm",
@@ -85356,7 +85356,7 @@
   "N 170 | 10 buc | 2748 mm",
   "N 171 | 15 buc | 1095 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1373x1161 | 10"
+  "S GG009 | 1373x1161 | 10"
  ],
  "luxVent | ALUMINIU | 5800x2790 | 5u/2s | B": [
   "F V301.011 | 5 buc",
@@ -85429,7 +85429,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.67 mp",
+  "F GG009 | 9.67 mp",
   "F 163 | 39.5 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4700 mm",
@@ -85440,7 +85440,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 875 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x941 | 10"
+  "S GG009 | 1028x941 | 10"
  ],
  "luxVent | ALUMINIU | 4700x2100 | 5u/2s | B": [
   "F V301.009 | 5 buc",
@@ -85511,7 +85511,7 @@
   "F 118 | 1 buc",
   "F 164 | 8 m",
   "F 275 | 3.5 m",
-  "F GG004 | 0.61 mp",
+  "F GG009 | 0.61 mp",
   "F 163 | 11 m",
   "F Manopera 1 | 5 buc",
   "N 110 | 1 buc | 800 mm",
@@ -85522,7 +85522,7 @@
   "N 170 | 10 buc | 758 mm",
   "N 171 | 15 buc | 95 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 378x161 | 10",
+  "S GG009 | 378x161 | 10",
   "E lipsă cod: usa · SAMPANIE · 166 mm",
   "E lipsă cod: rama · SAMPANIE · 166 mm"
  ],
@@ -85597,7 +85597,7 @@
   "F 118 | 3 buc",
   "F 164 | 27.5 m",
   "F 275 | 11 m",
-  "F GG004 | 15.94 mp",
+  "F GG009 | 15.94 mp",
   "F 163 | 51 m",
   "F Manopera 1 | 5 buc",
   "N 110 | 1 buc | 5800 mm",
@@ -85608,7 +85608,7 @@
   "N 170 | 10 buc | 2748 mm",
   "N 171 | 15 buc | 1095 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1373x1161 | 10"
+  "S GG009 | 1373x1161 | 10"
  ],
  "luxVent | SAMPANIE | 5800x2790 | 5u/2s | B": [
   "F V301.211 | 5 buc",
@@ -85681,7 +85681,7 @@
   "F 118 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.67 mp",
+  "F GG009 | 9.67 mp",
   "F 163 | 39.5 m",
   "F Manopera 1 | 5 buc",
   "N 110 | 1 buc | 4700 mm",
@@ -85692,7 +85692,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 875 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x941 | 10"
+  "S GG009 | 1028x941 | 10"
  ],
  "luxVent | SAMPANIE | 4700x2100 | 5u/2s | B": [
   "F V301.029 | 5 buc",
@@ -85763,7 +85763,7 @@
   "F 129 | 1 buc",
   "F 164 | 8 m",
   "F 275 | 3.5 m",
-  "F GG004 | 0.61 mp",
+  "F GG009 | 0.61 mp",
   "F 163 | 11 m",
   "F Manopera 1 | 5 buc",
   "N 121 | 1 buc | 800 mm",
@@ -85774,7 +85774,7 @@
   "N 170 | 10 buc | 758 mm",
   "N 171 | 15 buc | 95 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 378x161 | 10",
+  "S GG009 | 378x161 | 10",
   "E lipsă cod: usa · CROM · 166 mm",
   "E lipsă cod: rama · CROM · 166 mm"
  ],
@@ -85849,7 +85849,7 @@
   "F 129 | 3 buc",
   "F 164 | 27.5 m",
   "F 275 | 11 m",
-  "F GG004 | 15.94 mp",
+  "F GG009 | 15.94 mp",
   "F 163 | 51 m",
   "F Manopera 1 | 5 buc",
   "N 121 | 1 buc | 5800 mm",
@@ -85860,7 +85860,7 @@
   "N 170 | 10 buc | 2748 mm",
   "N 171 | 15 buc | 1095 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1373x1161 | 10"
+  "S GG009 | 1373x1161 | 10"
  ],
  "luxVent | CROM | 5800x2790 | 5u/2s | B": [
   "F V301.311 | 5 buc",
@@ -85933,7 +85933,7 @@
   "F 129 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.67 mp",
+  "F GG009 | 9.67 mp",
   "F 163 | 39.5 m",
   "F Manopera 1 | 5 buc",
   "N 121 | 1 buc | 4700 mm",
@@ -85944,7 +85944,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 875 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x941 | 10"
+  "S GG009 | 1028x941 | 10"
  ],
  "luxVent | CROM | 4700x2100 | 5u/2s | B": [
   "F V301.039 | 5 buc",
@@ -86015,7 +86015,7 @@
   "F 138 | 1 buc",
   "F 164 | 8 m",
   "F 275 | 3.5 m",
-  "F GG004 | 0.61 mp",
+  "F GG009 | 0.61 mp",
   "F 163 | 11 m",
   "F Manopera 1 | 5 buc",
   "N 240 | 1 buc | 800 mm",
@@ -86026,7 +86026,7 @@
   "N 170 | 10 buc | 758 mm",
   "N 171 | 15 buc | 95 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 378x161 | 10",
+  "S GG009 | 378x161 | 10",
   "E lipsă cod: usa · ALB · 166 mm",
   "E lipsă cod: rama · ALB · 166 mm"
  ],
@@ -86101,7 +86101,7 @@
   "F 138 | 3 buc",
   "F 164 | 27.5 m",
   "F 275 | 11 m",
-  "F GG004 | 15.94 mp",
+  "F GG009 | 15.94 mp",
   "F 163 | 51 m",
   "F Manopera 1 | 5 buc",
   "N 240 | 1 buc | 5800 mm",
@@ -86112,7 +86112,7 @@
   "N 170 | 10 buc | 2748 mm",
   "N 171 | 15 buc | 1095 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1373x1161 | 10"
+  "S GG009 | 1373x1161 | 10"
  ],
  "luxVent | ALB | 5800x2790 | 5u/2s | B": [
   "F V301.511 | 5 buc",
@@ -86185,7 +86185,7 @@
   "F 138 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.67 mp",
+  "F GG009 | 9.67 mp",
   "F 163 | 39.5 m",
   "F Manopera 1 | 5 buc",
   "N 240 | 1 buc | 4700 mm",
@@ -86196,7 +86196,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 875 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x941 | 10"
+  "S GG009 | 1028x941 | 10"
  ],
  "luxVent | ALB | 4700x2100 | 5u/2s | B": [
   "F V301.059 | 5 buc",
@@ -86267,7 +86267,7 @@
   "F 149 | 1 buc",
   "F 164 | 8 m",
   "F 275 | 3.5 m",
-  "F GG004 | 0.61 mp",
+  "F GG009 | 0.61 mp",
   "F 163 | 11 m",
   "F Manopera 1 | 5 buc",
   "N 250 | 1 buc | 800 mm",
@@ -86278,7 +86278,7 @@
   "N 170 | 10 buc | 758 mm",
   "N 171 | 15 buc | 95 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 378x161 | 10",
+  "S GG009 | 378x161 | 10",
   "E lipsă cod: usa · NEGRU · 166 mm",
   "E lipsă cod: rama · NEGRU · 166 mm"
  ],
@@ -86353,7 +86353,7 @@
   "F 149 | 3 buc",
   "F 164 | 27.5 m",
   "F 275 | 11 m",
-  "F GG004 | 15.94 mp",
+  "F GG009 | 15.94 mp",
   "F 163 | 51 m",
   "F Manopera 1 | 5 buc",
   "N 250 | 1 buc | 5800 mm",
@@ -86364,7 +86364,7 @@
   "N 170 | 10 buc | 2748 mm",
   "N 171 | 15 buc | 1095 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1373x1161 | 10"
+  "S GG009 | 1373x1161 | 10"
  ],
  "luxVent | NEGRU | 5800x2790 | 5u/2s | B": [
   "F V301.411 | 5 buc",
@@ -86437,7 +86437,7 @@
   "F 149 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.67 mp",
+  "F GG009 | 9.67 mp",
   "F 163 | 39.5 m",
   "F Manopera 1 | 5 buc",
   "N 250 | 1 buc | 4700 mm",
@@ -86448,7 +86448,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 875 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x941 | 10"
+  "S GG009 | 1028x941 | 10"
  ],
  "luxVent | NEGRU | 4700x2100 | 5u/2s | B": [
   "F V301.049 | 5 buc",
@@ -86519,7 +86519,7 @@
   "F 156 | 1 buc",
   "F 164 | 8 m",
   "F 275 | 3.5 m",
-  "F GG004 | 0.61 mp",
+  "F GG009 | 0.61 mp",
   "F 163 | 11 m",
   "F Manopera 1 | 5 buc",
   "N 260 | 1 buc | 800 mm",
@@ -86530,7 +86530,7 @@
   "N 170 | 10 buc | 758 mm",
   "N 171 | 15 buc | 95 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 378x161 | 10",
+  "S GG009 | 378x161 | 10",
   "E lipsă cod: usa · AURIU · 166 mm",
   "E lipsă cod: rama · AURIU · 166 mm"
  ],
@@ -86604,7 +86604,7 @@
   "F 156 | 3 buc",
   "F 164 | 27.5 m",
   "F 275 | 11 m",
-  "F GG004 | 15.94 mp",
+  "F GG009 | 15.94 mp",
   "F 163 | 51 m",
   "F Manopera 1 | 5 buc",
   "N 260 | 1 buc | 5800 mm",
@@ -86615,7 +86615,7 @@
   "N 170 | 10 buc | 2748 mm",
   "N 171 | 15 buc | 1095 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1373x1161 | 10"
+  "S GG009 | 1373x1161 | 10"
  ],
  "luxVent | AURIU | 5800x2790 | 5u/2s | B": [
   "F V301.611 | 5 buc",
@@ -86687,7 +86687,7 @@
   "F 156 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.67 mp",
+  "F GG009 | 9.67 mp",
   "F 163 | 39.5 m",
   "F Manopera 1 | 5 buc",
   "N 260 | 1 buc | 4700 mm",
@@ -86698,7 +86698,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 875 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x941 | 10"
+  "S GG009 | 1028x941 | 10"
  ],
  "luxVent | AURIU | 4700x2100 | 5u/2s | B": [
   "F V301.069 | 5 buc",
@@ -86770,7 +86770,7 @@
   "F 182 | 1 buc",
   "F 164 | 8 m",
   "F 275 | 3.5 m",
-  "F GG004 | 0.61 mp",
+  "F GG009 | 0.61 mp",
   "F 163 | 11 m",
   "F Manopera 1 | 5 buc",
   "N 290 | 1 buc | 800 mm",
@@ -86781,7 +86781,7 @@
   "N 170 | 10 buc | 758 mm",
   "N 171 | 15 buc | 95 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 378x161 | 10",
+  "S GG009 | 378x161 | 10",
   "E lipsă cod: usa · CUPRU · 166 mm",
   "E lipsă cod: rama · CUPRU · 166 mm"
  ],
@@ -86861,7 +86861,7 @@
   "F 182 | 3 buc",
   "F 164 | 27.5 m",
   "F 275 | 11 m",
-  "F GG004 | 15.94 mp",
+  "F GG009 | 15.94 mp",
   "F 163 | 51 m",
   "F Manopera 1 | 5 buc",
   "N 290 | 1 buc | 5800 mm",
@@ -86872,7 +86872,7 @@
   "N 170 | 10 buc | 2748 mm",
   "N 171 | 15 buc | 1095 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1373x1161 | 10"
+  "S GG009 | 1373x1161 | 10"
  ],
  "luxVent | CUPRU | 5800x2790 | 5u/2s | B": [
   "F V301.711 | 5 buc",
@@ -86950,7 +86950,7 @@
   "F 182 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.67 mp",
+  "F GG009 | 9.67 mp",
   "F 163 | 39.5 m",
   "F Manopera 1 | 5 buc",
   "N 290 | 1 buc | 4700 mm",
@@ -86961,7 +86961,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 875 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x941 | 10"
+  "S GG009 | 1028x941 | 10"
  ],
  "luxVent | CUPRU | 4700x2100 | 5u/2s | B": [
   "F V301.079 | 5 buc",
@@ -87037,7 +87037,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.37 mp",
+  "F GG009 | 9.37 mp",
   "F 163 | 39 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4550 mm",
@@ -87048,7 +87048,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 845 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x911 | 10"
+  "S GG009 | 1028x911 | 10"
  ],
  "luxVent | ALUMINIU | 4560x2100 | 5u/2s | A": [
   "F V301.009 | 5 buc",
@@ -87056,7 +87056,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.39 mp",
+  "F GG009 | 9.39 mp",
   "F 163 | 39 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4560 mm",
@@ -87067,7 +87067,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 847 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x913 | 10"
+  "S GG009 | 1028x913 | 10"
  ],
  "luxVent | ALUMINIU | 4570x2100 | 5u/2s | A": [
   "F V301.009 | 5 buc",
@@ -87075,7 +87075,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.41 mp",
+  "F GG009 | 9.41 mp",
   "F 163 | 39 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4570 mm",
@@ -87086,7 +87086,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 849 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x915 | 10"
+  "S GG009 | 1028x915 | 10"
  ],
  "luxVent | ALUMINIU | 4580x2100 | 5u/2s | A": [
   "F V301.009 | 5 buc",
@@ -87094,7 +87094,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.43 mp",
+  "F GG009 | 9.43 mp",
   "F 163 | 39 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4580 mm",
@@ -87105,7 +87105,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 851 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x917 | 10"
+  "S GG009 | 1028x917 | 10"
  ],
  "luxVent | ALUMINIU | 4590x2100 | 5u/2s | A": [
   "F V301.009 | 5 buc",
@@ -87113,7 +87113,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.45 mp",
+  "F GG009 | 9.45 mp",
   "F 163 | 39 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4590 mm",
@@ -87124,7 +87124,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 853 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x919 | 10"
+  "S GG009 | 1028x919 | 10"
  ],
  "luxVent | ALUMINIU | 4600x2100 | 5u/2s | A": [
   "F V301.009 | 5 buc",
@@ -87132,7 +87132,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.47 mp",
+  "F GG009 | 9.47 mp",
   "F 163 | 39 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4600 mm",
@@ -87143,7 +87143,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 855 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x921 | 10"
+  "S GG009 | 1028x921 | 10"
  ],
  "luxVent | ALUMINIU | 4610x2100 | 5u/2s | A": [
   "F V301.009 | 5 buc",
@@ -87151,7 +87151,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.49 mp",
+  "F GG009 | 9.49 mp",
   "F 163 | 39.5 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4610 mm",
@@ -87162,7 +87162,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 857 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x923 | 10"
+  "S GG009 | 1028x923 | 10"
  ],
  "luxVent | ALUMINIU | 4620x2100 | 5u/2s | A": [
   "F V301.009 | 5 buc",
@@ -87170,7 +87170,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.51 mp",
+  "F GG009 | 9.51 mp",
   "F 163 | 39.5 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4620 mm",
@@ -87181,7 +87181,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 859 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x925 | 10"
+  "S GG009 | 1028x925 | 10"
  ],
  "luxVent | ALUMINIU | 4630x2100 | 5u/2s | A": [
   "F V301.009 | 5 buc",
@@ -87189,7 +87189,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.53 mp",
+  "F GG009 | 9.53 mp",
   "F 163 | 39.5 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4630 mm",
@@ -87200,7 +87200,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 861 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x927 | 10"
+  "S GG009 | 1028x927 | 10"
  ],
  "luxVent | ALUMINIU | 4640x2100 | 5u/2s | A": [
   "F V301.009 | 5 buc",
@@ -87208,7 +87208,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.55 mp",
+  "F GG009 | 9.55 mp",
   "F 163 | 39.5 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4640 mm",
@@ -87219,7 +87219,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 863 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x929 | 10"
+  "S GG009 | 1028x929 | 10"
  ],
  "luxVent | ALUMINIU | 4650x2100 | 5u/2s | A": [
   "F V301.009 | 5 buc",
@@ -87227,7 +87227,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.57 mp",
+  "F GG009 | 9.57 mp",
   "F 163 | 39.5 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4650 mm",
@@ -87238,7 +87238,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 865 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x931 | 10"
+  "S GG009 | 1028x931 | 10"
  ],
  "luxVent | ALUMINIU | 4660x2100 | 5u/2s | A": [
   "F V301.009 | 5 buc",
@@ -87246,7 +87246,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.59 mp",
+  "F GG009 | 9.59 mp",
   "F 163 | 39.5 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4660 mm",
@@ -87257,7 +87257,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 867 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x933 | 10"
+  "S GG009 | 1028x933 | 10"
  ],
  "luxVent | ALUMINIU | 4670x2100 | 5u/2s | A": [
   "F V301.009 | 5 buc",
@@ -87265,7 +87265,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.61 mp",
+  "F GG009 | 9.61 mp",
   "F 163 | 39.5 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4670 mm",
@@ -87276,7 +87276,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 869 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x935 | 10"
+  "S GG009 | 1028x935 | 10"
  ],
  "luxVent | ALUMINIU | 4680x2100 | 5u/2s | A": [
   "F V301.009 | 5 buc",
@@ -87284,7 +87284,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.63 mp",
+  "F GG009 | 9.63 mp",
   "F 163 | 39.5 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4680 mm",
@@ -87295,7 +87295,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 871 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x937 | 10"
+  "S GG009 | 1028x937 | 10"
  ],
  "luxVent | ALUMINIU | 4690x2100 | 5u/2s | A": [
   "F V301.009 | 5 buc",
@@ -87303,7 +87303,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.65 mp",
+  "F GG009 | 9.65 mp",
   "F 163 | 39.5 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4690 mm",
@@ -87314,7 +87314,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 873 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x939 | 10"
+  "S GG009 | 1028x939 | 10"
  ],
  "luxVent | ALUMINIU | 4710x2100 | 5u/2s | A": [
   "F V301.009 | 5 buc",
@@ -87322,7 +87322,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.69 mp",
+  "F GG009 | 9.69 mp",
   "F 163 | 39.5 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4710 mm",
@@ -87333,7 +87333,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 877 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x943 | 10"
+  "S GG009 | 1028x943 | 10"
  ],
  "luxVent | ALUMINIU | 4720x2100 | 5u/2s | A": [
   "F V301.009 | 5 buc",
@@ -87341,7 +87341,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.71 mp",
+  "F GG009 | 9.71 mp",
   "F 163 | 39.5 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4720 mm",
@@ -87352,7 +87352,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 879 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x945 | 10"
+  "S GG009 | 1028x945 | 10"
  ],
  "luxVent | ALUMINIU | 4730x2100 | 5u/2s | A": [
   "F V301.009 | 5 buc",
@@ -87360,7 +87360,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.74 mp",
+  "F GG009 | 9.74 mp",
   "F 163 | 39.5 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4730 mm",
@@ -87371,7 +87371,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 881 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x947 | 10"
+  "S GG009 | 1028x947 | 10"
  ],
  "luxVent | ALUMINIU | 4740x2100 | 5u/2s | A": [
   "F V301.009 | 5 buc",
@@ -87379,7 +87379,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.76 mp",
+  "F GG009 | 9.76 mp",
   "F 163 | 40 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4740 mm",
@@ -87390,7 +87390,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 883 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x949 | 10"
+  "S GG009 | 1028x949 | 10"
  ],
  "luxVent | ALUMINIU | 4750x2100 | 5u/2s | A": [
   "F V301.009 | 5 buc",
@@ -87398,7 +87398,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.78 mp",
+  "F GG009 | 9.78 mp",
   "F 163 | 40 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4750 mm",
@@ -87409,7 +87409,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 885 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x951 | 10"
+  "S GG009 | 1028x951 | 10"
  ],
  "luxVent | ALUMINIU | 4760x2100 | 5u/2s | A": [
   "F V301.009 | 5 buc",
@@ -87417,7 +87417,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.8 mp",
+  "F GG009 | 9.8 mp",
   "F 163 | 40 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4760 mm",
@@ -87428,7 +87428,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 887 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x953 | 10"
+  "S GG009 | 1028x953 | 10"
  ],
  "luxVent | ALUMINIU | 4770x2100 | 5u/2s | A": [
   "F V301.009 | 5 buc",
@@ -87436,7 +87436,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.82 mp",
+  "F GG009 | 9.82 mp",
   "F 163 | 40 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4770 mm",
@@ -87447,7 +87447,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 889 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x955 | 10"
+  "S GG009 | 1028x955 | 10"
  ],
  "luxVent | ALUMINIU | 4780x2100 | 5u/2s | A": [
   "F V301.009 | 5 buc",
@@ -87455,7 +87455,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.84 mp",
+  "F GG009 | 9.84 mp",
   "F 163 | 40 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4780 mm",
@@ -87466,7 +87466,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 891 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x957 | 10"
+  "S GG009 | 1028x957 | 10"
  ],
  "luxVent | ALUMINIU | 4790x2100 | 5u/2s | A": [
   "F V301.009 | 5 buc",
@@ -87474,7 +87474,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.86 mp",
+  "F GG009 | 9.86 mp",
   "F 163 | 40 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4790 mm",
@@ -87485,7 +87485,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 893 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x959 | 10"
+  "S GG009 | 1028x959 | 10"
  ],
  "luxVent | ALUMINIU | 4800x2100 | 5u/2s | A": [
   "F V301.009 | 5 buc",
@@ -87493,7 +87493,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.88 mp",
+  "F GG009 | 9.88 mp",
   "F 163 | 40 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4800 mm",
@@ -87504,7 +87504,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 895 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x961 | 10"
+  "S GG009 | 1028x961 | 10"
  ],
  "luxVent | ALUMINIU | 4810x2100 | 5u/2s | A": [
   "F V301.009 | 5 buc",
@@ -87512,7 +87512,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.9 mp",
+  "F GG009 | 9.9 mp",
   "F 163 | 40 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4810 mm",
@@ -87523,7 +87523,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 897 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x963 | 10"
+  "S GG009 | 1028x963 | 10"
  ],
  "luxVent | ALUMINIU | 4820x2100 | 5u/2s | A": [
   "F V301.009 | 5 buc",
@@ -87531,7 +87531,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.92 mp",
+  "F GG009 | 9.92 mp",
   "F 163 | 40 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4820 mm",
@@ -87542,7 +87542,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 899 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x965 | 10"
+  "S GG009 | 1028x965 | 10"
  ],
  "luxVent | ALUMINIU | 4830x2100 | 5u/2s | A": [
   "F V301.009 | 5 buc",
@@ -87550,7 +87550,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.94 mp",
+  "F GG009 | 9.94 mp",
   "F 163 | 40 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4830 mm",
@@ -87561,7 +87561,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 901 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x967 | 10"
+  "S GG009 | 1028x967 | 10"
  ],
  "luxVent | ALUMINIU | 4840x2100 | 5u/2s | A": [
   "F V301.009 | 5 buc",
@@ -87569,7 +87569,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.96 mp",
+  "F GG009 | 9.96 mp",
   "F 163 | 40 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4840 mm",
@@ -87580,7 +87580,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 903 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x969 | 10"
+  "S GG009 | 1028x969 | 10"
  ],
  "luxVent | ALUMINIU | 4850x2100 | 5u/2s | A": [
   "F V301.009 | 5 buc",
@@ -87588,7 +87588,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.98 mp",
+  "F GG009 | 9.98 mp",
   "F 163 | 40 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4850 mm",
@@ -87599,14 +87599,14 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 905 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x971 | 10"
+  "S GG009 | 1028x971 | 10"
  ],
  "luxBreda | ALUMINIU | 800x800 | 1u/1s | A": [
   "F B302.007 | 1 buc",
   "F R300.007 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 2 m",
-  "F GG004 | 0.6 mp",
+  "F GG009 | 0.6 mp",
   "F 163 | 5 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 800 mm",
@@ -87617,7 +87617,7 @@
   "N 170 | 2 buc | 758 mm",
   "N 171 | 3 buc | 727 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 378x793 | 2"
+  "S GG009 | 378x793 | 2"
  ],
  "luxBreda | ALUMINIU | 800x800 | 1u/1s | B": [
   "F B302.007 | 1 buc",
@@ -87670,7 +87670,7 @@
  "luxBreda | ALUMINIU | 5800x2790 | 1u/1s | A": [
   "F 104 | 2 buc",
   "F 164 | 5.5 m",
-  "F GG004 | 15.91 mp",
+  "F GG009 | 15.91 mp",
   "F 163 | 29 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 5800 mm",
@@ -87682,7 +87682,7 @@
   "N 170 | 2 buc | 2748 mm",
   "N 171 | 3 buc | 5727 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1373x5793 | 2",
+  "S GG009 | 1373x5793 | 2",
   "E lipsă cod: usa · ALUMINIU · 5798 mm",
   "E lipsă cod: rama · ALUMINIU · 5798 mm"
  ],
@@ -87739,7 +87739,7 @@
   "F R300.010 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.25 mp",
+  "F GG009 | 2.25 mp",
   "F 163 | 8.5 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1100 mm",
@@ -87750,7 +87750,7 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 1027 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1093 | 2"
+  "S GG009 | 1028x1093 | 2"
  ],
  "luxBreda | ALUMINIU | 1100x2100 | 1u/1s | B": [
   "F B302.010 | 1 buc",
@@ -87805,7 +87805,7 @@
   "F R300.007 | 1 buc",
   "F 118 | 1 buc",
   "F 164 | 2 m",
-  "F GG004 | 0.6 mp",
+  "F GG009 | 0.6 mp",
   "F 163 | 5 m",
   "F Manopera 1 | 1 buc",
   "N 110 | 1 buc | 800 mm",
@@ -87816,7 +87816,7 @@
   "N 170 | 2 buc | 758 mm",
   "N 171 | 3 buc | 727 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 378x793 | 2"
+  "S GG009 | 378x793 | 2"
  ],
  "luxBreda | SAMPANIE | 800x800 | 1u/1s | B": [
   "F B302.027 | 1 buc",
@@ -87869,7 +87869,7 @@
  "luxBreda | SAMPANIE | 5800x2790 | 1u/1s | A": [
   "F 118 | 2 buc",
   "F 164 | 5.5 m",
-  "F GG004 | 15.91 mp",
+  "F GG009 | 15.91 mp",
   "F 163 | 29 m",
   "F Manopera 1 | 1 buc",
   "N 110 | 1 buc | 5800 mm",
@@ -87881,7 +87881,7 @@
   "N 170 | 2 buc | 2748 mm",
   "N 171 | 3 buc | 5727 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1373x5793 | 2",
+  "S GG009 | 1373x5793 | 2",
   "E lipsă cod: usa · SAMPANIE · 5798 mm",
   "E lipsă cod: rama · SAMPANIE · 5798 mm"
  ],
@@ -87938,7 +87938,7 @@
   "F R300.010 | 1 buc",
   "F 118 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.25 mp",
+  "F GG009 | 2.25 mp",
   "F 163 | 8.5 m",
   "F Manopera 1 | 1 buc",
   "N 110 | 1 buc | 1100 mm",
@@ -87949,7 +87949,7 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 1027 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1093 | 2"
+  "S GG009 | 1028x1093 | 2"
  ],
  "luxBreda | SAMPANIE | 1100x2100 | 1u/1s | B": [
   "F B302.210 | 1 buc",
@@ -88004,7 +88004,7 @@
   "F R300.007 | 1 buc",
   "F 129 | 1 buc",
   "F 164 | 2 m",
-  "F GG004 | 0.6 mp",
+  "F GG009 | 0.6 mp",
   "F 163 | 5 m",
   "F Manopera 1 | 1 buc",
   "N 121 | 1 buc | 800 mm",
@@ -88015,7 +88015,7 @@
   "N 170 | 2 buc | 758 mm",
   "N 171 | 3 buc | 727 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 378x793 | 2"
+  "S GG009 | 378x793 | 2"
  ],
  "luxBreda | CROM | 800x800 | 1u/1s | B": [
   "F B302.037 | 1 buc",
@@ -88068,7 +88068,7 @@
  "luxBreda | CROM | 5800x2790 | 1u/1s | A": [
   "F 129 | 2 buc",
   "F 164 | 5.5 m",
-  "F GG004 | 15.91 mp",
+  "F GG009 | 15.91 mp",
   "F 163 | 29 m",
   "F Manopera 1 | 1 buc",
   "N 121 | 1 buc | 5800 mm",
@@ -88080,7 +88080,7 @@
   "N 170 | 2 buc | 2748 mm",
   "N 171 | 3 buc | 5727 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1373x5793 | 2",
+  "S GG009 | 1373x5793 | 2",
   "E lipsă cod: usa · CROM · 5798 mm",
   "E lipsă cod: rama · CROM · 5798 mm"
  ],
@@ -88137,7 +88137,7 @@
   "F R300.010 | 1 buc",
   "F 129 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.25 mp",
+  "F GG009 | 2.25 mp",
   "F 163 | 8.5 m",
   "F Manopera 1 | 1 buc",
   "N 121 | 1 buc | 1100 mm",
@@ -88148,7 +88148,7 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 1027 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1093 | 2"
+  "S GG009 | 1028x1093 | 2"
  ],
  "luxBreda | CROM | 1100x2100 | 1u/1s | B": [
   "F B302.310 | 1 buc",
@@ -88203,7 +88203,7 @@
   "F R300.007 | 1 buc",
   "F 138 | 1 buc",
   "F 164 | 2 m",
-  "F GG004 | 0.6 mp",
+  "F GG009 | 0.6 mp",
   "F 163 | 5 m",
   "F Manopera 1 | 1 buc",
   "N 240 | 1 buc | 800 mm",
@@ -88214,7 +88214,7 @@
   "N 170 | 2 buc | 758 mm",
   "N 171 | 3 buc | 727 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 378x793 | 2"
+  "S GG009 | 378x793 | 2"
  ],
  "luxBreda | ALB | 800x800 | 1u/1s | B": [
   "F B302.057 | 1 buc",
@@ -88267,7 +88267,7 @@
  "luxBreda | ALB | 5800x2790 | 1u/1s | A": [
   "F 138 | 2 buc",
   "F 164 | 5.5 m",
-  "F GG004 | 15.91 mp",
+  "F GG009 | 15.91 mp",
   "F 163 | 29 m",
   "F Manopera 1 | 1 buc",
   "N 240 | 1 buc | 5800 mm",
@@ -88279,7 +88279,7 @@
   "N 170 | 2 buc | 2748 mm",
   "N 171 | 3 buc | 5727 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1373x5793 | 2",
+  "S GG009 | 1373x5793 | 2",
   "E lipsă cod: usa · ALB · 5798 mm",
   "E lipsă cod: rama · ALB · 5798 mm"
  ],
@@ -88336,7 +88336,7 @@
   "F R300.010 | 1 buc",
   "F 138 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.25 mp",
+  "F GG009 | 2.25 mp",
   "F 163 | 8.5 m",
   "F Manopera 1 | 1 buc",
   "N 240 | 1 buc | 1100 mm",
@@ -88347,7 +88347,7 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 1027 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1093 | 2"
+  "S GG009 | 1028x1093 | 2"
  ],
  "luxBreda | ALB | 1100x2100 | 1u/1s | B": [
   "F B302.510 | 1 buc",
@@ -88402,7 +88402,7 @@
   "F R300.007 | 1 buc",
   "F 149 | 1 buc",
   "F 164 | 2 m",
-  "F GG004 | 0.6 mp",
+  "F GG009 | 0.6 mp",
   "F 163 | 5 m",
   "F Manopera 1 | 1 buc",
   "N 250 | 1 buc | 800 mm",
@@ -88413,7 +88413,7 @@
   "N 170 | 2 buc | 758 mm",
   "N 171 | 3 buc | 727 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 378x793 | 2"
+  "S GG009 | 378x793 | 2"
  ],
  "luxBreda | NEGRU | 800x800 | 1u/1s | B": [
   "F B302.047 | 1 buc",
@@ -88466,7 +88466,7 @@
  "luxBreda | NEGRU | 5800x2790 | 1u/1s | A": [
   "F 149 | 2 buc",
   "F 164 | 5.5 m",
-  "F GG004 | 15.91 mp",
+  "F GG009 | 15.91 mp",
   "F 163 | 29 m",
   "F Manopera 1 | 1 buc",
   "N 250 | 1 buc | 5800 mm",
@@ -88478,7 +88478,7 @@
   "N 170 | 2 buc | 2748 mm",
   "N 171 | 3 buc | 5727 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1373x5793 | 2",
+  "S GG009 | 1373x5793 | 2",
   "E lipsă cod: usa · NEGRU · 5798 mm",
   "E lipsă cod: rama · NEGRU · 5798 mm"
  ],
@@ -88535,7 +88535,7 @@
   "F R300.010 | 1 buc",
   "F 149 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.25 mp",
+  "F GG009 | 2.25 mp",
   "F 163 | 8.5 m",
   "F Manopera 1 | 1 buc",
   "N 250 | 1 buc | 1100 mm",
@@ -88546,7 +88546,7 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 1027 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1093 | 2"
+  "S GG009 | 1028x1093 | 2"
  ],
  "luxBreda | NEGRU | 1100x2100 | 1u/1s | B": [
   "F B302.410 | 1 buc",
@@ -88601,7 +88601,7 @@
   "F R300.009 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 1.94 mp",
+  "F GG009 | 1.94 mp",
   "F 163 | 8 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 950 mm",
@@ -88612,14 +88612,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 877 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x943 | 2"
+  "S GG009 | 1028x943 | 2"
  ],
  "luxBreda | ALUMINIU | 960x2100 | 1u/1s | A": [
   "F B302.009 | 1 buc",
   "F R300.009 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 1.96 mp",
+  "F GG009 | 1.96 mp",
   "F 163 | 8 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 960 mm",
@@ -88630,14 +88630,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 887 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x953 | 2"
+  "S GG009 | 1028x953 | 2"
  ],
  "luxBreda | ALUMINIU | 970x2100 | 1u/1s | A": [
   "F B302.009 | 1 buc",
   "F R300.009 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 1.98 mp",
+  "F GG009 | 1.98 mp",
   "F 163 | 8 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 970 mm",
@@ -88648,14 +88648,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 897 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x963 | 2"
+  "S GG009 | 1028x963 | 2"
  ],
  "luxBreda | ALUMINIU | 980x2100 | 1u/1s | A": [
   "F B302.009 | 1 buc",
   "F R300.009 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2 mp",
+  "F GG009 | 2 mp",
   "F 163 | 8.5 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 980 mm",
@@ -88666,14 +88666,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 907 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x973 | 2"
+  "S GG009 | 1028x973 | 2"
  ],
  "luxBreda | ALUMINIU | 990x2100 | 1u/1s | A": [
   "F B302.009 | 1 buc",
   "F R300.009 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.03 mp",
+  "F GG009 | 2.03 mp",
   "F 163 | 8.5 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 990 mm",
@@ -88684,14 +88684,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 917 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x983 | 2"
+  "S GG009 | 1028x983 | 2"
  ],
  "luxBreda | ALUMINIU | 1000x2100 | 1u/1s | A": [
   "F B302.009 | 1 buc",
   "F R300.009 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.05 mp",
+  "F GG009 | 2.05 mp",
   "F 163 | 8.5 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1000 mm",
@@ -88702,14 +88702,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 927 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x993 | 2"
+  "S GG009 | 1028x993 | 2"
  ],
  "luxBreda | ALUMINIU | 1010x2100 | 1u/1s | A": [
   "F B302.010 | 1 buc",
   "F R300.010 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.07 mp",
+  "F GG009 | 2.07 mp",
   "F 163 | 8.5 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1010 mm",
@@ -88720,14 +88720,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 937 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1003 | 2"
+  "S GG009 | 1028x1003 | 2"
  ],
  "luxBreda | ALUMINIU | 1020x2100 | 1u/1s | A": [
   "F B302.010 | 1 buc",
   "F R300.010 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.09 mp",
+  "F GG009 | 2.09 mp",
   "F 163 | 8.5 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1020 mm",
@@ -88738,14 +88738,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 947 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1013 | 2"
+  "S GG009 | 1028x1013 | 2"
  ],
  "luxBreda | ALUMINIU | 1030x2100 | 1u/1s | A": [
   "F B302.010 | 1 buc",
   "F R300.010 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.11 mp",
+  "F GG009 | 2.11 mp",
   "F 163 | 8.5 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1030 mm",
@@ -88756,14 +88756,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 957 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1023 | 2"
+  "S GG009 | 1028x1023 | 2"
  ],
  "luxBreda | ALUMINIU | 1040x2100 | 1u/1s | A": [
   "F B302.010 | 1 buc",
   "F R300.010 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.13 mp",
+  "F GG009 | 2.13 mp",
   "F 163 | 8.5 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1040 mm",
@@ -88774,14 +88774,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 967 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1033 | 2"
+  "S GG009 | 1028x1033 | 2"
  ],
  "luxBreda | ALUMINIU | 1050x2100 | 1u/1s | A": [
   "F B302.010 | 1 buc",
   "F R300.010 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.15 mp",
+  "F GG009 | 2.15 mp",
   "F 163 | 8.5 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1050 mm",
@@ -88792,14 +88792,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 977 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1043 | 2"
+  "S GG009 | 1028x1043 | 2"
  ],
  "luxBreda | ALUMINIU | 1060x2100 | 1u/1s | A": [
   "F B302.010 | 1 buc",
   "F R300.010 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.17 mp",
+  "F GG009 | 2.17 mp",
   "F 163 | 8.5 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1060 mm",
@@ -88810,14 +88810,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 987 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1053 | 2"
+  "S GG009 | 1028x1053 | 2"
  ],
  "luxBreda | ALUMINIU | 1070x2100 | 1u/1s | A": [
   "F B302.010 | 1 buc",
   "F R300.010 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.19 mp",
+  "F GG009 | 2.19 mp",
   "F 163 | 8.5 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1070 mm",
@@ -88828,14 +88828,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 997 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1063 | 2"
+  "S GG009 | 1028x1063 | 2"
  ],
  "luxBreda | ALUMINIU | 1080x2100 | 1u/1s | A": [
   "F B302.010 | 1 buc",
   "F R300.010 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.21 mp",
+  "F GG009 | 2.21 mp",
   "F 163 | 8.5 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1080 mm",
@@ -88846,14 +88846,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 1007 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1073 | 2"
+  "S GG009 | 1028x1073 | 2"
  ],
  "luxBreda | ALUMINIU | 1090x2100 | 1u/1s | A": [
   "F B302.010 | 1 buc",
   "F R300.010 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.23 mp",
+  "F GG009 | 2.23 mp",
   "F 163 | 8.5 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1090 mm",
@@ -88864,14 +88864,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 1017 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1083 | 2"
+  "S GG009 | 1028x1083 | 2"
  ],
  "luxBreda | ALUMINIU | 1110x2100 | 1u/1s | A": [
   "F B302.011 | 1 buc",
   "F R300.011 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.27 mp",
+  "F GG009 | 2.27 mp",
   "F 163 | 9 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1110 mm",
@@ -88882,14 +88882,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 1037 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1103 | 2"
+  "S GG009 | 1028x1103 | 2"
  ],
  "luxBreda | ALUMINIU | 1120x2100 | 1u/1s | A": [
   "F B302.011 | 1 buc",
   "F R300.011 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.29 mp",
+  "F GG009 | 2.29 mp",
   "F 163 | 9 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1120 mm",
@@ -88900,14 +88900,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 1047 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1113 | 2"
+  "S GG009 | 1028x1113 | 2"
  ],
  "luxBreda | ALUMINIU | 1130x2100 | 1u/1s | A": [
   "F B302.011 | 1 buc",
   "F R300.011 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.31 mp",
+  "F GG009 | 2.31 mp",
   "F 163 | 9 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1130 mm",
@@ -88918,14 +88918,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 1057 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1123 | 2"
+  "S GG009 | 1028x1123 | 2"
  ],
  "luxBreda | ALUMINIU | 1140x2100 | 1u/1s | A": [
   "F B302.011 | 1 buc",
   "F R300.011 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.33 mp",
+  "F GG009 | 2.33 mp",
   "F 163 | 9 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1140 mm",
@@ -88936,14 +88936,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 1067 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1133 | 2"
+  "S GG009 | 1028x1133 | 2"
  ],
  "luxBreda | ALUMINIU | 1150x2100 | 1u/1s | A": [
   "F B302.011 | 1 buc",
   "F R300.011 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.35 mp",
+  "F GG009 | 2.35 mp",
   "F 163 | 9 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1150 mm",
@@ -88954,14 +88954,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 1077 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1143 | 2"
+  "S GG009 | 1028x1143 | 2"
  ],
  "luxBreda | ALUMINIU | 1160x2100 | 1u/1s | A": [
   "F B302.011 | 1 buc",
   "F R300.011 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.37 mp",
+  "F GG009 | 2.37 mp",
   "F 163 | 9 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1160 mm",
@@ -88972,14 +88972,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 1087 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1153 | 2"
+  "S GG009 | 1028x1153 | 2"
  ],
  "luxBreda | ALUMINIU | 1170x2100 | 1u/1s | A": [
   "F B302.011 | 1 buc",
   "F R300.011 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.39 mp",
+  "F GG009 | 2.39 mp",
   "F 163 | 9 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1170 mm",
@@ -88990,14 +88990,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 1097 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1163 | 2"
+  "S GG009 | 1028x1163 | 2"
  ],
  "luxBreda | ALUMINIU | 1180x2100 | 1u/1s | A": [
   "F B302.011 | 1 buc",
   "F R300.011 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.42 mp",
+  "F GG009 | 2.42 mp",
   "F 163 | 9 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1180 mm",
@@ -89008,14 +89008,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 1107 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1173 | 2"
+  "S GG009 | 1028x1173 | 2"
  ],
  "luxBreda | ALUMINIU | 1190x2100 | 1u/1s | A": [
   "F B302.011 | 1 buc",
   "F R300.011 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.44 mp",
+  "F GG009 | 2.44 mp",
   "F 163 | 9 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1190 mm",
@@ -89026,14 +89026,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 1117 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1183 | 2"
+  "S GG009 | 1028x1183 | 2"
  ],
  "luxBreda | ALUMINIU | 1200x2100 | 1u/1s | A": [
   "F B302.011 | 1 buc",
   "F R300.011 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.46 mp",
+  "F GG009 | 2.46 mp",
   "F 163 | 9 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1200 mm",
@@ -89044,14 +89044,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 1127 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1193 | 2"
+  "S GG009 | 1028x1193 | 2"
  ],
  "luxBreda | ALUMINIU | 1210x2100 | 1u/1s | A": [
   "F B302.012 | 1 buc",
   "F R300.012 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.48 mp",
+  "F GG009 | 2.48 mp",
   "F 163 | 9 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1210 mm",
@@ -89062,14 +89062,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 1137 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1203 | 2"
+  "S GG009 | 1028x1203 | 2"
  ],
  "luxBreda | ALUMINIU | 1220x2100 | 1u/1s | A": [
   "F B302.012 | 1 buc",
   "F R300.012 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.5 mp",
+  "F GG009 | 2.5 mp",
   "F 163 | 9 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1220 mm",
@@ -89080,14 +89080,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 1147 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1213 | 2"
+  "S GG009 | 1028x1213 | 2"
  ],
  "luxBreda | ALUMINIU | 1230x2100 | 1u/1s | A": [
   "F B302.012 | 1 buc",
   "F R300.012 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.52 mp",
+  "F GG009 | 2.52 mp",
   "F 163 | 9.5 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1230 mm",
@@ -89098,14 +89098,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 1157 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1223 | 2"
+  "S GG009 | 1028x1223 | 2"
  ],
  "luxBreda | ALUMINIU | 1240x2100 | 1u/1s | A": [
   "F B302.012 | 1 buc",
   "F R300.012 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.54 mp",
+  "F GG009 | 2.54 mp",
   "F 163 | 9.5 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1240 mm",
@@ -89116,14 +89116,14 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 1167 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1233 | 2"
+  "S GG009 | 1028x1233 | 2"
  ],
  "luxBreda | ALUMINIU | 1250x2100 | 1u/1s | A": [
   "F B302.012 | 1 buc",
   "F R300.012 | 1 buc",
   "F 104 | 1 buc",
   "F 164 | 4.5 m",
-  "F GG004 | 2.56 mp",
+  "F GG009 | 2.56 mp",
   "F 163 | 9.5 m",
   "F Manopera 1 | 1 buc",
   "N 200 | 1 buc | 1250 mm",
@@ -89134,13 +89134,13 @@
   "N 170 | 2 buc | 2058 mm",
   "N 171 | 3 buc | 1177 mm",
   "N DIN7504N | 6 buc | ",
-  "S GG004 | 1028x1243 | 2"
+  "S GG009 | 1028x1243 | 2"
  ],
  "luxBreda | ALUMINIU | 800x800 | 2u/1s | A": [
   "F 104 | 1 buc",
   "F 164 | 3.5 m",
   "F 275 | 1 m",
-  "F GG004 | 0.61 mp",
+  "F GG009 | 0.61 mp",
   "F 163 | 6.5 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 800 mm",
@@ -89151,7 +89151,7 @@
   "N 170 | 4 buc | 758 mm",
   "N 171 | 6 buc | 332 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 378x398 | 4",
+  "S GG009 | 378x398 | 4",
   "E lipsă cod: usa · ALUMINIU · 403 mm",
   "E lipsă cod: rama · ALUMINIU · 403 mm"
  ],
@@ -89221,7 +89221,7 @@
   "F 104 | 2 buc",
   "F 164 | 11 m",
   "F 275 | 3 m",
-  "F GG004 | 15.92 mp",
+  "F GG009 | 15.92 mp",
   "F 163 | 34.5 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 5800 mm",
@@ -89232,7 +89232,7 @@
   "N 170 | 4 buc | 2748 mm",
   "N 171 | 6 buc | 2832 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1373x2898 | 4",
+  "S GG009 | 1373x2898 | 4",
   "E lipsă cod: usa · ALUMINIU · 2903 mm",
   "E lipsă cod: rama · ALUMINIU · 2903 mm"
  ],
@@ -89304,7 +89304,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.11 mp",
+  "F GG009 | 4.11 mp",
   "F 163 | 16.5 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 2000 mm",
@@ -89315,7 +89315,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 932 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x998 | 4"
+  "S GG009 | 1028x998 | 4"
  ],
  "luxBreda | ALUMINIU | 2000x2100 | 2u/1s | B": [
   "F B302.010 | 2 buc",
@@ -89383,7 +89383,7 @@
   "F 118 | 1 buc",
   "F 164 | 3.5 m",
   "F 275 | 1 m",
-  "F GG004 | 0.61 mp",
+  "F GG009 | 0.61 mp",
   "F 163 | 6.5 m",
   "F Manopera 1 | 2 buc",
   "N 110 | 1 buc | 800 mm",
@@ -89394,7 +89394,7 @@
   "N 170 | 4 buc | 758 mm",
   "N 171 | 6 buc | 332 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 378x398 | 4",
+  "S GG009 | 378x398 | 4",
   "E lipsă cod: usa · SAMPANIE · 403 mm",
   "E lipsă cod: rama · SAMPANIE · 403 mm"
  ],
@@ -89464,7 +89464,7 @@
   "F 118 | 2 buc",
   "F 164 | 11 m",
   "F 275 | 3 m",
-  "F GG004 | 15.92 mp",
+  "F GG009 | 15.92 mp",
   "F 163 | 34.5 m",
   "F Manopera 1 | 2 buc",
   "N 110 | 1 buc | 5800 mm",
@@ -89475,7 +89475,7 @@
   "N 170 | 4 buc | 2748 mm",
   "N 171 | 6 buc | 2832 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1373x2898 | 4",
+  "S GG009 | 1373x2898 | 4",
   "E lipsă cod: usa · SAMPANIE · 2903 mm",
   "E lipsă cod: rama · SAMPANIE · 2903 mm"
  ],
@@ -89547,7 +89547,7 @@
   "F 118 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.11 mp",
+  "F GG009 | 4.11 mp",
   "F 163 | 16.5 m",
   "F Manopera 1 | 2 buc",
   "N 110 | 1 buc | 2000 mm",
@@ -89558,7 +89558,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 932 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x998 | 4"
+  "S GG009 | 1028x998 | 4"
  ],
  "luxBreda | SAMPANIE | 2000x2100 | 2u/1s | B": [
   "F B302.210 | 2 buc",
@@ -89626,7 +89626,7 @@
   "F 129 | 1 buc",
   "F 164 | 3.5 m",
   "F 275 | 1 m",
-  "F GG004 | 0.61 mp",
+  "F GG009 | 0.61 mp",
   "F 163 | 6.5 m",
   "F Manopera 1 | 2 buc",
   "N 121 | 1 buc | 800 mm",
@@ -89637,7 +89637,7 @@
   "N 170 | 4 buc | 758 mm",
   "N 171 | 6 buc | 332 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 378x398 | 4",
+  "S GG009 | 378x398 | 4",
   "E lipsă cod: usa · CROM · 403 mm",
   "E lipsă cod: rama · CROM · 403 mm"
  ],
@@ -89707,7 +89707,7 @@
   "F 129 | 2 buc",
   "F 164 | 11 m",
   "F 275 | 3 m",
-  "F GG004 | 15.92 mp",
+  "F GG009 | 15.92 mp",
   "F 163 | 34.5 m",
   "F Manopera 1 | 2 buc",
   "N 121 | 1 buc | 5800 mm",
@@ -89718,7 +89718,7 @@
   "N 170 | 4 buc | 2748 mm",
   "N 171 | 6 buc | 2832 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1373x2898 | 4",
+  "S GG009 | 1373x2898 | 4",
   "E lipsă cod: usa · CROM · 2903 mm",
   "E lipsă cod: rama · CROM · 2903 mm"
  ],
@@ -89790,7 +89790,7 @@
   "F 129 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.11 mp",
+  "F GG009 | 4.11 mp",
   "F 163 | 16.5 m",
   "F Manopera 1 | 2 buc",
   "N 121 | 1 buc | 2000 mm",
@@ -89801,7 +89801,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 932 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x998 | 4"
+  "S GG009 | 1028x998 | 4"
  ],
  "luxBreda | CROM | 2000x2100 | 2u/1s | B": [
   "F B302.310 | 2 buc",
@@ -89869,7 +89869,7 @@
   "F 138 | 1 buc",
   "F 164 | 3.5 m",
   "F 275 | 1 m",
-  "F GG004 | 0.61 mp",
+  "F GG009 | 0.61 mp",
   "F 163 | 6.5 m",
   "F Manopera 1 | 2 buc",
   "N 240 | 1 buc | 800 mm",
@@ -89880,7 +89880,7 @@
   "N 170 | 4 buc | 758 mm",
   "N 171 | 6 buc | 332 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 378x398 | 4",
+  "S GG009 | 378x398 | 4",
   "E lipsă cod: usa · ALB · 403 mm",
   "E lipsă cod: rama · ALB · 403 mm"
  ],
@@ -89950,7 +89950,7 @@
   "F 138 | 2 buc",
   "F 164 | 11 m",
   "F 275 | 3 m",
-  "F GG004 | 15.92 mp",
+  "F GG009 | 15.92 mp",
   "F 163 | 34.5 m",
   "F Manopera 1 | 2 buc",
   "N 240 | 1 buc | 5800 mm",
@@ -89961,7 +89961,7 @@
   "N 170 | 4 buc | 2748 mm",
   "N 171 | 6 buc | 2832 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1373x2898 | 4",
+  "S GG009 | 1373x2898 | 4",
   "E lipsă cod: usa · ALB · 2903 mm",
   "E lipsă cod: rama · ALB · 2903 mm"
  ],
@@ -90033,7 +90033,7 @@
   "F 138 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.11 mp",
+  "F GG009 | 4.11 mp",
   "F 163 | 16.5 m",
   "F Manopera 1 | 2 buc",
   "N 240 | 1 buc | 2000 mm",
@@ -90044,7 +90044,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 932 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x998 | 4"
+  "S GG009 | 1028x998 | 4"
  ],
  "luxBreda | ALB | 2000x2100 | 2u/1s | B": [
   "F B302.510 | 2 buc",
@@ -90112,7 +90112,7 @@
   "F 149 | 1 buc",
   "F 164 | 3.5 m",
   "F 275 | 1 m",
-  "F GG004 | 0.61 mp",
+  "F GG009 | 0.61 mp",
   "F 163 | 6.5 m",
   "F Manopera 1 | 2 buc",
   "N 250 | 1 buc | 800 mm",
@@ -90123,7 +90123,7 @@
   "N 170 | 4 buc | 758 mm",
   "N 171 | 6 buc | 332 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 378x398 | 4",
+  "S GG009 | 378x398 | 4",
   "E lipsă cod: usa · NEGRU · 403 mm",
   "E lipsă cod: rama · NEGRU · 403 mm"
  ],
@@ -90193,7 +90193,7 @@
   "F 149 | 2 buc",
   "F 164 | 11 m",
   "F 275 | 3 m",
-  "F GG004 | 15.92 mp",
+  "F GG009 | 15.92 mp",
   "F 163 | 34.5 m",
   "F Manopera 1 | 2 buc",
   "N 250 | 1 buc | 5800 mm",
@@ -90204,7 +90204,7 @@
   "N 170 | 4 buc | 2748 mm",
   "N 171 | 6 buc | 2832 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1373x2898 | 4",
+  "S GG009 | 1373x2898 | 4",
   "E lipsă cod: usa · NEGRU · 2903 mm",
   "E lipsă cod: rama · NEGRU · 2903 mm"
  ],
@@ -90276,7 +90276,7 @@
   "F 149 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.11 mp",
+  "F GG009 | 4.11 mp",
   "F 163 | 16.5 m",
   "F Manopera 1 | 2 buc",
   "N 250 | 1 buc | 2000 mm",
@@ -90287,7 +90287,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 932 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x998 | 4"
+  "S GG009 | 1028x998 | 4"
  ],
  "luxBreda | NEGRU | 2000x2100 | 2u/1s | B": [
   "F B302.410 | 2 buc",
@@ -90357,7 +90357,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 3.8 mp",
+  "F GG009 | 3.8 mp",
   "F 163 | 16 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 1850 mm",
@@ -90368,7 +90368,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 857 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x923 | 4"
+  "S GG009 | 1028x923 | 4"
  ],
  "luxBreda | ALUMINIU | 1860x2100 | 2u/1s | A": [
   "F B302.009 | 2 buc",
@@ -90376,7 +90376,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 3.82 mp",
+  "F GG009 | 3.82 mp",
   "F 163 | 16 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 1860 mm",
@@ -90387,7 +90387,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 862 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x928 | 4"
+  "S GG009 | 1028x928 | 4"
  ],
  "luxBreda | ALUMINIU | 1870x2100 | 2u/1s | A": [
   "F B302.009 | 2 buc",
@@ -90395,7 +90395,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 3.84 mp",
+  "F GG009 | 3.84 mp",
   "F 163 | 16 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 1870 mm",
@@ -90406,7 +90406,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 867 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x933 | 4"
+  "S GG009 | 1028x933 | 4"
  ],
  "luxBreda | ALUMINIU | 1880x2100 | 2u/1s | A": [
   "F B302.009 | 2 buc",
@@ -90414,7 +90414,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 3.86 mp",
+  "F GG009 | 3.86 mp",
   "F 163 | 16 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 1880 mm",
@@ -90425,7 +90425,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 872 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x938 | 4"
+  "S GG009 | 1028x938 | 4"
  ],
  "luxBreda | ALUMINIU | 1890x2100 | 2u/1s | A": [
   "F B302.009 | 2 buc",
@@ -90433,7 +90433,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 3.88 mp",
+  "F GG009 | 3.88 mp",
   "F 163 | 16 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 1890 mm",
@@ -90444,7 +90444,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 877 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x943 | 4"
+  "S GG009 | 1028x943 | 4"
  ],
  "luxBreda | ALUMINIU | 1900x2100 | 2u/1s | A": [
   "F B302.009 | 2 buc",
@@ -90452,7 +90452,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 3.9 mp",
+  "F GG009 | 3.9 mp",
   "F 163 | 16 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 1900 mm",
@@ -90463,7 +90463,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 882 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x948 | 4"
+  "S GG009 | 1028x948 | 4"
  ],
  "luxBreda | ALUMINIU | 1910x2100 | 2u/1s | A": [
   "F B302.009 | 2 buc",
@@ -90471,7 +90471,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 3.92 mp",
+  "F GG009 | 3.92 mp",
   "F 163 | 16 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 1910 mm",
@@ -90482,7 +90482,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 887 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x953 | 4"
+  "S GG009 | 1028x953 | 4"
  ],
  "luxBreda | ALUMINIU | 1920x2100 | 2u/1s | A": [
   "F B302.009 | 2 buc",
@@ -90490,7 +90490,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 3.94 mp",
+  "F GG009 | 3.94 mp",
   "F 163 | 16 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 1920 mm",
@@ -90501,7 +90501,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 892 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x958 | 4"
+  "S GG009 | 1028x958 | 4"
  ],
  "luxBreda | ALUMINIU | 1930x2100 | 2u/1s | A": [
   "F B302.009 | 2 buc",
@@ -90509,7 +90509,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 3.96 mp",
+  "F GG009 | 3.96 mp",
   "F 163 | 16 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 1930 mm",
@@ -90520,7 +90520,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 897 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x963 | 4"
+  "S GG009 | 1028x963 | 4"
  ],
  "luxBreda | ALUMINIU | 1940x2100 | 2u/1s | A": [
   "F B302.009 | 2 buc",
@@ -90528,7 +90528,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 3.98 mp",
+  "F GG009 | 3.98 mp",
   "F 163 | 16 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 1940 mm",
@@ -90539,7 +90539,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 902 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x968 | 4"
+  "S GG009 | 1028x968 | 4"
  ],
  "luxBreda | ALUMINIU | 1950x2100 | 2u/1s | A": [
   "F B302.009 | 2 buc",
@@ -90547,7 +90547,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4 mp",
+  "F GG009 | 4 mp",
   "F 163 | 16.5 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 1950 mm",
@@ -90558,7 +90558,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 907 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x973 | 4"
+  "S GG009 | 1028x973 | 4"
  ],
  "luxBreda | ALUMINIU | 1960x2100 | 2u/1s | A": [
   "F B302.009 | 2 buc",
@@ -90566,7 +90566,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.02 mp",
+  "F GG009 | 4.02 mp",
   "F 163 | 16.5 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 1960 mm",
@@ -90577,7 +90577,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 912 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x978 | 4"
+  "S GG009 | 1028x978 | 4"
  ],
  "luxBreda | ALUMINIU | 1970x2100 | 2u/1s | A": [
   "F B302.009 | 2 buc",
@@ -90585,7 +90585,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.05 mp",
+  "F GG009 | 4.05 mp",
   "F 163 | 16.5 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 1970 mm",
@@ -90596,7 +90596,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 917 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x983 | 4"
+  "S GG009 | 1028x983 | 4"
  ],
  "luxBreda | ALUMINIU | 1980x2100 | 2u/1s | A": [
   "F B302.009 | 2 buc",
@@ -90604,7 +90604,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.07 mp",
+  "F GG009 | 4.07 mp",
   "F 163 | 16.5 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 1980 mm",
@@ -90615,7 +90615,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 922 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x988 | 4"
+  "S GG009 | 1028x988 | 4"
  ],
  "luxBreda | ALUMINIU | 1990x2100 | 2u/1s | A": [
   "F B302.009 | 2 buc",
@@ -90623,7 +90623,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.09 mp",
+  "F GG009 | 4.09 mp",
   "F 163 | 16.5 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 1990 mm",
@@ -90634,7 +90634,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 927 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x993 | 4"
+  "S GG009 | 1028x993 | 4"
  ],
  "luxBreda | ALUMINIU | 2010x2100 | 2u/1s | A": [
   "F B302.010 | 2 buc",
@@ -90642,7 +90642,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.13 mp",
+  "F GG009 | 4.13 mp",
   "F 163 | 16.5 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 2010 mm",
@@ -90653,7 +90653,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 937 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x1003 | 4"
+  "S GG009 | 1028x1003 | 4"
  ],
  "luxBreda | ALUMINIU | 2020x2100 | 2u/1s | A": [
   "F B302.010 | 2 buc",
@@ -90661,7 +90661,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.15 mp",
+  "F GG009 | 4.15 mp",
   "F 163 | 16.5 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 2020 mm",
@@ -90672,7 +90672,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 942 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x1008 | 4"
+  "S GG009 | 1028x1008 | 4"
  ],
  "luxBreda | ALUMINIU | 2030x2100 | 2u/1s | A": [
   "F B302.010 | 2 buc",
@@ -90680,7 +90680,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.17 mp",
+  "F GG009 | 4.17 mp",
   "F 163 | 16.5 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 2030 mm",
@@ -90691,7 +90691,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 947 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x1013 | 4"
+  "S GG009 | 1028x1013 | 4"
  ],
  "luxBreda | ALUMINIU | 2040x2100 | 2u/1s | A": [
   "F B302.010 | 2 buc",
@@ -90699,7 +90699,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.19 mp",
+  "F GG009 | 4.19 mp",
   "F 163 | 16.5 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 2040 mm",
@@ -90710,7 +90710,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 952 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x1018 | 4"
+  "S GG009 | 1028x1018 | 4"
  ],
  "luxBreda | ALUMINIU | 2050x2100 | 2u/1s | A": [
   "F B302.010 | 2 buc",
@@ -90718,7 +90718,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.21 mp",
+  "F GG009 | 4.21 mp",
   "F 163 | 16.5 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 2050 mm",
@@ -90729,7 +90729,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 957 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x1023 | 4"
+  "S GG009 | 1028x1023 | 4"
  ],
  "luxBreda | ALUMINIU | 2060x2100 | 2u/1s | A": [
   "F B302.010 | 2 buc",
@@ -90737,7 +90737,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.23 mp",
+  "F GG009 | 4.23 mp",
   "F 163 | 16.5 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 2060 mm",
@@ -90748,7 +90748,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 962 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x1028 | 4"
+  "S GG009 | 1028x1028 | 4"
  ],
  "luxBreda | ALUMINIU | 2070x2100 | 2u/1s | A": [
   "F B302.010 | 2 buc",
@@ -90756,7 +90756,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.25 mp",
+  "F GG009 | 4.25 mp",
   "F 163 | 16.5 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 2070 mm",
@@ -90767,7 +90767,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 967 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x1033 | 4"
+  "S GG009 | 1028x1033 | 4"
  ],
  "luxBreda | ALUMINIU | 2080x2100 | 2u/1s | A": [
   "F B302.010 | 2 buc",
@@ -90775,7 +90775,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.27 mp",
+  "F GG009 | 4.27 mp",
   "F 163 | 17 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 2080 mm",
@@ -90786,7 +90786,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 972 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x1038 | 4"
+  "S GG009 | 1028x1038 | 4"
  ],
  "luxBreda | ALUMINIU | 2090x2100 | 2u/1s | A": [
   "F B302.010 | 2 buc",
@@ -90794,7 +90794,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.29 mp",
+  "F GG009 | 4.29 mp",
   "F 163 | 17 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 2090 mm",
@@ -90805,7 +90805,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 977 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x1043 | 4"
+  "S GG009 | 1028x1043 | 4"
  ],
  "luxBreda | ALUMINIU | 2100x2100 | 2u/1s | A": [
   "F B302.010 | 2 buc",
@@ -90813,7 +90813,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.31 mp",
+  "F GG009 | 4.31 mp",
   "F 163 | 17 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 2100 mm",
@@ -90824,7 +90824,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 982 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x1048 | 4"
+  "S GG009 | 1028x1048 | 4"
  ],
  "luxBreda | ALUMINIU | 2110x2100 | 2u/1s | A": [
   "F B302.010 | 2 buc",
@@ -90832,7 +90832,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.33 mp",
+  "F GG009 | 4.33 mp",
   "F 163 | 17 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 2110 mm",
@@ -90843,7 +90843,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 987 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x1053 | 4"
+  "S GG009 | 1028x1053 | 4"
  ],
  "luxBreda | ALUMINIU | 2120x2100 | 2u/1s | A": [
   "F B302.010 | 2 buc",
@@ -90851,7 +90851,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.35 mp",
+  "F GG009 | 4.35 mp",
   "F 163 | 17 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 2120 mm",
@@ -90862,7 +90862,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 992 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x1058 | 4"
+  "S GG009 | 1028x1058 | 4"
  ],
  "luxBreda | ALUMINIU | 2130x2100 | 2u/1s | A": [
   "F B302.010 | 2 buc",
@@ -90870,7 +90870,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.37 mp",
+  "F GG009 | 4.37 mp",
   "F 163 | 17 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 2130 mm",
@@ -90881,7 +90881,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 997 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x1063 | 4"
+  "S GG009 | 1028x1063 | 4"
  ],
  "luxBreda | ALUMINIU | 2140x2100 | 2u/1s | A": [
   "F B302.010 | 2 buc",
@@ -90889,7 +90889,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.39 mp",
+  "F GG009 | 4.39 mp",
   "F 163 | 17 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 2140 mm",
@@ -90900,7 +90900,7 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 1002 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x1068 | 4"
+  "S GG009 | 1028x1068 | 4"
  ],
  "luxBreda | ALUMINIU | 2150x2100 | 2u/1s | A": [
   "F B302.010 | 2 buc",
@@ -90908,7 +90908,7 @@
   "F 104 | 1 buc",
   "F 164 | 8.5 m",
   "F 275 | 2.5 m",
-  "F GG004 | 4.42 mp",
+  "F GG009 | 4.42 mp",
   "F 163 | 17 m",
   "F Manopera 1 | 2 buc",
   "N 200 | 1 buc | 2150 mm",
@@ -90919,13 +90919,13 @@
   "N 170 | 4 buc | 2058 mm",
   "N 171 | 6 buc | 1007 mm",
   "N DIN7504N | 12 buc | ",
-  "S GG004 | 1028x1073 | 4"
+  "S GG009 | 1028x1073 | 4"
  ],
  "luxBreda | ALUMINIU | 800x800 | 3u/2s | A": [
   "F 104 | 1 buc",
   "F 164 | 5 m",
   "F 275 | 2 m",
-  "F GG004 | 0.61 mp",
+  "F GG009 | 0.61 mp",
   "F 163 | 8 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 800 mm",
@@ -90936,7 +90936,7 @@
   "N 170 | 6 buc | 758 mm",
   "N 171 | 9 buc | 200 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 378x266 | 6",
+  "S GG009 | 378x266 | 6",
   "E lipsă cod: usa · ALUMINIU · 271 mm",
   "E lipsă cod: rama · ALUMINIU · 271 mm"
  ],
@@ -91009,7 +91009,7 @@
   "F 104 | 3 buc",
   "F 164 | 16.5 m",
   "F 275 | 5.5 m",
-  "F GG004 | 15.92 mp",
+  "F GG009 | 15.92 mp",
   "F 163 | 40 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 5800 mm",
@@ -91020,7 +91020,7 @@
   "N 170 | 6 buc | 2748 mm",
   "N 171 | 9 buc | 1867 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1373x1933 | 6"
+  "S GG009 | 1373x1933 | 6"
  ],
  "luxBreda | ALUMINIU | 5800x2790 | 3u/2s | B": [
   "F B302.015 | 3 buc",
@@ -91091,7 +91091,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 5.96 mp",
+  "F GG009 | 5.96 mp",
   "F 163 | 24 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2900 mm",
@@ -91102,7 +91102,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 900 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x966 | 6"
+  "S GG009 | 1028x966 | 6"
  ],
  "luxBreda | ALUMINIU | 2900x2100 | 3u/2s | B": [
   "F B302.009 | 3 buc",
@@ -91171,7 +91171,7 @@
   "F 118 | 1 buc",
   "F 164 | 5 m",
   "F 275 | 2 m",
-  "F GG004 | 0.61 mp",
+  "F GG009 | 0.61 mp",
   "F 163 | 8 m",
   "F Manopera 1 | 3 buc",
   "N 110 | 1 buc | 800 mm",
@@ -91182,7 +91182,7 @@
   "N 170 | 6 buc | 758 mm",
   "N 171 | 9 buc | 200 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 378x266 | 6",
+  "S GG009 | 378x266 | 6",
   "E lipsă cod: usa · SAMPANIE · 271 mm",
   "E lipsă cod: rama · SAMPANIE · 271 mm"
  ],
@@ -91255,7 +91255,7 @@
   "F 118 | 3 buc",
   "F 164 | 16.5 m",
   "F 275 | 5.5 m",
-  "F GG004 | 15.92 mp",
+  "F GG009 | 15.92 mp",
   "F 163 | 40 m",
   "F Manopera 1 | 3 buc",
   "N 110 | 1 buc | 5800 mm",
@@ -91266,7 +91266,7 @@
   "N 170 | 6 buc | 2748 mm",
   "N 171 | 9 buc | 1867 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1373x1933 | 6"
+  "S GG009 | 1373x1933 | 6"
  ],
  "luxBreda | SAMPANIE | 5800x2790 | 3u/2s | B": [
   "F B302.215 | 3 buc",
@@ -91337,7 +91337,7 @@
   "F 118 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 5.96 mp",
+  "F GG009 | 5.96 mp",
   "F 163 | 24 m",
   "F Manopera 1 | 3 buc",
   "N 110 | 1 buc | 2900 mm",
@@ -91348,7 +91348,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 900 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x966 | 6"
+  "S GG009 | 1028x966 | 6"
  ],
  "luxBreda | SAMPANIE | 2900x2100 | 3u/2s | B": [
   "F B302.029 | 3 buc",
@@ -91417,7 +91417,7 @@
   "F 129 | 1 buc",
   "F 164 | 5 m",
   "F 275 | 2 m",
-  "F GG004 | 0.61 mp",
+  "F GG009 | 0.61 mp",
   "F 163 | 8 m",
   "F Manopera 1 | 3 buc",
   "N 121 | 1 buc | 800 mm",
@@ -91428,7 +91428,7 @@
   "N 170 | 6 buc | 758 mm",
   "N 171 | 9 buc | 200 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 378x266 | 6",
+  "S GG009 | 378x266 | 6",
   "E lipsă cod: usa · CROM · 271 mm",
   "E lipsă cod: rama · CROM · 271 mm"
  ],
@@ -91501,7 +91501,7 @@
   "F 129 | 3 buc",
   "F 164 | 16.5 m",
   "F 275 | 5.5 m",
-  "F GG004 | 15.92 mp",
+  "F GG009 | 15.92 mp",
   "F 163 | 40 m",
   "F Manopera 1 | 3 buc",
   "N 121 | 1 buc | 5800 mm",
@@ -91512,7 +91512,7 @@
   "N 170 | 6 buc | 2748 mm",
   "N 171 | 9 buc | 1867 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1373x1933 | 6"
+  "S GG009 | 1373x1933 | 6"
  ],
  "luxBreda | CROM | 5800x2790 | 3u/2s | B": [
   "F B302.316 | 3 buc",
@@ -91583,7 +91583,7 @@
   "F 129 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 5.96 mp",
+  "F GG009 | 5.96 mp",
   "F 163 | 24 m",
   "F Manopera 1 | 3 buc",
   "N 121 | 1 buc | 2900 mm",
@@ -91594,7 +91594,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 900 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x966 | 6"
+  "S GG009 | 1028x966 | 6"
  ],
  "luxBreda | CROM | 2900x2100 | 3u/2s | B": [
   "F B302.039 | 3 buc",
@@ -91663,7 +91663,7 @@
   "F 138 | 1 buc",
   "F 164 | 5 m",
   "F 275 | 2 m",
-  "F GG004 | 0.61 mp",
+  "F GG009 | 0.61 mp",
   "F 163 | 8 m",
   "F Manopera 1 | 3 buc",
   "N 240 | 1 buc | 800 mm",
@@ -91674,7 +91674,7 @@
   "N 170 | 6 buc | 758 mm",
   "N 171 | 9 buc | 200 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 378x266 | 6",
+  "S GG009 | 378x266 | 6",
   "E lipsă cod: usa · ALB · 271 mm",
   "E lipsă cod: rama · ALB · 271 mm"
  ],
@@ -91747,7 +91747,7 @@
   "F 138 | 3 buc",
   "F 164 | 16.5 m",
   "F 275 | 5.5 m",
-  "F GG004 | 15.92 mp",
+  "F GG009 | 15.92 mp",
   "F 163 | 40 m",
   "F Manopera 1 | 3 buc",
   "N 240 | 1 buc | 5800 mm",
@@ -91758,7 +91758,7 @@
   "N 170 | 6 buc | 2748 mm",
   "N 171 | 9 buc | 1867 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1373x1933 | 6"
+  "S GG009 | 1373x1933 | 6"
  ],
  "luxBreda | ALB | 5800x2790 | 3u/2s | B": [
   "F B302.515 | 3 buc",
@@ -91829,7 +91829,7 @@
   "F 138 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 5.96 mp",
+  "F GG009 | 5.96 mp",
   "F 163 | 24 m",
   "F Manopera 1 | 3 buc",
   "N 240 | 1 buc | 2900 mm",
@@ -91840,7 +91840,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 900 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x966 | 6"
+  "S GG009 | 1028x966 | 6"
  ],
  "luxBreda | ALB | 2900x2100 | 3u/2s | B": [
   "F B302.059 | 3 buc",
@@ -91909,7 +91909,7 @@
   "F 149 | 1 buc",
   "F 164 | 5 m",
   "F 275 | 2 m",
-  "F GG004 | 0.61 mp",
+  "F GG009 | 0.61 mp",
   "F 163 | 8 m",
   "F Manopera 1 | 3 buc",
   "N 250 | 1 buc | 800 mm",
@@ -91920,7 +91920,7 @@
   "N 170 | 6 buc | 758 mm",
   "N 171 | 9 buc | 200 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 378x266 | 6",
+  "S GG009 | 378x266 | 6",
   "E lipsă cod: usa · NEGRU · 271 mm",
   "E lipsă cod: rama · NEGRU · 271 mm"
  ],
@@ -91993,7 +91993,7 @@
   "F 149 | 3 buc",
   "F 164 | 16.5 m",
   "F 275 | 5.5 m",
-  "F GG004 | 15.92 mp",
+  "F GG009 | 15.92 mp",
   "F 163 | 40 m",
   "F Manopera 1 | 3 buc",
   "N 250 | 1 buc | 5800 mm",
@@ -92004,7 +92004,7 @@
   "N 170 | 6 buc | 2748 mm",
   "N 171 | 9 buc | 1867 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1373x1933 | 6"
+  "S GG009 | 1373x1933 | 6"
  ],
  "luxBreda | NEGRU | 5800x2790 | 3u/2s | B": [
   "F B302.415 | 3 buc",
@@ -92075,7 +92075,7 @@
   "F 149 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 5.96 mp",
+  "F GG009 | 5.96 mp",
   "F 163 | 24 m",
   "F Manopera 1 | 3 buc",
   "N 250 | 1 buc | 2900 mm",
@@ -92086,7 +92086,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 900 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x966 | 6"
+  "S GG009 | 1028x966 | 6"
  ],
  "luxBreda | NEGRU | 2900x2100 | 3u/2s | B": [
   "F B302.049 | 3 buc",
@@ -92157,7 +92157,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 5.65 mp",
+  "F GG009 | 5.65 mp",
   "F 163 | 23.5 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2750 mm",
@@ -92168,7 +92168,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 850 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x916 | 6"
+  "S GG009 | 1028x916 | 6"
  ],
  "luxBreda | ALUMINIU | 2760x2100 | 3u/2s | A": [
   "F B302.009 | 3 buc",
@@ -92176,7 +92176,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 5.68 mp",
+  "F GG009 | 5.68 mp",
   "F 163 | 23.5 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2760 mm",
@@ -92187,7 +92187,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 854 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x920 | 6"
+  "S GG009 | 1028x920 | 6"
  ],
  "luxBreda | ALUMINIU | 2770x2100 | 3u/2s | A": [
   "F B302.009 | 3 buc",
@@ -92195,7 +92195,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 5.7 mp",
+  "F GG009 | 5.7 mp",
   "F 163 | 23.5 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2770 mm",
@@ -92206,7 +92206,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 857 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x923 | 6"
+  "S GG009 | 1028x923 | 6"
  ],
  "luxBreda | ALUMINIU | 2780x2100 | 3u/2s | A": [
   "F B302.009 | 3 buc",
@@ -92214,7 +92214,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 5.71 mp",
+  "F GG009 | 5.71 mp",
   "F 163 | 23.5 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2780 mm",
@@ -92225,7 +92225,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 860 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x926 | 6"
+  "S GG009 | 1028x926 | 6"
  ],
  "luxBreda | ALUMINIU | 2790x2100 | 3u/2s | A": [
   "F B302.009 | 3 buc",
@@ -92233,7 +92233,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 5.74 mp",
+  "F GG009 | 5.74 mp",
   "F 163 | 23.5 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2790 mm",
@@ -92244,7 +92244,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 864 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x930 | 6"
+  "S GG009 | 1028x930 | 6"
  ],
  "luxBreda | ALUMINIU | 2800x2100 | 3u/2s | A": [
   "F B302.009 | 3 buc",
@@ -92252,7 +92252,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 5.76 mp",
+  "F GG009 | 5.76 mp",
   "F 163 | 24 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2800 mm",
@@ -92263,7 +92263,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 867 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x933 | 6"
+  "S GG009 | 1028x933 | 6"
  ],
  "luxBreda | ALUMINIU | 2810x2100 | 3u/2s | A": [
   "F B302.009 | 3 buc",
@@ -92271,7 +92271,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 5.78 mp",
+  "F GG009 | 5.78 mp",
   "F 163 | 24 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2810 mm",
@@ -92282,7 +92282,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 870 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x936 | 6"
+  "S GG009 | 1028x936 | 6"
  ],
  "luxBreda | ALUMINIU | 2820x2100 | 3u/2s | A": [
   "F B302.009 | 3 buc",
@@ -92290,7 +92290,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 5.8 mp",
+  "F GG009 | 5.8 mp",
   "F 163 | 24 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2820 mm",
@@ -92301,7 +92301,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 874 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x940 | 6"
+  "S GG009 | 1028x940 | 6"
  ],
  "luxBreda | ALUMINIU | 2830x2100 | 3u/2s | A": [
   "F B302.009 | 3 buc",
@@ -92309,7 +92309,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 5.82 mp",
+  "F GG009 | 5.82 mp",
   "F 163 | 24 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2830 mm",
@@ -92320,7 +92320,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 877 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x943 | 6"
+  "S GG009 | 1028x943 | 6"
  ],
  "luxBreda | ALUMINIU | 2840x2100 | 3u/2s | A": [
   "F B302.009 | 3 buc",
@@ -92328,7 +92328,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 5.84 mp",
+  "F GG009 | 5.84 mp",
   "F 163 | 24 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2840 mm",
@@ -92339,7 +92339,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 880 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x946 | 6"
+  "S GG009 | 1028x946 | 6"
  ],
  "luxBreda | ALUMINIU | 2850x2100 | 3u/2s | A": [
   "F B302.009 | 3 buc",
@@ -92347,7 +92347,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 5.86 mp",
+  "F GG009 | 5.86 mp",
   "F 163 | 24 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2850 mm",
@@ -92358,7 +92358,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 884 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x950 | 6"
+  "S GG009 | 1028x950 | 6"
  ],
  "luxBreda | ALUMINIU | 2860x2100 | 3u/2s | A": [
   "F B302.009 | 3 buc",
@@ -92366,7 +92366,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 5.88 mp",
+  "F GG009 | 5.88 mp",
   "F 163 | 24 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2860 mm",
@@ -92377,7 +92377,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 887 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x953 | 6"
+  "S GG009 | 1028x953 | 6"
  ],
  "luxBreda | ALUMINIU | 2870x2100 | 3u/2s | A": [
   "F B302.009 | 3 buc",
@@ -92385,7 +92385,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 5.9 mp",
+  "F GG009 | 5.9 mp",
   "F 163 | 24 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2870 mm",
@@ -92396,7 +92396,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 890 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x956 | 6"
+  "S GG009 | 1028x956 | 6"
  ],
  "luxBreda | ALUMINIU | 2880x2100 | 3u/2s | A": [
   "F B302.009 | 3 buc",
@@ -92404,7 +92404,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 5.92 mp",
+  "F GG009 | 5.92 mp",
   "F 163 | 24 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2880 mm",
@@ -92415,7 +92415,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 894 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x960 | 6"
+  "S GG009 | 1028x960 | 6"
  ],
  "luxBreda | ALUMINIU | 2890x2100 | 3u/2s | A": [
   "F B302.009 | 3 buc",
@@ -92423,7 +92423,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 5.94 mp",
+  "F GG009 | 5.94 mp",
   "F 163 | 24 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2890 mm",
@@ -92434,7 +92434,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 897 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x963 | 6"
+  "S GG009 | 1028x963 | 6"
  ],
  "luxBreda | ALUMINIU | 2910x2100 | 3u/2s | A": [
   "F B302.009 | 3 buc",
@@ -92442,7 +92442,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 5.99 mp",
+  "F GG009 | 5.99 mp",
   "F 163 | 24 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2910 mm",
@@ -92453,7 +92453,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 904 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x970 | 6"
+  "S GG009 | 1028x970 | 6"
  ],
  "luxBreda | ALUMINIU | 2920x2100 | 3u/2s | A": [
   "F B302.009 | 3 buc",
@@ -92461,7 +92461,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 6 mp",
+  "F GG009 | 6 mp",
   "F 163 | 24.5 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2920 mm",
@@ -92472,7 +92472,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 907 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x973 | 6"
+  "S GG009 | 1028x973 | 6"
  ],
  "luxBreda | ALUMINIU | 2930x2100 | 3u/2s | A": [
   "F B302.009 | 3 buc",
@@ -92480,7 +92480,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 6.02 mp",
+  "F GG009 | 6.02 mp",
   "F 163 | 24.5 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2930 mm",
@@ -92491,7 +92491,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 910 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x976 | 6"
+  "S GG009 | 1028x976 | 6"
  ],
  "luxBreda | ALUMINIU | 2940x2100 | 3u/2s | A": [
   "F B302.009 | 3 buc",
@@ -92499,7 +92499,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 6.05 mp",
+  "F GG009 | 6.05 mp",
   "F 163 | 24.5 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2940 mm",
@@ -92510,7 +92510,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 914 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x980 | 6"
+  "S GG009 | 1028x980 | 6"
  ],
  "luxBreda | ALUMINIU | 2950x2100 | 3u/2s | A": [
   "F B302.009 | 3 buc",
@@ -92518,7 +92518,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 6.07 mp",
+  "F GG009 | 6.07 mp",
   "F 163 | 24.5 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2950 mm",
@@ -92529,7 +92529,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 917 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x983 | 6"
+  "S GG009 | 1028x983 | 6"
  ],
  "luxBreda | ALUMINIU | 2960x2100 | 3u/2s | A": [
   "F B302.009 | 3 buc",
@@ -92537,7 +92537,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 6.08 mp",
+  "F GG009 | 6.08 mp",
   "F 163 | 24.5 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2960 mm",
@@ -92548,7 +92548,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 920 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x986 | 6"
+  "S GG009 | 1028x986 | 6"
  ],
  "luxBreda | ALUMINIU | 2970x2100 | 3u/2s | A": [
   "F B302.009 | 3 buc",
@@ -92556,7 +92556,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 6.11 mp",
+  "F GG009 | 6.11 mp",
   "F 163 | 24.5 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2970 mm",
@@ -92567,7 +92567,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 924 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x990 | 6"
+  "S GG009 | 1028x990 | 6"
  ],
  "luxBreda | ALUMINIU | 2980x2100 | 3u/2s | A": [
   "F B302.009 | 3 buc",
@@ -92575,7 +92575,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 6.13 mp",
+  "F GG009 | 6.13 mp",
   "F 163 | 24.5 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2980 mm",
@@ -92586,7 +92586,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 927 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x993 | 6"
+  "S GG009 | 1028x993 | 6"
  ],
  "luxBreda | ALUMINIU | 2990x2100 | 3u/2s | A": [
   "F B302.010 | 3 buc",
@@ -92594,7 +92594,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 6.15 mp",
+  "F GG009 | 6.15 mp",
   "F 163 | 24.5 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 2990 mm",
@@ -92605,7 +92605,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 930 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x996 | 6"
+  "S GG009 | 1028x996 | 6"
  ],
  "luxBreda | ALUMINIU | 3000x2100 | 3u/2s | A": [
   "F B302.010 | 3 buc",
@@ -92613,7 +92613,7 @@
   "F 104 | 1 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 6.17 mp",
+  "F GG009 | 6.17 mp",
   "F 163 | 24.5 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 3000 mm",
@@ -92624,7 +92624,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 934 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x1000 | 6"
+  "S GG009 | 1028x1000 | 6"
  ],
  "luxBreda | ALUMINIU | 3010x2100 | 3u/2s | A": [
   "F B302.010 | 3 buc",
@@ -92632,7 +92632,7 @@
   "F 104 | 2 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 6.19 mp",
+  "F GG009 | 6.19 mp",
   "F 163 | 24.5 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 3010 mm",
@@ -92643,7 +92643,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 937 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x1003 | 6"
+  "S GG009 | 1028x1003 | 6"
  ],
  "luxBreda | ALUMINIU | 3020x2100 | 3u/2s | A": [
   "F B302.010 | 3 buc",
@@ -92651,7 +92651,7 @@
   "F 104 | 2 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 6.21 mp",
+  "F GG009 | 6.21 mp",
   "F 163 | 24.5 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 3020 mm",
@@ -92662,7 +92662,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 940 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x1006 | 6"
+  "S GG009 | 1028x1006 | 6"
  ],
  "luxBreda | ALUMINIU | 3030x2100 | 3u/2s | A": [
   "F B302.010 | 3 buc",
@@ -92670,7 +92670,7 @@
   "F 104 | 2 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 6.23 mp",
+  "F GG009 | 6.23 mp",
   "F 163 | 24.5 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 3030 mm",
@@ -92681,7 +92681,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 944 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x1010 | 6"
+  "S GG009 | 1028x1010 | 6"
  ],
  "luxBreda | ALUMINIU | 3040x2100 | 3u/2s | A": [
   "F B302.010 | 3 buc",
@@ -92689,7 +92689,7 @@
   "F 104 | 2 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 6.25 mp",
+  "F GG009 | 6.25 mp",
   "F 163 | 24.5 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 3040 mm",
@@ -92700,7 +92700,7 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 947 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x1013 | 6"
+  "S GG009 | 1028x1013 | 6"
  ],
  "luxBreda | ALUMINIU | 3050x2100 | 3u/2s | A": [
   "F B302.010 | 3 buc",
@@ -92708,7 +92708,7 @@
   "F 104 | 2 buc",
   "F 164 | 12.5 m",
   "F 275 | 4.5 m",
-  "F GG004 | 6.27 mp",
+  "F GG009 | 6.27 mp",
   "F 163 | 25 m",
   "F Manopera 1 | 3 buc",
   "N 200 | 1 buc | 3050 mm",
@@ -92719,13 +92719,13 @@
   "N 170 | 6 buc | 2058 mm",
   "N 171 | 9 buc | 950 mm",
   "N DIN7504N | 18 buc | ",
-  "S GG004 | 1028x1016 | 6"
+  "S GG009 | 1028x1016 | 6"
  ],
  "luxBreda | ALUMINIU | 800x800 | 5u/2s | A": [
   "F 104 | 1 buc",
   "F 164 | 8 m",
   "F 275 | 3.5 m",
-  "F GG004 | 0.61 mp",
+  "F GG009 | 0.61 mp",
   "F 163 | 11 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 800 mm",
@@ -92736,7 +92736,7 @@
   "N 170 | 10 buc | 758 mm",
   "N 171 | 15 buc | 95 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 378x161 | 10",
+  "S GG009 | 378x161 | 10",
   "E lipsă cod: usa · ALUMINIU · 166 mm",
   "E lipsă cod: rama · ALUMINIU · 166 mm"
  ],
@@ -92811,7 +92811,7 @@
   "F 104 | 3 buc",
   "F 164 | 27.5 m",
   "F 275 | 11 m",
-  "F GG004 | 15.94 mp",
+  "F GG009 | 15.94 mp",
   "F 163 | 51 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 5800 mm",
@@ -92822,7 +92822,7 @@
   "N 170 | 10 buc | 2748 mm",
   "N 171 | 15 buc | 1095 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1373x1161 | 10"
+  "S GG009 | 1373x1161 | 10"
  ],
  "luxBreda | ALUMINIU | 5800x2790 | 5u/2s | B": [
   "F B302.011 | 5 buc",
@@ -92895,7 +92895,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.67 mp",
+  "F GG009 | 9.67 mp",
   "F 163 | 39.5 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4700 mm",
@@ -92906,7 +92906,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 875 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x941 | 10"
+  "S GG009 | 1028x941 | 10"
  ],
  "luxBreda | ALUMINIU | 4700x2100 | 5u/2s | B": [
   "F B302.009 | 5 buc",
@@ -92977,7 +92977,7 @@
   "F 118 | 1 buc",
   "F 164 | 8 m",
   "F 275 | 3.5 m",
-  "F GG004 | 0.61 mp",
+  "F GG009 | 0.61 mp",
   "F 163 | 11 m",
   "F Manopera 1 | 5 buc",
   "N 110 | 1 buc | 800 mm",
@@ -92988,7 +92988,7 @@
   "N 170 | 10 buc | 758 mm",
   "N 171 | 15 buc | 95 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 378x161 | 10",
+  "S GG009 | 378x161 | 10",
   "E lipsă cod: usa · SAMPANIE · 166 mm",
   "E lipsă cod: rama · SAMPANIE · 166 mm"
  ],
@@ -93063,7 +93063,7 @@
   "F 118 | 3 buc",
   "F 164 | 27.5 m",
   "F 275 | 11 m",
-  "F GG004 | 15.94 mp",
+  "F GG009 | 15.94 mp",
   "F 163 | 51 m",
   "F Manopera 1 | 5 buc",
   "N 110 | 1 buc | 5800 mm",
@@ -93074,7 +93074,7 @@
   "N 170 | 10 buc | 2748 mm",
   "N 171 | 15 buc | 1095 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1373x1161 | 10"
+  "S GG009 | 1373x1161 | 10"
  ],
  "luxBreda | SAMPANIE | 5800x2790 | 5u/2s | B": [
   "F B302.211 | 5 buc",
@@ -93147,7 +93147,7 @@
   "F 118 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.67 mp",
+  "F GG009 | 9.67 mp",
   "F 163 | 39.5 m",
   "F Manopera 1 | 5 buc",
   "N 110 | 1 buc | 4700 mm",
@@ -93158,7 +93158,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 875 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x941 | 10"
+  "S GG009 | 1028x941 | 10"
  ],
  "luxBreda | SAMPANIE | 4700x2100 | 5u/2s | B": [
   "F B302.029 | 5 buc",
@@ -93229,7 +93229,7 @@
   "F 129 | 1 buc",
   "F 164 | 8 m",
   "F 275 | 3.5 m",
-  "F GG004 | 0.61 mp",
+  "F GG009 | 0.61 mp",
   "F 163 | 11 m",
   "F Manopera 1 | 5 buc",
   "N 121 | 1 buc | 800 mm",
@@ -93240,7 +93240,7 @@
   "N 170 | 10 buc | 758 mm",
   "N 171 | 15 buc | 95 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 378x161 | 10",
+  "S GG009 | 378x161 | 10",
   "E lipsă cod: usa · CROM · 166 mm",
   "E lipsă cod: rama · CROM · 166 mm"
  ],
@@ -93315,7 +93315,7 @@
   "F 129 | 3 buc",
   "F 164 | 27.5 m",
   "F 275 | 11 m",
-  "F GG004 | 15.94 mp",
+  "F GG009 | 15.94 mp",
   "F 163 | 51 m",
   "F Manopera 1 | 5 buc",
   "N 121 | 1 buc | 5800 mm",
@@ -93326,7 +93326,7 @@
   "N 170 | 10 buc | 2748 mm",
   "N 171 | 15 buc | 1095 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1373x1161 | 10"
+  "S GG009 | 1373x1161 | 10"
  ],
  "luxBreda | CROM | 5800x2790 | 5u/2s | B": [
   "F B302.311 | 5 buc",
@@ -93399,7 +93399,7 @@
   "F 129 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.67 mp",
+  "F GG009 | 9.67 mp",
   "F 163 | 39.5 m",
   "F Manopera 1 | 5 buc",
   "N 121 | 1 buc | 4700 mm",
@@ -93410,7 +93410,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 875 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x941 | 10"
+  "S GG009 | 1028x941 | 10"
  ],
  "luxBreda | CROM | 4700x2100 | 5u/2s | B": [
   "F B302.039 | 5 buc",
@@ -93481,7 +93481,7 @@
   "F 138 | 1 buc",
   "F 164 | 8 m",
   "F 275 | 3.5 m",
-  "F GG004 | 0.61 mp",
+  "F GG009 | 0.61 mp",
   "F 163 | 11 m",
   "F Manopera 1 | 5 buc",
   "N 240 | 1 buc | 800 mm",
@@ -93492,7 +93492,7 @@
   "N 170 | 10 buc | 758 mm",
   "N 171 | 15 buc | 95 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 378x161 | 10",
+  "S GG009 | 378x161 | 10",
   "E lipsă cod: usa · ALB · 166 mm",
   "E lipsă cod: rama · ALB · 166 mm"
  ],
@@ -93567,7 +93567,7 @@
   "F 138 | 3 buc",
   "F 164 | 27.5 m",
   "F 275 | 11 m",
-  "F GG004 | 15.94 mp",
+  "F GG009 | 15.94 mp",
   "F 163 | 51 m",
   "F Manopera 1 | 5 buc",
   "N 240 | 1 buc | 5800 mm",
@@ -93578,7 +93578,7 @@
   "N 170 | 10 buc | 2748 mm",
   "N 171 | 15 buc | 1095 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1373x1161 | 10"
+  "S GG009 | 1373x1161 | 10"
  ],
  "luxBreda | ALB | 5800x2790 | 5u/2s | B": [
   "F B302.511 | 5 buc",
@@ -93651,7 +93651,7 @@
   "F 138 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.67 mp",
+  "F GG009 | 9.67 mp",
   "F 163 | 39.5 m",
   "F Manopera 1 | 5 buc",
   "N 240 | 1 buc | 4700 mm",
@@ -93662,7 +93662,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 875 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x941 | 10"
+  "S GG009 | 1028x941 | 10"
  ],
  "luxBreda | ALB | 4700x2100 | 5u/2s | B": [
   "F B302.059 | 5 buc",
@@ -93733,7 +93733,7 @@
   "F 149 | 1 buc",
   "F 164 | 8 m",
   "F 275 | 3.5 m",
-  "F GG004 | 0.61 mp",
+  "F GG009 | 0.61 mp",
   "F 163 | 11 m",
   "F Manopera 1 | 5 buc",
   "N 250 | 1 buc | 800 mm",
@@ -93744,7 +93744,7 @@
   "N 170 | 10 buc | 758 mm",
   "N 171 | 15 buc | 95 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 378x161 | 10",
+  "S GG009 | 378x161 | 10",
   "E lipsă cod: usa · NEGRU · 166 mm",
   "E lipsă cod: rama · NEGRU · 166 mm"
  ],
@@ -93819,7 +93819,7 @@
   "F 149 | 3 buc",
   "F 164 | 27.5 m",
   "F 275 | 11 m",
-  "F GG004 | 15.94 mp",
+  "F GG009 | 15.94 mp",
   "F 163 | 51 m",
   "F Manopera 1 | 5 buc",
   "N 250 | 1 buc | 5800 mm",
@@ -93830,7 +93830,7 @@
   "N 170 | 10 buc | 2748 mm",
   "N 171 | 15 buc | 1095 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1373x1161 | 10"
+  "S GG009 | 1373x1161 | 10"
  ],
  "luxBreda | NEGRU | 5800x2790 | 5u/2s | B": [
   "F B302.411 | 5 buc",
@@ -93903,7 +93903,7 @@
   "F 149 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.67 mp",
+  "F GG009 | 9.67 mp",
   "F 163 | 39.5 m",
   "F Manopera 1 | 5 buc",
   "N 250 | 1 buc | 4700 mm",
@@ -93914,7 +93914,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 875 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x941 | 10"
+  "S GG009 | 1028x941 | 10"
  ],
  "luxBreda | NEGRU | 4700x2100 | 5u/2s | B": [
   "F B302.049 | 5 buc",
@@ -93987,7 +93987,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.37 mp",
+  "F GG009 | 9.37 mp",
   "F 163 | 39 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4550 mm",
@@ -93998,7 +93998,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 845 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x911 | 10"
+  "S GG009 | 1028x911 | 10"
  ],
  "luxBreda | ALUMINIU | 4560x2100 | 5u/2s | A": [
   "F B302.009 | 5 buc",
@@ -94006,7 +94006,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.39 mp",
+  "F GG009 | 9.39 mp",
   "F 163 | 39 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4560 mm",
@@ -94017,7 +94017,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 847 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x913 | 10"
+  "S GG009 | 1028x913 | 10"
  ],
  "luxBreda | ALUMINIU | 4570x2100 | 5u/2s | A": [
   "F B302.009 | 5 buc",
@@ -94025,7 +94025,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.41 mp",
+  "F GG009 | 9.41 mp",
   "F 163 | 39 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4570 mm",
@@ -94036,7 +94036,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 849 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x915 | 10"
+  "S GG009 | 1028x915 | 10"
  ],
  "luxBreda | ALUMINIU | 4580x2100 | 5u/2s | A": [
   "F B302.009 | 5 buc",
@@ -94044,7 +94044,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.43 mp",
+  "F GG009 | 9.43 mp",
   "F 163 | 39 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4580 mm",
@@ -94055,7 +94055,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 851 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x917 | 10"
+  "S GG009 | 1028x917 | 10"
  ],
  "luxBreda | ALUMINIU | 4590x2100 | 5u/2s | A": [
   "F B302.009 | 5 buc",
@@ -94063,7 +94063,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.45 mp",
+  "F GG009 | 9.45 mp",
   "F 163 | 39 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4590 mm",
@@ -94074,7 +94074,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 853 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x919 | 10"
+  "S GG009 | 1028x919 | 10"
  ],
  "luxBreda | ALUMINIU | 4600x2100 | 5u/2s | A": [
   "F B302.009 | 5 buc",
@@ -94082,7 +94082,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.47 mp",
+  "F GG009 | 9.47 mp",
   "F 163 | 39 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4600 mm",
@@ -94093,7 +94093,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 855 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x921 | 10"
+  "S GG009 | 1028x921 | 10"
  ],
  "luxBreda | ALUMINIU | 4610x2100 | 5u/2s | A": [
   "F B302.009 | 5 buc",
@@ -94101,7 +94101,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.49 mp",
+  "F GG009 | 9.49 mp",
   "F 163 | 39.5 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4610 mm",
@@ -94112,7 +94112,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 857 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x923 | 10"
+  "S GG009 | 1028x923 | 10"
  ],
  "luxBreda | ALUMINIU | 4620x2100 | 5u/2s | A": [
   "F B302.009 | 5 buc",
@@ -94120,7 +94120,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.51 mp",
+  "F GG009 | 9.51 mp",
   "F 163 | 39.5 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4620 mm",
@@ -94131,7 +94131,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 859 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x925 | 10"
+  "S GG009 | 1028x925 | 10"
  ],
  "luxBreda | ALUMINIU | 4630x2100 | 5u/2s | A": [
   "F B302.009 | 5 buc",
@@ -94139,7 +94139,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.53 mp",
+  "F GG009 | 9.53 mp",
   "F 163 | 39.5 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4630 mm",
@@ -94150,7 +94150,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 861 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x927 | 10"
+  "S GG009 | 1028x927 | 10"
  ],
  "luxBreda | ALUMINIU | 4640x2100 | 5u/2s | A": [
   "F B302.009 | 5 buc",
@@ -94158,7 +94158,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.55 mp",
+  "F GG009 | 9.55 mp",
   "F 163 | 39.5 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4640 mm",
@@ -94169,7 +94169,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 863 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x929 | 10"
+  "S GG009 | 1028x929 | 10"
  ],
  "luxBreda | ALUMINIU | 4650x2100 | 5u/2s | A": [
   "F B302.009 | 5 buc",
@@ -94177,7 +94177,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.57 mp",
+  "F GG009 | 9.57 mp",
   "F 163 | 39.5 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4650 mm",
@@ -94188,7 +94188,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 865 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x931 | 10"
+  "S GG009 | 1028x931 | 10"
  ],
  "luxBreda | ALUMINIU | 4660x2100 | 5u/2s | A": [
   "F B302.009 | 5 buc",
@@ -94196,7 +94196,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.59 mp",
+  "F GG009 | 9.59 mp",
   "F 163 | 39.5 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4660 mm",
@@ -94207,7 +94207,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 867 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x933 | 10"
+  "S GG009 | 1028x933 | 10"
  ],
  "luxBreda | ALUMINIU | 4670x2100 | 5u/2s | A": [
   "F B302.009 | 5 buc",
@@ -94215,7 +94215,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.61 mp",
+  "F GG009 | 9.61 mp",
   "F 163 | 39.5 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4670 mm",
@@ -94226,7 +94226,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 869 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x935 | 10"
+  "S GG009 | 1028x935 | 10"
  ],
  "luxBreda | ALUMINIU | 4680x2100 | 5u/2s | A": [
   "F B302.009 | 5 buc",
@@ -94234,7 +94234,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.63 mp",
+  "F GG009 | 9.63 mp",
   "F 163 | 39.5 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4680 mm",
@@ -94245,7 +94245,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 871 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x937 | 10"
+  "S GG009 | 1028x937 | 10"
  ],
  "luxBreda | ALUMINIU | 4690x2100 | 5u/2s | A": [
   "F B302.009 | 5 buc",
@@ -94253,7 +94253,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.65 mp",
+  "F GG009 | 9.65 mp",
   "F 163 | 39.5 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4690 mm",
@@ -94264,7 +94264,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 873 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x939 | 10"
+  "S GG009 | 1028x939 | 10"
  ],
  "luxBreda | ALUMINIU | 4710x2100 | 5u/2s | A": [
   "F B302.009 | 5 buc",
@@ -94272,7 +94272,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.69 mp",
+  "F GG009 | 9.69 mp",
   "F 163 | 39.5 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4710 mm",
@@ -94283,7 +94283,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 877 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x943 | 10"
+  "S GG009 | 1028x943 | 10"
  ],
  "luxBreda | ALUMINIU | 4720x2100 | 5u/2s | A": [
   "F B302.009 | 5 buc",
@@ -94291,7 +94291,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.71 mp",
+  "F GG009 | 9.71 mp",
   "F 163 | 39.5 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4720 mm",
@@ -94302,7 +94302,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 879 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x945 | 10"
+  "S GG009 | 1028x945 | 10"
  ],
  "luxBreda | ALUMINIU | 4730x2100 | 5u/2s | A": [
   "F B302.009 | 5 buc",
@@ -94310,7 +94310,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.74 mp",
+  "F GG009 | 9.74 mp",
   "F 163 | 39.5 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4730 mm",
@@ -94321,7 +94321,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 881 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x947 | 10"
+  "S GG009 | 1028x947 | 10"
  ],
  "luxBreda | ALUMINIU | 4740x2100 | 5u/2s | A": [
   "F B302.009 | 5 buc",
@@ -94329,7 +94329,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.76 mp",
+  "F GG009 | 9.76 mp",
   "F 163 | 40 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4740 mm",
@@ -94340,7 +94340,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 883 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x949 | 10"
+  "S GG009 | 1028x949 | 10"
  ],
  "luxBreda | ALUMINIU | 4750x2100 | 5u/2s | A": [
   "F B302.009 | 5 buc",
@@ -94348,7 +94348,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.78 mp",
+  "F GG009 | 9.78 mp",
   "F 163 | 40 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4750 mm",
@@ -94359,7 +94359,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 885 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x951 | 10"
+  "S GG009 | 1028x951 | 10"
  ],
  "luxBreda | ALUMINIU | 4760x2100 | 5u/2s | A": [
   "F B302.009 | 5 buc",
@@ -94367,7 +94367,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.8 mp",
+  "F GG009 | 9.8 mp",
   "F 163 | 40 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4760 mm",
@@ -94378,7 +94378,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 887 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x953 | 10"
+  "S GG009 | 1028x953 | 10"
  ],
  "luxBreda | ALUMINIU | 4770x2100 | 5u/2s | A": [
   "F B302.009 | 5 buc",
@@ -94386,7 +94386,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.82 mp",
+  "F GG009 | 9.82 mp",
   "F 163 | 40 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4770 mm",
@@ -94397,7 +94397,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 889 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x955 | 10"
+  "S GG009 | 1028x955 | 10"
  ],
  "luxBreda | ALUMINIU | 4780x2100 | 5u/2s | A": [
   "F B302.009 | 5 buc",
@@ -94405,7 +94405,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.84 mp",
+  "F GG009 | 9.84 mp",
   "F 163 | 40 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4780 mm",
@@ -94416,7 +94416,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 891 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x957 | 10"
+  "S GG009 | 1028x957 | 10"
  ],
  "luxBreda | ALUMINIU | 4790x2100 | 5u/2s | A": [
   "F B302.009 | 5 buc",
@@ -94424,7 +94424,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.86 mp",
+  "F GG009 | 9.86 mp",
   "F 163 | 40 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4790 mm",
@@ -94435,7 +94435,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 893 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x959 | 10"
+  "S GG009 | 1028x959 | 10"
  ],
  "luxBreda | ALUMINIU | 4800x2100 | 5u/2s | A": [
   "F B302.009 | 5 buc",
@@ -94443,7 +94443,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.88 mp",
+  "F GG009 | 9.88 mp",
   "F 163 | 40 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4800 mm",
@@ -94454,7 +94454,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 895 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x961 | 10"
+  "S GG009 | 1028x961 | 10"
  ],
  "luxBreda | ALUMINIU | 4810x2100 | 5u/2s | A": [
   "F B302.009 | 5 buc",
@@ -94462,7 +94462,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.9 mp",
+  "F GG009 | 9.9 mp",
   "F 163 | 40 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4810 mm",
@@ -94473,7 +94473,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 897 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x963 | 10"
+  "S GG009 | 1028x963 | 10"
  ],
  "luxBreda | ALUMINIU | 4820x2100 | 5u/2s | A": [
   "F B302.009 | 5 buc",
@@ -94481,7 +94481,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.92 mp",
+  "F GG009 | 9.92 mp",
   "F 163 | 40 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4820 mm",
@@ -94492,7 +94492,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 899 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x965 | 10"
+  "S GG009 | 1028x965 | 10"
  ],
  "luxBreda | ALUMINIU | 4830x2100 | 5u/2s | A": [
   "F B302.009 | 5 buc",
@@ -94500,7 +94500,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.94 mp",
+  "F GG009 | 9.94 mp",
   "F 163 | 40 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4830 mm",
@@ -94511,7 +94511,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 901 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x967 | 10"
+  "S GG009 | 1028x967 | 10"
  ],
  "luxBreda | ALUMINIU | 4840x2100 | 5u/2s | A": [
   "F B302.009 | 5 buc",
@@ -94519,7 +94519,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.96 mp",
+  "F GG009 | 9.96 mp",
   "F 163 | 40 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4840 mm",
@@ -94530,7 +94530,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 903 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x969 | 10"
+  "S GG009 | 1028x969 | 10"
  ],
  "luxBreda | ALUMINIU | 4850x2100 | 5u/2s | A": [
   "F B302.009 | 5 buc",
@@ -94538,7 +94538,7 @@
   "F 104 | 2 buc",
   "F 164 | 21 m",
   "F 275 | 8.5 m",
-  "F GG004 | 9.98 mp",
+  "F GG009 | 9.98 mp",
   "F 163 | 40 m",
   "F Manopera 1 | 5 buc",
   "N 200 | 1 buc | 4850 mm",
@@ -94549,7 +94549,7 @@
   "N 170 | 10 buc | 2058 mm",
   "N 171 | 15 buc | 905 mm",
   "N DIN7504N | 30 buc | ",
-  "S GG004 | 1028x971 | 10"
+  "S GG009 | 1028x971 | 10"
  ],
  "suspendataA | ALUMINIU | 987x2227 | 1u/2s | D": [
   "F USA005 | 1 buc",
