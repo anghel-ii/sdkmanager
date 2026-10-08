@@ -23,6 +23,16 @@
     #bara .insigna { display: inline-block; min-width: 1.5em; padding: 0 6px; margin-left: 4px; border-radius: 10px;
       background: var(--accent-dim); color: #fff; font-size: .75rem; text-align: center; }
     #bara .insigna:empty { display: none; }
+    #bara .insigna.rosie { background: #a3412f; }
+    #caseteTaskuri { position: fixed; right: 16px; bottom: 16px; z-index: 1000; display: flex; flex-direction: column; gap: 8px;
+      max-width: 360px; font-family: 'Inter', system-ui, sans-serif; font-size: 14px; }
+    #caseteTaskuri > div { background: var(--panel-2, #21252c); color: var(--text, #e9ebee); border: 1px solid #c9604c;
+      border-radius: 10px; padding: 12px 14px; box-shadow: 0 6px 24px rgba(0,0,0,.45); }
+    #caseteTaskuri .dim { color: var(--text-dim, #8b92a0); font-size: 13px; margin: 4px 0 8px; }
+    #caseteTaskuri a { color: var(--accent, #4da3ff); margin-right: 12px; }
+    #caseteTaskuri button { font: inherit; font-size: 13px; padding: 4px 10px; border-radius: 6px; cursor: pointer;
+      border: 1px solid var(--line, #2c313a); background: var(--panel, #1b1e24); color: inherit; }
+    @media print { #caseteTaskuri { display: none !important; } }
     #bara .bara-context { flex: 0 1 auto; margin: 0; font-weight: 400; color: var(--text-dim); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
     #bara .bara-context b { color: var(--text); font-weight: 500; }
     #bara .bara-context i { font-style: normal; margin: 0 5px; }
@@ -42,6 +52,7 @@
       <button type="button" id="ofertaNoua" class="primar">+ OFERTĂ NOUĂ</button>
       <a href="/sticla" class="buton${activ('/sticla')}" id="linkSticla">Comandă sticlă <span class="insigna" id="nrSticla"></span></a>
       <a href="/livrari" class="buton${activ('/livrari')}" id="linkLivrari">Organizează livrări</a>
+      <a href="/taskuri" class="buton${activ('/taskuri')}" id="linkTaskuri" title="Taskurile tale; numărul = ajunse la ora reminderului">Taskuri <span class="insigna rosie" id="nrTaskuri"></span></a>
       <a href="/clienti" class="buton${activ('/clienti')}" id="linkClienti" hidden title="Clienţii; numărul = trimise de agenţi, de aprobat">Clienţi <span class="insigna" id="nrClienti"></span></a>
       <a href="/admin" class="buton${activ('/admin')}" id="linkAdmin" hidden>Utilizatori</a>
       <span class="spatiu"></span>
@@ -69,6 +80,49 @@
       el.querySelector('#nrSticla').textContent = s.sticla || '';
       el.querySelector('#nrClienti').textContent = s.deAprobat || '';
     });
+
+    // ── Remindere (server/taskuri.js): din minut în minut, taskurile mele ajunse la scadenţă.
+    // Fiecare (task, scadenţă) se anunţă o dată pe calculator — ţinut minte în localStorage,
+    // comun tuturor taburilor; amânat = altă scadenţă = se anunţă iar. Notificare Windows
+    // dacă browserul o permite (HTTPS sau excepţia din chrome://flags — vezi pagina Taskuri),
+    // altfel o casetă în colţul paginii, până o închizi.
+    const anuntateAici = new Set();   // dacă localStorage nu merge, măcar nu se repetă în tabul ăsta
+    const anuntate = () => { try { return JSON.parse(localStorage.getItem('taskuriAnuntate') ?? '[]'); } catch { return []; } };
+    const anunta = t => {
+      const titlu = `⏰ ${t.text}`;
+      const detaliu = [t.comanda_nr && `${t.comanda_nr} · ${t.client_nume}`, t.creat_de !== t.pentru && `de la ${t.creat_de_nume}`]
+        .filter(Boolean).join(' — ');
+      if (window.Notification?.permission === 'granted') {
+        const n = new Notification(titlu, { body: detaliu, tag: `task-${t.id}`, requireInteraction: true });
+        n.onclick = () => { window.open('/taskuri', 'taskuri'); n.close(); };
+        return;
+      }
+      let cutie = document.getElementById('caseteTaskuri');
+      if (!cutie) { cutie = document.createElement('div'); cutie.id = 'caseteTaskuri'; document.body.appendChild(cutie); }
+      const c = document.createElement('div');
+      c.innerHTML = '<b></b><div class="dim"></div><a href="/taskuri" target="taskuri">Deschide taskurile</a><button type="button">Închide</button>';
+      c.querySelector('b').textContent = titlu;
+      c.querySelector('.dim').textContent = detaliu;
+      c.querySelector('button').addEventListener('click', () => c.remove());
+      cutie.appendChild(c);
+    };
+    const verificaTaskuri = async () => {
+      const r = await fetch('/api/taskuri/scadente').catch(() => null);
+      if (!r?.ok) return;
+      const { taskuri } = await r.json();
+      el.querySelector('#nrTaskuri').textContent = taskuri.length || '';
+      const vechi = anuntate();
+      const chei = taskuri.map(t => `${t.id}@${t.scadenta}`);
+      try { localStorage.setItem('taskuriAnuntate', JSON.stringify(chei)); } catch { /* rămâne anuntateAici */ }
+      taskuri.forEach((t, k) => {
+        if (vechi.includes(chei[k]) || anuntateAici.has(chei[k])) return;
+        anuntateAici.add(chei[k]);
+        anunta(t);
+      });
+    };
+    window.verificaTaskuri = verificaTaskuri;   // pagina Taskuri o cheamă după o schimbare
+    verificaTaskuri();
+    setInterval(verificaTaskuri, 60 * 1000);
   };
 
   const el = document.getElementById('bara');

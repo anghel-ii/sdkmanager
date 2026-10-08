@@ -180,6 +180,21 @@ const MIGRATII = [
         PRIMARY KEY (livrare_id, comanda_id)
       );`);
   },
+  // v15 → v16 (2026-10-08): taskuri cu reminder (server/taskuri.js). Unul dat de
+  // cineva (creat_de) cuiva (pentru), opţional legat de o comandă; scadenta = când
+  // apare notificarea (UTC, ca restul datelor; NULL = fără reminder).
+  d => d.exec(`
+    CREATE TABLE task (
+      id         INTEGER PRIMARY KEY,
+      text       TEXT NOT NULL,
+      scadenta   TEXT,
+      pentru     INTEGER NOT NULL REFERENCES utilizator(id),
+      creat_de   INTEGER NOT NULL REFERENCES utilizator(id),
+      comanda_id INTEGER REFERENCES comanda(id) ON DELETE SET NULL,
+      creat_la   TEXT NOT NULL,
+      facut_la   TEXT
+    );
+    CREATE INDEX task_pentru ON task (pentru, facut_la);`),
 ];
 
 // Exportată pt. test.

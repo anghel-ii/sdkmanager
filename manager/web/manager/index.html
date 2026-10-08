@@ -685,6 +685,7 @@ async function renderDetaliu(id) {
       ${ePlata ? '<button class="verde" id="accepta">Plată primită</button>' : ''}
       ${eComanda && !c.finalizat_la ? '<button class="verde-contur" id="finalizeaza">Marchează finalizată</button>' : ''}
       ${c.finalizat_la ? '<button class="galben-contur" id="redeschide">Redeschide</button>' : ''}
+      <button id="taskNou" title="Un task / reminder legat de comanda asta">+ Task</button>
     </div>
 
     <!-- stânga: datele clientului; dreapta: paşii comenzii (cine şi când) -->
@@ -792,6 +793,7 @@ async function renderDetaliu(id) {
   leagaCopiere($('copCant'), total.map(l => qtyText(l.cantitate)));
 
   $('fisaDetaliu')?.addEventListener('click', e => deschideFisa(id, e.currentTarget));
+  $('taskNou').addEventListener('click', () => { location.href = `/taskuri?comanda=${id}`; });
   document.querySelectorAll('button.fisa-poz').forEach(b => b.addEventListener('click', () => deschideFisa(id, b, +b.dataset.poz)));
 
   // Acceptare: dialogul cere modalitatea de plată (obligatoriu) şi avansul.

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Taskuri</title>
+<link rel="stylesheet" href="/comun.css">
+<link rel="stylesheet" href="/nou.css">
+<script src="/dialog.js"></script>
+<script src="/data.js"></script>
+<script src="/live.js"></script>
+<script src="/copiaza.js"></script>
+<style>
+  #continut { padding: 20px 24px 40px; max-width: 1100px; margin: 0 auto; }
+  h1 { margin-bottom: 16px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+  .card > h2 { font-size: .74rem; text-transform: uppercase; letter-spacing: .05em; color: var(--text-dim); margin-bottom: 10px; }
+  .nou { display: grid; grid-template-columns: minmax(0, 1fr) 200px 210px auto; gap: 10px; align-items: end; }
+  @media (max-width: 900px) { .nou { grid-template-columns: 1fr; } }
+  .nou label { display: flex; flex-direction: column; gap: 4px; font-size: .78rem; color: var(--text-dim); }
+  .nou textarea { resize: vertical; min-height: 38px; }
+  .legat { margin-top: 10px; font-size: .88rem; }
+  .legat[hidden] { display: none; }
+  .notif { font-size: .84rem; color: var(--text-dim); margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); line-height: 1.5; }
+  .notif code { background: var(--panel-2); padding: 1px 6px; border-radius: 4px; color: var(--text); }
+
+  .task { display: flex; align-items: flex-start; gap: 12px; padding: 10px 4px; border-bottom: 1px solid var(--line); }
+  .task:last-child { border-bottom: none; }
+  .task input[type=checkbox] { width: 18px; height: 18px; margin-top: 2px; flex: none; }
+  .task .corp { flex: 1; min-width: 0; }
+  .task .text { white-space: pre-wrap; word-break: break-word; }
+  .task.facut .text { text-decoration: line-through; color: var(--text-dim); }
+  .task .info { color: var(--text-dim); font-size: .8rem; margin-top: 3px; }
+  .task .info a { color: var(--accent); }
+  .task.intarziat .ora { color: #e8907f; font-weight: 600; }
+  .task input[type=datetime-local] { width: auto; padding: 4px 6px; font-size: .8rem; }
+  button.mic { padding: 4px 9px; font-size: .78rem; }
+  .gol { text-align: center; padding: 20px; color: var(--text-dim); }
+  details > summary { cursor: pointer; color: var(--text-dim); }
+</style>
+</head>
+<body class="ui-nou">
+
+<div id="bara"></div>
+<script src="/bara.js"></script>
+
+<div id="continut">
+  <h1>Taskuri</h1>
+
+  <div class="card">
+    <h2>Task nou</h2>
+    <form class="nou" id="formular">
+      <label>Ce e de făcut<textarea id="text" rows="1" maxlength="1000" required></textarea></label>
+      <label>Pentru<select id="pentru"></select></label>
+      <label>Reminder (opţional)<input type="datetime-local" id="scadenta"></label>
+      <button class="verde" type="submit">Adaugă</button>
+    </form>
+    <div class="legat" id="legat" hidden></div>
+    <div class="notif" id="notif"></div>
+  </div>
+
+  <div class="card"><h2>Pentru mine</h2><div id="mie">Se încarcă…</div></div>
+  <div class="card"><h2>Date de mine altora</h2><div id="altora"></div></div>
+  <div class="card"><details><summary id="facuteTitlu">Făcute</summary><div id="facute"></div></details></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+//  Taskuri + remindere (server/taskuri.js). Notificarea la ora reminderului o face
+//  bara de sus (bara.js), pe orice pagină a managerului / configuratorului deschisă.
+//  „+ Task" din detaliul unei comenzi deschide pagina cu ?comanda=<id>.
+// ═══════════════════════════════════════════════════════════════════════════
+window.name = 'taskuri';   // notificarea / caseta deschid tot tabul ăsta, nu altul nou
+const $ = id => document.getElementById(id);
+const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+async function api(cale, optiuni = {}) {
+  const r = await fetch(cale, { headers: { 'Content-Type': 'application/json' }, ...optiuni });
+  if (r.status === 401) { location.href = '/login?redirect=' + encodeURIComponent(location.pathname + location.search); return null; }
+  return r;
+}
+const eroareDin = async r => (await r.json().catch(() => ({}))).eroare || 'Operaţia a eşuat.';
+
+// data din SQLite (UTC) → valoarea pt. <input type=datetime-local>, în ora României
+const RO = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Bucharest', year: 'numeric', month: '2-digit',
+  day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+const utc = s => new Date(String(s).replace(' ', 'T') + 'Z');
+function pentruInput(s) {
+  if (!s) return '';
+  const p = Object.fromEntries(RO.formatToParts(utc(s)).map(x => [x.type, x.value]));
+  return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}`;
+}
+
+let eu = null, taskuri = [], utilizatori = [];
+let comanda = Number(new URLSearchParams(location.search).get('comanda')) || null;
+
+function randTask(t) {
+  const facut = !!t.facut_la;
+  const intarziat = !facut && t.scadenta && utc(t.scadenta) <= Date.now();
+  const cine = t.pentru !== eu.id ? `pentru <b>${esc(t.pentru_nume)}</b>` : t.creat_de !== eu.id ? `de la <b>${esc(t.creat_de_nume)}</b>` : '';
+  const info = [
+    t.scadenta && `<span class="ora">⏰ ${dataOra(t.scadenta)}</span>`,
+    cine,
+    t.comanda_id && `<a href="/#comanda/${t.comanda_id}">${esc(t.comanda_nr)} · ${esc(t.client_nume)}</a>`,
+    facut && `făcut ${dataOra(t.facut_la)}`,
+  ].filter(Boolean).join(' · ');
+  return `<div class="task${facut ? ' facut' : ''}${intarziat ? ' intarziat' : ''}" data-id="${t.id}">
+    <input type="checkbox" class="bifa" title="${facut ? 'Nu e făcut' : 'Făcut'}"${facut ? ' checked' : ''}>
+    <div class="corp"><div class="text">${esc(t.text)}</div>${info ? `<div class="info">${info}</div>` : ''}</div>
+    ${facut ? '' : `<input type="datetime-local" class="amana" title="Mută reminderul" value="${pentruInput(t.scadenta)}">`}
+    ${t.creat_de === eu.id ? '<button type="button" class="mic rosu-contur sterge">Şterge</button>' : ''}
+  </div>`;
+}
+
+function randeaza() {
+  const deFacut = taskuri.filter(t => !t.facut_la), facute = taskuri.filter(t => t.facut_la);
+  const mie = deFacut.filter(t => t.pentru === eu.id), altora = deFacut.filter(t => t.pentru !== eu.id);
+  $('mie').innerHTML = mie.length ? mie.map(randTask).join('') : '<div class="gol">Nimic de făcut.</div>';
+  $('altora').innerHTML = altora.length ? altora.map(randTask).join('') : '<div class="gol">Niciun task dat altcuiva.</div>';
+  $('facuteTitlu').textContent = `Făcute în ultimele 14 zile (${facute.length})`;
+  $('facute').innerHTML = facute.map(randTask).join('');
+
+  document.querySelectorAll('.task').forEach(el => {
+    const id = +el.dataset.id;
+    const schimba = async (corp, mesaj) => {
+      if (mesaj && !(await confirma(mesaj))) return;
+      const r = await api(`/api/taskuri/${id}`, corp ? { method: 'PATCH', body: JSON.stringify(corp) } : { method: 'DELETE' });
+      if (r && !r.ok) alerta(await eroareDin(r));
+      await incarca();
+      window.verificaTaskuri?.();   // numărul din bară, imediat
+    };
+    el.querySelector('.bifa').addEventListener('change', e => schimba({ facut: e.target.checked }));
+    el.querySelector('.amana')?.addEventListener('change', e => schimba({ scadenta: e.target.value || null }));
+    el.querySelector('.sterge')?.addEventListener('click', () => schimba(null, 'Ştergi taskul?'));
+  });
+}
+
+async function incarca() {
+  const r = await api('/api/taskuri');
+  if (!r) return;
+  ({ taskuri, utilizatori } = await r.json());
+  const ales = $('pentru').value || eu.id;
+  $('pentru').innerHTML = utilizatori.map(u => `<option value="${u.id}">${esc(u.nume)}${u.id === eu.id ? ' (eu)' : ''}</option>`).join('');
+  $('pentru').value = ales;
+  randeaza();
+}
+
+// comanda de care se leagă taskul nou (din „+ Task" de pe comandă)
+async function arataComanda() {
+  $('legat').hidden = !comanda;
+  if (!comanda) return;
+  const r = await api(`/api/comenzi/${comanda}`);
+  if (!r?.ok) { comanda = null; $('legat').hidden = true; return; }
+  const c = (await r.json()).comanda;
+  $('legat').innerHTML = `Legat de comanda <a href="/#comanda/${c.id}">${esc(c.oferta_nr || c.numar)} · ${esc(c.client_nume)}</a>
+    <button type="button" class="mic" id="scoateComanda" title="Task fără comandă">×</button>`;
+  $('scoateComanda').addEventListener('click', () => { comanda = null; history.replaceState(null, '', '/taskuri'); arataComanda(); });
+}
+
+$('formular').addEventListener('submit', async e => {
+  e.preventDefault();
+  const r = await api('/api/taskuri', { method: 'POST', body: JSON.stringify({
+    text: $('text').value, pentru: +$('pentru').value, scadenta: $('scadenta').value || null, comanda_id: comanda }) });
+  if (r && !r.ok) return alerta(await eroareDin(r));
+  $('text').value = $('scadenta').value = '';
+  await incarca();
+  window.verificaTaskuri?.();
+});
+
+// Notificările Windows: browserul le dă doar paginilor pe HTTPS (sau localhost). Managerul
+// e pe http://<IP>, deci pe fiecare calculator trebuie o dată excepţia din chrome://flags —
+// aceeaşi ca la camera telefoanelor. Fără ea, reminderul e o casetă în colţul paginii.
+function arataNotificari() {
+  const n = window.Notification;
+  if (n?.permission === 'granted') { $('notif').textContent = '🔔 Notificările Windows sunt pornite pe calculatorul ăsta.'; return; }
+  if (n && window.isSecureContext && n.permission === 'default') {
+    $('notif').innerHTML = 'Reminderele apar acum ca o casetă în colţul paginii. <button type="button" class="mic" id="pornesteNotif">Porneşte notificările Windows</button>';
+    $('pornesteNotif').addEventListener('click', async () => { await n.requestPermission(); arataNotificari(); });
+    return;
+  }
+  if (n && window.isSecureContext) {
+    $('notif').textContent = 'Notificările sunt blocate pentru site-ul ăsta — deblochează-le din lacătul din stânga adresei, apoi reîncarcă pagina. Până atunci reminderele apar ca o casetă în colţul paginii.';
+    return;
+  }
+  $('notif').innerHTML = `Reminderele apar ca o casetă în colţul paginii managerului (cât e deschis). Pentru <b>notificări Windows</b>,
+    o singură dată pe calculatorul ăsta: deschide <code>chrome://flags/#unsafely-treat-insecure-origin-as-secure</code>
+    (în Edge: <code>edge://flags/#unsafely-treat-insecure-origin-as-secure</code>), scrie în câmp <code>${esc(location.origin)}</code>
+    <button type="button" class="mic" id="copiazaOrigine">Copiază</button>, alege <b>Enabled</b>, apasă <b>Relaunch</b>, apoi revino aici.`;
+  $('copiazaOrigine').addEventListener('click', async e => { if (await copiazaText(location.origin)) e.target.textContent = 'Copiat ✓'; });
+}
+
+// ── Pornire + actualizare live (nu în timp ce scrii) ──
+let deReimprospatat = false;
+const reimprospateaza = () => {
+  if (document.activeElement?.matches?.('input, select, textarea')) { deReimprospatat = true; return; }
+  deReimprospatat = false; incarca();
+};
+document.addEventListener('focusout', () => { if (deReimprospatat) setTimeout(reimprospateaza, 0); });
+(async () => {
+  const r = await api('/api/eu');
+  if (!r) return;
+  eu = (await r.json()).utilizator;
+  arataNotificari();
+  arataComanda();
+  await incarca();
+  urmareste(reimprospateaza);
+})();
+</script>
+</body>
+</html>

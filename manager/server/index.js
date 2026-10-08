@@ -14,6 +14,7 @@ const scanare     = config.scanare ? require('./scanare.js') : null;
 const evenimente  = require('./evenimente.js');
 const sticla      = require('./sticla.js');
 const livrari     = require('./livrari.js');
+const taskuri     = require('./taskuri.js');
 const actualizare = require('./actualizare.js');
 const clienti     = require('./clienti.js');
 const ora         = require('./ora.js');
@@ -37,7 +38,7 @@ const ora         = require('./ora.js');
 //   { }                — orice utilizator logat
 //   { rol: 'admin' }   — doar administratorii
 
-const MODULE = [utilizatori, comenzi, scanare, evenimente, sticla, livrari, actualizare, clienti].filter(Boolean);
+const MODULE = [utilizatori, comenzi, scanare, evenimente, sticla, livrari, taskuri, actualizare, clienti].filter(Boolean);
 
 const rute = MODULE.flatMap(m => m.rute).map(([metoda, cale, spec]) => [metoda, cale, spec]);
 const potriveste = router(rute);
@@ -89,6 +90,7 @@ async function trateaza(req, res) {
     '/comenzi':     'manager',   // (adresa veche — linkurile existente merg în continuare)
     '/sticla':      'sticla',    // comanda de sticlă la furnizori
     '/livrari':     'livrari',   // organizează livrările cu maşina noastră
+    '/taskuri':     'taskuri',   // taskuri + remindere (notificarea o face bara.js)
     '/clienti':     'clienti',   // clienţii adăugaţi de agenţii de vânzări
     '/login':       'login',
     '/admin':       'admin',     // conturile (API-ul e doar pt. admin; pagina se autoverifică)

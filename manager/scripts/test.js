@@ -175,6 +175,7 @@ async function main() {
     ['linkul spre sticlă',  'href="/sticla"'],
     ['linkul Acasă',        'href="/"'],
     ['Organizează livrări', 'href="/livrari"'],
+    ['Taskuri + reminderele', "fetch('/api/taskuri/scadente')"],
   ]) verifica(`bara comună are ${ce}`, bara.includes(bucata), bucata);
 
   const mg = String((await cer('GET', '/comenzi')).date);
@@ -463,7 +464,7 @@ async function main() {
     const idVechi = Number(db2().prepare("INSERT INTO utilizator (nume, user, parola_hash, parola_salt, rol) VALUES ('Vechi', 'vechi', 'x', 'x', 'operator')").run().lastInsertRowid);
     require('../server/db.js').roluriNoi(db2());
     verifica('migraţie: operator → birou', db2().prepare('SELECT rol FROM utilizator WHERE id = ?').get(idVechi).rol === 'birou');
-    verifica('schema la versiunea 15', db2().prepare('PRAGMA user_version').get().user_version === 15);
+    verifica('schema la versiunea 16', db2().prepare('PRAGMA user_version').get().user_version === 16);
   }
 
   console.log('\nFixare şi sortare — per utilizator');
@@ -864,6 +865,46 @@ async function main() {
     verifica('pagina /livrari se serveşte', pagLiv.includes('Organizează livrări'));
     // butonul are handler şi căutarea pe hartă există (le-am şters o dată din greşeală)
     verifica('pagina /livrari: „Confirmă livrarea" + căutarea pe hartă', pagLiv.includes("$('confirma').addEventListener") && pagLiv.includes('async function cautaPeHarta'));
+  }
+
+  console.log('\nTaskuri + remindere (server/taskuri.js)');
+  {
+    const { dinOraRomaniei } = require('../server/taskuri.js');
+    verifica('reminder: ora României vara (UTC+3) → UTC', dinOraRomaniei('2026-07-01T09:00') === '2026-07-01 06:00:00', dinOraRomaniei('2026-07-01T09:00'));
+    verifica('reminder: ora României iarna (UTC+2) → UTC', dinOraRomaniei('2026-12-01T09:00') === '2026-12-01 07:00:00', dinOraRomaniei('2026-12-01T09:00'));
+    verifica('reminder: dată greşită → null', dinOraRomaniei('2026-13-01T09:00') === null && dinOraRomaniei('mâine') === null);
+
+    const maria = db2().prepare("SELECT id FROM utilizator WHERE user = 'maria'").get().id;
+    const admin = db2().prepare("SELECT id FROM utilizator WHERE user = 'admin'").get().id;
+    const cmd = db2().prepare('SELECT id FROM comanda LIMIT 1').get().id;
+    verifica('task fără text → 400', (await cer('POST', '/api/taskuri', { text: ' ', pentru: maria })).stare === 400);
+    verifica('task pentru un cont inexistent → 400', (await cer('POST', '/api/taskuri', { text: 'x', pentru: 99999 })).stare === 400);
+    verifica('task cu dată greşită → 400', (await cer('POST', '/api/taskuri', { text: 'x', pentru: maria, scadenta: 'mâine' })).stare === 400);
+    const t1 = await cer('POST', '/api/taskuri', { text: 'Sună clientul pt. avans', pentru: maria, scadenta: '2020-01-01T09:00', comanda_id: cmd });
+    const t2 = await cer('POST', '/api/taskuri', { text: 'Al meu, mai târziu', pentru: admin, scadenta: '2099-01-01T09:00' });
+    verifica('task nou → 201', t1.stare === 201 && t2.stare === 201, JSON.stringify(t1.date));
+    const l = (await cer('GET', '/api/taskuri')).date;
+    verifica('lista: ale mele + date de mine, cu comanda şi conturile', l.taskuri.length === 2 && l.utilizatori.length >= 2
+      && l.taskuri.find(t => t.id === t1.date.id)?.comanda_id === cmd && l.taskuri.find(t => t.id === t1.date.id)?.pentru_nume === 'Maria Birou',
+      JSON.stringify(l.taskuri));
+    verifica('scadente: nu şi cele date altora / cu scadenţa în viitor', (await cer('GET', '/api/taskuri/scadente')).date.taskuri.length === 0);
+
+    const k = cookie; cookie = null;
+    await cer('POST', '/api/login', { user: 'maria', parola: 'parola-maria-1' });
+    const sc = (await cer('GET', '/api/taskuri/scadente')).date.taskuri;
+    verifica('scadente: Maria vede taskul primit, ajuns la scadenţă', sc.length === 1 && sc[0].creat_de_nume === 'Admin Test', JSON.stringify(sc));
+    verifica('Maria nu vede taskul personal al adminului', (await cer('GET', '/api/taskuri')).date.taskuri.length === 1);
+    verifica('Maria nu-l poate şterge pe al adminului', (await cer('DELETE', `/api/taskuri/${t1.date.id}`)).stare === 403);
+    verifica('Maria nu-l atinge pe cel personal al adminului', (await cer('PATCH', `/api/taskuri/${t2.date.id}`, { facut: true })).stare === 404);
+    verifica('amânare → 200', (await cer('PATCH', `/api/taskuri/${t1.date.id}`, { scadenta: '2099-02-01T10:30' })).stare === 200);
+    verifica('amânat → nu mai e scadent', (await cer('GET', '/api/taskuri/scadente')).date.taskuri.length === 0);
+    verifica('bifat făcut → 200', (await cer('PATCH', `/api/taskuri/${t1.date.id}`, { facut: true })).stare === 200);
+    cookie = k;
+    const dupa = (await cer('GET', '/api/taskuri')).date.taskuri.find(t => t.id === t1.date.id);
+    verifica('adminul vede că e făcut', !!dupa?.facut_la && dupa.scadenta === '2099-02-01 08:30:00', JSON.stringify(dupa));
+    verifica('cel care l-a dat îl şterge', (await cer('DELETE', `/api/taskuri/${t1.date.id}`)).stare === 200);
+    const pag = String((await cer('GET', '/taskuri')).date);
+    verifica('pagina /taskuri se serveşte', pag.includes('<title>Taskuri</title>') && pag.includes("api('/api/taskuri'"));
   }
 
   console.log('\nOra exactă (server/ora.js) — ceasul serverului în urmă cu 5 minute');
