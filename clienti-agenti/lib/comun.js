@@ -119,18 +119,19 @@ export function eManager(request, env) {
 // Pagina /admin: parola = secretul PAROLA_ADMIN din Pages (wrangler pages secret put PAROLA_ADMIN),
 // trimisă de pagină în antetul X-Parola (encodeURIComponent — poate avea diacritice).
 // 10 parole greşite în 15 minute → blocat 15 minute, pentru oricine: parola nu se poate ghici încercând.
-export async function eAdmin(request, env) {
-  if (!env.PAROLA_ADMIN) return { eroare: [503, 'Parola de admin nu e pusă pe Cloudflare (wrangler pages secret put PAROLA_ADMIN).'] };
+// null = e adminul; altfel răspunsul de eroare, gata de întors.
+export async function nuEAdmin(request, env) {
+  if (!env.PAROLA_ADMIN) return raspuns(503, { eroare: 'Parola de admin nu e pusă pe Cloudflare (wrangler pages secret put PAROLA_ADMIN).' });
   await env.DB.prepare('INSERT OR IGNORE INTO server (id) VALUES (1)').run();
   const acum = Date.now();
   const recente = JSON.parse((await env.DB.prepare('SELECT esecuri FROM server WHERE id = 1').first())?.esecuri || '[]')
     .filter(t => acum - t < 15 * 60e3);
-  if (recente.length >= 10) return { eroare: [429, 'Prea multe parole greşite — mai încearcă peste 15 minute.'] };
+  if (recente.length >= 10) return raspuns(429, { eroare: 'Prea multe parole greşite — mai încearcă peste 15 minute.' });
   let parola = '';
   try { parola = decodeURIComponent(request.headers.get('X-Parola') || ''); } catch { /* antet stricat = parolă greşită */ }
-  if (egale(enc.encode(parola), enc.encode(env.PAROLA_ADMIN))) return {};
+  if (egale(enc.encode(parola), enc.encode(env.PAROLA_ADMIN))) return null;
   await env.DB.prepare('UPDATE server SET esecuri = ? WHERE id = 1').bind(JSON.stringify([...recente, acum])).run();
-  return { eroare: [401, 'Parolă greşită.'] };
+  return raspuns(401, { eroare: 'Parolă greşită.' });
 }
 
 // următoarea versiune — la fiecare adăugare/modificare; managerul cere „după versiunea X"

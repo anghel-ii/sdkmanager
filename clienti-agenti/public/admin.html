@@ -106,7 +106,8 @@ async function incarca() {
   $('versiune').textContent = r?.versiune || '—';
   $('mod').innerHTML = !r ? '—' : !r.disponibil ? '<span class="eroare">nu se poate de aici (managerul nu rulează pe Windows)</span>'
     : r.ruleaza ? '<span class="astept">în curs…</span>'
-    : r.mod === 'cheie' ? 'pachetul de pe GitHub (cheia GitHub e pusă)' : 'sarcina „SDK Actualizare" (ca administrator)';
+    : r.mod === 'cheie' ? 'pachetul de pe GitHub (cheia GitHub e pusă)'
+    : 'sarcina „SDK Actualizare" — merge doar dacă managerul rulează ca administrator; altfel pune cheia GitHub în /admin-ul managerului';
   cererePeDrum = !!d.cerere;
   $('verifica').disabled = $('actualizeaza').disabled = cererePeDrum || !viu || !!r?.ruleaza || !r?.disponibil;
   $('mesaj').innerHTML = d.cerere
