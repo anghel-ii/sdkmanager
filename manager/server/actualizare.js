@@ -154,12 +154,19 @@ async function aplicaPachet() {
   if (fs.existsSync(FISIER_VERSIUNE)) fs.copyFileSync(FISIER_VERSIUNE, path.join(inainte, 'VERSIUNE.json'));
   scrieJurnal(`Copia codului de acum: ${inainte}`);
 
-  for (const [f, b64] of fisiere) {
-    const dest = path.join(COD, f);
-    fs.mkdirSync(path.dirname(dest), { recursive: true });
-    fs.writeFileSync(dest, Buffer.from(b64, 'base64'));
+  try {
+    for (const [f, b64] of fisiere) {
+      const dest = path.join(COD, f);
+      fs.mkdirSync(path.dirname(dest), { recursive: true });
+      fs.writeFileSync(dest, Buffer.from(b64, 'base64'));
+    }
+    fs.writeFileSync(FISIER_VERSIUNE, JSON.stringify(p.versiune));
+  } catch (e) {
+    // scrierea s-a oprit la jumătate — înapoi codul de dinainte, serverul rămâne pornit pe el
+    fs.rmSync(FISIER_VERSIUNE, { force: true });
+    fs.cpSync(inainte, COD, { recursive: true, force: true });
+    throw e;
   }
-  fs.writeFileSync(FISIER_VERSIUNE, JSON.stringify(p.versiune));
   scrieJurnal('Fişierele noi sunt la locul lor. Repornesc serverul…');
 
   // repornirea — proces separat, care trăieşte după ce ăsta se opreşte
