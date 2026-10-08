@@ -30,8 +30,10 @@ const { acumMs } = require('./ora.js');
 const SARCINA = 'SDK Actualizare';
 const COD = path.resolve(config.radacina, '..');                          // clona git
 const DATE = path.dirname(config.db);
-const JURNAL = path.join(DATE, 'actualizari.log');                         // scris de actualizeaza.ps1 / de aici
+const JURNAL = path.join(DATE, 'actualizari.log');                         // scris de actualizeaza.ps1
 const FISIER_VERSIUNE = path.join(COD, 'VERSIUNE.json');                   // scris de update-ul fără admin
+// jurnalul update-ului fără admin — separat: transcriptul PowerShell de mai sus poate fi UTF-16
+const JURNAL_FARA_ADMIN = path.join(DATE, 'update', 'jurnal.log');
 const peWindows = process.platform === 'win32';
 
 const ruleaza = async (exe, args) => (await promisify(execFile)(exe, args, { windowsHide: true })).stdout.trim();
@@ -52,14 +54,16 @@ async function sarcinaRuleaza() {
 }
 
 // Coada jurnalului. PowerShell 5.1 poate scrie transcriptul în UTF-16.
-function coadaJurnal(linii = 60) {
+function coadaJurnal(fisier, linii = 60) {
   let buf;
-  try { buf = fs.readFileSync(JURNAL); } catch { return ''; }
+  try { buf = fs.readFileSync(fisier); } catch { return ''; }
   const text = buf[0] === 0xff && buf[1] === 0xfe ? buf.toString('utf16le') : buf.toString('utf8');
   return text.split(/\r?\n/).slice(-linii).join('\n');
 }
-const scrieJurnal = t => fs.appendFileSync(JURNAL,
-  `${new Date(acumMs()).toLocaleString('ro-RO', { timeZone: 'Europe/Bucharest' })}  ${t}\n`);
+function scrieJurnal(t) {
+  fs.mkdirSync(path.dirname(JURNAL_FARA_ADMIN), { recursive: true });
+  fs.appendFileSync(JURNAL_FARA_ADMIN, `${new Date(acumMs()).toLocaleString('ro-RO', { timeZone: 'Europe/Bucharest' })}  ${t}\n`);
+}
 
 // Versiunea care rulează: VERSIUNE.json (după un update fără admin), altfel git.
 async function versiuneLocala() {
@@ -111,7 +115,7 @@ async function stare(ctx) {
     areCheie: !!cheieGithub(),
     versiune: textVersiune(await versiuneLocala()),
     ruleaza: fara ? inCurs : await sarcinaRuleaza(),
-    jurnal: coadaJurnal(),
+    jurnal: coadaJurnal(fara ? JURNAL_FARA_ADMIN : JURNAL),
   });
 }
 
@@ -172,7 +176,7 @@ async function aplicaPachet() {
   // repornirea — proces separat, care trăieşte după ce ăsta se opreşte
   spawn(process.execPath, [path.join(COD, 'deploy', 'windows', 'reporneste.js')], {
     detached: true, stdio: 'ignore', windowsHide: true,
-    env: { ...process.env, SDK_COD: COD, SDK_INAINTE: inainte, SDK_JURNAL: JURNAL, SDK_LOG: path.join(DATE, 'server.log'),
+    env: { ...process.env, SDK_COD: COD, SDK_INAINTE: inainte, SDK_JURNAL: JURNAL_FARA_ADMIN, SDK_LOG: path.join(DATE, 'server.log'),
       SDK_URL: `${config.https ? 'https' : 'http'}://127.0.0.1:${config.port}/login` },
   }).unref();
   setTimeout(() => process.emit('SIGTERM'), 500);   // oprirea curată din index.js (închide baza)
