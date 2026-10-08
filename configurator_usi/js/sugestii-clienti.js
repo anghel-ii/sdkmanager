@@ -18,9 +18,9 @@ export function initSugestiiClienti(laAgent) {
   camp.addEventListener('input', async e => {
     // alegerea din listă nu e tastare: fără inputType (Chrome) sau insertReplacementText (Firefox)
     if (!e.inputType || e.inputType === 'insertReplacementText') {
-      // ponytail: la nume identice (13 din 5300) ia primul; listă proprie în loc de <datalist> dacă deranjează
-      const c = gasiti.find(c => c.nume === camp.value);
+      const c = gasiti.find(c => c.valoare === camp.value);
       if (!c) return;
+      camp.value = c.nume;   // „NUME — adresa" (la nume cu mai multe adrese) → doar numele
       completat = { nume: c.nume,
         clientTelefon: c.telefon_delegat || c.telefon_administrator || '',
         clientAdresa:  [c.adresa_livrare || c.adresa_sediu, c.localitate, c.judet].filter(Boolean).join(', ') };
@@ -38,8 +38,12 @@ export function initSugestiiClienti(laAgent) {
     const q = camp.value.trim();
     const clienti = await cautaClienti(q);
     if (camp.value.trim() !== q) return;   // între timp s-a mai tastat
-    gasiti = clienti;
-    lista.innerHTML = clienti.map(c =>
-      `<option value="${esc(c.nume)}" label="${esc([c.localitate, c.cui].filter(Boolean).join(' · '))}"></option>`).join('');
+    // acelaşi client pe mai multe rânduri = mai multe adrese (ex. din lista FAN Courier): în
+    // <datalist> alegerea dă doar textul, deci textul lor poartă şi adresa, ca să fie distincte
+    const nume = clienti.map(c => c.nume);
+    gasiti = clienti.map(c => ({ ...c, valoare: nume.indexOf(c.nume) === nume.lastIndexOf(c.nume) ? c.nume
+      : `${c.nume} — ${[c.adresa_livrare || c.adresa_sediu, c.localitate].filter(Boolean).join(', ')}` }));
+    lista.innerHTML = gasiti.map(c =>
+      `<option value="${esc(c.valoare)}" label="${esc([c.localitate, c.cui].filter(Boolean).join(' · '))}"></option>`).join('');
   });
 }
