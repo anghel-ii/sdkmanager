@@ -1274,6 +1274,7 @@ export async function initUI() {
       $('clientNume').value    = o.comanda.client_nume ?? '';
       $('clientTelefon').value = o.comanda.client_telefon ?? '';
       $('clientAdresa').value  = o.comanda.client_adresa ?? '';
+      $('ofertaNr').value      = o.comanda.oferta_nr || o.comanda.numar || '';   // pe fişă, lângă livrare / plată / agent
       modFisa = {
         numar:  `${o.comanda.oferta_nr || o.comanda.numar}${n > 1 ? ` · produsul ${k + 1} din ${n}` : ''}`,
         coduri: (o.coduri ?? []).map(cod_bare => ({ cod_bare })),

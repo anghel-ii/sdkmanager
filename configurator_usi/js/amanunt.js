@@ -464,6 +464,7 @@ function tipareste() {
     <table class="perechi">
       ${rand('Client', $('clientNume').value)}${rand('Telefon', $('clientTelefon').value)}${rand('Adresă', $('clientAdresa').value)}
       ${rand('Mod de livrare', comanda.livrare)}${rand('Metodă de plată', plataText(comanda.plata))}${rand('Agent', comanda.agent)}
+      ${rand('Număr ofertă', $('ofertaNr').value.trim())}
     </table>
     <table>
       <thead><tr><th>#</th><th>Cod</th><th>Produs</th><th>Cant.</th><th>✓</th></tr></thead>

@@ -22,9 +22,9 @@ import JsBarcode from 'jsbarcode';
 //  Funcţionează ORICÂND — inclusiv configuratorul deschis de pe disc, fără
 //  server. Nu ţine cont de starea ofertei (js/oferta.js).
 //
-//  Două pagini: faţa (schiţă/cote/necesar — pt. atelier) şi spatele (tabelul
-//  de facturare — pt. birou/NeoManager), separate cu page-break, ca la
-//  printare faţă-verso spatele să cadă exact pe facturare.
+//  Două pagini: faţa (cote, sticlă/PAL, necesar — pt. atelier) şi spatele
+//  (facturarea — pt. birou/NeoManager — şi, la uşi, schiţele mari ale uşilor),
+//  separate cu page-break, ca la printare faţă-verso spatele să cadă exact pe facturare.
 // ═══════════════════════════════════════════════════════════════════════════
 
 const esc = t => String(t ?? '').replace(/[&<>"]/g, c =>
@@ -46,14 +46,44 @@ function geamModelLabel(i) {
   return g ? g.denumire : (state.geam?.[i] ?? '—');
 }
 
-// ── Desenele uşilor (doar Confort) — înlocuiesc tabelul de asamblare ───────
-// Cerut explicit (2026-09-18): alb-negru (tuşul color e scump), cât mai mari,
-// aproape lipite, fără să iasă din proporţiile reale; pe fiecare panou doar
-// PAL/OGL şi cota (înălţime × lăţime), scrise cât mai mare; deasupra NOI /
-// CLIENTUL; dedesubt modelul de geam, amortizările şi divizările aplicate
-// (acestea NU se mai desenează). SVG în mm reali: viewBox = uşa (+ o margine
-// în dreapta doar dacă are bară H, pt. eticheta „H").
+// ── Schiţele uşilor — pe VERSO, sub facturare, cât încap (userul, 2026-10-08: pe faţă
+// erau înghesuite; acolo stă acum tabelul Sticlă / PAL). Alb-negru (tuşul color e
+// scump), la scară: cotele uşii (L sus, H în stânga), pe fiecare panou PAL/OGL şi
+// cota de debitare, divizările aplicate ca linii întrerupte (legenda sub desen);
+// deasupra NOI / CLIENTUL, dedesubt geamul, amortizările, mânerul aplicat.
+// SVG în mm reali (+ marginile cotelor şi, la bară H, eticheta „H" în dreapta).
 const PARTE_TEXT = { fata: 'faţă', spate: 'spate', ambele: 'faţă + spate' };
+
+// Cotele de gabarit ale uşii: L deasupra, H în stânga → { el, st, sus } (marginile lor)
+function coteUsa(W, H, linie) {
+  const f = Math.max(W, H) * 0.04, d = f * 1.5, tic = f * 0.35;
+  const l = (x1, y1, x2, y2) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#000" stroke-width="${linie * 0.6}"/>`;
+  const xH = -d - f * 0.3;
+  return {
+    el: [l(0, -d, W, -d), l(0, -d - tic, 0, -d + tic), l(W, -d - tic, W, -d + tic),
+      `<text x="${W / 2}" y="${-d - f * 0.3}" font-size="${f}" font-weight="700" text-anchor="middle">L ${Math.round(W)}</text>`,
+      l(-d, 0, -d, H), l(-d - tic, 0, -d + tic, 0), l(-d - tic, H, -d + tic, H),
+      `<text x="${xH}" y="${H / 2}" font-size="${f}" font-weight="700" text-anchor="middle" transform="rotate(-90 ${xH} ${H / 2})">H ${Math.round(H)}</text>`],
+    st: d + f * 1.4, sus: d + f * 1.4,
+  };
+}
+
+// Divizare aplicată = linie întreruptă, groasă cât banda (10 / 20 mm), ca s-o deosebeşti
+// de profile (linii pline). Pe un panou, ca în 3D: verticalele pe toată înălţimea lui,
+// orizontalele la distanţe egale.
+const stilAplicata = (latime, linie) =>
+  `stroke="#000" stroke-width="${Math.max(+latime, linie)}" stroke-dasharray="${linie * 5} ${linie * 3}"`;
+function liniiAplicate(da, x, y, w, h, linie) {
+  if (!da || da.latime === 'fara') return [];
+  const V = da.verticale ?? 0, O = da.orizontale ?? 0, st = stilAplicata(da.latime, linie), el = [];
+  for (let j = 1; j <= V; j++) { const xj = x + w * j / (V + 1); el.push(`<line x1="${xj}" y1="${y}" x2="${xj}" y2="${y + h}" ${st}/>`); }
+  for (let k = 1; k <= O; k++) { const yk = y + h * k / (O + 1); el.push(`<line x1="${x}" y1="${yk}" x2="${x + w}" y2="${yk}" ${st}/>`); }
+  return el;
+}
+// textul de pe panou, cu contur alb — rămâne citibil peste liniile aplicatelor
+const textPanou = (x, y, font, t, bold = false) =>
+  `<text x="${x}" y="${y}" font-size="${font}"${bold ? ' font-weight="700"' : ''} text-anchor="middle"
+    paint-order="stroke" stroke="#fff" stroke-width="${font * 0.22}" stroke-linejoin="round">${t}</text>`;
 
 // Pe ce parte are uşa amortizare — doar la uşile asamblate DE NOI (userul, 2026-10-02):
 // Confort / UTIL = amortizările alese pe uşă; suspendate = rola cu amortizor.
@@ -92,24 +122,27 @@ function desenUtil(sys, spec, i) {
   const o = state.util?.orizontale ?? 'ambele';
   const sus = spec.uPeUsa && o !== 'jos' ? INALT_U_DESEN : 0, jos = spec.uPeUsa && o !== 'sus' ? INALT_U_DESEN : 0;
   const linie = Math.max(W, H) * 0.004;
-  const el = [`<rect x="${linie / 2}" y="${linie / 2}" width="${W - linie}" height="${H - linie}" fill="none" stroke="#000" stroke-width="${linie * 2}"/>`];
+  const cote = coteUsa(W, H, linie);
+  const el = [...cote.el, `<rect x="${linie / 2}" y="${linie / 2}" width="${W - linie}" height="${H - linie}" fill="none" stroke="#000" stroke-width="${linie * 2}"/>`];
   const total = p.heights.reduce((a, h) => a + h, 0) || 1;
   const loc = H - sus - jos - p.divisions * GROS_H_DESEN;
   let y = H - jos;   // SVG: y în jos; panourile urcă de jos
   p.heights.forEach((h, k) => {
     const hp = loc * h / total;
     y -= hp;
-    el.push(`<rect x="${mont}" y="${y}" width="${W - 2 * mont}" height="${hp}" fill="none" stroke="#000" stroke-width="${linie}"/>`);
+    el.push(`<rect x="${mont}" y="${y}" width="${W - 2 * mont}" height="${hp}" fill="none" stroke="#000" stroke-width="${linie}"/>`,
+      ...liniiAplicate(state.divAplicate?.[i], mont, y, W - 2 * mont, hp, linie));
     const font = Math.min((W - 2 * mont) * 0.15, hp * 0.26), cx = W / 2, cy = y + hp / 2;
-    el.push(`<text x="${cx}" y="${cy - font * 0.15}" font-size="${font}" font-weight="700" text-anchor="middle">PAL</text>`,
-      `<text x="${cx}" y="${cy + font * 0.95}" font-size="${font * 0.8}" text-anchor="middle">${Math.round(h)}×${Math.round(spec.panouL)}</text>`);
+    el.push(textPanou(cx, cy - font * 0.15, font, 'PAL', true),
+      textPanou(cx, cy + font * 0.95, font * 0.8, `${Math.round(h)}×${Math.round(spec.panouL)}`));
     if (k < p.heights.length - 1) {
       y -= GROS_H_DESEN;
       el.push(`<line x1="${mont}" y1="${y + GROS_H_DESEN / 2}" x2="${W - mont}" y2="${y + GROS_H_DESEN / 2}" stroke="#000" stroke-width="${GROS_H_DESEN}"/>`);
     }
   });
   el.push(...semneAmortizare(amortizareUsa(sys, i), W, H, mont, sus, linie));
-  return { svg: `<svg viewBox="0 0 ${W} ${H}">${el.join('')}</svg>`, raport: W / H };
+  const vbW = W + cote.st, vbH = H + cote.sus;
+  return { svg: `<svg viewBox="${-cote.st} ${-cote.sus} ${vbW} ${vbH}">${el.join('')}</svg>`, raport: vbW / vbH };
 }
 
 function desenUsa(sys, spec, i, margH = 0) {
@@ -130,7 +163,8 @@ function desenUsa(sys, spec, i, margH = 0) {
   // la blocDesene), altfel uşile cu H ar ieşi mai mici în desen.
   const marg = margH;
   const linie = Math.max(W, H) * 0.004;
-  const el = [];
+  const cote = coteUsa(W, H, linie);
+  const el = [...cote.el];
 
   el.push(`<rect x="${linie / 2}" y="${linie / 2}" width="${W - linie}" height="${H - linie}" fill="none" stroke="#000" stroke-width="${linie * 2}"/>`);
   let y = jos;
@@ -138,11 +172,12 @@ function desenUsa(sys, spec, i, margH = 0) {
     const h = hDesen(k);
     const pal = p.mats[k] === 'pal';
     const latime = Math.round(pal ? spec.glass.palW : spec.glass.glassW);
-    el.push(`<rect x="${mont}" y="${Y(y + h)}" width="${innerW}" height="${h}" fill="none" stroke="#000" stroke-width="${linie}"/>`);
+    el.push(`<rect x="${mont}" y="${Y(y + h)}" width="${innerW}" height="${h}" fill="none" stroke="#000" stroke-width="${linie}"/>`,
+      ...liniiAplicate(state.divAplicate?.[i], mont, Y(y + h), innerW, h, linie));
     const font = Math.min(innerW * 0.15, h * 0.26);
     const cx = mont + innerW / 2, cy = Y(y + h / 2);
-    el.push(`<text x="${cx}" y="${cy - font * 0.15}" font-size="${font}" font-weight="700" text-anchor="middle">${pal ? 'PAL' : 'OGL'}</text>`);
-    el.push(`<text x="${cx}" y="${cy + font * 0.95}" font-size="${font * 0.8}" text-anchor="middle">${Math.round(p.heights[k])}×${latime}</text>`);
+    el.push(textPanou(cx, cy - font * 0.15, font, pal ? 'PAL' : 'OGL', true),
+      textPanou(cx, cy + font * 0.95, font * 0.8, `${Math.round(p.heights[k])}×${latime}`));
     y += h;
     if (k < p.heights.length - 1) {
       const s = slot(k);
@@ -151,6 +186,12 @@ function desenUsa(sys, spec, i, margH = 0) {
         el.push(`<line x1="${mont}" y1="${Y(c)}" x2="${W - mont}" y2="${Y(c)}" stroke="#000" stroke-width="${PROFIL_H_3D.fata}"/>`);
         el.push(`<text x="${W + 18}" y="${Y(c) + 30}" font-size="90" font-weight="700">H</text>`);
       }
+      // LUX: intermediarul ramei (sticlă–sticlă) are mereu o aplicată de 10 mm pe faţă — întreruptă
+      // pe fond alb, altfel se pierde în chenarele panourilor de lângă
+      if (p.profil[k] === 'R') {
+        const yc = Y(y + s / 2), bara = st => `<line x1="${mont}" y1="${yc}" x2="${W - mont}" y2="${yc}" ${st}/>`;
+        el.push(bara(`stroke="#fff" stroke-width="${s + linie * 2}"`), bara(stilAplicata(10, linie * 1.5)));
+      }
       y += s;
     }
   });
@@ -158,15 +199,16 @@ function desenUsa(sys, spec, i, margH = 0) {
   // desenat ultimul, peste geam
   el.push(...semneAmortizare(amort, W, H, mont, sus, linie));
 
+  const vbW = W + cote.st + marg, vbH = H + cote.sus;
   return {
-    svg: `<svg viewBox="0 0 ${W + marg} ${H}">${el.join('')}</svg>`,
-    raport: (W + marg) / H,
+    svg: `<svg viewBox="${-cote.st} ${-cote.sus} ${vbW} ${vbH}">${el.join('')}</svg>`,
+    raport: vbW / vbH,
   };
 }
 
 const rolaLabel = v => (v === 'amortizor' ? 'amortizor' : 'simplă');
 
-function textSubDesen(sys, i) {
+function textSubDesen(sys, spec, i) {
   const a  = state.amortizare?.[i] ?? {};
   const w  = state.wheels?.[i] ?? {};
   const da = state.divAplicate?.[i];
@@ -180,11 +222,16 @@ function textSubDesen(sys, i) {
     // LUX: mânerul aplicat
     ...(state.manerAplicat?.[i] && state.manerAplicat[i] !== 'fara'
       ? [['Mâner aplicat', { stanga: 'stânga', dreapta: 'dreapta', ambele: 'stânga şi dreapta' }[state.manerAplicat[i]]]] : []),
-    ...(da && da.latime !== 'fara'
-      ? [['Aplicate', `${da.latime}mm ${PARTE_TEXT[da.parte] ?? da.parte} · ${da.verticale ?? 0} vert. × ${da.orizontale ?? 0} oriz. / panou`]]
-      : []),
   ];
-  return randuri.map(([e, v]) => `<div class="sub-rand"><span class="sub-et">${e}:</span> ${esc(v)}</div>`).join('');
+  // legenda liniilor întrerupte: aplicatele alese + (LUX) cea de 10 mm de pe intermediari
+  const mostra = '<svg class="mostra" viewBox="0 0 24 4"><line x1="0" y1="2" x2="24" y2="2" stroke="#000" stroke-width="2.4" stroke-dasharray="5 3"/></svg>';
+  const aplicate = [
+    ...(da && da.latime !== 'fara'
+      ? [`${da.latime} mm ${PARTE_TEXT[da.parte] ?? da.parte} · ${da.verticale ?? 0} vert. × ${da.orizontale ?? 0} oriz. / panou`] : []),
+    ...((spec.glass?.panels?.[i]?.profil ?? []).includes('R') ? ['10 mm faţă pe intermediar'] : []),
+  ];
+  return randuri.map(([e, v]) => `<div class="sub-rand"><span class="sub-et">${e}:</span> ${esc(v)}</div>`).join('')
+    + aplicate.map(t => `<div class="sub-rand">${mostra} <span class="sub-et">Aplicată:</span> ${esc(t)}</div>`).join('');
 }
 
 // `usi` = ce uşi se desenează (indicii lor; implicit toate), `desen(i)` = desenul uneia
@@ -199,50 +246,10 @@ function blocDesene(sys, spec, usi = [...Array(spec.door.count || 0).keys()], de
       <div class="usa-col" style="--r:${raport.toFixed(4)}">
         <div class="usa-cap"><span class="usa-nr">Uşa ${i + 1}</span> <span class="usa-cine">${cine}</span></div>
         ${svg}
-        <div class="usa-sub">${textSubDesen(sys, i)}</div>
+        <div class="usa-sub">${textSubDesen(sys, spec, i)}</div>
       </div>`;
   }).join('');
-  return `<div class="desene" style="--n:${n}">${coloane}</div>`;
-}
-
-// Tabel de dimensiuni EXACTE, pt. spatele fişei — aceeaşi structură transpusă
-// (coloană per uşă, rând per nivel de panou, sus→jos), cu celule care arată
-// direct cota de debitare, nu doar materialul: "P-876x765" (PAL) sau
-// "O-1989x876" (sticlă) — înălţime×lăţime, fără spaţii, fără "mm".
-function tabelDimensiuniPanouri(spec) {
-  const n = spec.door.count || 0;
-  if (!n) return '';
-
-  // Fiecare panou cu înălţimea LUI — la Confort pot diferi în aceeaşi uşă
-  // (înălţimi introduse în opţiuni avansate).
-  const stivePanouri = Array.from({ length: n }, (_, i) => {
-    const p    = spec.glass?.panels?.[i];
-    const mats = state.panels?.[i] ?? [];
-    const hs   = p?.heights ?? mats.map(() => p?.paneH ?? 0);
-    return mats.map((mat, k) => ({ mat, h: Math.round(hs[k] ?? 0) })).reverse();   // sus→jos
-  });
-  const maxPanouri = Math.max(1, ...stivePanouri.map(s => s.length));
-
-  const glassW = Math.round(spec.glass?.glassW ?? 0);
-  const palW   = Math.round(spec.glass?.palW ?? glassW);
-  const antetUsi = Array.from({ length: n }, (_, i) => `<th>Uşa ${i + 1}</th>`).join('');
-
-  const randuriPanouri = Array.from({ length: maxPanouri }, (_, nivel) => {
-    const celule = stivePanouri.map(stiva => {
-      const panou = stiva[nivel];
-      if (!panou) return '<td>—</td>';
-      const latime = panou.mat === 'pal' ? palW : glassW;
-      const cod    = panou.mat === 'pal' ? 'P' : 'O';
-      return `<td>${cod}-${panou.h}x${latime}</td>`;
-    }).join('');
-    return `<tr><td class="eticheta-rand">Panou ${nivel + 1}</td>${celule}</tr>`;
-  }).join('');
-
-  return `
-    <table class="usi-transpus">
-      <thead><tr><th></th>${antetUsi}</tr></thead>
-      <tbody>${randuriPanouri}</tbody>
-    </table>`;
+  return `<div class="desene" style="--n:${Math.min(n, 4)}">${coloane}</div>`;   // max. 4 pe rând — mai puţin înghesuite
 }
 
 // ── Debitare rame — toate laturile din profilul modelului; EXCEPŢIE 842: doar
@@ -470,6 +477,8 @@ export function deschideFisa(client, oferta = null, salvate = null) {
   const telefon = document.getElementById('clientTelefon')?.value.trim() ?? '';
   const adresa  = document.getElementById('clientAdresa')?.value.trim() ?? '';
   const factura = salvate?.factura ?? currentBilling();
+  // nr. ofertei (scris de mână) — rând în tabelul cu livrarea / plata / agentul, la toate gamele (userul, 2026-10-08)
+  const nrOferta = document.getElementById('ofertaNr')?.value.trim() || oferta?.numar || '—';
   // cale absolută — fereastra nouă porneşte de la about:blank, o cale
   // relativă la sketch (ex. 'assets/verona.jpeg') nu s-ar rezolva acolo
   const sketch  = sys.meta.sketch ? new URL(sys.meta.sketch, location.href).href : null;
@@ -508,6 +517,7 @@ export function deschideFisa(client, oferta = null, salvate = null) {
     ['Mod de livrare',    detaliiComanda(state).livrare ?? '—'],
     ['Metodă de plată',   plataText(detaliiComanda(state).plata) ?? '—'],
     ['Agent',             detaliiComanda(state).agent ?? '—'],
+    ['Număr ofertă',      nrOferta],
   ], 'cote') : tabelMic([
     ['H gol',                `${spec.opening.h} mm`],
     ['L gol',                `${spec.opening.w} mm`],
@@ -522,14 +532,17 @@ export function deschideFisa(client, oferta = null, salvate = null) {
         `<tr><td>${rame.asamblare === 'noi' ? esc(findGeam(rame.geam)?.cod ?? '—') : 'Client'}</td><td>${x.geamH} × ${x.geamL} mm</td>
          <td class="num">${x.buc} buc</td><td>${rame.asamblare === 'noi' ? 'Noi' : 'Client'}</td></tr>`))
     : tabel(['Sticlă / PAL', 'Dimensiuni', 'Cant.', 'Cine'], necesarSticlaPal(sys, spec));
-  // Desene în loc de tabelul de asamblare, necesarul de sticlă/PAL pe spate,
-  // fără margini, câmpuri de atelier — Confort 2026-09-18, suspendate 2026-09-21.
+  // Uşile: pe faţă tabelul Sticlă / PAL (unde erau schiţele), schiţele pe verso — 2026-10-08.
+  const schite = rame ? '' : util
+    ? blocDesene(sys, spec, [...Array(spec.n).keys()].filter(i => state.assembly?.[i] === 'noi'), i => desenUtil(sys, spec, i))
+    : blocDesene(sys, spec);
 
   const nrNoi    = (state.assembly ?? []).filter(a => a === 'noi').length;
   const nrClient = (state.assembly ?? []).filter(a => a === 'client').length;
   // detaliile comenzii (toate gamele) — livrare / metodă de plată / agent
   const det = detaliiComanda(state);
-  const detalii = tabelMic([['Mod de livrare', det.livrare ?? '—'], ['Metodă de plată', plataText(det.plata) ?? '—'], ['Agent', det.agent ?? '—']]);
+  const detalii = tabelMic([['Mod de livrare', det.livrare ?? '—'], ['Metodă de plată', plataText(det.plata) ?? '—'], ['Agent', det.agent ?? '—'],
+    ['Număr ofertă', nrOferta]]);
   const montaj = util ? tabelMic([
     ['Asamblăm noi',        `${nrNoi} uşi`],
     ['Asamblează clientul', `${nrClient} uşi`],
@@ -626,41 +639,26 @@ export function deschideFisa(client, oferta = null, salvate = null) {
   table.mic td:first-child { color: #555; width: 55%; }
   table.mic td.num { font-weight: 600; }
 
-  /* tabelul transpus de uşi — o coloană per uşă, până la 7 la Confort, deci
-     celule înguste şi text mai mic ca să încapă pe lăţimea A4 */
-  table.usi-transpus { font-size: 10px; table-layout: fixed; }
-  table.usi-transpus th, table.usi-transpus td {
-    padding: 4px 3px; text-align: center;
-    /* text lung (ex. modelul de geam) se împachetează pe mai multe rânduri
-       în celulă, nu se taie şi nu iese din pagină */
-    overflow-wrap: break-word; word-break: break-word;
-  }
-  table.usi-transpus td.eticheta-rand, table.usi-transpus th:first-child {
-    text-align: left; color: #555; width: 78px;
-  }
-
   /* lăţimea utilă A4 şi pe ecran, ca măsurătoarea pt. modul compact să
      corespundă cu ce iese la print */
   .fata { width: 182mm; }
 
-  /* desenele uşilor (Confort) — alb-negru, cât mai mari, aproape lipite,
-     fără să iasă din proporţii: lăţimea = înălţimea maximă × raportul real
-     al uşii, dar niciodată mai mult decât partea ei din lăţimea paginii */
-  .desene { --hmax: 118mm; display: flex; justify-content: center; gap: 2mm; margin-top: 10px; }
-  body.nivel-3 .desene { margin-top: 6px; }
+  /* schiţele uşilor (verso) — alb-negru, cât mai mari, fără să iasă din proporţii:
+     lăţimea = înălţimea maximă × raportul real al uşii, dar niciodată mai mult decât
+     partea ei din lăţimea paginii; max. 4 pe rând (--n = coloanele unui rând) */
+  .desene { --hmax: 118mm; display: flex; flex-wrap: wrap; justify-content: center; gap: 5mm 4mm; margin-top: 6mm; }
   /* coloana e cel puţin 40mm (cât încape pe pagină), ca textul de sub desen
      să nu se rupă pe multe rânduri când desenul e mic; desenul are lăţimea lui */
   .usa-col { flex: 0 0 auto; width: max(calc(var(--hmax) * var(--r)), 40mm);
-             max-width: calc((198mm - (var(--n) - 1) * 2mm) / var(--n)); min-width: 0; }
-  .usa-col svg { width: calc(var(--hmax) * var(--r)); max-width: 100%; height: auto; display: block;
+             max-width: calc((198mm - (var(--n) - 1) * 4mm) / var(--n)); min-width: 0; }
+  .usa-col > svg { width: calc(var(--hmax) * var(--r)); max-width: 100%; height: auto; display: block;
                  margin: 0 auto; font-family: Arial, sans-serif; }
   .usa-cap { text-align: center; margin-bottom: 2px; line-height: 1.15; }
   .usa-nr { display: block; font-size: 10px; color: #555; }
   .usa-cine { display: block; font-size: 15px; font-weight: 700; letter-spacing: .02em; line-height: 1.1; }
   .usa-sub { font-size: 10.5px; line-height: 1.3; margin-top: 3px; overflow-wrap: break-word; }
   .sub-et { color: #555; }
-  body.nivel-1 .usa-sub { font-size: 9px; line-height: 1.15; margin-top: 1px; }
-  body.nivel-1 .sub-et { display: none; }
+  .mostra { width: 7mm; height: 1.2mm; vertical-align: middle; }
   body.nivel-1 table.necesar-materiale td { padding: 2px 5px; }
   body.nivel-3 .cap { margin-bottom: 8px; }
   body.nivel-3 table.cote { font-size: 11px; }
@@ -792,8 +790,7 @@ export function deschideFisa(client, oferta = null, salvate = null) {
 
   ${util ? tabel(['PAL (clientul)', 'Dimensiuni', 'Cant.'], panouriClient.map(r =>
         `<tr><td>${esc(r.label)}</td><td>${esc(r.cut)}</td><td class="num">${r.qty} buc</td></tr>`))
-      + blocDesene(sys, spec, [...Array(spec.n).keys()].filter(i => state.assembly?.[i] === 'noi'), i => desenUtil(sys, spec, i))
-    : rame ? debitareRame(spec) : blocDesene(sys, spec)}
+    : rame ? debitareRame(spec) : necesarSP}
 
   <div class="jos">${necesarHtml}${eRame ? '' : campuriAtelier}</div>
   ${eRame ? observatiiRame : ''}
@@ -806,7 +803,6 @@ export function deschideFisa(client, oferta = null, salvate = null) {
       ${client ? ` · ${esc(client)}` : ''} · ${acum()}</div>`}
 
     ${rame ? schiteGaurire(spec, rame) : ''}
-    ${rame || util ? '' : tabelDimensiuniPanouri(spec)}
 
     ${tabel(['Cod', 'Denumire', 'Cant.'],
         factura.lines.map(l => `<tr><td>${esc(l.cod)}</td><td>${esc(l.denumire ?? '—')}</td>
@@ -816,18 +812,17 @@ export function deschideFisa(client, oferta = null, salvate = null) {
     ${!factura.lines.length && !factura.errors.length
         ? '<div class="nota">Nicio linie de facturare pt. configuraţia asta.</div>' : ''}
 
-    ${necesarSP}
+    ${rame ? necesarSP : schite}
   </div>
 
 <script>
   // După ce se încarcă schiţa (altfel nu i se ştie înălţimea):
   //  1. schiţa se micşorează/măreşte ca cele două coloane din cap să se
-  //     termine la aceeaşi înălţime (desenele pornesc de la o linie dreaptă);
+  //     termine la aceeaşi înălţime;
   //  2. dacă faţa nu încape pe o foaie A4 (necesarul ar trece pe pagina 2 şi
-  //     ar strica printul faţă-verso), se compactează în trepte, doar cât e
-  //     nevoie: 1 = text compact + rânduri mai joase; 2, 3 = desene mai mici;
-  //     (înainte de toate, secţiunea de montaj e limitată la 18% din foaie)
-  //  3. faţa se întinde pe toată foaia — câmpurile de atelier umplu restul.
+  //     ar strica printul faţă-verso), se compactează în trepte, doar cât e nevoie;
+  //  3. faţa se întinde pe toată foaia — câmpurile de atelier umplu restul;
+  //  4. verso: schiţele uşilor umplu ce rămâne sub facturare, fără să treacă pe a 3-a foaie.
   window.addEventListener('load', function () {
     function aliniaza() {
       var st = document.querySelector('.cap .stanga'), dr = document.querySelector('.cap .dreapta');
@@ -839,27 +834,9 @@ export function deschideFisa(client, oferta = null, salvate = null) {
     var fata = document.querySelector('.fata');
     var PX = 96 / 25.4;                       // px CSS pe mm
     var util = 296 * PX * 0.98;
-    // Secţiunea de montaj (titluri + desene + text) — max. 18% din înălţimea
-    // foii (userul, 2026-09-21; înainte 30%). Se măsoară şi se micşorează desenele cât e
-    // nevoie (de 2 ori: textul de sub desene se poate reaşeza la altă lăţime).
-    var desene = document.querySelector('.desene');
-    var hmax = 118;
-    function setH(v) { hmax = Math.max(20, v); desene.style.setProperty('--hmax', hmax + 'mm'); }
-    if (desene) {
-      var lim = (297 * 0.18 - 1) * PX;   // 18% din foaie, 1mm rezervă pt. rotunjiri
-      // se porneşte de la înălţimea DESENATĂ (poate fi deja mai mică decât hmax,
-      // când lăţimea coloanei e cea care limitează), nu de la hmax
-      for (var k = 0; k < 6 && desene.offsetHeight > lim; k++) {
-        var svgEl = desene.querySelector('svg');
-        if (!svgEl) break;
-        var svgH = svgEl.getBoundingClientRect().height / PX;
-        setH(svgH - (desene.offsetHeight - lim) / PX);
-      }
-    }
     aliniaza();
     for (var n = 1; n <= 3 && fata.offsetHeight > util; n++) {
       document.body.classList.add('nivel-' + n);
-      if (n >= 2 && desene) setH(hmax * 0.85);   // treptele 2-3: desene şi mai mici
       aliniaza();
     }
     fata.classList.add('intinde');
@@ -890,6 +867,23 @@ export function deschideFisa(client, oferta = null, salvate = null) {
         var f = parseFloat(getComputedStyle(c).fontSize);
         while (c.scrollWidth > c.clientWidth + 1 && f > 7) { f -= 0.5; c.style.fontSize = f + 'px'; }
       });
+    }
+
+    // Verso (uşi): schiţele pornesc mari (un rând de uşi ≈ toată foaia) şi se micşorează
+    // cât e nevoie ca versoul să rămână pe o foaie. Se pleacă de la înălţimea DESENATĂ
+    // (lăţimea coloanei o poate limita înaintea lui --hmax); câteva treceri, pt. că
+    // textul de sub desene se reaşază la altă lăţime.
+    var desene = document.querySelector('.spate .desene');
+    if (desene) {
+      var foaie = 297 * PX * 0.98, sp = document.querySelector('.spate');
+      var randuri = Math.ceil(desene.children.length / parseInt(getComputedStyle(desene).getPropertyValue('--n')));
+      var hmax = 250;
+      var setH = function (v) { hmax = Math.max(25, v); desene.style.setProperty('--hmax', hmax + 'mm'); };
+      setH(hmax);
+      for (var k = 0; k < 8 && sp.offsetHeight > foaie; k++) {
+        var svgH = desene.querySelector('svg').getBoundingClientRect().height / PX;
+        setH(Math.min(hmax, svgH) - (sp.offsetHeight - foaie) / PX / randuri - 0.5);
+      }
     }
 
     // Verso (rame): schiţele de găurire se micşorează în trepte de 10% până încape
