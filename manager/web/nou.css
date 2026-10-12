@@ -9,6 +9,15 @@
    butoanele în comun.css.
    ═══════════════════════════════════════════════════════════════════════════ */
 
+/* pagina principală: stânga (butoane, stări, căutare, listă) | dreapta cardul comenzii alese, de sus
+   până jos (userul, 2026-10-12: „să aibă cardul mai mult loc"). Pe pagina unei comenzi — fără card. */
+#acasa { display: grid; grid-template-columns: minmax(0, 1fr) 440px; align-items: start; max-width: 1760px; }
+#acasa:not(:has(#tabelLista)) { grid-template-columns: minmax(0, 1fr); }
+#acasa:not(:has(#tabelLista)) > #cardComanda { display: none; }
+.acasa-stanga { min-width: 0; }
+#acasa > #cardComanda { margin: 18px 24px 24px 0; }
+@media (max-width: 1279px) { #acasa { grid-template-columns: minmax(0, 1fr) 360px; } }
+@media (max-width: 999px)  { #acasa { grid-template-columns: minmax(0, 1fr); } #acasa > #cardComanda { margin: 0 20px 24px; position: static; max-height: none; } }
 body.ui-nou #taburiSus, body.ui-nou #continut { max-width: 1680px; }
 body.ui-nou #taburiSus { padding: 18px 24px 0; container: tablou / inline-size; }
 /* lista / detaliul se aşază după lăţimea LOR (meniul din stânga poate fi lat sau restrâns) */
@@ -19,11 +28,12 @@ body.ui-nou:has(#continut > .antet) #taburiSus { display: none; }
 
 /* ── „Ofertă nouă": un rând de butoane, câte unul pe gamă ── */
 .eticheta-sus { margin: 0 2px 6px; font-size: 10.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #6f7684; }
-.placi-game { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
-.gama-btn { display: flex; align-items: center; gap: 9px; height: 40px; padding: 0 12px; min-width: 0;
+/* pe două rânduri, câte trei (userul, 2026-10-12), puţin mai mari */
+.placi-game { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
+.gama-btn { display: flex; align-items: center; gap: 10px; height: 50px; padding: 0 16px; min-width: 0; font-size: 15px;
             background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
             color: var(--text); text-decoration: none; font-weight: 500; white-space: nowrap; transition: border-color .15s, background .15s; }
-.gama-btn .ic { flex: none; width: 18px; height: 18px; color: var(--text-dim); }
+.gama-btn .ic { flex: none; width: 20px; height: 20px; color: var(--text-dim); }
 .gama-btn span { overflow: hidden; text-overflow: ellipsis; }
 .gama-btn:hover { border-color: var(--accent); background: rgba(31, 111, 209, .10); }
 .gama-btn:hover .ic { color: var(--accent); }
@@ -47,15 +57,13 @@ body.ui-nou:has(#continut > .antet) #taburiSus { display: none; }
 /* tabul arătat acum în listă */
 .taburi .placa.activ { border-color: var(--accent); background: linear-gradient(rgba(31, 111, 209, .14), rgba(31, 111, 209, .14)), var(--panel);
                        box-shadow: inset 0 0 0 1px var(--accent); }
-@container tablou (max-width: 900px) {
-  .placi-game { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@container tablou (max-width: 560px) {
+  .placi-game { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .taburi { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 /* ── lucrul: căutarea + lista în stânga, cardul comenzii alese în dreapta ── */
-.lucru { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 16px; align-items: start; }
-@container continut (max-width: 1000px) { .lucru { grid-template-columns: minmax(0, 1fr) 310px; gap: 12px; } }
-@container continut (max-width: 700px)  { .lucru { grid-template-columns: minmax(0, 1fr); } }
+.lucru { display: block; }
 .lucru-lista { container: lista / inline-size; min-width: 0; }
 
 .cauta-lista { display: flex; gap: 8px; margin-bottom: 10px; }
