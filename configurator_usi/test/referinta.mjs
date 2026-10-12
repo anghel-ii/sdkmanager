@@ -26,7 +26,7 @@ import { state } from '../js/state.js';
 import { systems } from '../js/systems/registry.js';
 import { initBuilder, buildConfig, currentSpec, currentBom, currentBilling,
          currentClientPanels, currentSticla, finishesOf } from '../js/builder.js';
-import { cotaGauri } from '../js/lib/rame/rame.js';
+import { cotaGauri, randGol } from '../js/lib/rame/rame.js';
 import catalog from '../js/catalog/catalog.generated.json';
 
 const FISIER = new URL('./referinta.json', import.meta.url);
@@ -340,6 +340,32 @@ for (const [id, W, H, doors, tracks] of [['confortVerona', 1800, 2100, 2, 2], ['
   verifica(c(1999, 4, '100 mm sus/jos si impartite egal') === '[100,699.7,1299.3,1899]', `cote egale: ${c(1999, 4, '100 mm sus/jos si impartite egal')}`);
   verifica(c(800, 3, 'vezi schita pe spate') === 'null' && c(800, 2, 'Fara gaurire') === '[]', 'schiţa clientului / fără găurire');
   console.log('✓ rame: 2 găuri la „sus/jos", bare de mâner de 3000 mm, cotele schiţei de găurire');
+}
+
+// Cote pe fiecare ramă (userul, 2026-10-12): găurile = cotele scrise sub rând, de sus sau de jos;
+// bucăţile pornesc de la 0 — H şi L fără bucăţi e o eroare, nu o ramă ignorată în tăcere.
+{
+  const sys = systems.rama822;
+  state.system = sys.meta.id;
+  stareRame(sys, { finish: 'ALUMINIU', varianta: 'noi', randuri: [[1000, 400, 2, 0], [800, 400, 1, 0]] });
+  state.rame.gaurire = 'Cote pe fiecare rama';
+  state.rame.randuri[0].cote = [{ v: 100, de: 'sus' }, { v: 150, de: 'jos' }, { v: null, de: 'sus' }];
+  state.rame.randuri[1].cote = [{ v: 120, de: 'jos' }];
+  buildConfig();
+  let s = currentSpec();
+  const verifica = (ok, mesaj) => { if (!ok) { console.error('✗ rame, cote pe ramă: ' + mesaj); process.exit(1); } };
+  verifica(s.nrGauri === 2 * 2 + 1, `aştept 2 rame × 2 cote + 1 ramă × 1 cotă = 5 găuri, am ${s.nrGauri}`);
+  const cote = JSON.stringify(cotaGauri(1000, 2, 'Cote pe fiecare rama', s.pline[0].cote));
+  verifica(cote === '[100,850]', `100 de sus + 150 de jos pe H 1000 → [100,850], am ${cote}`);
+  verifica(!s.erori.some(e => /cot|bucăţi/.test(e)), s.erori.join('; '));
+  state.rame.randuri[1].cote = [];
+  state.rame.randuri.push({ h: 500, l: 300, buc: 0, cote: [] });
+  buildConfig();
+  s = currentSpec();
+  verifica(s.erori.some(e => /rândul 2: completează cotele/.test(e)), `rând fără cote: ${s.erori.join('; ')}`);
+  verifica(s.erori.some(e => /rândul 3: completează nr\. de bucăţi/.test(e)), `rând fără bucăţi: ${s.erori.join('; ')}`);
+  verifica(randGol().buc === 0, 'rândul nou porneşte cu 0 bucăţi');
+  console.log('✓ rame: cote pe fiecare ramă (de sus / de jos = nr. de găuri), bucăţile pornesc de la 0');
 }
 
 // ── Graniţele dintre familii ────────────────────────────────────────────────

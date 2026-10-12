@@ -5,7 +5,7 @@ import { currentSpec, currentBom, currentBilling, currentClientPanels } from './
 import { finishesOf, familia } from './familii.js';
 import { findGeam } from './lib/comun/geam.js';
 import { suprapuneriEfective, PROFIL_H_3D } from './lib/confort/index.js';
-import { ASAMBLARE, FARA_GAURIRE, cotaGauri } from './lib/rame/rame.js';
+import { ASAMBLARE, FARA_GAURIRE, COTE_PE_RAMA, cotaGauri } from './lib/rame/rame.js';
 import { detaliiComanda, plataText } from './lib/comun/comanda.js';
 import JsBarcode from 'jsbarcode';
 
@@ -395,8 +395,9 @@ function schiteGaurire(spec, rame) {
   const desene = spec.pline.map(x => {
     // strict desenul, cu cotele ramei şi bucăţile deasupra (userul, 2026-10-02: fără explicaţii)
     return `<div class="gaur-desen">
-      <div class="gaur-cap"><b>${x.h} × ${x.l} mm</b> · ${x.buc} buc</div>
-      ${desenGaurire(x, spec.m.fata, cotaGauri(x.h, x.gauri, rame.gaurire), marime)}
+      <div class="gaur-cap"><b>${x.h} × ${x.l} mm</b> · ${x.buc} buc${rame.gaurire === COTE_PE_RAMA && x.cote.length
+        ? ` · găuri: ${x.cote.map(c => `${virgula1(c.v)} de ${c.de}`).join(', ')}` : ''}</div>
+      ${desenGaurire(x, spec.m.fata, cotaGauri(x.h, x.gauri, rame.gaurire, x.cote), marime)}
     </div>`;
   }).join('');
   return `<div class="schite-gaurire"><div class="gaur-lista">${desene}</div></div>`;

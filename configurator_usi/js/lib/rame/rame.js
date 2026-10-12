@@ -68,8 +68,11 @@ export const FARA_GAURIRE = 'Fara gaurire';   // la toate modelele (userul, 2026
 // găuri doar sus şi jos, la 100 mm de margini = mereu 2 pe ramă (userul, 2026-09-25):
 // nr. de găuri nu se mai scrie pe rând
 export const DOUA_GAURI = '100 mm de margini sus/jos';
+// cotele scrise de om sub fiecare rând de rame, fiecare de sus sau de jos (userul, 2026-10-12);
+// nr. de găuri (deci de balamale) = câte cote are rândul
+export const COTE_PE_RAMA = 'Cote pe fiecare rama';
 export const GAURIRE_820 = [FARA_GAURIRE, DOUA_GAURI, '100 mm sus/jos si la mijloc',
-                            '100 mm sus/jos si impartite egal', 'vezi schita pe spate'];   // SCHITA_CLIENT
+                            '100 mm sus/jos si impartite egal', COTE_PE_RAMA, 'vezi schita pe spate'];   // SCHITA_CLIENT
 export const GAURIRE_831 = ['Fara gaurire', 'Gaurire Standard'];
 export const SCHITA_CLIENT = 'vezi schita pe spate';
 
@@ -77,8 +80,11 @@ export const SCHITA_CLIENT = 'vezi schita pe spate';
 // pt. schiţa de găurire de pe verso (CNC). Prima şi ultima la 100 mm de margini,
 // celelalte împărţite egal între ele („la mijloc" = una la jumătate). null = cotele
 // nu se ştiu de aici (schiţa clientului, găurirea standard INVISIO); [] = fără găuri.
+// `cote` = cotele rândului la COTE_PE_RAMA: [{ v, de: 'sus' | 'jos' }].
 export const MARGINE_GAURA_MM = 100;
-export function cotaGauri(h, gauri, gaurire) {
+export const cotaDeSus = (h, c) => (c.de === 'jos' ? h - c.v : c.v);
+export function cotaGauri(h, gauri, gaurire, cote = []) {
+  if (gaurire === COTE_PE_RAMA) return cote.map(c => cotaDeSus(h, c)).sort((a, b) => a - b);
   if (!gauri || !gaurire || gaurire === FARA_GAURIRE) return [];
   if (!GAURIRE_820.includes(gaurire) || gaurire === SCHITA_CLIENT) return null;
   if (gauri === 1) return [h / 2];
@@ -221,7 +227,9 @@ const INVISIO = {
 INVISIO[842] = INVISIO[841];
 
 // ── Stare implicită (state.rame) ────────────────────────────────────────────
-export const randGol = () => ({ h: null, l: null, buc: 1, gauri: 0 });
+// bucăţile pornesc de la 0 (userul, 2026-10-12: nu 1) — un rând cu H şi L fără bucăţi e o eroare, nu o ramă în plus
+export const randGol = () => ({ h: null, l: null, buc: 0, gauri: 0, cote: [] });
+export const cotaGoala = () => ({ v: null, de: 'sus' });
 export const randManerGol = () => ({ model: null, lungime: null, buc: 1 });
 export const stareRameGoala = () => ({
   randuri: [randGol()],
@@ -263,11 +271,18 @@ export function specRame(model, state) {
   // fără găurire: nicio gaură, deci nici balamale / plăcuţe / şuruburi de balama
   const faraGaurire = r.gaurire === FARA_GAURIRE;
   const douaGauri  = r.gaurire === DOUA_GAURI;
+  const peRama     = m.grup === '820' && r.gaurire === COTE_PE_RAMA;
 
   const randuri = (r.randuri ?? []).map((x, i) => {
     const h = +x.h || 0, l = +x.l || 0, buc = Math.max(0, Math.round(+x.buc || 0));
-    const gauri = m.grup !== '820' || faraGaurire ? 0 : douaGauri ? 2 : Math.max(0, Math.round(+x.gauri || 0));
-    if (!h || !l || !buc) return { i, gol: true, h, l, buc, gauri };
+    const cote = peRama ? (x.cote ?? []).filter(c => +c.v > 0).map(c => ({ v: +c.v, de: c.de === 'jos' ? 'jos' : 'sus' })) : [];
+    const gauri = m.grup !== '820' || faraGaurire ? 0 : douaGauri ? 2 : peRama ? cote.length : Math.max(0, Math.round(+x.gauri || 0));
+    if (!h || !l || !buc) {
+      if (h && l) erori.push(`rândul ${i + 1}: completează nr. de bucăţi`);
+      return { i, gol: true, h, l, buc, gauri, cote };
+    }
+    if (peRama && !cote.length) erori.push(`rândul ${i + 1}: completează cotele de găurire`);
+    for (const c of cote) if (c.v >= h) erori.push(`rândul ${i + 1}: cota ${c.v} (de ${c.de}) e mai mare decât înălţimea ramei, ${h}`);
     const hR = rotunjeste(h, m.H), lR = rotunjeste(l, m.L);
     let cod = null, eroare = null;
     if (!hR || !lR) {
@@ -278,7 +293,7 @@ export function specRame(model, state) {
     }
     if (eroare) erori.push(eroare);
     return {
-      i, gol: false, h, l, buc, gauri, hR, lR, cod, eroare,
+      i, gol: false, h, l, buc, gauri, cote, hR, lR, cod, eroare,
       geamH: h - m.scadereGeam, geamL: l - m.scadereGeam,
     };
   });
@@ -476,7 +491,8 @@ export function facturareRame(state, s) {
 const MAX_RAME_3D = 12;
 const GOL_INTRE_RAME_MM = 120;
 
-export function pozitiiGauri(h, n, regula) {
+export function pozitiiGauri(h, n, regula, cote = []) {
+  if (regula === COTE_PE_RAMA) return cote.map(c => h - cotaDeSus(h, c));   // 3D: de jos în sus
   if (n <= 0) return [];
   if (n === 1) return [h / 2];
   const sus = h - 100, jos = 100;
@@ -579,7 +595,7 @@ export function buildRame(group, state, s, { THREE, box, mm, aluColor }) {
     const gz = mm(SECTIUNI_RAME[prof]?.geamZ ?? d / 2);
     add(box(mm(x.geamL), mm(x.geamH), mm(4), sticla), 0, H / 2, SECTIUNI_RAME[prof]?.intors ? gz - D / 2 : D / 2 - gz);
     if (s.m.grup === '820') {
-      for (const y of pozitiiGauri(x.h, x.gauri, r.gaurire)) {
+      for (const y of pozitiiGauri(x.h, x.gauri, r.gaurire, x.cote)) {
         const c = new THREE.Mesh(new THREE.CylinderGeometry(mm(17.5), mm(17.5), mm(2), 24), gaura);
         c.rotation.x = Math.PI / 2;
         add(c, -W / 2 + f / 2, mm(y), -D / 2 - mm(1));

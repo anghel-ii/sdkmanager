@@ -258,5 +258,7 @@ body.ui-nou .toate-usi-label { font-size: 13px; text-transform: none; letter-spa
 body.ui-nou #sidebar .row { font-family: 'Inter', sans-serif; font-size: 13px; padding: 4px 0; }
 body.ui-nou #sidebar table { font-family: 'Inter', sans-serif; font-size: 13px; }
 body.ui-nou #sidebar td { padding: 5px 10px 5px 0; border-bottom: 1px solid rgba(44, 49, 58, .6); }
+/* rama + cotele ei de găurire = un singur rând vizual (linia doar după cote) */
+body.ui-nou #sidebar .rame-tabel tr[data-i]:has(+ tr.rame-sub) td { border-bottom: none; }
 body.ui-nou #sidebar td.code, body.ui-nou #sidebar td.num { font-family: 'JetBrains Mono', monospace; font-size: 12.5px; }
 body.ui-nou .bill-hint { font-size: 12px; }
