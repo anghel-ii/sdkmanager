@@ -17,8 +17,6 @@ const fs   = require('node:fs');
 //                          https://clienti-agenti.pages.dev)
 //   MANAGER_CLIENTI_CHEIE  cheia managerului de acolo — de obicei NU se pune
 //                          aici: se lipeşte o dată în /admin (tabelul `setare`)
-//   MANAGER_FAN_URL    API-ul FAN Courier (implicit https://api.fancourier.ro);
-//                      contul (user, parolă, clientId) se pune în /admin
 
 const RADACINA = path.resolve(__dirname, '..');
 
@@ -53,9 +51,6 @@ const config = {
   // Clienţii de la agenţii de vânzări — vezi server/clienti.js
   clientiUrl:   (process.env.MANAGER_CLIENTI_URL ?? 'https://clienti-agenti.pages.dev').replace(/\/$/, ''),
   clientiCheie: process.env.MANAGER_CLIENTI_CHEIE || '',
-
-  // AWB-uri FAN Courier — vezi server/fan.js
-  fanUrl: (process.env.MANAGER_FAN_URL ?? 'https://api.fancourier.ro').replace(/\/$/, ''),
 
   // Cât ţine o sesiune fără activitate. 30 de zile: omul din atelier se
   // loghează o dată pe telefon şi nu se mai gândeşte la asta.

@@ -279,3 +279,10 @@ body.ui-nou [data-z="info"] .factura-form input { flex: 1 1 110px; }
 .cc-butoane a.buton { display: inline-flex; align-items: center; padding: 7px 12px; font-size: 13px; border: 1px solid var(--line);
                       border-radius: 8px; background: var(--panel-2); color: var(--text); text-decoration: none; }
 .cc-butoane a.buton:hover { border-color: var(--accent); }
+
+/* funcţii anunţate, încă nelansate (ex. AWB FAN Courier pe comandă) */
+.card.in-curand { display: flex; align-items: center; gap: 12px; padding: 14px 18px; }
+.card.in-curand .dim { flex: 1; font-size: 13px; }
+.eticheta-curand { padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600;
+                   color: #e5b45a; background: rgba(212, 162, 76, .12); border: 1px solid rgba(212, 162, 76, .45); }
+.card.in-curand button:disabled { opacity: .45; cursor: not-allowed; }
