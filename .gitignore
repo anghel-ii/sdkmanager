@@ -19,7 +19,7 @@ manager/certs/
 /TestWebConnector*.php
 
 # ── Generate — se refac la build ────────────────────────────────────────────
-node_modules/
+node_modules
 configurator_usi/dist/
 configurator_usi/dist_pages/
 
