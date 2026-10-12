@@ -382,6 +382,23 @@ for (const [id, W, H, doors, tracks] of [['confortVerona', 1800, 2100, 2, 2], ['
   console.log('✓ rame: cote pe fiecare ramă (de sus / de jos = nr. de găuri, peste regula din listă), câmpurile pornesc goale');
 }
 
+// UTIL Roma (userul, 2026-10-12): oglindă aplicată pe PAL — în necesarul clientului,
+// înălţimea panoului × lăţimea PAL − 50 mm; doar pe panourile alese, doar la Roma.
+{
+  const { specUtil, clientPanelsUtil } = await import('../js/lib/util/util.js');
+  const st = { height: 2400, width: 3000, doors: 2, finish: Object.keys(systems.utilRoma.meta.finishes ?? {})[0],
+    divisions: [0, 1], hPanouri: [[], []], util: { orizontale: 'ambele' }, oglindaUtil: [[0], [1, 5]] };
+  const s = specUtil('ROMA', st);
+  const ogl = clientPanelsUtil(st, s).filter(r => /Oglindă/.test(r.label));
+  const L = Math.round(s.panouL - 50);
+  const asteptat = [[s.glass.panels[0].heights[0], 1], [s.glass.panels[1].heights[1], 1]];
+  const ok = ogl.reduce((a, r) => a + r.qty, 0) === 2 && asteptat.every(([h]) => ogl.some(r => r.cut === `${Math.round(h)} × ${L} mm`));
+  if (!ok) { console.error('✗ UTIL Roma oglindă:', JSON.stringify(ogl), L); process.exit(1); }
+  const atena = specUtil('ATENA', st);
+  if (clientPanelsUtil(st, atena).some(r => /Oglindă/.test(r.label))) { console.error('✗ oglinda apare şi la Atena'); process.exit(1); }
+  console.log('✓ UTIL Roma: oglinda aplicată pe PAL în necesarul clientului (H panou × L PAL − 50), doar pe panourile alese');
+}
+
 // ── Graniţele dintre familii ────────────────────────────────────────────────
 // Codul unei familii (lib/<familie>/ + systems/<prefix>_*.js) importă doar din
 // folderul ei, din lib/comun/, din catalog şi din three — niciodată din altă

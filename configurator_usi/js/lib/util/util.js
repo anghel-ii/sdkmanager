@@ -17,11 +17,14 @@ import catalog from '../../catalog/catalog.generated.json';
 //   orizontal orizontala U / divizarea H = trunchiat(lăţimea uşii + orizontal)
 export const MODELE_UTIL = {
   ATENA: { adaos: 32, panouH: -2, orizontal: -33 },
-  ROMA:  { adaos: 29, panouH:  0, orizontal: -48 },
+  ROMA:  { adaos: 29, panouH:  0, orizontal: -48, oglinda: true },   // poate avea oglindă aplicată pe PAL
   SOFT:  { adaos: 19, panouH: -2, orizontal: -33 },
 };
 const SCADERE_H_USA = 38;
 const SCADERE_L_PANOU = 6;
+// Oglinda aplicată pe PAL (doar Roma, userul 2026-10-12): înălţimea panoului, lăţimea PAL − 50 mm.
+// Pe ce panouri: state.oglindaUtil[uşă] = indicii panourilor (0 = cel de JOS, ca la înălţimi).
+const SCADERE_L_OGLINDA = 50;
 
 // Nr. de suprapuneri după nr. de uşi (Sheet1 L1:M6). Mereu şină dublă.
 export const SUPRAPUNERI_UTIL = { 2: 1, 3: 2, 4: 2, 5: 4, 6: 4, 7: 5 };
@@ -212,7 +215,17 @@ export function clientPanelsUtil(state, s) {
     const cut = `${Math.round(h)} × ${Math.round(s.panouL)} mm`;
     m.set(cut, (m.get(cut) ?? 0) + 1);
   }
-  return [...m].map(([cut, qty]) => ({ label: 'Panou PAL 18 mm', qty, unit: 'buc', cut }));
+  const randuri = [...m].map(([cut, qty]) => ({ label: 'Panou PAL 18 mm', qty, unit: 'buc', cut }));
+  if (!s.m.oglinda) return randuri;
+  const o = new Map();
+  s.glass.panels.forEach((p, i) => {
+    for (const k of new Set(state.oglindaUtil?.[i] ?? [])) {
+      if (!(k >= 0 && k < p.panes)) continue;   // panou care nu mai există (s-au scos divizări)
+      const cut = `${Math.round(p.heights[k])} × ${Math.round(s.panouL - SCADERE_L_OGLINDA)} mm`;
+      o.set(cut, (o.get(cut) ?? 0) + 1);
+    }
+  });
+  return [...randuri, ...[...o].map(([cut, qty]) => ({ label: 'Oglindă aplicată pe PAL', qty, unit: 'buc', cut }))];
 }
 
 // ── Facturare NeoManager (UTIL!A30:D41, în aceeaşi ordine) ─────────────────

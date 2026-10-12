@@ -836,7 +836,7 @@ export function deschideFisa(client, oferta = null, salvate = null) {
 
   ${obsText ? `<div class="obs-text"><b>Observaţii:</b> ${esc(obsText)}</div>` : ''}
 
-  ${util ? tabel(['PAL (clientul)', 'Dimensiuni', 'Cant.'], panouriClient.map(r =>
+  ${util ? tabel(['Clientul ia', 'Dimensiuni', 'Cant.'], panouriClient.map(r =>
         `<tr><td>${esc(r.label)}</td><td>${esc(r.cut)}</td><td class="num">${r.qty} buc</td></tr>`))
     : rame ? debitareRame(spec) : necesarSP}
 

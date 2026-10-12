@@ -17,6 +17,7 @@ export const meta = {
   family:     'util',
   catalog:    'util',
   sketch:     'assets/util_roma.png',   // secţiunea profilului (poza din Excel)
+  oglindaAplicata: true,                // oglindă aplicată pe PAL — cotele în necesarul clientului
   doorsRange: USI_UTIL,
   suprapuneri: n => SUPRAPUNERI_UTIL[n],   // fixe pe nr. de uşi, mereu şină dublă
   // lăţime max 5800 = şina (bară de 5,8 m); înălţime max 2788 = uşă de 2750:

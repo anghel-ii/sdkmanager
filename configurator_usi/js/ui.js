@@ -453,14 +453,25 @@ function refreshAvansat() {
 // Diferite: câte un card pe uşă, pornind de la ce era ales pe cardul comun.
 // Ofertele de dinainte (fără alegerea salvată în config): identice doar dacă
 // uşile chiar sunt la fel — altfel nu le stricăm.
-const PER_USA = ['divisions', 'wheels', 'assembly', 'geam', 'geamClient', 'hPanouri', 'divProfil', 'panels', 'amortizare', 'divAplicate', 'manerAplicat'];
+const PER_USA = ['divisions', 'wheels', 'assembly', 'geam', 'geamClient', 'hPanouri', 'divProfil', 'panels', 'amortizare', 'divAplicate', 'manerAplicat', 'oglindaUtil'];
 const toateLaFel = () => PER_USA.every(k => (state[k] ?? []).every(x => JSON.stringify(x) === JSON.stringify(state[k][0])));
 const usiIdentice = () => (state.usiIdentice ??= toateLaFel());
 function aliniazaUsile() {
   if (state.doors < 2 || !usiIdentice()) return;
+  // oglinda aplicată (UTIL Roma) nu e ţinută de syncDoors pe nr. de uşi — o completăm aici
+  if (Array.isArray(state.oglindaUtil)) while (state.oglindaUtil.length < state.doors) state.oglindaUtil.push([]);
   for (const k of PER_USA) {
     if (Array.isArray(state[k])) for (let i = 1; i < state[k].length; i++) state[k][i] = structuredClone(state[k][0]);
   }
+}
+
+// Butoanele „Oglindă aplicată" ale unei uşi UTIL Roma (indicii panourilor: 0 = jos; afişat de sus)
+function butoaneOglinda(i) {
+  const panes = (state.divisions[i] || 0) + 1;
+  const ks = (state.oglindaUtil?.[i] ?? []).filter(k => k < panes);
+  const b = (k, t, activ) => `<button data-k="${k}"${activ ? ' class="active"' : ''}>${t}</button>`;
+  if (panes === 1) return b('fara', 'Fără', !ks.length) + b(0, 'Pe PAL', ks.includes(0));
+  return b('fara', 'Fără', !ks.length) + [...Array(panes).keys()].map(n => b(panes - 1 - n, `Panou ${n + 1}`, ks.includes(panes - 1 - n))).join('');
 }
 
 function renderWheels() {
@@ -592,6 +603,12 @@ function renderWheels() {
               </div>
             </div>
           </div>
+        </div>` : ''}
+
+        ${isUtil && meta.oglindaAplicata ? `
+        <div class="door-row">
+          <span class="door-row-label">Oglindă aplicată</span>
+          <div class="segmented mini" data-door="${i}" data-oglinda="1">${butoaneOglinda(i)}</div>
         </div>` : ''}
 
         ${areManerAplicat ? `
@@ -746,6 +763,22 @@ function renderWheels() {
         rebuild();
       });
     });
+  });
+
+  // oglinda aplicată pe PAL (UTIL Roma): o uşă = Fără / Pe PAL; cu divizări — câte un buton pe panou (de sus)
+  box.querySelectorAll('[data-oglinda]').forEach(seg => {
+    const door = +seg.dataset.door;
+    seg.querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => {
+      const o = (state.oglindaUtil ??= []);
+      const panes = (state.divisions[door] || 0) + 1;
+      let ks = (o[door] ?? []).filter(k => k < panes);
+      if (btn.dataset.k === 'fara') ks = [];
+      else if (panes === 1) ks = [0];
+      else { const k = +btn.dataset.k; ks = ks.includes(k) ? ks.filter(x => x !== k) : [...ks, k]; }
+      o[door] = ks;
+      seg.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.k === 'fara' ? !ks.length : ks.includes(+b.dataset.k)));
+      rebuild();
+    }));
   });
 
   box.querySelectorAll('[data-maner-aplicat]').forEach(seg => {
