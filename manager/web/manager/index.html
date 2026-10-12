@@ -151,9 +151,15 @@
   </form>
 </dialog>
 
-<!-- taburile (Oferte / Aşteaptă plata / …) — lipite sus, şi pe pagina unei comenzi -->
-<div id="taburiSus"></div>
-<div id="continut">Se încarcă…</div>
+<!-- pagina principală: stânga butoanele „Ofertă nouă", stările, căutarea şi lista; dreapta,
+     de sus până jos, cardul comenzii alese (userul, 2026-10-12). Pe pagina unei comenzi cardul dispare. -->
+<div id="acasa">
+  <div class="acasa-stanga">
+    <div id="taburiSus"></div>
+    <div id="continut">Se încarcă…</div>
+  </div>
+  <aside class="card-comanda" id="cardComanda" aria-live="polite"></aside>
+</div>
 
 <script>
 const $ = id => document.getElementById(id);
@@ -419,7 +425,6 @@ function asiguraBaraLista() {
           </div>
           <div id="tabelLista"></div>
         </section>
-        <aside class="card-comanda" id="cardComanda" aria-live="polite"></aside>
       </div>`;
     $('cauta').value = cautare;
     $('cauta').addEventListener('input', cautaSchimbat);
@@ -637,6 +642,7 @@ function cardDetalii({ comanda: c, pozitii, sticlaLinii = [] }, fise) {
         : '<button class="cc-fisa" data-poz="0" title="Deschide fişa comenzii pentru printare">🖶 Printează fişa</button>'}
       ${eOferta ? '<button id="ccModifica">Modifică oferta</button>' : ''}
     </div>
+    <div class="cc-butoane cc-treceri">${butoaneTreceri(c, minuteInapoi(c))}</div>
     <dl class="cc-perechi">
       ${c.client_telefon ? `<dt>Telefon</dt><dd>${esc(c.client_telefon)}</dd>` : ''}
       ${c.client_adresa ? `<dt>Adresă</dt><dd>${esc(c.client_adresa)}</dd>` : ''}
@@ -667,12 +673,13 @@ async function incarcaCard() {
   if (!selectat) { el.innerHTML = cardAzi(); puneStare(); return; }
   const id = selectat;
   const r = await api('/api/comenzi/' + id);
-  if (!r || id !== selectat || !$('cardComanda')) return;   // între timp s-a ales altceva / s-a plecat din listă
+  if (!r || id !== selectat || !$('tabelLista')) return;   // între timp s-a ales altceva / s-a plecat din listă
   if (!r.ok) return selecteaza(null);
   const d = await r.json();
   const fise = d.pozitii.length > 1 ? numeFise(d.pozitii, await incarcaGame()) : [];
-  if (id !== selectat || !$('cardComanda')) return;
+  if (id !== selectat || !$('tabelLista')) return;
   el.innerHTML = cardDetalii(d, fise);
+  leagaTreceri(el, d.comanda, () => mergiLa(id));
   $('ccInchide').addEventListener('click', () => selecteaza(null));
   $('ccDeschide').addEventListener('click', () => { location.hash = '#comanda/' + id; });
   $('ccModifica')?.addEventListener('click', () => { location.href = '/configurator/?oferta=' + id; });
@@ -693,6 +700,81 @@ document.addEventListener('keydown', e => {
   } else if (e.key === 'Enter' && selectat) location.hash = '#comanda/' + selectat;
   else if (e.key === 'Escape' && selectat) selecteaza(null);
 });
+
+// ── Trecerile comenzii (aceleaşi butoane pe pagina comenzii şi în cardul din listă) ──
+// Aşteaptă plata / Acceptă oferta (dialogul cu plata şi avansul) / Plată primită /
+// Marchează finalizată / Redeschide / Înapoi în ofertă (10 minute după ce a ieşit din oferte).
+// „Înapoi în ofertă": cât nu s-a lucrat pe ea (serverul verifică oricum; aici doar nu arătăm butonul degeaba)
+const msInapoi = c => (c.tip_schimbat_la && !c.factura_nr && !c.finalizat_la ? 10 * 60e3 - c.secunde_schimbat * 1000 : 0);
+const minuteInapoi = c => (msInapoi(c) > 0 ? Math.ceil(msInapoi(c) / 60e3) : 0);
+function butoaneTreceri(c, minute) {
+  const eOferta = c.tip === 'oferta', ePlata = c.tip === 'plata', eComanda = c.tip === 'comanda';
+  return `${minute > 0 ? `<button class="rosu" data-trecere="inapoi-oferta" title="Greşeală? O mai poţi întoarce în oferte ${minute} ${minute === 1 ? 'minut' : 'minute'}">↩ Înapoi în ofertă</button>` : ''}
+    ${eOferta ? `<button class="galben-contur" data-trecere="asteapta-plata">Aşteaptă plata</button>
+                 <button class="verde" data-trecere="accepta">Acceptă oferta</button>` : ''}
+    ${ePlata ? '<button class="verde" data-trecere="accepta">Plată primită</button>' : ''}
+    ${eComanda && !c.finalizat_la ? '<button class="verde-contur" data-trecere="finalizeaza">Marchează finalizată</button>' : ''}
+    ${c.finalizat_la ? '<button class="galben-contur" data-trecere="redeschide">Redeschide</button>' : ''}`;
+}
+// `dupa()` — după o trecere reuşită (pagina comenzii se redesenează, cardul trece la tabul nou)
+function leagaTreceri(root, c, dupa) {
+  const id = c.id, ePlata = c.tip === 'plata';
+  const buton = t => root.querySelector(`[data-trecere="${t}"]`);
+  const posteaza = async cale => {
+    const rr = await api(`/api/comenzi/${id}/${cale}`, { method: 'POST' });
+    if (rr && !rr.ok) alerta((await rr.json().catch(() => ({}))).eroare || 'Operaţia a eşuat.');
+    dupa();
+  };
+  for (const [t, intrebare] of [
+    ['asteapta-plata', 'Trimiţi oferta la „Aşteaptă plata"?'],
+    ['inapoi-oferta', 'O întorci în oferte? De acolo o poţi accepta sau trimite la „Aşteaptă plata".'],
+  ]) buton(t)?.addEventListener('click', async () => { if (await confirma(intrebare)) posteaza(t); });
+  for (const t of ['finalizeaza', 'redeschide']) buton(t)?.addEventListener('click', () => posteaza(t));
+  // butonul dispare singur când trec cele 10 minute
+  if (msInapoi(c) > 0) setTimeout(() => buton('inapoi-oferta')?.remove(), msInapoi(c));
+  // Acceptare: dialogul cere modalitatea de plată (obligatoriu) şi avansul.
+  buton('accepta')?.addEventListener('click', () => {
+    const dlg = $('dialogAccepta');
+    $('formAccepta').reset();
+    $('titluAccepta').textContent = $('accOk').textContent = ePlata ? 'Plată primită' : 'Acceptă oferta';
+    // metoda aleasă deja în configurator (dacă e una din cele actuale)
+    if (c.plata && $('accPlata').querySelector(`option[value="${c.plata}"]`)) $('accPlata').value = c.plata;
+    for (const [camp, inp, are] of [['accTelefonCamp', 'accTelefon', c.client_telefon], ['accAdresaCamp', 'accAdresa', c.client_adresa]]) {
+      $(camp).hidden = !!are;
+      $(inp).required = !are;
+    }
+    $('accOk').disabled = false;
+    $('accRenunta').onclick = () => dlg.close();
+    $('formAccepta').onsubmit = async e => {
+      e.preventDefault();
+      $('accOk').disabled = true;
+      const rr = await api(`/api/comenzi/${id}/accepta`, { method: 'POST',
+        body: JSON.stringify({ plata: $('accPlata').value, avans: $('accAvans').value,
+                               telefon: $('accTelefon').value, adresa: $('accAdresa').value }) });
+      if (!rr) return;
+      if (!rr.ok) {
+        const d = await rr.json().catch(() => ({}));
+        alerta(d.eroare || 'Acceptarea a eşuat.');
+        $('accOk').disabled = false;
+        return;
+      }
+      dlg.close();
+      dupa();
+    };
+    dlg.showModal();
+  });
+}
+// Din card: comanda mutată în altă stare rămâne aleasă — lista trece pe tabul ei.
+async function mergiLa(id) {
+  const r = await api('/api/comenzi/' + id);
+  const c = r?.ok ? (await r.json()).comanda : null;
+  if (!c || !$('tabelLista')) return;
+  tabCurent = c.tip === 'oferta' ? 'oferta' : c.tip === 'plata' ? 'plata' : c.finalizat_la ? 'finalizata' : 'comanda';
+  history.replaceState(null, '', HASH_TAB[tabCurent]);
+  selectat = id;
+  await renderLista();
+  selecteaza(id);
+}
 
 // ── Detaliu ──────────────────────────────────────────────────────────────────
 
@@ -804,8 +886,6 @@ async function renderDetaliu(id) {
   const eComanda = c.tip === 'comanda';
   // „Înapoi în ofertă": 10 minute după ce a ieşit din oferte, cât nu s-a lucrat pe ea
   // (serverul verifică oricum; aici doar nu arătăm butonul degeaba)
-  const ramas = c.tip_schimbat_la && !c.factura_nr && !c.finalizat_la ? 10 * 60e3 - c.secunde_schimbat * 1000 : 0;
-  const minuteInapoi = ramas > 0 ? Math.ceil(ramas / 60e3) : 0;
 
   $('continut').innerHTML = `
     <button class="inapoi" id="inapoi">${icoana('inapoi')} Înapoi la ${cautare.trim() ? 'rezultatele căutării' : 'listă'}</button>
@@ -821,13 +901,8 @@ async function renderDetaliu(id) {
       ${pozitii.length > 1
         ? pozitii.map((p, k) => `<button class="fisa-poz" data-poz="${k}" title="Fişa produsului ${k + 1}: ${esc(p.eticheta)}">🖶 Fişa ${esc(fise[k])}</button>`).join('')
         : '<button id="fisaDetaliu" title="Deschide fişa comenzii pentru printare">🖶 Printează fişa</button>'}
-      ${minuteInapoi > 0 ? `<button class="rosu" id="inapoiOferta" title="Greşeală? O mai poţi întoarce în oferte ${minuteInapoi} ${minuteInapoi === 1 ? 'minut' : 'minute'}">↩ Înapoi în ofertă</button>` : ''}
-      ${eOferta ? `<button id="modifica">Modifică oferta</button>
-                   <button class="galben-contur" id="laPlata">Aşteaptă plata</button>
-                   <button class="verde" id="accepta">Acceptă oferta</button>` : ''}
-      ${ePlata ? '<button class="verde" id="accepta">Plată primită</button>' : ''}
-      ${eComanda && !c.finalizat_la ? '<button class="verde-contur" id="finalizeaza">Marchează finalizată</button>' : ''}
-      ${c.finalizat_la ? '<button class="galben-contur" id="redeschide">Redeschide</button>' : ''}
+      ${eOferta ? '<button id="modifica">Modifică oferta</button>' : ''}
+      ${butoaneTreceri(c, minuteInapoi(c))}
     </div>
 
     <!-- stânga: datele clientului; dreapta: paşii comenzii (cine şi când) -->
@@ -884,18 +959,8 @@ async function renderDetaliu(id) {
   tabCurent = eOferta ? 'oferta' : ePlata ? 'plata' : c.finalizat_la ? 'finalizata' : 'comanda';
   asiguraTaburi();   // taburile rămân sus şi aici, cu tabul comenzii marcat
   $('modifica')?.addEventListener('click', () => { location.href = '/configurator/?oferta=' + id; });
-  // trecerile simple (fără dialog): în „aşteaptă plata" / înapoi în oferte
-  for (const [btn, cale, intrebare] of [
-    ['laPlata', 'asteapta-plata', 'Trimiţi oferta la „Aşteaptă plata"?'],
-    ['inapoiOferta', 'inapoi-oferta', 'O întorci în oferte? De acolo o poţi accepta sau trimite la „Aşteaptă plata".'],
-  ]) {
-    $(btn)?.addEventListener('click', async () => {
-      if (!(await confirma(intrebare))) return;
-      const rr = await api(`/api/comenzi/${id}/${cale}`, { method: 'POST' });
-      if (rr && !rr.ok) alerta((await rr.json().catch(() => ({}))).eroare || 'Operaţia a eşuat.');
-      renderDetaliu(id);
-    });
-  }
+  // Aşteaptă plata / Acceptă / Plată primită / Finalizată / Redeschide / Înapoi în ofertă
+  leagaTreceri($('continut').querySelector('.antet'), c, () => renderDetaliu(id));
   // modul de livrare la comenzile în lucru / care aşteaptă plata (userul, 2026-10-08)
   $('schimbaLivrare')?.addEventListener('click', () => {
     $('livrareDd').innerHTML = `<select id="livrareNoua">${LIVRARI.map(v =>
@@ -915,8 +980,6 @@ async function renderDetaliu(id) {
       renderDetaliu(id);
     });
   });
-  // butonul dispare singur când trec cele 10 minute
-  if (minuteInapoi > 0) setTimeout(() => $('inapoiOferta')?.remove(), ramas);
   leagaFacturare($('continut'), () => renderDetaliu(id));
   leagaSticla(sticlaLinii, () => renderDetaliu(id));
   $('anuleazaFactura')?.addEventListener('click', async () => {
@@ -924,51 +987,12 @@ async function renderDetaliu(id) {
     await api(`/api/comenzi/${id}/factura`, { method: 'POST', body: JSON.stringify({ numar: '', anuleaza: true }) });
     renderDetaliu(id);
   });
-  for (const [btn, cale] of [['finalizeaza', 'finalizeaza'], ['redeschide', 'redeschide']]) {
-    $(btn)?.addEventListener('click', async () => {
-      const rr = await api(`/api/comenzi/${id}/${cale}`, { method: 'POST' });
-      if (rr && !rr.ok) alerta((await rr.json().catch(() => ({}))).eroare || 'Operaţia a eşuat.');
-      renderDetaliu(id);
-    });
-  }
   leagaCopiere($('copCod'),  total.map(l => l.cod));
   leagaCopiere($('copCant'), total.map(l => qtyText(l.cantitate)));
 
   $('fisaDetaliu')?.addEventListener('click', e => deschideFisa(id, e.currentTarget));
   document.querySelectorAll('button.fisa-poz').forEach(b => b.addEventListener('click', () => deschideFisa(id, b, +b.dataset.poz)));
 
-  // Acceptare: dialogul cere modalitatea de plată (obligatoriu) şi avansul.
-  $('accepta')?.addEventListener('click', () => {
-    const dlg = $('dialogAccepta');
-    $('formAccepta').reset();
-    $('titluAccepta').textContent = $('accOk').textContent = ePlata ? 'Plată primită' : 'Acceptă oferta';
-    // metoda aleasă deja în configurator (dacă e una din cele actuale)
-    if (c.plata && $('accPlata').querySelector(`option[value="${c.plata}"]`)) $('accPlata').value = c.plata;
-    for (const [camp, inp, are] of [['accTelefonCamp', 'accTelefon', c.client_telefon], ['accAdresaCamp', 'accAdresa', c.client_adresa]]) {
-      $(camp).hidden = !!are;
-      $(inp).required = !are;
-    }
-    $('accOk').disabled = false;
-    $('accRenunta').onclick = () => dlg.close();
-    $('formAccepta').onsubmit = async e => {
-      e.preventDefault();
-      $('accOk').disabled = true;
-      const rr = await api(`/api/comenzi/${id}/accepta`, { method: 'POST',
-        body: JSON.stringify({ plata: $('accPlata').value, avans: $('accAvans').value,
-                               telefon: $('accTelefon').value, adresa: $('accAdresa').value }) });
-      if (!rr) return;
-      if (!rr.ok) {
-        const d = await rr.json().catch(() => ({}));
-        alerta(d.eroare || 'Acceptarea a eşuat.');
-        $('accOk').disabled = false;
-        return;
-      }
-      dlg.close();
-      tabCurent = 'comanda';
-      renderDetaliu(id);
-    };
-    dlg.showModal();
-  });
 }
 
 // ── Rutare pe hash ───────────────────────────────────────────────────────────
