@@ -1,4 +1,4 @@
-// ── Meniul din stânga + bara de sus, aceleaşi pe toate paginile ──────────────
+// ── Meniul din stânga (manager) / bara compactă (configurator) ───────────────
 // Manager, comanda de sticlă, clienţi, utilizatori, configurator şi oferta cu
 // amănuntul arătau ca patru programe diferite (userul, 2026-10-05). Fiecare
 // pagină are <div id="bara"> + acest script, încărcat SINCRON imediat după el,
@@ -6,9 +6,10 @@
 //
 // Redesign 2026-10-12 (ideea userului: tablou de bord închis, meniu în stânga):
 //   • paginile managerului — MENIUL din stânga (#meniu: ofertă nouă, stările
-//     comenzilor cu numărul lor, sticlă, livrări, clienţi, utilizatori, contul),
-//     restrângibil la iconiţe (ţinut minte în browser); bara de sus (#bara) are
-//     „unde eşti", căutarea comenzilor (Ctrl K) şi starea legăturii live;
+//     comenzilor cu numărul lor, sticlă, livrări, clienţi, utilizatori, starea
+//     legăturii live, contul), restrângibil la iconiţe (ţinut minte în browser).
+//     FĂRĂ bară sus („bara de sus nu mai are ce căuta" — userul): <div id="bara">
+//     se scoate; căutarea comenzilor e deasupra listei, în pagina principală (Ctrl K);
 //   • configuratorul (/configurator/…) — o bară COMPACTĂ sus, fără meniu lateral,
 //     ca 3D-ul să-şi păstreze lăţimea. Ce pune pagina în bară cu
 //     class="bara-context" (ex. „Ofertă nouă › Confort") rămâne, lângă marcă.
@@ -32,8 +33,9 @@
     cauta:   '<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>',
     sageata: '<path d="m9.5 6 6 6-6 6"/>',
     inapoi:  '<path d="M19 12H5.5M11 18l-6-6 6-6"/>',
+    inchide: '<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>',
     panou:   '<rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M9.5 4.5v15"/>',
-    // gamele configuratorului (game.json) — plăcile „Ofertă nouă" din pagina principală
+    // gamele configuratorului (game.json) — butoanele „Ofertă nouă" din pagina principală
     suspendata: '<path d="M3 4.5h18"/><rect x="5" y="7" width="6.5" height="13" rx=".6"/><rect x="12.5" y="7" width="6.5" height="13" rx=".6"/><path d="M7 4.5V7M17 4.5V7"/>',
     confort: '<rect x="4" y="4" width="9" height="16" rx=".6"/><path d="M13 4h6.4a.6.6 0 0 1 .6.6v14.8a.6.6 0 0 1-.6.6H13"/><path d="M10.5 11.5v1.5M15.5 11.5v1.5"/>',
     rame:    '<rect x="4.5" y="3" width="15" height="18" rx="1"/><rect x="8" y="6.5" width="8" height="11" rx=".5"/>',
@@ -50,44 +52,49 @@
   const cuMeniu = !cale.startsWith('/configurator');          // configuratorul: doar bara compactă
   const activ = p => (cale === p ? ' activ' : '');
   const ROLURI = { admin: 'Administrator', conducere: 'Conducere', birou: 'Birou' };
-  // „unde eşti", în bara de sus a fiecărei pagini (pagina principală îl completează cu tabul / comanda)
-  const TITLURI = { '/': 'Comenzi', '/comenzi': 'Comenzi', '/sticla': 'Comandă sticlă', '/livrari': 'Organizează livrări',
-                    '/clienti': 'Clienţi', '/admin': 'Utilizatori' };
   // stările comenzilor — aceleaşi patru taburi ca în pagina principală (data-tab = tabCurent de acolo)
   const STARI = [['oferta', 'oferte', '#oferte', 'oferta', 'Oferte'], ['plata', 'plata', '#plata', 'plata', 'Aşteaptă plata'],
                  ['comanda', 'comenzi', '#comenzi', 'lucru', 'În lucru'], ['finalizata', 'finalizate', '#finalizate', 'gata', 'Finalizate']];
 
   const stil = document.createElement('style');
   stil.textContent = `
-    :root { --meniu-l: 248px; }
-    html.meniu-strans { --meniu-l: 68px; }
+    :root { --meniu-l: 216px; }
+    html.meniu-strans { --meniu-l: 58px; }
     html.cu-meniu body { padding-left: var(--meniu-l); }
-    #bara, #meniu { font-family: 'Inter', system-ui, sans-serif; font-size: 14px; }
-    #bara .ic, #meniu .ic { width: 18px; height: 18px; flex: none; }
+    #bara, #meniu { font-family: 'Inter', system-ui, sans-serif; font-size: 13.5px; }
+    #bara .ic, #meniu .ic { width: 17px; height: 17px; flex: none; }
     #bara [hidden], #meniu [hidden] { display: none !important; }
-    .insigna { display: inline-grid; place-items: center; min-width: 22px; height: 20px; padding: 0 7px; border-radius: 999px;
-      background: var(--panel-2); color: var(--text-dim); font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1; }
+    .insigna { display: inline-grid; place-items: center; min-width: 20px; height: 18px; padding: 0 6px; border-radius: 999px;
+      background: var(--panel-2); color: var(--text-dim); font-size: 11.5px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1; }
     .insigna:empty { display: none; }
     .insigna.cald { background: var(--accent-dim); color: #fff; }
+    /* legătura live (web/live.js pune data-live pe <html>): ascunsă pe paginile fără ea */
+    .live { display: none; align-items: center; gap: 7px; height: 24px; padding: 0 10px; border-radius: 999px; font-size: 12px; font-weight: 500; white-space: nowrap;
+      color: #7cc493; background: rgba(63,166,106,.10); border: 1px solid rgba(63,166,106,.35); }
+    .live::before { content: ''; flex: none; width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 3px rgba(63,166,106,.18); }
+    html[data-live] .live { display: inline-flex; }
+    html[data-live="nu"] .live { color: #e5b45a; background: rgba(212,162,76,.10); border-color: rgba(212,162,76,.4); }
+    html[data-live="nu"] .live::before { box-shadow: 0 0 0 3px rgba(212,162,76,.18); }
+    html[data-live="da"] .live .nu, html[data-live="nu"] .live .da { display: none; }
 
-    /* ── meniul din stânga ── */
+    /* ── meniul din stânga (compact — userul, 2026-10-12) ── */
     #meniu { position: fixed; top: 0; bottom: 0; left: 0; width: var(--meniu-l); z-index: 20; box-sizing: border-box;
-      display: flex; flex-direction: column; gap: 2px; padding: 14px 12px 12px; overflow: hidden auto;
+      display: flex; flex-direction: column; gap: 1px; padding: 10px 10px 10px; overflow: hidden auto;
       background: #111317; border-right: 1px solid var(--line); }
-    #meniu .meniu-cap { display: flex; align-items: center; gap: 6px; padding: 2px 2px 14px; }
-    #meniu .marca { display: flex; align-items: center; gap: 11px; min-width: 0; color: var(--text); text-decoration: none; }
-    #meniu .logo, #bara .logo { flex: none; width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; color: #fff;
+    #meniu .meniu-cap { display: flex; align-items: center; gap: 6px; padding: 0 0 10px 2px; }
+    #meniu .marca { display: flex; align-items: center; gap: 9px; min-width: 0; color: var(--text); text-decoration: none; }
+    #meniu .logo, #bara .logo { flex: none; width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; color: #fff;
       background: linear-gradient(140deg, #3b8ff0, #1c5fbf); box-shadow: inset 0 1px 0 rgba(255,255,255,.18); }
-    #meniu .marca b { display: block; font-size: 15px; font-weight: 600; white-space: nowrap; letter-spacing: -.01em; }
-    #meniu .marca small { display: block; font-size: 12px; color: var(--text-dim); white-space: nowrap; }
-    #meniu .comuta { margin-left: auto; flex: none; width: 30px; height: 30px; padding: 0; display: grid; place-items: center;
-      border: none; border-radius: 8px; background: none; color: var(--text-dim); cursor: pointer; }
+    #meniu .logo .ic, #bara .logo .ic { width: 16px; height: 16px; }
+    #meniu .marca b { font-size: 14px; font-weight: 600; white-space: nowrap; letter-spacing: -.01em; }
+    #meniu .comuta { margin-left: auto; flex: none; width: 28px; height: 28px; padding: 0; display: grid; place-items: center;
+      border: none; border-radius: 7px; background: none; color: var(--text-dim); cursor: pointer; }
     #meniu .comuta:hover { background: var(--panel-2); color: var(--text); }
-    #meniu #ofertaNoua { display: flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 12px; margin: 0 0 10px;
-      font: inherit; font-weight: 600; color: #fff; background: var(--accent-dim); border: 1px solid var(--accent); border-radius: 10px; cursor: pointer; }
+    #meniu #ofertaNoua { display: flex; align-items: center; justify-content: center; gap: 7px; height: 34px; padding: 0 10px; margin: 0 0 6px;
+      font: inherit; font-weight: 600; color: #fff; background: var(--accent-dim); border: 1px solid var(--accent); border-radius: 8px; cursor: pointer; }
     #meniu #ofertaNoua:hover { background: #2f82e6; }
-    #meniu .grup { margin: 16px 10px 6px; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #6f7684; white-space: nowrap; }
-    #meniu .link { display: flex; align-items: center; gap: 12px; min-height: 38px; padding: 0 10px; border-radius: 9px; position: relative;
+    #meniu .grup { margin: 10px 8px 3px; font-size: 10.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #6f7684; white-space: nowrap; }
+    #meniu .link { display: flex; align-items: center; gap: 10px; min-height: 32px; padding: 0 8px; border-radius: 7px; position: relative;
       color: #b6bcc7; text-decoration: none; white-space: nowrap; }
     #meniu .link .ic { color: #8b92a0; }
     #meniu .link:hover { background: rgba(255,255,255,.045); color: var(--text); }
@@ -96,63 +103,45 @@
     #meniu .link .insigna { margin-left: auto; }
     /* starea comenzii arătate acum (pagina principală) — mai discret decât pagina activă */
     #meniu .link.curent { color: #fff; }
-    #meniu .link.curent::before { content: ''; position: absolute; left: -12px; top: 9px; bottom: 9px; width: 3px; border-radius: 0 3px 3px 0; background: var(--accent); }
+    #meniu .link.curent::before { content: ''; position: absolute; left: -10px; top: 8px; bottom: 8px; width: 3px; border-radius: 0 3px 3px 0; background: var(--accent); }
     #meniu .link.curent .ic { color: var(--accent); }
-    #meniu .spatiu { flex: 1; min-height: 16px; }
-    #meniu .eu { display: flex; align-items: center; gap: 10px; padding: 12px 4px 0; margin-top: 8px; border-top: 1px solid var(--line); min-width: 0; }
-    #meniu .avatar { flex: none; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
-      background: var(--panel-2); border: 1px solid var(--line); color: var(--text); font-size: 12.5px; font-weight: 600; }
-    #meniu .eu .txt { min-width: 0; flex: 1; }
+    #meniu .spatiu { flex: 1; min-height: 12px; }
+    #meniu .meniu-live { padding: 0 2px 8px; }
+    #meniu .eu { display: flex; align-items: center; gap: 8px; padding: 9px 2px 0; border-top: 1px solid var(--line); min-width: 0; }
+    #meniu .avatar { flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+      background: var(--panel-2); border: 1px solid var(--line); color: var(--text); font-size: 11px; font-weight: 600; }
+    #meniu .eu .txt { min-width: 0; flex: 1; line-height: 1.25; }
     #meniu .eu b { display: block; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    #meniu .eu small { display: block; font-size: 12px; color: var(--text-dim); }
-    #meniu #iesire { flex: none; display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 10px; font: inherit; font-size: 13px;
-      color: var(--text-dim); background: none; border: 1px solid var(--line); border-radius: 8px; cursor: pointer; }
+    #meniu .eu small { display: block; font-size: 11.5px; color: var(--text-dim); }
+    #meniu #iesire { flex: none; display: flex; align-items: center; gap: 5px; height: 28px; padding: 0 8px; font: inherit; font-size: 12.5px;
+      color: var(--text-dim); background: none; border: 1px solid var(--line); border-radius: 7px; cursor: pointer; }
     #meniu #iesire:hover { color: #e8907f; border-color: rgba(201,96,76,.6); background: rgba(201,96,76,.08); }
-    #meniu #iesire .ic { width: 16px; height: 16px; }
+    #meniu #iesire .ic { width: 15px; height: 15px; }
     /* restrâns: doar iconiţele (numele apar ca title la hover) */
-    html.meniu-strans #meniu { padding-left: 10px; padding-right: 10px; }
+    html.meniu-strans #meniu { padding-left: 8px; padding-right: 8px; }
     html.meniu-strans #meniu .txt { display: none; }
-    html.meniu-strans #meniu .meniu-cap { flex-direction: column; gap: 10px; }
+    html.meniu-strans #meniu .meniu-cap { flex-direction: column; gap: 8px; padding-left: 0; }
     html.meniu-strans #meniu .comuta { margin: 0; }
     html.meniu-strans #meniu .marca { justify-content: center; }
     html.meniu-strans #meniu #ofertaNoua { padding: 0; }
-    html.meniu-strans #meniu .grup { height: 1px; margin: 10px 6px; background: var(--line); }
+    html.meniu-strans #meniu .grup { height: 1px; margin: 8px 4px; background: var(--line); }
     html.meniu-strans #meniu .link { justify-content: center; padding: 0; }
-    html.meniu-strans #meniu .link .insigna { position: absolute; top: 2px; right: 1px; min-width: 18px; height: 16px; padding: 0 4px; font-size: 10.5px; }
-    html.meniu-strans #meniu .link.curent::before { left: -10px; }
+    html.meniu-strans #meniu .link .insigna { position: absolute; top: 1px; right: 0; min-width: 16px; height: 15px; padding: 0 4px; font-size: 10px; }
+    html.meniu-strans #meniu .link.curent::before { left: -8px; }
+    html.meniu-strans #meniu .meniu-live { display: flex; justify-content: center; padding: 0 0 8px; }
+    html.meniu-strans #meniu .live { width: 24px; padding: 0; justify-content: center; gap: 0; }
+    html.meniu-strans #meniu .live > span { display: none; }
     html.meniu-strans #meniu .eu { flex-direction: column; padding-left: 0; padding-right: 0; }
-    html.meniu-strans #meniu #iesire { padding: 0 8px; }
+    html.meniu-strans #meniu #iesire { padding: 0 6px; }
 
-    /* ── bara de sus ── */
-    #bara { display: flex; align-items: center; gap: 12px; padding: 0 32px; height: 64px; box-sizing: border-box;
-      background: rgba(20,22,26,.86); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 10; }
-    @media (max-width: 1099px) { #bara { padding: 0 24px; } }
-    #bara .spatiu { flex: 1; }
-    #bara .bara-context { flex: 0 1 auto; margin: 0; font-weight: 400; color: var(--text-dim); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-    #bara .bara-context b { color: var(--text); font-weight: 600; }
-    #bara .bara-context i { font-style: normal; margin: 0 7px; opacity: .6; }
-    #bara .cauta-sus { display: flex; align-items: center; gap: 10px; width: min(420px, 38vw); height: 40px; padding: 0 8px 0 14px; margin: 0;
-      background: var(--panel); border: 1px solid var(--line); border-radius: 999px; color: var(--text-dim); cursor: text;
-      text-transform: none; letter-spacing: 0; font-size: 14px; }
-    #bara .cauta-sus:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(77,163,255,.15); }
-    #bara .cauta-sus input { flex: 1; min-width: 0; width: auto; height: 100%; padding: 0; border: none; background: none; color: var(--text); font: inherit; outline: none; }
-    #bara .cauta-sus input::-webkit-search-cancel-button { filter: invert(.6); }
-    #bara kbd { flex: none; font: 600 11px 'Inter', system-ui, sans-serif; color: var(--text-dim); padding: 3px 7px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel-2); }
-    /* legătura live (web/live.js pune data-live pe <html>): ascunsă pe paginile fără ea */
-    .live { display: none; align-items: center; gap: 7px; height: 28px; padding: 0 12px; border-radius: 999px; font-size: 12.5px; font-weight: 500; white-space: nowrap;
-      color: #7cc493; background: rgba(63,166,106,.10); border: 1px solid rgba(63,166,106,.35); }
-    .live::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 3px rgba(63,166,106,.18); }
-    html[data-live] .live { display: inline-flex; }
-    html[data-live="nu"] .live { color: #e5b45a; background: rgba(212,162,76,.10); border-color: rgba(212,162,76,.4); }
-    html[data-live="nu"] .live::before { box-shadow: 0 0 0 3px rgba(212,162,76,.18); }
-    html[data-live="da"] .live .nu, html[data-live="nu"] .live .da { display: none; }
-
-    /* ── configuratorul: bara compactă, fără meniu lateral ── */
-    #bara.compacta { height: auto; min-height: 52px; padding: 6px 14px; gap: 8px; background: var(--panel); backdrop-filter: none; }
+    /* ── configuratorul: bara compactă sus, fără meniu lateral ── */
+    #bara.compacta { display: flex; align-items: center; gap: 8px; min-height: 52px; padding: 6px 14px; box-sizing: border-box;
+      background: var(--panel); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 10; font-size: 14px; }
+    #bara.compacta .spatiu { flex: 1; }
     #bara.compacta .marca { display: flex; align-items: center; gap: 9px; margin-right: 6px; color: var(--text); text-decoration: none; font-weight: 600; white-space: nowrap; }
-    #bara.compacta .logo { width: 30px; height: 30px; border-radius: 8px; }
-    #bara.compacta .logo .ic { width: 16px; height: 16px; }
-    #bara.compacta .bara-context { font-size: 13px; }
+    #bara.compacta .bara-context { flex: 0 1 auto; margin: 0; font-weight: 400; color: var(--text-dim); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    #bara.compacta .bara-context b { color: var(--text); font-weight: 500; }
+    #bara.compacta .bara-context i { font-style: normal; margin: 0 5px; }
     #bara.compacta .buton, #bara.compacta button { display: inline-flex; align-items: center; gap: 7px; font: inherit; font-size: 13px; height: 34px; padding: 0 11px;
       border: 1px solid var(--line); border-radius: 8px; background: var(--panel-2); color: var(--text); text-decoration: none; cursor: pointer; white-space: nowrap; }
     #bara.compacta .buton:hover, #bara.compacta button:hover { border-color: #3a4049; background: #272c34; }
@@ -183,8 +172,7 @@
     nav.setAttribute('aria-label', 'Meniu');
     nav.innerHTML = `
       <div class="meniu-cap">
-        <a href="/" class="marca" title="Manager comenzi — acasă"><span class="logo">${icoana('logo')}</span>
-          <span class="txt"><b>Manager comenzi</b><small>oferte · comenzi · livrări</small></span></a>
+        <a href="/" class="marca" title="Manager comenzi — acasă"><span class="logo">${icoana('logo')}</span><b class="txt">Manager comenzi</b></a>
         <button type="button" class="comuta" id="comutaMeniu" title="Restrânge / extinde meniul" aria-label="Restrânge meniul">${icoana('panou')}</button>
       </div>
       <button type="button" id="ofertaNoua" title="Ofertă nouă">${icoana('plus')}<span class="txt">Ofertă nouă</span></button>
@@ -198,6 +186,7 @@
       ${link('/clienti', 'clienti', 'Clienţi', 'id="linkClienti" hidden', '<span class="insigna cald" id="nrClienti" title="trimise de agenţi, de aprobat"></span>')}
       ${link('/admin', 'admin', 'Utilizatori', 'id="linkAdmin" hidden')}
       <div class="spatiu"></div>
+      <div class="meniu-live"><span class="live" title="Actualizare live: pagina se schimbă singură când lucrează altcineva"><span class="da">Conectat</span><span class="nu">Reconectare…</span></span></div>
       <div class="eu">
         <span class="avatar" id="initiale"></span>
         <span class="txt"><b id="cine"></b><small id="rolEu"></small></span>
@@ -210,21 +199,6 @@
     });
     document.body.prepend(nav);
     return nav;
-  }
-
-  function baraSus(el) {
-    el.innerHTML = `
-      <span class="bara-context" id="baraContext"><b>${TITLURI[cale] ?? document.title}</b></span>
-      <span class="spatiu"></span>
-      <label class="cauta-sus" title="Caută în comenzi (Ctrl K)">${icoana('cauta')}
-        <input type="search" id="${acasa ? 'cauta' : 'cautaSus'}" autocomplete="off"
-          placeholder="${acasa ? 'Caută client, telefon, nr. ofertă, factură…' : 'Caută o comandă (client, telefon, nr. ofertă)…'}">
-        <kbd>Ctrl K</kbd></label>
-      <span class="live" title="Actualizare live: pagina se schimbă singură când lucrează altcineva"><span class="da">Conectat</span><span class="nu">Reconectare…</span></span>`;
-    // pe pagina principală căutarea filtrează lista (o leagă pagina); de pe altă pagină duce acolo
-    if (!acasa) el.querySelector('#cautaSus').addEventListener('keydown', e => {
-      if (e.key === 'Enter' && e.target.value.trim()) location.href = '/?q=' + encodeURIComponent(e.target.value.trim());
-    });
   }
 
   function baraCompacta(el) {
@@ -257,19 +231,22 @@
   let amana = null;
   window.addEventListener('live:schimbare', () => { clearTimeout(amana); amana = setTimeout(incarcaSumar, 200); });
 
-  // Ctrl K (⌘K pe Mac) — căutarea comenzilor, de oriunde
-  document.addEventListener('keydown', e => {
+  // Ctrl K (⌘K pe Mac) — căutarea: pe pagina principală (şi din pagina unei comenzi)
+  // cea a comenzilor; altundeva căutarea paginii (#cauta, ex. clienţii), altfel duce
+  // la căutarea comenzilor. În configurator nu luăm scurtătura browserului.
+  if (cuMeniu) document.addEventListener('keydown', e => {
     if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'k') return;
-    const c = document.querySelector('#bara .cauta-sus input');
-    if (c) { e.preventDefault(); c.focus(); c.select(); }
+    e.preventDefault();
+    if (window.cautaComenzi) return window.cautaComenzi();
+    const c = document.getElementById('cauta');
+    if (c) { c.focus(); c.select(); } else location.href = '/?cauta';
   });
 
   window.puneBara = el => {
     const context = [...el.querySelectorAll('.bara-context')];
-    el.id = 'bara';
     const nav = cuMeniu ? meniu() : null;
-    if (cuMeniu) baraSus(el);
-    else { baraCompacta(el); el.querySelector('.spatiu').before(...context); }
+    if (nav) el.remove();   // paginile managerului: fără bară sus
+    else { el.id = 'bara'; baraCompacta(el); el.querySelector('.spatiu').before(...context); }
     const radacina = nav ?? el;
 
     // pe pagina principală butonul deschide alegerea gamei (îl leagă pagina);

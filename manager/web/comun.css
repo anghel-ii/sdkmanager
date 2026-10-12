@@ -129,15 +129,15 @@ button.rosu-contur:hover:not(:disabled)   { background: rgba(201, 96, 76, .2);  
 
 /* ═══ Cadrul paginilor cu meniul din stânga (bara.js pune html.cu-meniu) ═══
    Redesign 2026-10-12: conţinutul începe la aceeaşi margine pe toate paginile,
-   sub bara de sus; fiecare pagină îşi păstrează lăţimea maximă. */
+   lângă meniu (fără bară sus); fiecare pagină îşi păstrează lăţimea maximă. */
 html.cu-meniu #continut, html.cu-meniu #taburiSus { margin: 0; }
-html.cu-meniu #continut { padding: 28px 32px 56px; }
-@media (max-width: 1099px) { html.cu-meniu #continut { padding: 22px 24px 48px; } }
+html.cu-meniu #continut { padding: 22px 24px 48px; }
+@media (max-width: 1099px) { html.cu-meniu #continut { padding: 18px 20px 40px; } }
 
 /* titlul mare al paginii: salut / titlu / un rând despre pagină */
-.pagina-cap { margin-bottom: 24px; }
+.pagina-cap { margin-bottom: 20px; }
 .pagina-cap .salut { font-size: 15px; color: var(--text-dim); margin-bottom: 2px; }
-.pagina-cap h1 { font-size: 34px; font-weight: 700; letter-spacing: -.025em; line-height: 1.15; }
+.pagina-cap h1 { font-size: 30px; font-weight: 700; letter-spacing: -.025em; line-height: 1.15; }
 .pagina-cap p { margin-top: 6px; font-size: 14.5px; color: var(--text-dim); max-width: 760px; }
 /* tabelele late din panouri (ex. conturile din /admin) se derulează în panou când meniul lat ia din loc */
 html.cu-meniu .panou { overflow-x: auto; }
