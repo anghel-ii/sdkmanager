@@ -40,9 +40,9 @@ code, .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
 
 button, .btn {
   font: inherit;
-  padding: 10px 16px;
+  padding: 9px 16px;
   border: 1px solid var(--line);
-  border-radius: 6px;
+  border-radius: 9px;
   background: var(--panel-2);
   color: var(--text);
   cursor: pointer;
@@ -61,13 +61,14 @@ input, select, textarea {
   width: 100%;
   padding: 10px 12px;
   border: 1px solid var(--line);
-  border-radius: 6px;
+  border-radius: 9px;
   background: var(--bg);
   color: var(--text);
 }
 input:focus, select:focus, textarea:focus {
   outline: none;
   border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(77, 163, 255, .15);
 }
 
 label { display: block; margin-bottom: 6px; color: var(--text-dim); font-size: .8rem;
@@ -79,7 +80,7 @@ label { display: block; margin-bottom: 6px; color: var(--text-dim); font-size: .
 
 .mesaj {
   padding: 10px 14px;
-  border-radius: 6px;
+  border-radius: 10px;
   border: 1px solid;
   margin-bottom: 16px;
   font-size: .9rem;
@@ -93,7 +94,7 @@ label { display: block; margin-bottom: 6px; color: var(--text-dim); font-size: .
 .card {
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 14px;
   padding: 24px;
 }
 
@@ -125,3 +126,18 @@ button.rosu-contur   { background: rgba(201, 96, 76, .10);  border-color: rgba(2
 button.verde-contur:hover:not(:disabled)  { background: rgba(63, 166, 106, .2);  border-color: #3fa66a; }
 button.galben-contur:hover:not(:disabled) { background: rgba(212, 162, 76, .2);  border-color: #d4a24c; }
 button.rosu-contur:hover:not(:disabled)   { background: rgba(201, 96, 76, .2);   border-color: #c9604c; }
+
+/* ═══ Cadrul paginilor cu meniul din stânga (bara.js pune html.cu-meniu) ═══
+   Redesign 2026-10-12: conţinutul începe la aceeaşi margine pe toate paginile,
+   sub bara de sus; fiecare pagină îşi păstrează lăţimea maximă. */
+html.cu-meniu #continut, html.cu-meniu #taburiSus { margin: 0; }
+html.cu-meniu #continut { padding: 28px 32px 56px; }
+@media (max-width: 1099px) { html.cu-meniu #continut { padding: 22px 24px 48px; } }
+
+/* titlul mare al paginii: salut / titlu / un rând despre pagină */
+.pagina-cap { margin-bottom: 24px; }
+.pagina-cap .salut { font-size: 15px; color: var(--text-dim); margin-bottom: 2px; }
+.pagina-cap h1 { font-size: 34px; font-weight: 700; letter-spacing: -.025em; line-height: 1.15; }
+.pagina-cap p { margin-top: 6px; font-size: 14.5px; color: var(--text-dim); max-width: 760px; }
+/* titlul unei secţiuni din pagină (ex. „Ofertă nouă", lista „Oferte 2") */
+.titlu-sectiune { font-size: 18px; font-weight: 650; letter-spacing: -.01em; margin: 26px 2px 12px; }
