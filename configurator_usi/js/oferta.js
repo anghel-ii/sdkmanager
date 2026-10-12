@@ -14,7 +14,7 @@ import { salveaza } from './manager.js';
 //  tabelul `pozitie` rămâne aşa — dar de aici se trimite mereu una singură.)
 // ═══════════════════════════════════════════════════════════════════════════
 
-export { stareOferta, initOferta, cautaClienti, incarcaOferta, treceIn } from './manager.js';
+export { stareOferta, initOferta, cautaClienti, incarcaOferta, treceIn, adaugaLaComanda } from './manager.js';
 
 // ── Poziţia curentă ──────────────────────────────────────────────────────────
 

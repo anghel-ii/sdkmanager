@@ -229,6 +229,36 @@ async function modifica(ctx) {
   json(ctx.res, 200, { comanda: rezultat });
 }
 
+// ── Adaugă la comandă (userul, 2026-10-12) ───────────────────────────────────
+// La o comandă ÎN LUCRU se mai pot adăuga produse din configurator: poziţiile noi
+// se pun după cele existente (cele vechi, codul de bare, scanările, sticla, factura
+// rămân neatinse). Clientul şi livrarea sunt ale comenzii; transportul e deja pe ea —
+// de pe produsele noi se scoate.
+async function adauga(ctx) {
+  const id = Number(ctx.params.id);
+  const corp = await corpJson(ctx.req);
+  const c = db().prepare('SELECT * FROM comanda WHERE id = ?').get(id);
+  if (!c) return eroare(ctx.res, 404, 'Comanda nu există.');
+  if (c.anulat) return eroare(ctx.res, 400, 'Comanda e anulată.');
+  if (c.tip !== 'comanda' || c.finalizat_la) return eroare(ctx.res, 409, 'Se pot adăuga produse doar la o comandă în lucru.');
+  const pozitii = corp.pozitii;
+  if (!Array.isArray(pozitii) || !pozitii.length) return eroare(ctx.res, 400, 'Nu e niciun produs de adăugat.');
+  const are = db().prepare('SELECT COUNT(*) AS n FROM pozitie WHERE comanda_id = ?').get(id).n;
+  if (are + pozitii.length > MAX_POZITII) return eroare(ctx.res, 400, `O comandă are cel mult ${MAX_POZITII} produse (are deja ${are}).`);
+  for (const [i, p] of pozitii.entries()) {
+    const v = valideazaPozitia(p);
+    if (v) return eroare(ctx.res, 400, pozitii.length > 1 ? `Produsul ${i + 1}: ${v}` : v);
+  }
+  tranzactie(d => {
+    for (const p of pozitii) {
+      const facturare = (p.linii?.facturare ?? []).filter(l => l?.cod !== TRANSPORT.cod);
+      scriePozitia(d, id, { ...p, linii: { ...p.linii, facturare } });
+    }
+  });
+  anunta({ comanda: id });
+  json(ctx.res, 200, { comanda: { id, numar: c.oferta_nr || c.numar }, adaugate: pozitii.length });
+}
+
 // ── Citire ───────────────────────────────────────────────────────────────────
 
 // tab: 'oferta' | 'plata' (aşteaptă plata) | 'comanda' (în lucru) | 'finalizata'
@@ -558,6 +588,7 @@ module.exports = {
     ['POST', '/api/comenzi/:id/accepta',     { handler: accepta }],
     ['POST', '/api/comenzi/:id/asteapta-plata', { handler: asteaptaPlata }],
     ['POST', '/api/comenzi/:id/livrare',        { handler: schimbaLivrare }],
+    ['POST', '/api/comenzi/:id/adauga',         { handler: adauga }],
     ['POST', '/api/comenzi/:id/inapoi-oferta',  { handler: inapoiInOferta }],
     ['POST', '/api/comenzi/:id/finalizeaza', { handler: schimbaFinalizare(true) }],
     ['POST', '/api/comenzi/:id/redeschide',  { handler: schimbaFinalizare(false) }],

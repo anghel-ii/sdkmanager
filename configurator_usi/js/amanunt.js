@@ -378,7 +378,7 @@ let card = null;
 
 const mesaj = (html, fel) => { $('ofertaMesaj').innerHTML = `<div class="oferta-msg ${fel}">${html}</div>`; };
 const BUTOANE = ['btnConfirma', 'btnComanda', 'btnPlata'];
-const TEXT = { btnConfirma: () => (cos.ofertaEditata ? 'Salvează modificările' : 'Salvează oferta'),
+const TEXT = { btnConfirma: () => (cos.adaugaLa ? `Adaugă la comanda ${cos.adaugaLa.numar}` : cos.ofertaEditata ? 'Salvează modificările' : 'Salvează oferta'),
                btnComanda: () => 'Salvează comanda', btnPlata: () => 'Aşteaptă plata' };
 
 function renderOferta() {
@@ -386,7 +386,9 @@ function renderOferta() {
   const servit = stare === 'logat' || stare === 'nelogat';
   if ($('linkAcasa')) $('linkAcasa').style.display = servit ? '' : 'none';
   $('cine').textContent = utilizator?.nume ?? '';
-  const arata = da => { for (const id of BUTOANE) $(id).style.display = da ? '' : 'none'; $('ofertaNr').style.display = da ? '' : 'none'; };
+  // „Adaugă la comandă": doar butonul de adăugare (comanda e deja în lucru)
+  const arata = da => { for (const id of BUTOANE) $(id).style.display = da && (id === 'btnConfirma' || !cos.adaugaLa) ? '' : 'none';
+                        $('ofertaNr').style.display = da && !cos.adaugaLa ? '' : 'none'; };
   if (!servit || modFisa) { $('ofertaUI').innerHTML = ''; return arata(false); }
   if (stare === 'nelogat') {
     arata(false);
@@ -395,6 +397,7 @@ function renderOferta() {
     return;
   }
   arata(true);
+  $('btnConfirma').textContent = TEXT.btnConfirma();
   const t = cosul.toate(cos, curenta());
   $('ofertaUI').innerHTML = t.pozitii?.length > 1 ? `<div class="oferta-hint">${t.pozitii.length} produse în ofertă</div>` : '';
   for (const id of BUTOANE) $(id).disabled = !t.pozitii;
@@ -415,6 +418,7 @@ function cerePlata() {
 }
 
 async function trimite(unde) {
+  if (cos.adaugaLa) return adaugaLaComanda();
   const ofertaNr = $('ofertaNr').value.trim();
   // obligatorii: numele, livrarea, agentul, nr. ofertei; la „Salvează comanda" şi telefonul + adresa
   const lipsa = campuriLipsa({ laAcceptare: unde === 'comanda' });
@@ -446,6 +450,18 @@ async function trimite(unde) {
       ? 'nu a devenit comandă' : 'nu a trecut la „Aşteaptă plata"'}: ${esc(t.eroare)}`, 'eroare');
   }
   laComanda();
+}
+// „Adaugă la comandă": produsele se adaugă la comanda în lucru — fără transport şi fără datele clientului
+async function adaugaLaComanda() {
+  const tot = cosul.toate(cos, curenta());
+  if (tot.eroare) return mesaj(esc(tot.eroare), 'eroare');
+  $('btnConfirma').disabled = true;
+  $('btnConfirma').textContent = 'Se adaugă…';
+  const r = await manager.adaugaLaComanda(cos.adaugaLa.id, cosul.transportOData(tot.pozitii, null).map(x => x.pozitie));
+  if (r.eroare) { $('btnConfirma').disabled = false; $('btnConfirma').textContent = TEXT.btnConfirma(); return mesaj(esc(r.eroare), 'eroare'); }
+  const id = cos.adaugaLa.id;
+  cosul.goleste();
+  location.href = '/#comanda/' + id;
 }
 $('btnConfirma').addEventListener('click', () => trimite('oferta'));
 $('btnComanda').addEventListener('click', () => trimite('comanda'));
@@ -501,6 +517,10 @@ const puneClientul = (client, ofertaNr, detalii) => {
   // „Modifică oferta": coşul cu toate produsele ofertei îl face configuratorul (ştie gamele)
   if (params.get('oferta')) return location.replace(`./?oferta=${encodeURIComponent(params.get('oferta'))}`);
   let eroare = null;
+  if (params.get('adauga')) {
+    const r = await cosul.dinAdauga(params.get('adauga'), manager.incarcaOferta, 'amanunt');
+    if (r.eroare) eroare = r.eroare; else return;
+  }
   if (params.get('fisa')) {
     const o = await manager.incarcaOferta(params.get('fisa'));
     const k = +params.get('poz') || 0, p = o.pozitii?.[k];

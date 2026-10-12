@@ -983,7 +983,9 @@ function renderOferta() {
   // mereu; aici se decide doar ce ţine de ofertă: butonul de salvare şi
   // rezumatul de deasupra lui.
   const butoane = [btn, $('btnComanda'), $('btnPlata')].filter(Boolean);
-  const arata = da => { for (const b of butoane) b.style.display = da ? '' : 'none'; $('ofertaNr').style.display = da ? '' : 'none'; };
+  // „Adaugă la comandă": doar butonul de adăugare (comanda e deja în lucru)
+  const arata = da => { for (const b of butoane) b.style.display = da && (b === btn || !cos.adaugaLa) ? '' : 'none';
+                        $('ofertaNr').style.display = da && !cos.adaugaLa ? '' : 'none'; };
   if (!servit || modFisa) { box.innerHTML = ''; arata(false); return; }
 
   if (stare === 'nelogat') {
@@ -1052,7 +1054,7 @@ function cerePlata() {
 
 const TEXT_BUTON = { oferta: 'Salvează oferta', comanda: 'Salvează comanda', plata: 'Aşteaptă plata' };
 const textButoane = () => {
-  $('btnConfirma').textContent = cos.ofertaEditata ? 'Salvează modificările' : TEXT_BUTON.oferta;
+  $('btnConfirma').textContent = cos.adaugaLa ? `Adaugă la comanda ${cos.adaugaLa.numar}` : cos.ofertaEditata ? 'Salvează modificările' : TEXT_BUTON.oferta;
   $('btnComanda').textContent = TEXT_BUTON.comanda;
   $('btnPlata').textContent   = TEXT_BUTON.plata;
 };
@@ -1060,6 +1062,7 @@ const textButoane = () => {
 // unde: 'oferta' (rămâne ofertă) | 'comanda' (în lucru) | 'plata' (aşteaptă plata).
 // Oferta se salvează întâi (POST / PUT), apoi, la comandă / plată, trece mai departe.
 async function trimiteOferta(unde = 'oferta') {
+  if (cos.adaugaLa) return adaugaLaComanda();
   const ofertaNr = $('ofertaNr').value.trim();
   // obligatorii: numele, livrarea, agentul, nr. ofertei; la „Salvează comanda" şi telefonul + adresa
   const lipsa = campuriLipsa({ laAcceptare: unde === 'comanda' });
@@ -1111,6 +1114,20 @@ async function trimiteOferta(unde = 'oferta') {
       ? 'nu a devenit comandă' : 'nu a trecut la „Aşteaptă plata"'}: ${esc(t.eroare)}`, 'eroare');
   }
   laComanda();
+}
+
+// „Adaugă la comandă": produsele (coşul + cel de pe ecran) se adaugă la comanda în lucru —
+// fără transport (îl are deja comanda), fără datele clientului (sunt ale comenzii).
+async function adaugaLaComanda() {
+  const tot = cosul.toate(cos, curentaUsi());
+  if (tot.eroare) return mesajOferta(esc(tot.eroare), 'eroare');
+  $('btnConfirma').disabled = true;
+  $('btnConfirma').textContent = 'Se adaugă…';
+  const r = await oferta.adaugaLaComanda(cos.adaugaLa.id, cosul.transportOData(tot.pozitii, null).map(x => x.pozitie));
+  if (r.eroare) { $('btnConfirma').disabled = false; textButoane(); return mesajOferta(esc(r.eroare), 'eroare'); }
+  const id = cos.adaugaLa.id;
+  cosul.goleste();
+  location.href = '/#comanda/' + id;
 }
 
 // Ultima ofertă salvată + configuraţia de atunci. Fişa primeşte codurile de
@@ -1263,6 +1280,10 @@ export async function initUI() {
   // „Modifică oferta" din manager: toate produsele ofertei intră în coş, apoi se
   // deschide primul (pe pagina gamei lui); restul se modifică din „Adaugă la ofertă".
   let eroareIncarcare = null;
+  if (params.get('adauga')) {
+    const r = await cosul.dinAdauga(params.get('adauga'), oferta.incarcaOferta, gama?.id ?? 'suspendata');
+    if (r.eroare) eroareIncarcare = r.eroare; else return;
+  }
   if (params.get('oferta')) {
     const o = await oferta.incarcaOferta(params.get('oferta'));
     if (o.eroare || !o.pozitii?.length) eroareIncarcare = o.eroare || 'Oferta n-are configuraţie.';
@@ -1399,7 +1420,11 @@ export async function initUI() {
   aplicaGama();
   rebuild();
 
-  if (cos.ofertaEditata) {
+  if (cos.adaugaLa) {
+    textButoane();
+    mesajOferta(`Adaugi produse la comanda <strong>${esc(cos.adaugaLa.numar)}</strong> — clientul şi livrarea rămân ale ei.`, 'ok');
+  }
+  else if (cos.ofertaEditata) {
     $('btnConfirma').textContent = 'Salvează modificările';
     mesajOferta(`Modifici oferta <strong>${esc(cos.numar ?? '')}</strong>.`, 'ok');
   }

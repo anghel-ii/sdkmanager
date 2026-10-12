@@ -1053,6 +1053,25 @@ async function main() {
     verifica('pagina /admin are contul FAN', String((await cer('GET', '/admin')).date).includes('/api/fan/cont'));
   }
 
+  console.log('\nAdaugă la comandă (comenzi în lucru)');
+  {
+    const cuTransport = p => ({ ...p, linii: { ...p.linii, facturare: [...(p.linii?.facturare ?? []),
+      { cod: 'CHLTTRMANIP', denumire: 'Transport', um: 'buc', cantitate: 1 }] } });
+    const o = (await cer('POST', '/api/comenzi', { client: { nume: 'Client Adaugă', telefon: '0700', adresa: 'X' }, detalii: { livrare: 'Curier ramburs' },
+      ofertaNr: 'AD-1', pozitii: [cuTransport(pozitie('confortGamma', 'Confort Gamma', 2, 2000))] })).date.comanda.id;
+    verifica('adaugă: la o ofertă → 409', (await cer('POST', `/api/comenzi/${o}/adauga`, { pozitii: [pozitie('confortGamma', 'Confort Gamma', 1, 1200)] })).stare === 409);
+    await cer('POST', `/api/comenzi/${o}/accepta`, { plata: 'proforma', avans: 0 });
+    verifica('adaugă: fără produse → 400', (await cer('POST', `/api/comenzi/${o}/adauga`, { pozitii: [] })).stare === 400);
+    verifica('adaugă: produs invalid → 400', (await cer('POST', `/api/comenzi/${o}/adauga`, { pozitii: [{ sistem: '' }] })).stare === 400);
+    const a = await cer('POST', `/api/comenzi/${o}/adauga`, { pozitii: [cuTransport(pozitie('confortGamma', 'Confort Gamma', 1, 1200))] });
+    const d = (await cer('GET', `/api/comenzi/${o}`)).date;
+    const transport = d.pozitii.flatMap(p => p.linii.facturare).filter(l => l.cod === 'CHLTTRMANIP').length;
+    verifica('adaugă: comanda în lucru primeşte produsul (după cele vechi)', a.stare === 200 && d.pozitii.length === 2 && d.pozitii[1].nr_usi === 1, JSON.stringify(a.date));
+    verifica('adaugă: transportul nu se dublează', transport === 1, `linii transport: ${transport}`);
+    await cer('POST', `/api/comenzi/${o}/finalizeaza`);
+    verifica('adaugă: la o comandă finalizată → 409', (await cer('POST', `/api/comenzi/${o}/adauga`, { pozitii: [pozitie('confortGamma', 'Confort Gamma', 1, 1200)] })).stare === 409);
+  }
+
   console.log('\nTaskuri + remindere (server/taskuri.js)');
   {
     const { dinOraRomaniei } = require('../server/taskuri.js');

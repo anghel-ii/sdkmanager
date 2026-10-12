@@ -15,14 +15,15 @@ import { qtyText } from './lib/comun/num.js';
 //
 //  cos = { pozitii: [{ gama, pozitie }], curent: indexul de pe ecran | null (produs nou),
 //          client: { nume, telefon, adresa }, ofertaNr, comanda: { livrare, plata, agent },
-//          ofertaEditata: id | null, numar }
+//          ofertaEditata: id | null, numar, adaugaLa: { id, numar } | null }
+//  adaugaLa = „Adaugă la comandă" din manager: produsele se ADAUGĂ la o comandă în lucru.
 // ═══════════════════════════════════════════════════════════════════════════
 
 const CHEIE = 'cosOferta';
 const $ = id => document.getElementById(id);
 const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-const gol = () => ({ pozitii: [], curent: null, client: {}, ofertaNr: '', comanda: {}, ofertaEditata: null, numar: null });
+const gol = () => ({ pozitii: [], curent: null, client: {}, ofertaNr: '', comanda: {}, ofertaEditata: null, numar: null, adaugaLa: null });
 export const activ = () => new URLSearchParams(location.search).has('cos');
 export function citeste() {
   if (!activ()) return gol();
@@ -30,6 +31,21 @@ export function citeste() {
 }
 export function scrie(cos) { try { sessionStorage.setItem(CHEIE, JSON.stringify(cos)); } catch { /* fără coş */ } }
 export function goleste() { try { sessionStorage.removeItem(CHEIE); } catch { /* nimic */ } }
+
+// „Adaugă la comandă" din manager (?adauga=<id>): un coş nou, legat de comanda în lucru —
+// clientul şi livrarea sunt ale ei (pt. fişă), produsele de aici i se adaugă la salvare.
+// `incarca` = incarcaOferta din manager.js. Întoarce { eroare } sau pleacă pe pagina gamei.
+export async function dinAdauga(id, incarca, gama) {
+  const o = await incarca(id);
+  if (o.eroare) return { eroare: o.eroare };
+  const c = o.comanda;
+  if (c.tip !== 'comanda' || c.finalizat_la) return { eroare: `${c.oferta_nr || c.numar} nu e o comandă în lucru — nu i se mai adaugă produse.` };
+  scrie({ ...gol(), adaugaLa: { id: c.id, numar: c.oferta_nr || c.numar },
+          client: { nume: c.client_nume, telefon: c.client_telefon ?? '', adresa: c.client_adresa ?? '' },
+          ofertaNr: c.oferta_nr ?? '', comanda: { livrare: c.livrare, plata: c.plata, agent: c.agent } });
+  location.replace(url(gama));
+  return {};
+}
 
 // adresa paginii unei game, în coş (`poz` = produsul din coş de deschis pe ecran)
 export const url = (gama, extra = {}) => gama === 'amanunt'

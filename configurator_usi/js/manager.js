@@ -89,6 +89,19 @@ export async function salveaza({ nume, telefon, adresa, email, observatii, detal
   return { ok: true, comanda: date.comanda };
 }
 
+// „Adaugă la comandă" (comandă în lucru): produsele se pun după cele existente.
+export async function adaugaLaComanda(id, pozitii) {
+  let r;
+  try {
+    r = await fetch(`/api/comenzi/${id}/adauga`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pozitii }) });
+  } catch {
+    return { eroare: 'Serverul nu răspunde. Verifică legătura la reţea.' };
+  }
+  const date = await r.json().catch(() => ({}));
+  return r.ok ? { ok: true, ...date } : { eroare: date.eroare || `Adăugarea a eşuat (${r.status}).` };
+}
+
 // După salvare, oferta trece mai departe: 'comanda' (în lucru — cere plata +
 // avansul, ca Acceptă din manager) sau 'plata' (tabul „Aşteaptă plata").
 export async function treceIn(id, unde, plata = {}) {
