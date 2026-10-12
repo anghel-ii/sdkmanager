@@ -40,11 +40,11 @@ body.ui-nou:has(#continut > .antet) #taburiSus { display: none; }
 
 /* ── cele patru stări: un rând de plăci joase — iconiţa, numele, numărul ── */
 .taburi { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
-.placa { display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 14px 0 9px; min-width: 0; text-align: left;
+.placa { display: flex; align-items: center; gap: 8px; height: 46px; padding: 0 12px 0 8px; min-width: 0; text-align: left;
          font: inherit; color: var(--text); cursor: pointer;
          background: var(--panel); border: 1px solid var(--line); border-radius: 10px; transition: border-color .15s, background .15s; }
 .placa:hover:not(:disabled) { background: #1f232a; border-color: #3a4049; }
-.placa-ic { flex: none; width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center;
+.placa-ic { flex: none; width: 26px; height: 26px; border-radius: 7px; display: grid; place-items: center;
             background: rgba(77, 163, 255, .12); color: var(--accent); }
 .placa-ic .ic { width: 17px; height: 17px; }
 .placa .tab-nume { flex: 1; min-width: 0; font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
