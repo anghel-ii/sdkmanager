@@ -358,6 +358,8 @@ const normal = t => String(t ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toL
 // în afara conţinutului; pe pagina unei comenzi se ascund (nou.css) — stările
 // rămân în meniul din stânga. Fiecare stare cu iconiţa ei (bara.js).
 const ICOANA_TAB = { oferta: 'oferta', plata: 'plata', comanda: 'lucru', finalizata: 'gata' };
+// pe plăcile înguste, numele din meniul din stânga (cel întreg rămâne în title)
+const NUME_SCURT = { oferta: 'Oferte', plata: 'Aşteaptă plata', comanda: 'În lucru', finalizata: 'Finalizate' };
 
 function asiguraTaburi() {
   if (!$('taburiSus').children.length) {
@@ -365,8 +367,8 @@ function asiguraTaburi() {
       <div class="eticheta-sus">Ofertă nouă</div>
       <div class="placi-game" id="placiGame"></div>
       <div class="taburi">${TABURI.map(([t, n]) => `
-        <button data-tab="${t}" class="placa ton-${t}">
-          <span class="placa-ic">${icoana(ICOANA_TAB[t])}</span><span class="tab-nume">${n}</span><span class="tab-cate" data-cate="${t}"></span>
+        <button data-tab="${t}" class="placa ton-${t}" title="${n}">
+          <span class="placa-ic">${icoana(ICOANA_TAB[t])}</span><span class="tab-nume">${NUME_SCURT[t]}</span><span class="tab-cate" data-cate="${t}"></span>
         </button>`).join('')}</div>`;
     incarcaGame().then(g => {
       $('placiGame').innerHTML = (g?.game ?? []).map(x => `
