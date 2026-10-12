@@ -681,6 +681,15 @@ input[type="range"]::-moz-range-thumb {
 }
 .rame-tabel input { width: 64px; }
 .rame-tabel input.mic { width: 46px; }
+/* cotele găurilor de balama, sub fiecare rând de rame (Cote pe fiecare rama) */
+.rame-tabel tr.rame-sub td { padding: 0 3px 8px; }
+.rame-cote { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.rame-cote-et { font-size: 10.5px; color: var(--text-dim); margin-right: 2px; }
+.rame-cota { display: inline-flex; align-items: center; gap: 3px; }
+.rame-tabel .rame-cota input { width: 58px; }
+.rame-cota-de { background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; color: var(--text);
+  cursor: pointer; font-size: 10.5px; padding: 4px 6px; white-space: nowrap; }
+.rame-cota-de:hover { border-color: var(--accent); }
 .rame-tabel input::-webkit-inner-spin-button, .rame-tabel input::-webkit-outer-spin-button,
 .rame-camp input::-webkit-inner-spin-button, .rame-camp input::-webkit-outer-spin-button { -webkit-appearance: none; }
 .rame-camp select { font-family: 'Inter', sans-serif; }

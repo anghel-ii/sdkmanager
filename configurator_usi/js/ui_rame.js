@@ -3,8 +3,8 @@ import { systems } from './systems/registry.js';
 import { currentSpec } from './builder.js';
 import {
   MODELE_RAME, ASAMBLARE, GAURIRE_820, GAURIRE_831,
-  BALAMALE, PLACUTE, FARA_BALAMALE, FARA_PLACUTE, FARA_GAURIRE, DOUA_GAURI, BARA_MANER_MM, MODELE_MANER, codManer,
-  stareRameGoala, randGol, randManerGol,
+  BALAMALE, PLACUTE, FARA_BALAMALE, FARA_PLACUTE, FARA_GAURIRE, DOUA_GAURI, COTE_PE_RAMA, BARA_MANER_MM, MODELE_MANER, codManer,
+  stareRameGoala, randGol, randManerGol, cotaGoala,
 } from './lib/rame/rame.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -73,21 +73,24 @@ function celula(rd, [c, max, mic]) {
     max && Number.isFinite(max) ? ` max="${max}"` : ''} step="1" value="${rd[c] ?? ''}"></td>`;
 }
 
-function randHtml(rd, i, coloane, idCod) {
+// `sub` = un rând dedesubtul fiecărui rând (cotele de găurire): { html(rd, i), leaga(tr, rd) }
+function randHtml(rd, i, coloane, idCod, sub) {
   return `<tr data-i="${i}">
     <td class="rame-nr">${i + 1}</td>
     ${coloane.map(col => celula(rd, col)).join('')}
     ${idCod ? `<td class="rame-cod" id="${idCod}${i}"></td>` : ''}
     <td><button class="rame-sterge" title="Şterge rândul">✕</button></td>
-  </tr>`;
+  </tr>${sub ? sub.html(rd, i) : ''}`;
 }
 
-function tabelCrescator(tbody, { lista, coloane, gol, idCod, laSchimbare, redeseneaza }) {
+function tabelCrescator(tbody, { lista, coloane, gol, idCod, sub, laSchimbare, redeseneaza }) {
   const randNou = i => {   // ai început ultimul rând → încă unul gol dedesubt
     if (i !== lista.length - 1) return;
     lista.push(gol());
-    tbody.insertAdjacentHTML('beforeend', randHtml(lista.at(-1), lista.length - 1, coloane, idCod));
-    leaga(tbody.lastElementChild);
+    const n = lista.length - 1;
+    tbody.insertAdjacentHTML('beforeend', randHtml(lista[n], n, coloane, idCod, sub));
+    leaga(/** @type {HTMLElement} */ (tbody.querySelector(`tr[data-i="${n}"]`)));
+    if (sub) sub.leaga(tbody.querySelector(`tr[data-sub="${n}"]`), lista[n]);
   };
   const leaga = tr => {
     const i = +tr.dataset.i;
@@ -111,7 +114,49 @@ function tabelCrescator(tbody, { lista, coloane, gol, idCod, laSchimbare, redese
       redeseneaza();
     });
   };
-  tbody.querySelectorAll('tr').forEach(leaga);
+  tbody.querySelectorAll('tr[data-i]').forEach(tr => leaga(/** @type {HTMLElement} */ (tr)));
+  if (sub) tbody.querySelectorAll('tr[data-sub]').forEach(tr => sub.leaga(tr, lista[+(/** @type {HTMLElement} */ (tr)).dataset.sub]));
+}
+
+// ── Cotele găurilor de balama sub fiecare rând de rame (COTE_PE_RAMA, userul 2026-10-12) ──
+// Câte un câmp pe gaură, cu butonul „de sus" / „de jos"; începi să scrii în ultimul → apare
+// încă unul. Nr. de găuri (deci de balamale) = câte cote are rândul.
+const cotaHtml = (c, k) => `<span class="rame-cota" data-k="${k}"><input type="number" min="1" step="1" placeholder="cotă"
+  value="${c.v ?? ''}"><button type="button" class="rame-cota-de" title="Cota se măsoară de sus sau de jos — apasă ca s-o schimbi">${
+  c.de === 'jos' ? '↑ de jos' : '↓ de sus'}</button></span>`;
+function coteRand(nrColoane, laSchimbare) {
+  return {
+    html: (rd, i) => {
+      rd.cote = (rd.cote ?? []).filter(c => c.v != null);
+      rd.cote.push(cotaGoala());
+      return `<tr class="rame-sub" data-sub="${i}"><td></td><td colspan="${nrColoane}"><div class="rame-cote">
+        <span class="rame-cote-et">Găuri balama (mm)</span>${rd.cote.map(cotaHtml).join('')}</div></td></tr>`;
+    },
+    leaga: (tr, rd) => {
+      const box = tr.querySelector('.rame-cote');
+      const leagaCota = span => {
+        const k = +span.dataset.k, inp = span.querySelector('input'), btn = span.querySelector('button');
+        inp.addEventListener('input', () => {
+          if (inp.value === '' || k !== rd.cote.length - 1) return;
+          rd.cote.push(cotaGoala());
+          box.insertAdjacentHTML('beforeend', cotaHtml(rd.cote.at(-1), rd.cote.length - 1));
+          leagaCota(box.lastElementChild);
+        });
+        inp.addEventListener('change', () => {
+          const v = parseInt(inp.value, 10);
+          rd.cote[k].v = v > 0 ? v : null;
+          inp.value = rd.cote[k].v ?? '';
+          laSchimbare();
+        });
+        btn.addEventListener('click', () => {
+          rd.cote[k].de = rd.cote[k].de === 'jos' ? 'sus' : 'jos';
+          btn.textContent = rd.cote[k].de === 'jos' ? '↑ de jos' : '↓ de sus';
+          laSchimbare();
+        });
+      };
+      box.querySelectorAll('.rame-cota').forEach(leagaCota);
+    },
+  };
 }
 
 // Schiţa de găurire trasă de om (820 / 822 / 824, userul 2026-10-08) — poza se micşorează
@@ -139,8 +184,11 @@ export function renderRame(box, { rebuild, geamOptionsHtml }) {
   // la coadă, mereu un rând gol (se completează ca să apară următorul)
   const faraGaurire = x.gaurire === FARA_GAURIRE;
   const cuBalama = cu820 && !faraGaurire;                        // balama / plăcuţă
-  const cuGauri  = cuBalama && x.gaurire !== DOUA_GAURI;          // coloana „Găuri" (la sus/jos: mereu 2)
+  const peRama   = cuBalama && x.gaurire === COTE_PE_RAMA;        // cotele sub fiecare rând
+  const cuGauri  = cuBalama && x.gaurire !== DOUA_GAURI && !peRama; // coloana „Găuri" (la sus/jos: mereu 2; la cote: câte cote)
   const COL_RAME = [['h', m.H.at(-1)], ['l', m.L.at(-1)], ['buc', Infinity, true], ...(cuGauri ? [['gauri', Infinity, true]] : [])];
+  // cotele sub fiecare rând (laSchimbare e mai jos — se cheamă abia la editare)
+  const coteSub = peRama ? coteRand(COL_RAME.length + 2, () => laSchimbare()) : null;
   // toate modelele de mâner la vedere; cele fără cod în culoarea aleasă — gri
   const existaInCuloare = v => !state.finish || !!codManer(v, state.finish);
   const COL_MANER = [['model', { variante: MODELE_MANER.map(([v, t]) => [v, t, existaInCuloare(v)]) }],
@@ -168,7 +216,7 @@ export function renderRame(box, { rebuild, geamOptionsHtml }) {
       (se rotunjesc în sus la mărimea standard)</div>
     <table class="rame-tabel">
       <thead><tr><th>#</th><th>Înălţime (mm)</th><th>Lăţime (mm)</th><th>Bucăţi</th>${cuGauri ? '<th>Găuri</th>' : ''}<th>Cod ramă</th><th></th></tr></thead>
-      <tbody id="rameRanduri">${x.randuri.map((rd, i) => randHtml(rd, i, COL_RAME, 'rame-cod-')).join('')}</tbody>
+      <tbody id="rameRanduri">${x.randuri.map((rd, i) => randHtml(rd, i, COL_RAME, 'rame-cod-', coteSub)).join('')}</tbody>
     </table>
 
     ${cu820 ? `
@@ -197,8 +245,8 @@ export function renderRame(box, { rebuild, geamOptionsHtml }) {
   const redeseneaza = () => { renderRame(box, { rebuild, geamOptionsHtml }); rebuild(); refreshRame(); };
   const laSchimbare = () => { rebuild(); refreshRame(); };
 
-  tabelCrescator(box.querySelector('#rameRanduri'),
-    { lista: x.randuri, coloane: COL_RAME, gol: randGol, idCod: 'rame-cod-', laSchimbare, redeseneaza });
+  tabelCrescator(box.querySelector('#rameRanduri'), { lista: x.randuri, coloane: COL_RAME, gol: randGol, idCod: 'rame-cod-',
+    sub: coteSub, laSchimbare, redeseneaza });
   const tm = box.querySelector('#rameManer');
   if (tm) tabelCrescator(tm, { lista: x.maner.randuri, coloane: COL_MANER, gol: randManerGol, idCod: null, laSchimbare, redeseneaza });
 
