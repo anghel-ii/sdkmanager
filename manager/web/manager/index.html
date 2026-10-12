@@ -159,7 +159,10 @@
     <div id="taburiSus"></div>
     <div id="continut">Se încarcă…</div>
   </div>
-  <aside class="card-comanda" id="cardComanda" aria-live="polite"></aside>
+  <div class="acasa-dreapta">
+    <section class="card-taskuri" id="cardTaskuri"></section>
+    <aside class="card-comanda" id="cardComanda" aria-live="polite"></aside>
+  </div>
 </div>
 
 <script>
@@ -445,8 +448,41 @@ function asiguraBaraLista() {
       await api('/api/preferinte', { method: 'PUT', body: JSON.stringify({ sortare }) });
     });
     incarcaCard();
+    incarcaTaskuri();
   }
 }
+
+// ── Taskurile mele, deasupra cardului comenzii (server/taskuri.js; pagina /taskuri) ──
+// Nefăcute, cele cu reminderul trecut primele (roşii); bifa = făcut; click pe comandă o deschide.
+const ARATA_TASKURI = 6;
+async function incarcaTaskuri() {
+  const el = $('cardTaskuri');
+  if (!el || !$('tabelLista') || !eu) return;
+  const r = await api('/api/taskuri');
+  if (!r?.ok) { el.hidden = true; return; }
+  const ale = (await r.json()).taskuri.filter(t => t.pentru === eu.id && !t.facut_la);
+  const acum = Date.now();
+  const tarziu = t => t.scadenta && new Date(t.scadenta.replace(' ', 'T') + 'Z') <= acum;
+  el.hidden = false;
+  el.innerHTML = `
+    <div class="ct-cap"><b>Taskurile mele</b>${ale.length ? `<span class="insigna-num">${ale.length}</span>` : ''}
+      <span class="spatiu"></span><a class="buton mic" href="/taskuri">+ Task</a><a class="ct-toate" href="/taskuri">Toate →</a></div>
+    ${ale.length ? `<ul class="ct-lista">${ale.slice(0, ARATA_TASKURI).map(t => `
+      <li class="${tarziu(t) ? 'tarziu' : ''}" data-id="${t.id}">
+        <input type="checkbox" title="Făcut">
+        <div><span class="ct-text">${esc(t.text)}</span>
+          <span class="ct-info">${[t.scadenta && `⏰ ${dataOra(t.scadenta)}`, t.creat_de !== t.pentru && `de la ${esc(t.creat_de_nume)}`,
+            t.comanda_id && `<a href="#comanda/${t.comanda_id}">${esc(t.comanda_nr)} · ${esc(t.client_nume)}</a>`].filter(Boolean).join(' · ')}</span></div>
+      </li>`).join('')}</ul>${ale.length > ARATA_TASKURI ? `<a class="ct-mai" href="/taskuri">încă ${ale.length - ARATA_TASKURI} →</a>` : ''}`
+    : '<p class="ct-gol">Nimic de făcut.</p>'}`;
+  el.querySelectorAll('li input[type=checkbox]').forEach(cb => cb.addEventListener('change', async () => {
+    const id = cb.closest('li').dataset.id;
+    await api(`/api/taskuri/${id}`, { method: 'PATCH', body: JSON.stringify({ facut: true }) });
+    incarcaTaskuri();
+    window.verificaTaskuri?.();
+  }));
+}
+window.addEventListener('live:schimbare', () => incarcaTaskuri());
 
 async function renderLista() {
   asiguraBaraLista();
@@ -644,6 +680,7 @@ function cardDetalii({ comanda: c, pozitii, sticlaLinii = [] }, fise) {
         ? pozitii.map((p, k) => `<button class="cc-fisa" data-poz="${k}" title="Fişa produsului ${k + 1}: ${esc(p.eticheta)}">🖶 Fişa ${esc(fise[k])}</button>`).join('')
         : '<button class="cc-fisa" data-poz="0" title="Deschide fişa comenzii pentru printare">🖶 Printează fişa</button>'}
       ${eOferta ? '<button id="ccModifica">Modifică oferta</button>' : ''}
+      <a class="buton" href="/taskuri?comanda=${c.id}" title="Un task / reminder legat de comanda asta">+ Task</a>
     </div>
     <div class="cc-butoane cc-treceri">${butoaneTreceri(c, minuteInapoi(c))}</div>
     <dl class="cc-perechi">
@@ -906,6 +943,7 @@ async function renderDetaliu(id) {
         : '<button id="fisaDetaliu" title="Deschide fişa comenzii pentru printare">🖶 Printează fişa</button>'}
       ${eOferta ? '<button id="modifica">Modifică oferta</button>' : ''}
       ${butoaneTreceri(c, minuteInapoi(c))}
+      <button id="taskNou" title="Un task / reminder legat de comanda asta">+ Task</button>
     </div>
 
     <!-- stânga: datele clientului; dreapta: paşii comenzii (cine şi când) -->
@@ -996,6 +1034,7 @@ async function renderDetaliu(id) {
   leagaCopiere($('copCant'), total.map(l => qtyText(l.cantitate)));
 
   $('fisaDetaliu')?.addEventListener('click', e => deschideFisa(id, e.currentTarget));
+  $('taskNou').addEventListener('click', () => { location.href = `/taskuri?comanda=${id}`; });
   document.querySelectorAll('button.fisa-poz').forEach(b => b.addEventListener('click', () => deschideFisa(id, b, +b.dataset.poz)));
 
 }

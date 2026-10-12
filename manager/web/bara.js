@@ -25,6 +25,7 @@
     plata:   '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
     lucru:   '<path d="M20.5 7.5 12 3 3.5 7.5v9L12 21l8.5-4.5z"/><path d="M3.5 7.5 12 12l8.5-4.5M12 12v9"/>',
     gata:    '<circle cx="12" cy="12" r="8.5"/><path d="m8.5 12.2 2.4 2.4 4.6-5"/>',
+    taskuri: '<path d="M10 6.5h10M10 12h10M10 17.5h10"/><path d="m3.5 6.5 1.4 1.4 2.3-2.6M3.5 12l1.4 1.4 2.3-2.6M3.5 17.5l1.4 1.4 2.3-2.6"/>',
     sticla:  '<rect x="4.5" y="3.5" width="15" height="17" rx="1.5"/><path d="m8 9.5 3-3M8 14.5l7.5-7.5"/>',
     livrari: '<path d="M14 16.5V6H3.5v10.5h1.8"/><path d="M14 9h3.8l2.7 3.4v4.1h-1.8M9 16.5h6.2"/><circle cx="7.2" cy="16.8" r="1.8"/><circle cx="17" cy="16.8" r="1.8"/>',
     clienti: '<circle cx="9" cy="8.5" r="3.3"/><path d="M3 19.5c.7-3.2 3.1-5 6-5s5.3 1.8 6 5"/><path d="M15.5 5.3a3.3 3.3 0 0 1 0 6.4M17.6 14.8c1.7.7 2.9 2.2 3.4 4.7"/>',
@@ -68,6 +69,16 @@
       background: var(--panel-2); color: var(--text-dim); font-size: 11.5px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1; }
     .insigna:empty { display: none; }
     .insigna.cald { background: var(--accent-dim); color: #fff; }
+    .insigna.rosie { background: #a3412f; color: #fff; }
+    /* reminderele fără notificare Windows: casete în colţul paginii (server/taskuri.js) */
+    #caseteTaskuri { position: fixed; right: 16px; bottom: 16px; z-index: 1000; display: flex; flex-direction: column; gap: 8px;
+      max-width: 360px; font-family: 'Inter', system-ui, sans-serif; font-size: 14px; }
+    #caseteTaskuri > div { background: var(--panel-2, #21252c); color: var(--text, #e9ebee); border: 1px solid #c9604c;
+      border-radius: 10px; padding: 12px 14px; box-shadow: 0 6px 24px rgba(0,0,0,.45); }
+    #caseteTaskuri .dim { color: var(--text-dim, #8b92a0); font-size: 13px; margin: 4px 0 8px; }
+    #caseteTaskuri a { color: var(--accent, #4da3ff); margin-right: 12px; }
+    #caseteTaskuri button { font: inherit; font-size: 13px; padding: 4px 10px; border-radius: 6px; cursor: pointer;
+      border: 1px solid var(--line, #2c313a); background: var(--panel, #1b1e24); color: inherit; }
     /* legătura live (web/live.js pune data-live pe <html>): ascunsă pe paginile fără ea */
     .live { display: none; align-items: center; gap: 7px; height: 24px; padding: 0 10px; border-radius: 999px; font-size: 12px; font-weight: 500; white-space: nowrap;
       color: #7cc493; background: rgba(63,166,106,.10); border: 1px solid rgba(63,166,106,.35); }
@@ -152,7 +163,7 @@
     #bara.compacta #iesire { padding: 0 9px; }
     @media (max-width: 1379px) { #bara.compacta .buton .txt { display: none; } #bara.compacta .buton { padding: 0 9px; } }
     @media (max-width: 1100px) { #bara.compacta #cine { display: none; } }
-    @media print { #bara, #meniu { display: none !important; } html.cu-meniu body { padding-left: 0; } }`;
+    @media print { #bara, #meniu, #caseteTaskuri { display: none !important; } html.cu-meniu body { padding-left: 0; } }`;
   document.head.appendChild(stil);
 
   // meniul restrâns se ţine minte în browser; fără alegere: restrâns la jumătate de ecran
@@ -182,6 +193,7 @@
       <div class="grup"><span class="txt">Atelier</span></div>
       ${link('/sticla', 'sticla', 'Comandă sticlă', 'id="linkSticla"', '<span class="insigna cald" id="nrSticla"></span>')}
       ${link('/livrari', 'livrari', 'Organizează livrări', 'id="linkLivrari"')}
+      ${link('/taskuri', 'taskuri', 'Taskuri', 'id="linkTaskuri"', '<span class="insigna rosie" id="nrTaskuri" title="ajunse la ora reminderului"></span>')}
       <div class="grup" id="grupAdmin" hidden><span class="txt">Administrare</span></div>
       ${link('/clienti', 'clienti', 'Clienţi', 'id="linkClienti" hidden', '<span class="insigna cald" id="nrClienti" title="trimise de agenţi, de aprobat"></span>')}
       ${link('/admin', 'admin', 'Utilizatori', 'id="linkAdmin" hidden')}
@@ -209,6 +221,7 @@
       <a href="/" class="buton" title="Comenzi">${icoana('acasa')}<span class="txt">Comenzi</span></a>
       <a href="/sticla" class="buton" id="linkSticla" title="Comandă sticlă">${icoana('sticla')}<span class="txt">Comandă sticlă</span><span class="insigna cald" id="nrSticla"></span></a>
       <a href="/livrari" class="buton" id="linkLivrari" title="Organizează livrări">${icoana('livrari')}<span class="txt">Organizează livrări</span></a>
+      <a href="/taskuri" class="buton" id="linkTaskuri" title="Taskuri; numărul = ajunse la ora reminderului">${icoana('taskuri')}<span class="txt">Taskuri</span><span class="insigna rosie" id="nrTaskuri"></span></a>
       <a href="/clienti" class="buton" id="linkClienti" hidden title="Clienţi; numărul = trimise de agenţi, de aprobat">${icoana('clienti')}<span class="txt">Clienţi</span><span class="insigna cald" id="nrClienti"></span></a>
       <a href="/admin" class="buton" id="linkAdmin" hidden title="Utilizatori">${icoana('admin')}<span class="txt">Utilizatori</span></a>
       <button type="button" id="ofertaNoua" class="primar">${icoana('plus')}Ofertă nouă</button>
@@ -270,7 +283,50 @@
       nav.querySelector('.eu').title = `${eu.nume} · ${ROLURI[eu.rol] ?? eu.rol}`;
     }).catch(() => {});
     incarcaSumar();
+    verificaTaskuri();
+    setInterval(verificaTaskuri, 60 * 1000);
   };
+
+  // ── Remindere (server/taskuri.js): din minut în minut, taskurile mele ajunse la scadenţă.
+  // Fiecare (task, scadenţă) se anunţă o dată pe calculator — ţinut minte în localStorage,
+  // comun tuturor taburilor; amânat = altă scadenţă = se anunţă iar. Notificare Windows
+  // dacă browserul o permite (HTTPS sau excepţia din chrome://flags — vezi pagina Taskuri),
+  // altfel o casetă în colţul paginii, până o închizi.
+  const anuntateAici = new Set();   // dacă localStorage nu merge, măcar nu se repetă în tabul ăsta
+  const anuntate = () => { try { return JSON.parse(localStorage.getItem('taskuriAnuntate') ?? '[]'); } catch { return []; } };
+  const anuntaTask = t => {
+    const titlu = `⏰ ${t.text}`;
+    const detaliu = [t.comanda_nr && `${t.comanda_nr} · ${t.client_nume}`, t.creat_de !== t.pentru && `de la ${t.creat_de_nume}`]
+      .filter(Boolean).join(' — ');
+    if (window.Notification?.permission === 'granted') {
+      const n = new Notification(titlu, { body: detaliu, tag: `task-${t.id}`, requireInteraction: true });
+      n.onclick = () => { window.open('/taskuri', 'taskuri'); n.close(); };
+      return;
+    }
+    let cutie = document.getElementById('caseteTaskuri');
+    if (!cutie) { cutie = document.createElement('div'); cutie.id = 'caseteTaskuri'; document.body.appendChild(cutie); }
+    const c = document.createElement('div');
+    c.innerHTML = '<b></b><div class="dim"></div><a href="/taskuri" target="taskuri">Deschide taskurile</a><button type="button">Închide</button>';
+    c.querySelector('b').textContent = titlu;
+    c.querySelector('.dim').textContent = detaliu;
+    c.querySelector('button').addEventListener('click', () => c.remove());
+    cutie.appendChild(c);
+  };
+  async function verificaTaskuri() {
+    const r = await fetch('/api/taskuri/scadente').catch(() => null);
+    if (!r?.ok) return;
+    const { taskuri } = await r.json();
+    document.querySelectorAll('#nrTaskuri').forEach(x => { x.textContent = taskuri.length || ''; });
+    const vechi = anuntate();
+    const chei = taskuri.map(t => `${t.id}@${t.scadenta}`);
+    try { localStorage.setItem('taskuriAnuntate', JSON.stringify(chei)); } catch { /* rămâne anuntateAici */ }
+    taskuri.forEach((t, k) => {
+      if (vechi.includes(chei[k]) || anuntateAici.has(chei[k])) return;
+      anuntateAici.add(chei[k]);
+      anuntaTask(t);
+    });
+  }
+  window.verificaTaskuri = verificaTaskuri;   // pagina Taskuri şi cardul de pe Acasă o cheamă după o schimbare
 
   const el = document.getElementById('bara');
   if (el) window.puneBara(el);
