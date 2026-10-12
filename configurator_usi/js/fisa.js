@@ -949,10 +949,15 @@ export function deschideFisa(client, oferta = null, salvate = null) {
     var foaieSpate = 297 * PX * 0.98;
     if (spate && schite.length && spate.offsetHeight > foaieSpate) {
       var mari = Array.prototype.map.call(schite, function (sv) { return [parseFloat(sv.style.width), parseFloat(sv.style.height)]; });
+      // cifrele cotelor nu se micşorează odată cu desenul (pe hârtie rămân ~2,4 mm, nu 1,5)
       var scara = function (f) {
         schite.forEach(function (sv, i) {
           sv.style.width = (mari[i][0] * f).toFixed(1) + 'mm';
           sv.style.height = (mari[i][1] * f).toFixed(1) + 'mm';
+          sv.querySelectorAll('text').forEach(function (tx) {
+            tx.dataset.fs = tx.dataset.fs || tx.getAttribute('font-size');
+            tx.setAttribute('font-size', (tx.dataset.fs * Math.min(1.6, Math.max(1, 0.78 / f))).toFixed(2));
+          });
         });
       };
       var fMin = 0.5, fMax = 1;
