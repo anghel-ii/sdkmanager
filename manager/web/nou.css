@@ -8,7 +8,7 @@
    cardurile şi butoanele în comun.css.
    ═══════════════════════════════════════════════════════════════════════════ */
 
-body.ui-nou #taburiSus, body.ui-nou #continut { max-width: 1400px; }
+body.ui-nou #taburiSus, body.ui-nou #continut { max-width: 1680px; }
 body.ui-nou #taburiSus { padding: 28px 32px 0; }
 /* lista / detaliul se aşază după lăţimea LOR (meniul din stânga poate fi lat sau restrâns) */
 body.ui-nou #continut { container: continut / inline-size; }
@@ -20,9 +20,17 @@ body.ui-nou #taburiSus:not(:empty) + #continut { padding-top: 32px; }
 body.ui-nou:has(#continut > .antet) #taburiSus { display: none; }
 
 /* ── tabloul: plăcile în stânga, panoul „Azi" în dreapta ── */
+body.ui-nou #taburiSus { container: tablou / inline-size; }
 .tablou { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 20px; align-items: start; }
-@media (max-width: 1279px) { html.cu-meniu:not(.meniu-strans) .tablou { grid-template-columns: minmax(0, 1fr) 280px; } }
-@media (max-width: 1099px) { .tablou { grid-template-columns: minmax(0, 1fr) 270px; gap: 16px; } }
+@container tablou (max-width: 1000px) { .tablou { grid-template-columns: minmax(0, 1fr) 270px; gap: 16px; } }
+/* loc puţin (jumătate de ecran cu meniul lat): panoul devine o bandă sub plăci, doar „De făcut"
+   (legătura live e în bara de sus, contul în meniu) */
+@container tablou (max-width: 860px) {
+  .tablou { grid-template-columns: minmax(0, 1fr); }
+  .panou-stare { display: flex; flex-wrap: wrap; gap: 0 28px; padding: 4px 20px; }
+  .panou-stare .panou-cap, .panou-stare .eticheta, .panou-stare div.rand { display: none; }
+  .panou-stare a.rand { flex: 1 1 200px; border: none; }
+}
 
 .tablou-stanga { container-type: inline-size; }
 .taburi { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }

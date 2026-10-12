@@ -139,5 +139,8 @@ html.cu-meniu #continut { padding: 28px 32px 56px; }
 .pagina-cap .salut { font-size: 15px; color: var(--text-dim); margin-bottom: 2px; }
 .pagina-cap h1 { font-size: 34px; font-weight: 700; letter-spacing: -.025em; line-height: 1.15; }
 .pagina-cap p { margin-top: 6px; font-size: 14.5px; color: var(--text-dim); max-width: 760px; }
+/* tabelele late din panouri (ex. conturile din /admin) se derulează în panou când meniul lat ia din loc */
+html.cu-meniu .panou { overflow-x: auto; }
+
 /* titlul unei secţiuni din pagină (ex. „Ofertă nouă", lista „Oferte 2") */
 .titlu-sectiune { font-size: 18px; font-weight: 650; letter-spacing: -.01em; margin: 26px 2px 12px; }
