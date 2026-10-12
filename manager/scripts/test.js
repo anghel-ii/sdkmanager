@@ -1046,6 +1046,10 @@ async function main() {
     verifica('FAN căzut → 502 cu mesaj, nu „Eroare internă"', cazut.stare === 502 && cazut.date.eroare.startsWith('FAN Courier nu răspunde'), JSON.stringify(cazut.date));
     verifica('FAN: totul gol → legătura se şterge', (await cer('PUT', '/api/fan/cont', {})).date.activ === false && !setariFan().length);
 
+    verifica('/awb.js se serveşte', String((await cer('GET', '/awb.js')).date).includes('window.cardAwb'));
+    verifica('pagina comenzii încarcă cardul AWB', String((await cer('GET', '/')).date).includes('<script src="/awb.js"></script>')
+      && String((await cer('GET', '/')).date).includes("window.cardAwb?.($('awbCard'), c)"));
+    verifica('pagina /admin are contul FAN', String((await cer('GET', '/admin')).date).includes('/api/fan/cont'));
   }
 
   console.log('\nOra exactă (server/ora.js) — ceasul serverului în urmă cu 5 minute');
