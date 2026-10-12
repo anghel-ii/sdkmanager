@@ -74,7 +74,7 @@ const randHtml = (l, i) => {
          role="combobox" aria-controls="sugestii" aria-expanded="false" aria-autocomplete="list"></td>
     <td class="cod">${celulaCod(l)}</td>
     <td class="num"><input class="cant" type="number" min="0" step="any" inputmode="decimal"
-         value="${d ? d.nr : l?.cantitate ?? ''}"${gol ? ' disabled' : ''}${d ? ' readonly title="Calculat din debitare"' : ''} aria-label="Cantitate"></td>
+         value="${d ? d.nr : l?.cantitate || ''}"${gol ? ' disabled' : ''}${d ? ' readonly title="Calculat din debitare"' : ''} aria-label="Cantitate"></td>
     <td class="um">${esc(l?.um ?? '')}</td>
     <td class="x">${gol ? '' : `<button class="sterge" type="button" aria-label="Scoate rândul ${i + 1}">✕</button>`}</td>
   </tr>${l?.bara ? debitareHtml(l, i) : ''}`;
@@ -90,9 +90,9 @@ const debitareHtml = (l, i) => {
 };
 const butonX = k => `<button class="deb-x" type="button" aria-label="Scoate bucata ${k + 1}">✕</button>`;
 const piesaHtml = (p, k, cuX) => `<span class="piesa" data-k="${k}">
-      <input class="deb-l" type="number" min="0" step="1" inputmode="numeric" value="${p.l}" placeholder="mm" aria-label="Lungimea bucăţii ${k + 1} (mm)">
+      <input class="deb-l" type="number" min="0" step="1" inputmode="numeric" value="${p.l || ''}" placeholder="mm" aria-label="Lungimea bucăţii ${k + 1} (mm)">
       <span class="dim">×</span>
-      <input class="deb-b" type="number" min="0" step="1" inputmode="numeric" value="${p.buc}" placeholder="buc" aria-label="Nr. de bucăţi ${k + 1}">
+      <input class="deb-b" type="number" min="0" step="1" inputmode="numeric" value="${p.buc || ''}" placeholder="buc" aria-label="Nr. de bucăţi ${k + 1}">
       ${cuX ? butonX(k) : ''}</span>`;
 const rezultatHtml = l => {
   const d = deb(l);

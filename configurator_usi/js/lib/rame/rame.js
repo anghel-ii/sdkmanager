@@ -229,8 +229,9 @@ const INVISIO = {
 INVISIO[842] = INVISIO[841];
 
 // ── Stare implicită (state.rame) ────────────────────────────────────────────
-// bucăţile pornesc de la 0 (userul, 2026-10-12: nu 1) — un rând cu H şi L fără bucăţi e o eroare, nu o ramă în plus
-export const randGol = () => ({ h: null, l: null, buc: 0, gauri: 0, cote: [] });
+// câmpurile pornesc GOALE (userul, 2026-10-12: nu 1, nici 0); gol = 0 — un rând cu H şi L fără
+// bucăţi e o eroare, nu o ramă ignorată în tăcere
+export const randGol = () => ({ h: null, l: null, buc: null, gauri: null, cote: [] });
 export const cotaGoala = () => ({ v: null, de: 'sus' });
 export const randManerGol = () => ({ model: null, lungime: null, buc: 1 });
 export const stareRameGoala = () => ({

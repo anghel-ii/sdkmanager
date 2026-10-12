@@ -70,7 +70,7 @@ function celula(rd, [c, max, mic]) {
   if (max?.variante) return `<td><div class="segmented mini rame-seg-rand" data-c="${c}">${max.variante.map(([v, t, activ]) =>
     `<button type="button" data-v="${v}"${rd[c] === v ? ' class="active"' : ''}${activ ? '' : ' disabled title="Nu există în culoarea aleasă"'}>${t}</button>`).join('')}</div></td>`;
   return `<td><input type="number" class="rame-in${mic ? ' mic' : ''}" data-c="${c}" min="0"${
-    max && Number.isFinite(max) ? ` max="${max}"` : ''} step="1" value="${rd[c] ?? ''}"></td>`;
+    max && Number.isFinite(max) ? ` max="${max}"` : ''} step="1" value="${rd[c] || ''}"></td>`;   // 0 = gol (userul, 2026-10-12)
 }
 
 // `sub` = un rând dedesubtul fiecărui rând (cotele de găurire): { html(rd, i), leaga(tr, rd) }

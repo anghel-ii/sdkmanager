@@ -364,7 +364,7 @@ for (const [id, W, H, doors, tracks] of [['confortVerona', 1800, 2100, 2, 2], ['
   s = currentSpec();
   verifica(s.erori.some(e => /rândul 2: completează cotele/.test(e)), `rând fără cote: ${s.erori.join('; ')}`);
   verifica(s.erori.some(e => /rândul 3: completează nr\. de bucăţi/.test(e)), `rând fără bucăţi: ${s.erori.join('; ')}`);
-  verifica(randGol().buc === 0, 'rândul nou porneşte cu 0 bucăţi');
+  verifica(randGol().buc == null && randGol().gauri == null, 'rândul nou porneşte cu câmpurile goale');
   // câmpurile de cote sunt sub rânduri la ORICE regulă: rândul cu cote are găurile lui, cel fără — regula din listă
   state.rame.randuri = [{ h: 1000, l: 400, buc: 1, cote: [{ v: 100, de: 'sus' }, { v: 200, de: 'jos' }, { v: 500, de: 'sus' }] },
                         { h: 800, l: 400, buc: 2, cote: [] }];
@@ -379,7 +379,7 @@ for (const [id, W, H, doors, tracks] of [['confortVerona', 1800, 2100, 2, 2], ['
   state.rame.gaurire = 'Fara gaurire';
   buildConfig(); s = currentSpec();
   verifica(s.nrGauri === 0, `„Fara gaurire" ignoră cotele: am ${s.nrGauri}`);
-  console.log('✓ rame: cote pe fiecare ramă (de sus / de jos = nr. de găuri, peste regula din listă), bucăţile pornesc de la 0');
+  console.log('✓ rame: cote pe fiecare ramă (de sus / de jos = nr. de găuri, peste regula din listă), câmpurile pornesc goale');
 }
 
 // ── Graniţele dintre familii ────────────────────────────────────────────────
