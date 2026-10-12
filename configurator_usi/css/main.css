@@ -683,8 +683,9 @@ input[type="range"]::-moz-range-thumb {
 .rame-tabel input.mic { width: 46px; }
 /* cotele găurilor de balama, sub fiecare rând de rame (Cote pe fiecare rama) */
 .rame-tabel tr.rame-sub td { padding: 0 3px 8px; }
-.rame-cote { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-.rame-cote-et { font-size: 10.5px; color: var(--text-dim); margin-right: 2px; }
+/* una sub alta (userul, 2026-10-12) */
+.rame-cote { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
+.rame-cote-et { font-size: 10.5px; color: var(--text-dim); }
 .rame-cota { display: inline-flex; align-items: center; gap: 3px; }
 .rame-tabel .rame-cota input { width: 58px; }
 .rame-cota-de { background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; color: var(--text);

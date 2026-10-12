@@ -389,19 +389,22 @@ function desenGaurire(x, fata, cote, { inalt = 105, lat = 120 } = {}) {
 function schiteGaurire(spec, rame) {
   if (spec.m.grup !== '820' || rame.gaurire === FARA_GAURIRE || !spec.pline.length) return '';
   if (!rame.gaurire && !spec.pline.some(x => x.cote?.length)) return '';   // nici regulă, nici cote scrise
-  // cu mai multe mărimi, desenele se micşorează ca versoul să rămână pe o foaie:
-  // câte 3 pe rând, iar înălţimea scade cu nr. de rânduri (până la 45 mm)
+  // Grilă cu căsuţe egale (userul, 2026-10-12: „să se vadă schiţele frumos"): câte 3 pe rând,
+  // desenele pornesc mari, iar scriptul de la load le micşorează cât trebuie ca versoul să
+  // încapă pe o foaie (căutare prin înjumătăţire, nu în trepte fixe).
   const n = spec.pline.length, col = Math.min(n, 3), randuri = Math.ceil(n / col);
-  const marime = { lat: (192 - 8 * (col - 1)) / col, inalt: Math.max(45, Math.min(95, 125 / randuri - 16)) };
+  const marime = { lat: (196 - 6 * (col - 1)) / col - 6, inalt: [140, 105, 80][Math.min(randuri, 3) - 1] };
+  const deUnde = (x, de) => x.cote.filter(c => c.de === de).map(c => virgula1(c.v)).join(', ');
   const desene = spec.pline.map(x => {
-    // strict desenul, cu cotele ramei şi bucăţile deasupra (userul, 2026-10-02: fără explicaţii)
+    // desenul, cu rândul, mărimea, bucăţile şi — la cotele scrise — de unde se măsoară fiecare
+    const sus = x.cote?.length ? deUnde(x, 'sus') : '', jos = x.cote?.length ? deUnde(x, 'jos') : '';
     return `<div class="gaur-desen">
-      <div class="gaur-cap"><b>${x.h} × ${x.l} mm</b> · ${x.buc} buc${x.cote?.length
-        ? ` · găuri: ${x.cote.map(c => `${virgula1(c.v)} de ${c.de}`).join(', ')}` : ''}</div>
+      <div class="gaur-cap"><span class="gaur-rand">Rândul ${x.i + 1}</span> <b>${x.h} × ${x.l} mm</b> · ${x.buc} buc</div>
+      ${sus || jos ? `<div class="gaur-cote">${sus ? `de sus: <b>${sus}</b>` : ''}${sus && jos ? ' · ' : ''}${jos ? `de jos: <b>${jos}</b>` : ''}</div>` : ''}
       ${desenGaurire(x, spec.m.fata, cotaGauri(x.h, x.gauri, rame.gaurire, x.cote), marime)}
     </div>`;
   }).join('');
-  return `<div class="schite-gaurire"><div class="gaur-lista">${desene}</div></div>`;
+  return `<div class="schite-gaurire"><div class="gaur-lista" style="grid-template-columns: repeat(${col}, 1fr)">${desene}</div></div>`;
 }
 
 // ── Codul de bare al comenzii (Code128) — UNUL pe comandă, oricâte uşi / rame
@@ -791,12 +794,13 @@ export function deschideFisa(client, oferta = null, salvate = null) {
   .numar-oferta { font-size: 15px; font-weight: 700; font-family: monospace; letter-spacing: .03em; }
 
   /* schiţa de găurire pt. CNC (verso, rame) */
-  .gaur-lista { display: flex; flex-wrap: wrap; gap: 4mm 8mm; align-items: flex-start; margin-bottom: 4mm; }
-  /* lăţimea = a desenului (cotele de deasupra îl pot lăţi puţin) */
-  .gaur-desen { break-inside: avoid; width: min-content; }
-  .gaur-cap { min-width: 30mm; }
-  .gaur-cap { font-size: 14px; margin-bottom: 1mm; white-space: nowrap; }
-  .gaur-desen svg { display: block; font-family: 'Segoe UI', Arial, sans-serif; }
+  .gaur-lista { display: grid; gap: 3mm; margin-bottom: 4mm; }
+  .gaur-desen { break-inside: avoid; border: 0.3mm solid #bbb; border-radius: 2mm; padding: 2mm 3mm 3mm;
+                display: flex; flex-direction: column; align-items: center; min-width: 0; }
+  .gaur-cap { font-size: 13px; align-self: stretch; }
+  .gaur-rand { color: #666; font-size: 11px; margin-right: 1mm; }
+  .gaur-cote { font-size: 11.5px; align-self: stretch; margin-top: 0.5mm; }
+  .gaur-desen svg { display: block; margin-top: 2mm; font-family: 'Segoe UI', Arial, sans-serif; }
   /* rame: rubricile de observaţii — un rând de 3 căsuţe care umple restul feţei */
   .obs-rame { display: flex; gap: 3mm; min-height: 25mm; margin-top: 3mm; }
   .obs-rame .obs-camp { flex: 1; }
@@ -938,17 +942,22 @@ export function deschideFisa(client, oferta = null, salvate = null) {
       }
     }
 
-    // Verso (rame): schiţele de găurire se micşorează în trepte de 10% până încape
-    // totul pe o foaie — altfel ce rămâne trece pe o a treia pagină şi strică
-    // printul faţă-verso. Cel mult ~50% din mărime, să rămână cotele lizibile.
+    // Verso (rame): schiţele de găurire pornesc mari şi se micşorează — prin înjumătăţire,
+    // cel mai mare factor cu care încape tot pe o foaie (altfel ce rămâne trece pe o a treia
+    // pagină şi strică printul faţă-verso). Cel mult la jumătate, să rămână cotele lizibile.
     var spate = document.querySelector('.spate'), schite = document.querySelectorAll('.gaur-desen svg');
-    if (spate && schite.length) {
-      for (var t = 0; t < 6 && spate.offsetHeight > 297 * PX * 0.98; t++) {
-        schite.forEach(function (sv) {
-          sv.style.width = (parseFloat(sv.style.width) * 0.9).toFixed(1) + 'mm';
-          sv.style.height = (parseFloat(sv.style.height) * 0.9).toFixed(1) + 'mm';
+    var foaieSpate = 297 * PX * 0.98;
+    if (spate && schite.length && spate.offsetHeight > foaieSpate) {
+      var mari = Array.prototype.map.call(schite, function (sv) { return [parseFloat(sv.style.width), parseFloat(sv.style.height)]; });
+      var scara = function (f) {
+        schite.forEach(function (sv, i) {
+          sv.style.width = (mari[i][0] * f).toFixed(1) + 'mm';
+          sv.style.height = (mari[i][1] * f).toFixed(1) + 'mm';
         });
-      }
+      };
+      var fMin = 0.5, fMax = 1;
+      for (var t = 0; t < 10; t++) { var f = (fMin + fMax) / 2; scara(f); if (spate.offsetHeight > foaieSpate) fMax = f; else fMin = f; }
+      scara(fMin);
     }
   });
 </script>
