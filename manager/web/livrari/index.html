@@ -28,7 +28,8 @@
 
   .plan[hidden] { display: none; }
   .plan { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(380px, 1fr); gap: 16px; align-items: start; }
-  @media (max-width: 1150px) { .plan { grid-template-columns: 1fr; } }
+  /* după locul paginii (meniul din stânga poate fi lat sau restrâns), nu după ecran */
+  @container continut (max-width: 1180px) { .plan { grid-template-columns: 1fr; } }
   .harta-card { position: sticky; top: 80px; }
 
   table.lst { width: 100%; border-collapse: collapse; font-size: .88rem; }
