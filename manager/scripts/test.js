@@ -882,6 +882,172 @@ async function main() {
     verifica('pagina /livrari: „Confirmă livrarea" + căutarea pe hartă', pagLiv.includes("$('confirma').addEventListener") && pagLiv.includes('async function cautaPeHarta'));
   }
 
+  console.log('\nFAN Courier — AWB-uri (server/fan.js)');
+  {
+    const { adresaFan, dinOraRo } = require('../server/fan.js');
+    const L = ['Iasi', 'Pascani', 'Lunca', 'Lunca (Pascani)', 'Targu Frumos'];
+    for (const [adresa, asteptat] of [
+      ['Str. Mihai Eminescu nr. 5, Paşcani, Iaşi', 'Pascani|Str. Mihai Eminescu|5'],
+      ['Str. Lunga 1, Iaşi', 'Iasi|Str. Lunga|1'],                         // reşedinţa cu numele judeţului
+      ['Str. X nr. 5 bl. A2, sc. 1, Pascani, jud. Iasi, 705200', 'Pascani|Str. X bl. A2, sc. 1|5'],
+      ['Târgu Frumos, str. Cuza Vodă 12', 'Targu Frumos|str. Cuza Vodă|12'],
+      ['Sat Lunca, com. Pascani, jud. Iasi', 'Lunca (Pascani)|Sat Lunca|'],
+    ]) {
+      const a = adresaFan(adresa, 'Iasi', L), r = `${a.localitate}|${a.strada}|${a.numar}`;
+      verifica(`adresa FAN: „${adresa}" → ${asteptat}`, r === asteptat, r);
+    }
+    verifica('adresa FAN: Bucureşti are o singură localitate', adresaFan('Bd. Unirii 3, Sector 3', 'Bucuresti', ['Bucuresti']).localitate === 'Bucuresti');
+    verifica('ora de la FAN (a României) → UTC, vara şi iarna', dinOraRo('2026-10-12 14:29:28') === '2026-10-12 11:29:28'
+      && dinOraRo('2026-01-10 10:00:00') === '2026-01-10 08:00:00');
+
+    // un FAN fals, cu răspunsurile luate de la API-ul adevărat (vezi antetul din server/fan.js)
+    let tokenBun = 'tok-1', urmator = 7000000000001;
+    const awbFan = new Map(), primite = [];
+    const fals = http.createServer((q, r) => {
+      const u = new URL(q.url, 'http://x');
+      const trimite = (cod, o) => { r.writeHead(cod, { 'Content-Type': 'application/json' }); r.end(JSON.stringify(o)); };
+      let corp = '';
+      q.on('data', b => corp += b);
+      q.on('end', () => {
+        primite.push({ metoda: q.method, cale: u.pathname, cerere: u.searchParams, corp });
+        if (u.pathname === '/login') {
+          const { username, password } = JSON.parse(corp || '{}');
+          return username === 'firma' && password === 'parola-fan-1'
+            ? trimite(200, { status: 'success', data: { token: tokenBun, expiresAt: '2026-10-13 14:29:28' } })
+            : trimite(401, { status: 'error', message: 'These credentials do not match our records.' });
+        }
+        if (q.headers.authorization !== `Bearer ${tokenBun}`) return trimite(401, { message: 'These credentials do not match our records.' });
+        if (u.pathname === '/reports/branches') return trimite(200, { status: 'success', data: [{ id: 7032158, name: 'Firma SRL' }] });
+        if (u.pathname === '/reports/localities') return trimite(200, { status: 'success',
+          data: (u.searchParams.get('county') === 'Iasi' ? L : []).map((name, id) => ({ id, name })) });
+        if (u.pathname === '/intern-awb' && q.method === 'POST') {
+          const { shipments: [s] } = JSON.parse(corp);
+          if (s.recipient.address.locality === 'Atlantida') return trimite(200, { response: [{ awbNumber: null, success: false, errors: { locality: ['Locality is invalid'] } }] });
+          const nr = urmator++;
+          awbFan.set(String(nr), { events: [] });
+          return trimite(200, { response: [{ awbNumber: nr, tariff: 60.88, vat: 12.78, packages: s.info.packages.parcel, errors: null }] });
+        }
+        if (u.pathname === '/awb/label') { r.writeHead(200, { 'Content-Type': 'application/pdf' }); return r.end(`%PDF-1.4 ${u.searchParams.get('awbs[]')}`); }
+        if (u.pathname === '/reports/awb/tracking') return trimite(200, { status: 'success', data: u.searchParams.getAll('awb[]').map(n =>
+          (awbFan.get(n)?.events.length ? { awbNumber: n, events: awbFan.get(n).events }
+            : { awbNumber: n, message: 'AWB-ul a fost inregistrat de catre clientul expeditor' })) });
+        if (u.pathname === '/awb' && q.method === 'DELETE') {
+          const a = awbFan.get(u.searchParams.get('awb'));
+          if (a.ridicat) return trimite(422, { status: 'fail', message: 'The AWB cannot be deleted.', data: { errors: { awb: ['The AWB cannot be deleted.'] } } });
+          a.sters = true;
+          return trimite(200, { status: 'success', data: 'The AWB was deleted successfully.' });
+        }
+        trimite(404, { message: 'Not found' });
+      });
+    });
+    await new Promise(r => fals.listen(0, r));
+    const { config } = require('../server/config.js');
+    config.fanUrl = `http://localhost:${fals.address().port}`;
+    const setariFan = () => db2().prepare("SELECT cheie, valoare FROM setare WHERE cheie LIKE 'fan_%' ORDER BY cheie").all();
+
+    const comanda = async (nume, livrare, adresa) => {
+      const id = (await cer('POST', '/api/comenzi', { client: { nume, telefon: '0722 123 456', adresa }, detalii: { livrare },
+        ofertaNr: 'FAN-' + nume, pozitii: [pozitie('confortGamma', 'Confort Gamma', 2, 2000)] })).date.comanda.id;
+      await cer('POST', `/api/comenzi/${id}/accepta`, { plata: 'proforma', avans: 0 });
+      return id;
+    };
+    const cuRamburs = await comanda('Ramburs', 'Curier ramburs', 'Str. Mihai Eminescu nr. 5, Pascani, Iasi');
+    const cuAvans   = await comanda('Avans', ' curier OP avans ', 'Str. Lunga 1, Iaşi');
+    await cer('PUT', `/api/livrari/comanda/${cuRamburs}`, { de_incasat: '450,5' });   // NU intră în AWB (userul: rambursul se scrie de mână)
+
+    verifica('FAN: fără cont → inactiv', (await cer('GET', '/api/fan/stare')).date.activ === false);
+    verifica('FAN: fără cont → AWB refuzat (409)', (await cer('POST', `/api/comenzi/${cuAvans}/awb`, {})).stare === 409);
+    {
+      const k = cookie; cookie = null;
+      await cer('POST', '/api/login', { user: 'maria', parola: 'parola-maria-1' });
+      verifica('FAN: doar adminul pune contul (403)', (await cer('PUT', '/api/fan/cont', { user: 'firma', parola: 'parola-fan-1', clientId: '7032158' })).stare === 403);
+      cookie = k;
+    }
+    const gresit = await cer('PUT', '/api/fan/cont', { user: 'firma', parola: 'gresita', clientId: '7032158' });
+    verifica('FAN: parolă greşită → 400, nimic salvat', gresit.stare === 400 && /refuzat/.test(gresit.date.eroare) && !setariFan().length, JSON.stringify(gresit.date));
+    const strain = await cer('PUT', '/api/fan/cont', { user: 'firma', parola: 'parola-fan-1', clientId: '999' });
+    verifica('FAN: clientId care nu e al contului → 400, nimic salvat', strain.stare === 400 && strain.date.eroare.includes('7032158 (Firma SRL)')
+      && !setariFan().length, JSON.stringify(strain.date));
+    const bun = await cer('PUT', '/api/fan/cont', { user: ' firma ', parola: 'parola-fan-1', clientId: '7032158' });
+    verifica('FAN: contul bun se salvează', bun.stare === 200 && bun.date.activ && bun.date.cont === 'Firma SRL'
+      && setariFan().map(s => s.valoare).join() === '7032158,parola-fan-1,firma', JSON.stringify(bun.date));
+    const st = await cer('GET', '/api/fan/stare');
+    verifica('FAN: parola nu se trimite înapoi', !JSON.stringify(bun.date).includes('parola-fan') && !JSON.stringify(st.date).includes('parola-fan')
+      && st.date.activ && st.date.clientId === '7032158', JSON.stringify(st.date));
+
+    const pr = (await cer('GET', `/api/comenzi/${cuRamburs}/awb`)).date;
+    verifica('FAN: propunere la „Curier ramburs" → Cont Colector, rambursul gol (se scrie de mână)', pr.propunere.serviciu === 'Cont Colector'
+      && pr.propunere.ramburs === null && pr.awb.length === 0, JSON.stringify(pr.propunere));
+    const d = pr.propunere.destinatar;
+    verifica('FAN: propunere — destinatarul şi adresa din comandă', d.nume === 'Ramburs' && d.telefon === '0722 123 456' && d.judet === 'Iasi'
+      && d.localitate === 'Pascani' && d.strada === 'Str. Mihai Eminescu' && d.numar === '5' && pr.propunere.continut === 'Comanda FAN-Ramburs', JSON.stringify(d));
+    verifica('FAN: judeţele fără diacritice, ca la FAN', pr.judete.length === 42 && pr.judete.includes('Bistrita-Nasaud') && pr.judete.includes('Bucuresti'));
+    const pa = (await cer('GET', `/api/comenzi/${cuAvans}/awb`)).date.propunere;
+    verifica('FAN: propunere la „Curier op avans" → Standard, fără ramburs, localitatea Iaşi', pa.serviciu === 'Standard' && pa.ramburs === 0
+      && pa.destinatar.localitate === 'Iasi', JSON.stringify(pa));
+    verifica('FAN: localităţile judeţului (pt. completare)', (await cer('GET', '/api/fan/localitati?judet=Iasi')).date.localitati?.includes('Lunca (Pascani)'));
+    verifica('FAN: judeţ necunoscut → 400', (await cer('GET', '/api/fan/localitati?judet=Atlantida')).stare === 400);
+
+    const corpAwb = { ...pr.propunere, ramburs: '450,5', greutate: '12,5', colete: 2, observatii: 'Fragil' };
+    for (const [ce, corp] of [
+      ['fără telefon', { ...corpAwb, destinatar: { ...d, telefon: '' } }], ['fără greutate', { ...corpAwb, greutate: '' }],
+      ['0 colete', { ...corpAwb, colete: 0 }], ['ramburs negativ', { ...corpAwb, ramburs: -1 }],
+      ['Cont Colector fără sumă', { ...corpAwb, ramburs: '' }], ['serviciu necunoscut', { ...corpAwb, serviciu: 'FANbox' }],
+      ['fără stradă', { ...corpAwb, destinatar: { ...d, strada: ' ' } }],
+    ]) verifica(`FAN: AWB respins — ${ce} (400)`, (await cer('POST', `/api/comenzi/${cuRamburs}/awb`, corp)).stare === 400);
+    const refuz = await cer('POST', `/api/comenzi/${cuRamburs}/awb`, { ...corpAwb, destinatar: { ...d, localitate: 'Atlantida' } });
+    verifica('FAN: refuzul FAN → 400 cu mesaj citeţ, nimic salvat', refuz.stare === 400 && refuz.date.eroare.includes('localitatea: valoare nerecunoscută')
+      && !db2().prepare('SELECT 1 FROM awb').get(), JSON.stringify(refuz.date));
+
+    const creat = await cer('POST', `/api/comenzi/${cuRamburs}/awb`, corpAwb);
+    const numar = creat.date.awb?.numar;
+    verifica('FAN: AWB generat → 201, salvat pe comandă', creat.stare === 201 && numar === '7000000000001' && creat.date.awb.ramburs === 450.5
+      && creat.date.awb.cost === 60.88 && creat.date.awb.creat_de_nume === 'Admin Test', JSON.stringify(creat.date));
+    const trimis = JSON.parse(primite.findLast(p => p.cale === '/intern-awb').corp);
+    const [s] = trimis.shipments;
+    verifica('FAN: ce a plecat la FAN', trimis.clientId === 7032158 && s.info.service === 'Cont Colector' && s.info.cod === 450.5
+      && s.info.weight === 12.5 && s.info.packages.parcel === 2 && !('dimensions' in s.info) && s.info.payment === 'sender'
+      && s.recipient.phone === '0722123456' && s.recipient.address.locality === 'Pascani' && s.recipient.address.streetNo === '5', JSON.stringify(s));
+    verifica('FAN: nu la o ofertă (409)', (await cer('POST', `/api/comenzi/${a2.date.comanda.id}/awb`, corpAwb)).stare === 409);
+
+    tokenBun = 'tok-2';   // tokenul a expirat la FAN înainte de 23 h
+    const et = await fetch(`${baza}/api/awb/${numar}/eticheta`, { headers: { Cookie: cookie } });
+    verifica('FAN: eticheta vine ca PDF (după relogare, la 401)', et.status === 200 && et.headers.get('content-type') === 'application/pdf'
+      && (await et.text()) === `%PDF-1.4 ${numar}` && primite.filter(p => p.cale === '/login').length === 4, `stare ${et.status}`);
+    verifica('FAN: eticheta unui AWB necunoscut → 404', (await cer('GET', '/api/awb/123/eticheta')).stare === 404);
+
+    const awbRand = () => db2().prepare('SELECT * FROM awb WHERE numar = ?').get(numar);
+    verifica('FAN: tracking — înregistrat', (await cer('POST', '/api/awb/actualizeaza')).date.schimbate === 1
+      && awbRand().stare === null && /inregistrat/.test(awbRand().stare_text) && primite.at(-1).cerere.getAll('awb[]').join() === numar);
+    awbFan.get(numar).events.push({ id: 'S1', name: 'Expeditie in livrare', location: 'Pascani', date: '2026-10-12 09:00:00' },
+      { id: 'S2', name: 'Livrat', location: 'Pascani', date: '2026-10-12 14:29:28' });
+    verifica('FAN: tracking — livrat (S2), cu ora în UTC', (await cer('POST', '/api/awb/actualizeaza')).date.schimbate === 1
+      && awbRand().stare === 'S2' && awbRand().stare_text === 'Livrat' && awbRand().livrat_la === '2026-10-12 11:29:28', JSON.stringify(awbRand()));
+    const cereri = primite.length;
+    verifica('FAN: un AWB livrat nu se mai întreabă', (await cer('POST', '/api/awb/actualizeaza')).date.schimbate === 0
+      && primite.length === cereri);
+
+    const al2 = (await cer('POST', `/api/comenzi/${cuAvans}/awb`, { ...pa, greutate: 3, ramburs: 99 })).date.awb.numar;
+    verifica('FAN: la Standard rambursul e 0, orice s-ar trimite', JSON.parse(primite.findLast(p => p.cale === '/intern-awb').corp).shipments[0].info.cod === 0);
+    awbFan.get(al2).ridicat = true;
+    const nu = await cer('DELETE', `/api/awb/${al2}`);
+    verifica('FAN: ştergere refuzată la FAN → 409 cu mesaj, AWB-ul rămâne', nu.stare === 409 && nu.date.eroare.includes('The AWB cannot be deleted')
+      && !db2().prepare('SELECT sters_la FROM awb WHERE numar = ?').get(al2).sters_la, JSON.stringify(nu.date));
+    awbFan.get(al2).ridicat = false;
+    verifica('FAN: ştergere → 200, rămâne cu sters_la', (await cer('DELETE', `/api/awb/${al2}`)).stare === 200 && awbFan.get(al2).sters
+      && !!db2().prepare('SELECT sters_la FROM awb WHERE numar = ?').get(al2).sters_la);
+    verifica('FAN: a doua ştergere → 409; eticheta unui AWB şters → 410', (await cer('DELETE', `/api/awb/${al2}`)).stare === 409
+      && (await cer('GET', `/api/awb/${al2}/eticheta`)).stare === 410);
+    verifica('FAN: lista comenzii arată şi AWB-ul şters', (await cer('GET', `/api/comenzi/${cuAvans}/awb`)).date.awb.map(a => !!a.sters_la).join() === 'true');
+
+    fals.close();
+    fals.closeAllConnections();
+    const cazut = await cer('POST', `/api/comenzi/${cuAvans}/awb`, { ...pa, greutate: 3 });
+    verifica('FAN căzut → 502 cu mesaj, nu „Eroare internă"', cazut.stare === 502 && cazut.date.eroare.startsWith('FAN Courier nu răspunde'), JSON.stringify(cazut.date));
+    verifica('FAN: totul gol → legătura se şterge', (await cer('PUT', '/api/fan/cont', {})).date.activ === false && !setariFan().length);
+
+  }
+
   console.log('\nOra exactă (server/ora.js) — ceasul serverului în urmă cu 5 minute');
   {
     const ora = require('../server/ora.js');

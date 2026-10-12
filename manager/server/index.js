@@ -16,6 +16,7 @@ const sticla      = require('./sticla.js');
 const livrari     = require('./livrari.js');
 const actualizare = require('./actualizare.js');
 const clienti     = require('./clienti.js');
+const fan         = require('./fan.js');
 const ora         = require('./ora.js');
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -37,7 +38,7 @@ const ora         = require('./ora.js');
 //   { }                — orice utilizator logat
 //   { rol: 'admin' }   — doar administratorii
 
-const MODULE = [utilizatori, comenzi, scanare, evenimente, sticla, livrari, actualizare, clienti].filter(Boolean);
+const MODULE = [utilizatori, comenzi, scanare, evenimente, sticla, livrari, actualizare, clienti, fan].filter(Boolean);
 
 const rute = MODULE.flatMap(m => m.rute).map(([metoda, cale, spec]) => [metoda, cale, spec]);
 const potriveste = router(rute);
@@ -161,6 +162,7 @@ function porneste() {
   zilnic();
   setInterval(zilnic, 24 * 3600 * 1000).unref();
   clienti.porneste();
+  fan.porneste();   // starea AWB-urilor FAN Courier, din oră în oră
   actualizare.pornesteRaportarea();   // pagina /admin de pe Cloudflare (update şi din afara firmei)
   ora.porneste();   // ora exactă de pe internet — momentele nu mai depind de ceasul serverului
 

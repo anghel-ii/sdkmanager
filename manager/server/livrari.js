@@ -151,7 +151,7 @@ function anuleaza(ctx) {
 }
 
 module.exports = {
-  judetDin, JUDETE,
+  judetDin, JUDETE, normal,
   rute: [
     ['GET',    '/api/livrari/candidati',    { handler: candidati }],
     ['PUT',    '/api/livrari/comanda/:id',  { handler: modificaComanda }],
