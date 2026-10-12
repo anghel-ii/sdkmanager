@@ -347,59 +347,28 @@ const TABURI = [['oferta', 'Oferte'], ['plata', 'Aşteaptă plata'], ['comanda',
 // fără diacritice şi litere mari: „şerban" găseşte „Serban"
 const normal = t => String(t ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
-// Tabloul de sus al paginii principale (redesign 2026-10-12): salutul, plăcile
-// stărilor — ELE sunt taburile listei —, plăcile „Ofertă nouă" (o gamă = o placă)
-// şi panoul „Azi" din dreapta. Construit o singură dată, în afara conţinutului;
-// pe pagina unei comenzi se ascunde (nou.css) — stările rămân în meniul din stânga.
-// Pe fiecare stare: iconiţa (bara.js) şi un rând scurt sub nume.
-const PLACI = { oferta: ['oferta', 'Aşteaptă răspunsul clientului'], plata: ['plata', 'Trimise clientului la plată'],
-                comanda: ['lucru', 'Acceptate, în producţie'], finalizata: ['gata', 'Marcate finalizate'] };
-const ZI_RO = new Intl.DateTimeFormat('ro-RO', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/Bucharest' });
-const ORA_RO_H = new Intl.DateTimeFormat('ro-RO', { hour: 'numeric', hourCycle: 'h23', timeZone: 'Europe/Bucharest' });
-const ROL = { admin: 'Administrator', conducere: 'Conducere', birou: 'Birou' };
+// Sus pe pagina principală (redesign 2026-10-12, a doua trecere — userul): întâi
+// butoanele „Ofertă nouă" (o gamă = un buton, din game.json), dedesubt cele patru
+// stări pe un singur rând — ELE sunt taburile listei. Construite o singură dată,
+// în afara conţinutului; pe pagina unei comenzi se ascund (nou.css) — stările
+// rămân în meniul din stânga. Fiecare stare cu iconiţa ei (bara.js).
+const ICOANA_TAB = { oferta: 'oferta', plata: 'plata', comanda: 'lucru', finalizata: 'gata' };
 
 function asiguraTaburi() {
   if (!$('taburiSus').children.length) {
-    const ora = +ORA_RO_H.format(new Date());
-    const zi = ZI_RO.format(new Date());
     $('taburiSus').innerHTML = `
-      <header class="pagina-cap">
-        <div class="salut">${ora >= 5 && ora < 11 ? 'Bună dimineaţa' : ora >= 5 && ora < 18 ? 'Bună ziua' : 'Bună seara'}, ${esc(eu?.nume?.split(/\s+/)[0] ?? '')}</div>
-        <h1>Comenzi</h1>
-        <p>Ofertele, plăţile şi comenzile atelierului, într-un singur loc. Alege o stare sau începe o ofertă nouă.</p>
-      </header>
-      <div class="tablou">
-        <div class="tablou-stanga">
-          <div class="taburi">${TABURI.map(([t, n]) => `
-            <button data-tab="${t}" class="placa ton-${t}">
-              <span class="placa-ic">${icoana(PLACI[t][0])}</span>
-              <span class="placa-text"><span class="tab-nume">${n}</span><span class="placa-sub">${PLACI[t][1]}</span></span>
-              <span class="tab-cate" data-cate="${t}"></span>${icoana('sageata')}
-            </button>`).join('')}</div>
-          <h2 class="titlu-sectiune">Ofertă nouă</h2>
-          <div class="placi-game" id="placiGame"></div>
-        </div>
-        <aside class="panou-stare" id="panouStare">
-          <div class="panou-cap"><span class="placa-ic">${icoana('acasa')}</span>
-            <div><b>Azi</b><span>${esc(zi[0].toUpperCase() + zi.slice(1))}</span></div></div>
-          <div class="eticheta">De făcut</div>
-          <a class="rand" href="/sticla"><span>Sticlă de comandat</span><b id="stSticla">…</b></a>
-          ${eu?.rol === 'birou' ? '' : '<a class="rand" href="/clienti"><span>Clienţi de aprobat</span><b id="stClienti">…</b></a>'}
-          <a class="rand" href="/livrari"><span>Livrări programate</span><b id="stLivrari">…</b></a>
-          <div class="eticheta">Stare</div>
-          <div class="rand"><span>Actualizare live</span><span class="live"><span class="da">Conectat</span><span class="nu">Reconectare…</span></span></div>
-          <div class="rand"><span>Conectat ca</span><b>${esc(eu?.nume ?? '—')}</b></div>
-          <div class="rand"><span>Rol</span><b>${esc(ROL[eu?.rol] ?? eu?.rol ?? '—')}</b></div>
-        </aside>
-      </div>`;
+      <div class="eticheta-sus">Ofertă nouă</div>
+      <div class="placi-game" id="placiGame"></div>
+      <div class="taburi">${TABURI.map(([t, n]) => `
+        <button data-tab="${t}" class="placa ton-${t}">
+          <span class="placa-ic">${icoana(ICOANA_TAB[t])}</span><span class="tab-nume">${n}</span><span class="tab-cate" data-cate="${t}"></span>
+        </button>`).join('')}</div>`;
     incarcaGame().then(g => {
       $('placiGame').innerHTML = (g?.game ?? []).map(x => `
-        <a class="placa placa-gama" href="/configurator/?gama=${encodeURIComponent(x.id)}" title="${esc(x.descriere ?? '')}">
-          <span class="placa-ic">${icoana(x.id)}</span>
-          <span class="placa-text"><span class="placa-nume">${esc(x.id === 'amanunt' ? 'Amănunt' : x.label)}</span><span class="placa-sub">${esc(subGama(x))}</span></span>${icoana('sageata')}
-        </a>`).join('') || '<p class="dim mic">Configuratorul nu e construit (cd configurator_usi && node build.js).</p>';
+        <a class="gama-btn" href="/configurator/?gama=${encodeURIComponent(x.id)}" title="Ofertă nouă — ${esc(x.label)}: ${esc(subGama(x))} · ${esc(x.descriere ?? '')}">
+          ${icoana(x.id)}<span>${esc(x.id === 'amanunt' ? 'Amănunt' : x.label)}</span></a>`).join('')
+        || '<p class="dim mic">Configuratorul nu e construit (cd configurator_usi && node build.js).</p>';
     });
-    puneStare();
     document.querySelectorAll('#taburiSus .taburi button').forEach(b =>
       b.addEventListener('click', () => {
         tabCurent = b.dataset.tab;
@@ -416,14 +385,9 @@ function asiguraTaburi() {
   document.querySelectorAll('#taburiSus .taburi button').forEach(b => b.classList.toggle('activ', b.dataset.tab === tabCurent && !toate));
   // în meniul din stânga: starea arătată acum
   document.querySelectorAll('#meniu [data-tab]').forEach(a => a.classList.toggle('curent', a.dataset.tab === tabCurent && !toate));
-  puneCale(toate ? 'Căutare în toate secţiunile' : numeTab());
   puneCate();
 }
 const numeTab = () => TABURI.find(([t]) => t === tabCurent)[1];
-// „unde eşti", în bara de sus (bara.js): Comenzi › Oferte › Client
-const puneCale = (...p) => {
-  if ($('baraContext')) $('baraContext').innerHTML = ['Comenzi', ...p].map((x, i, a) => (i === a.length - 1 ? `<b>${esc(x)}</b>` : esc(x))).join('<i>›</i>');
-};
 // stările din meniul din stânga = plăcile de aici (click pe placă: goleşte căutarea „în toate", iese din comandă)
 document.addEventListener('click', e => {
   const a = e.target.closest('#meniu a[data-tab]');
@@ -433,22 +397,37 @@ document.addEventListener('click', e => {
   b.click();
 });
 
-// Titlul listei + „unde caută" + sortarea se construiesc o singură dată —
-// actualizarea live le refoloseşte. Căutarea (#cauta) stă în bara de sus (bara.js),
-// aceeaşi şi pe pagina unei comenzi: acolo, scrisul întoarce la listă, cu rezultatele.
+// Căutarea + „unde caută" + sortarea + cardul din dreapta se construiesc o singură
+// dată — actualizarea live le refoloseşte, ca să nu piardă ce scrii în căutare.
+// Căutarea stă chiar deasupra listei (userul, 2026-10-12: fără bară sus).
+let focusCauta = false;   // Ctrl K din pagina unei comenzi: căutarea primeşte focusul după ce apare lista
 function asiguraBaraLista() {
   asiguraTaburi();
   if (!$('tabelLista')) {
     $('continut').innerHTML = `
-      <div class="bara-lista">
-        <h2 class="titlu-sectiune" id="titluLista"></h2>
-        <div class="segmented" id="unde" title="Unde caută">
-          <button data-unde="aici"></button><button data-unde="toate">În toate secţiunile</button>
-        </div>
-        <span class="spatiu"></span>
-        <button id="sortare" class="mic" title="Sortarea ta (se păstrează pe contul tău)"></button>
-      </div>
-      <div id="tabelLista"></div>`;
+      <div class="lucru">
+        <section class="lucru-lista">
+          <div class="cauta-lista">
+            <label class="camp-cauta" title="Caută (Ctrl K sau /)">${icoana('cauta')}
+              <input id="cauta" type="search" placeholder="Caută client, telefon, sistem, nr. ofertă, factură…" autocomplete="off">
+              <kbd>Ctrl K</kbd></label>
+            <button id="sortare" title="Sortarea ta (se păstrează pe contul tău)"></button>
+          </div>
+          <div class="bara-lista" id="undeRand" hidden>
+            <div class="segmented" id="unde" title="Unde caută">
+              <button data-unde="aici"></button><button data-unde="toate">În toate secţiunile</button>
+            </div>
+          </div>
+          <div id="tabelLista"></div>
+        </section>
+        <aside class="card-comanda" id="cardComanda" aria-live="polite"></aside>
+      </div>`;
+    $('cauta').value = cautare;
+    $('cauta').addEventListener('input', cautaSchimbat);
+    $('cauta').addEventListener('keydown', e => {
+      if (e.key === 'Escape') { $('cauta').value = ''; cautaSchimbat(); $('cauta').blur(); }
+    });
+    if (focusCauta) { focusCauta = false; $('cauta').focus(); }
     $('unde').addEventListener('click', e => {
       const b = e.target.closest('button');
       if (b) cautaUnde(b.dataset.unde === 'toate');
@@ -458,6 +437,7 @@ function asiguraBaraLista() {
       randeazaTabel();
       await api('/api/preferinte', { method: 'PUT', body: JSON.stringify({ sortare }) });
     });
+    incarcaCard();
   }
 }
 
@@ -469,13 +449,12 @@ async function renderLista() {
   lista = (await r.json()).comenzi;
   listaPt = ce;
   randeazaTabel();
+  if (selectat) incarcaCard();   // comanda aleasă poate să se fi schimbat (actualizare live)
 }
 
 // Prima literă în „toate secţiunile" aduce lista cu toate stările; restul doar filtrează.
 function cautaSchimbat() {
   cautare = $('cauta').value;
-  // de pe pagina unei comenzi: înapoi la listă (ruteaza), unde se vede rezultatul
-  if (!$('tabelLista')) { if (cautare.trim()) location.hash = HASH_TAB[tabCurent]; return; }
   asiguraTaburi();
   if (ceLista() !== listaPt) renderLista(); else randeazaTabel();
 }
@@ -485,11 +464,13 @@ function cautaUnde(toate) {
   cautaSchimbat();
   $('cauta').focus();
 }
-$('cauta').addEventListener('input', cautaSchimbat);
-$('cauta').addEventListener('keydown', e => {
-  if (e.key === 'Escape') { $('cauta').value = ''; cautaSchimbat(); $('cauta').blur(); }
-});
-// „/" sare în căutare, de oriunde din listă (şi Ctrl K — bara.js)
+// Ctrl K (bara.js): căutarea comenzilor — din pagina unei comenzi întâi înapoi la listă
+window.cautaComenzi = () => {
+  if ($('cauta')) { $('cauta').focus(); $('cauta').select(); return; }
+  focusCauta = true;
+  location.hash = HASH_TAB[tabCurent];
+};
+// „/" sare în căutare, de oriunde din listă
 document.addEventListener('keydown', e => {
   if (e.key !== '/' || !$('cauta') || e.ctrlKey || e.metaKey || e.altKey || e.target.matches?.('input, textarea, select')) return;
   e.preventDefault();
@@ -509,7 +490,7 @@ function randeazaTabel() {
   $('unde').firstElementChild.textContent = 'Doar în ' + numeTab();
   for (const b of $('unde').children) b.classList.toggle('active', (b.dataset.unde === 'toate') === pesteTot);
   // „Doar în … / În toate secţiunile" contează doar cât se caută — fără text părea o setare pornită
-  $('unde').style.visibility = q ? '' : 'hidden';
+  $('undeRand').hidden = !q;
   btnSort.textContent = sortare === 'facturare' ? '⇅ Nefacturate primele' : '⇅ Cele mai noi primele';
   btnSort.classList.toggle('activ', sortare === 'facturare');
 
@@ -532,7 +513,6 @@ function randeazaTabel() {
 
   // coloana „Status" (ultima operaţie scanată) doar cu scanarea pornită pe server
   const cuStatus = lista.some(c => 'status' in c);
-  $('titluLista').innerHTML = totul ? 'Rezultatele căutării' : `${esc(numeTab())} <span class="cate">${randuri.length}</span>`;
   // pe taburi: „2 din 14" cât se caută
   potriviri = totul ? Object.fromEntries(TABURI.map(([t]) => [t, randuri.filter(c => tabRand(c) === t).length])) : null;
   puneCate();
@@ -546,11 +526,13 @@ function randeazaTabel() {
     <p class="dim mic rezumat">${randuri.length} ${randuri.length === 1 ? 'rezultat' : 'rezultate'} pentru „${esc(cautare.trim())}" — din oferte, aşteaptă plata, în lucru şi finalizate</p>` : ''}
     <table class="lista">
       <thead><tr>
-        <th></th><th>Client</th><th>Nr. ofertă</th><th>Sistem</th>${cuStatus ? '<th>Status</th>' : ''}${cuSticla ? '<th>Sticlă</th>' : ''}${cuFacturare ? '<th>Plată</th><th class="num">Avans</th><th>Facturare</th>' : ''}
-        <th>Creat de</th><th>${titluData}</th><th></th>
+        <th data-c="pin"></th><th data-c="client">Client</th><th data-c="oferta">Nr. ofertă</th><th data-c="sistem">Sistem</th>${
+          cuStatus ? '<th data-c="status">Status</th>' : ''}${cuSticla ? '<th data-c="sticla">Sticlă</th>' : ''}${cuFacturare
+          ? '<th data-c="plata">Plată</th><th class="num" data-c="avans">Avans</th><th data-c="factura">Facturare</th>' : ''}
+        <th data-c="cine">Creat de</th><th data-c="data">${titluData}</th><th data-c="actiuni"></th>
       </tr></thead>
       <tbody>${randuri.map((c, i) => `${titluGrup(c, i)}
-        <tr data-id="${c.id}"${c.fixat ? ' class="fixat"' : ''}>
+        <tr data-id="${c.id}" class="${c.fixat ? 'fixat' : ''}${c.id === selectat ? ' selectat' : ''}">
           <td class="pin" data-c="pin"><button class="btn-pin${c.fixat ? ' activ' : ''}" data-id="${c.id}"
                 title="${c.fixat ? 'Scoate de sus' : 'Fixează sus (doar pentru tine)'}">📌</button></td>
           <td data-c="client">${esc(c.client_nume)}${totul && c.client_telefon ? `<div class="nr-mic mono">${esc(c.client_telefon)}</div>` : ''}</td>
@@ -583,8 +565,13 @@ function randeazaTabel() {
     </div>`;
 
   $('cautaToate')?.addEventListener('click', () => cautaUnde(true));
-  document.querySelectorAll('table.lista tbody tr[data-id]').forEach(tr =>
-    tr.addEventListener('click', () => { location.hash = '#comanda/' + tr.dataset.id; }));
+  // un click ALEGE comanda (detaliile în cardul din dreapta); dublu-click o deschide
+  document.querySelectorAll('table.lista tbody tr[data-id]').forEach(tr => {
+    tr.addEventListener('click', () => selecteaza(+tr.dataset.id));
+    tr.addEventListener('dblclick', () => { location.hash = '#comanda/' + tr.dataset.id; });
+  });
+  // comanda aleasă nu mai e în listă (alt tab, căutare) → cardul revine la „Azi"
+  if (selectat && !randuri.some(c => c.id === selectat)) selecteaza(null);
   // „Modifică oferta" — redeschide configuratorul cu configuraţia salvată
   document.querySelectorAll('button.fisa').forEach(b =>
     b.addEventListener('click', e => { e.stopPropagation(); deschideFisa(b.dataset.id, b); }));
@@ -603,6 +590,110 @@ function randeazaTabel() {
       await api(`/api/comenzi/${c.id}/fixare`, { method: 'POST', body: JSON.stringify({ fixat: c.fixat }) });
     }));
 }
+
+// ── Comanda aleasă din listă: cardul din dreapta ───────────────────────────────
+// Un click pe un rând o alege (fără să plece din listă); cardul arată clientul,
+// drumul comenzii, produsele şi butoanele (Deschide / fişa / Modifică oferta).
+// Alegerea rămâne la actualizarea live şi la schimbarea tabului, cât timp comanda
+// e în lista de pe ecran. Fără comandă aleasă: „Azi" (sticlă, clienţi, livrări).
+let selectat = null;
+const ZI_RO = new Intl.DateTimeFormat('ro-RO', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/Bucharest' });
+function selecteaza(id) {
+  selectat = id;
+  document.querySelectorAll('#tabelLista tr[data-id]').forEach(tr => tr.classList.toggle('selectat', +tr.dataset.id === id));
+  incarcaCard();
+}
+
+const cardAzi = () => {
+  const zi = ZI_RO.format(new Date());
+  return `<div id="panouStare">
+    <div class="panou-cap"><span class="placa-ic">${icoana('acasa')}</span>
+      <div><b>Azi</b><span>${esc(zi[0].toUpperCase() + zi.slice(1))}</span></div></div>
+    <a class="rand" href="/sticla"><span>Sticlă de comandat</span><b id="stSticla">…</b></a>
+    ${eu?.rol === 'birou' ? '' : '<a class="rand" href="/clienti"><span>Clienţi de aprobat</span><b id="stClienti">…</b></a>'}
+    <a class="rand" href="/livrari"><span>Livrări programate</span><b id="stLivrari">…</b></a>
+    <p class="cc-indemn">Alege o comandă din listă ca să-i vezi aici detaliile.
+      <span>↑ ↓ trec la următoarea · dublu-click sau Enter o deschide</span></p>
+  </div>`;
+};
+
+// un rând scurt despre fiecare produs al comenzii
+const rezumatProdus = p => (p.sistem === 'amanunt' ? `${p.linii.facturare.length} produse la bucată`
+  : /^rama/.test(p.sistem ?? '') ? `${p.finisaj} · ${p.nr_usi} rame · max. ${p.inaltime} × ${p.latime} mm`
+  : `${p.finisaj} · gol ${p.inaltime} × ${p.latime} mm · ${p.nr_usi} ${p.nr_usi === 1 ? 'uşă' : 'uşi'}`);
+
+function cardDetalii({ comanda: c, pozitii, sticlaLinii = [] }, fise) {
+  const eOferta = c.tip === 'oferta', ePlata = c.tip === 'plata', eComanda = c.tip === 'comanda';
+  const [cls, stare] = eOferta ? ['oferta', 'Ofertă'] : ePlata ? ['plata', 'Aşteaptă plata']
+    : c.finalizat_la ? ['gata', 'Comandă finalizată'] : ['lucru', 'Comandă în lucru'];
+  const sticla = sticlaLinii.length ? { total: sticlaLinii.length, comandate: sticlaLinii.filter(l => l.comandat_la).length } : null;
+  return `
+    <div class="cc-titlu"><h2>${esc(c.client_nume)}</h2>
+      <button class="cc-inchide" id="ccInchide" title="Închide (Esc)" aria-label="Închide">${icoana('inchide')}</button></div>
+    <div class="cc-nr"><span class="mono">${esc(c.oferta_nr || c.numar)}</span><span class="stare-pastila ${cls}">${stare}</span></div>
+    <div class="cc-butoane">
+      <button class="primar" id="ccDeschide" title="Pagina comenzii (dublu-click sau Enter pe rând)">Deschide comanda</button>
+      ${pozitii.length > 1
+        ? pozitii.map((p, k) => `<button class="cc-fisa" data-poz="${k}" title="Fişa produsului ${k + 1}: ${esc(p.eticheta)}">🖶 Fişa ${esc(fise[k])}</button>`).join('')
+        : '<button class="cc-fisa" data-poz="0" title="Deschide fişa comenzii pentru printare">🖶 Printează fişa</button>'}
+      ${eOferta ? '<button id="ccModifica">Modifică oferta</button>' : ''}
+    </div>
+    <dl class="cc-perechi">
+      ${c.client_telefon ? `<dt>Telefon</dt><dd>${esc(c.client_telefon)}</dd>` : ''}
+      ${c.client_adresa ? `<dt>Adresă</dt><dd>${esc(c.client_adresa)}</dd>` : ''}
+      ${c.client_email ? `<dt>E-mail</dt><dd>${esc(c.client_email)}</dd>` : ''}
+      <dt>Livrare</dt><dd>${esc(c.livrare ?? '—')}</dd>
+      <dt>Plată</dt><dd>${esc(PLATI[c.plata] ?? '—')}${c.avans > 0 ? ` · avans <strong>${virgulaLei(c.avans)} lei</strong>` : ''}</dd>
+      <dt>Agent</dt><dd>${esc(c.agent ?? '—')}</dd>
+    </dl>
+    <div class="cc-eticheta">Drumul comenzii</div>
+    <dl class="info-pasi cc-pasi">
+      ${pas('gata', 'Ofertat', deCine(c.creat_de_nume, c.creat_la))}
+      ${c.confirmat_la ? pas('gata', 'Acceptat', deCine(c.confirmat_de_nume, c.confirmat_la))
+        : pas('acum', 'Acceptat', `<span class="urmeaza">urmează „${ePlata ? 'Plată primită' : 'Acceptă oferta'}"</span>`)}
+      ${eComanda ? pas(c.factura_nr ? 'gata' : 'acum', 'Facturat', c.factura_nr
+        ? `<strong class="mono">${esc(c.factura_nr)}</strong> · ${dataOra(c.facturat_la)}` : '<span class="nefacturat">nefacturat</span>')
+        : pas('viitor', 'Facturat', '')}
+      ${eComanda ? pas('info', 'Sticlă', sticla ? sticlaHtml(sticla) : '<span class="dim">fără sticlă</span>') : ''}
+      ${c.finalizat_la ? pas('gata', 'Finalizat', deCine(c.finalizat_de_nume, c.finalizat_la)) : pas('viitor', 'Finalizat', '')}
+    </dl>
+    <div class="cc-eticheta">${pozitii.length === 1 ? 'Produs' : `Produse <span class="cate">${pozitii.length}</span>`}</div>
+    <ul class="cc-produse">${pozitii.map(p => `<li><b>${esc(p.eticheta)}</b><span>${esc(rezumatProdus(p))}</span></li>`).join('')}</ul>
+    ${c.observatii ? `<div class="cc-eticheta">Observaţii</div><p class="cc-obs">${esc(c.observatii)}</p>` : ''}`;
+}
+
+async function incarcaCard() {
+  const el = $('cardComanda');
+  if (!el) return;
+  if (!selectat) { el.innerHTML = cardAzi(); puneStare(); return; }
+  const id = selectat;
+  const r = await api('/api/comenzi/' + id);
+  if (!r || id !== selectat || !$('cardComanda')) return;   // între timp s-a ales altceva / s-a plecat din listă
+  if (!r.ok) return selecteaza(null);
+  const d = await r.json();
+  const fise = d.pozitii.length > 1 ? numeFise(d.pozitii, await incarcaGame()) : [];
+  if (id !== selectat || !$('cardComanda')) return;
+  el.innerHTML = cardDetalii(d, fise);
+  $('ccInchide').addEventListener('click', () => selecteaza(null));
+  $('ccDeschide').addEventListener('click', () => { location.hash = '#comanda/' + id; });
+  $('ccModifica')?.addEventListener('click', () => { location.href = '/configurator/?oferta=' + id; });
+  el.querySelectorAll('button.cc-fisa').forEach(b => b.addEventListener('click', () => deschideFisa(id, b, +b.dataset.poz)));
+}
+
+// ↑ ↓ aleg comanda următoare / de dinainte; Enter o deschide; Esc închide cardul
+document.addEventListener('keydown', e => {
+  if (!$('tabelLista') || e.ctrlKey || e.metaKey || e.altKey || !$('alegeGama').hidden || document.querySelector('dialog[open]')
+      || e.target.matches?.('input, textarea, select, button, a')) return;
+  const randuri = [...document.querySelectorAll('#tabelLista tr[data-id]')];
+  if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && randuri.length) {
+    e.preventDefault();
+    const i = randuri.findIndex(tr => +tr.dataset.id === selectat);
+    const j = i < 0 ? 0 : Math.max(0, Math.min(randuri.length - 1, i + (e.key === 'ArrowDown' ? 1 : -1)));
+    selecteaza(+randuri[j].dataset.id);
+    randuri[j].scrollIntoView({ block: 'nearest' });
+  } else if (e.key === 'Enter' && selectat) location.hash = '#comanda/' + selectat;
+  else if (e.key === 'Escape' && selectat) selecteaza(null);
+});
 
 // ── Detaliu ──────────────────────────────────────────────────────────────────
 
@@ -794,8 +885,7 @@ async function renderDetaliu(id) {
     document.querySelectorAll('.panou-detaliu').forEach(x => { x.hidden = x.dataset.panou !== tabDetaliu; });
   }));
   tabCurent = eOferta ? 'oferta' : ePlata ? 'plata' : c.finalizat_la ? 'finalizata' : 'comanda';
-  asiguraTaburi();   // tabul comenzii, marcat şi în meniul din stânga
-  puneCale(numeTab(), c.client_nume);
+  asiguraTaburi();   // taburile rămân sus şi aici, cu tabul comenzii marcat
   $('modifica')?.addEventListener('click', () => { location.href = '/configurator/?oferta=' + id; });
   // trecerile simple (fără dialog): în „aşteaptă plata" / înapoi în oferte
   for (const [btn, cale, intrebare] of [
@@ -916,9 +1006,8 @@ const nrModele = x => (x.tabel ? x.modele.flat() : x.modele).length;
 const subGama = x => (nrModele(x) ? `${nrModele(x)} ${nrModele(x) === 1 ? 'model' : 'modele'}` : 'produse la bucată');
 const inchideAlegereGama = () => { $('alegeGama').hidden = true; };
 $('ofertaNoua').addEventListener('click', deschideAlegereGama);
-// căutarea din bara de sus a altei pagini (bara.js) vine aici cu ?q=…, în toate secţiunile
-const qDinAdresa = new URLSearchParams(location.search).get('q');
-if (qDinAdresa) { cautare = $('cauta').value = qDinAdresa; pesteTot = true; history.replaceState(null, '', '/' + location.hash); }
+// Ctrl K de pe altă pagină (bara.js) vine aici cu ?cauta — căutarea primeşte focusul
+if (new URLSearchParams(location.search).has('cauta')) { history.replaceState(null, '', '/' + location.hash); focusCauta = true; }
 // „+ OFERTĂ NOUĂ" din bara altei pagini (bara.js) vine aici cu ?nou
 if (new URLSearchParams(location.search).has('nou')) { history.replaceState(null, '', '/' + location.hash); deschideAlegereGama(); }
 // linkul din lista goală de oferte deschide tot alegerea gamei (fără el, configuratorul pornea pe suspendate)
@@ -955,7 +1044,7 @@ function puneStare() {
   pune('stSticla', sumar.sticla, `${sumar.sticla} buc`, 'nimic');
   pune('stClienti', sumar.deAprobat, `${sumar.deAprobat}`, 'niciunul');
   api('/api/livrari').then(r => (r?.ok ? r.json() : null)).then(d => {
-    if (!d) return;
+    if (!d || !$('stLivrari')) return;
     const azi = ZI_ISO.format(new Date());
     const n = d.livrari.filter(l => l.data >= azi).length;
     $('stLivrari').textContent = n ? `${n} ${n === 1 ? 'livrare' : 'livrări'}` : 'niciuna';

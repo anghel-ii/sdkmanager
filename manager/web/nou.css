@@ -1,107 +1,95 @@
 /* ═══════════════════════════════════════════════════════════════════════════
    PAGINA PRINCIPALĂ a managerului (+ /livrari) — totul sub body.ui-nou.
-   Redesign 2026-10-12 (ideea userului: tablou de bord închis, meniu în stânga):
-   sus salutul + plăcile stărilor (= taburile listei) + plăcile „Ofertă nouă" +
-   panoul „Azi" în dreapta; dedesubt lista. Pe pagina unei comenzi: cardurile
-   una sub alta (orice card nou, ex. #awbCard, se aşază singur în şir).
-   Meniul din stânga şi bara de sus sunt în bara.js; titlul paginii (.pagina-cap),
-   cardurile şi butoanele în comun.css.
+   Redesign 2026-10-12 (a doua trecere — userul: mai compact, fără bară sus):
+   sus butoanele „Ofertă nouă" (o gamă = un buton) şi cele patru stări pe un rând
+   (= taburile listei); dedesubt căutarea + lista şi, în dreapta, cardul comenzii
+   alese din listă (sau „Azi", fără comandă aleasă). Pe pagina unei comenzi:
+   cardurile una sub alta (orice card nou, ex. #awbCard, se aşază singur în şir).
+   Meniul din stânga e în bara.js; titlul paginii (.pagina-cap), cardurile şi
+   butoanele în comun.css.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 body.ui-nou #taburiSus, body.ui-nou #continut { max-width: 1680px; }
-body.ui-nou #taburiSus { padding: 28px 32px 0; }
+body.ui-nou #taburiSus { padding: 18px 24px 0; container: tablou / inline-size; }
 /* lista / detaliul se aşază după lăţimea LOR (meniul din stânga poate fi lat sau restrâns) */
 body.ui-nou #continut { container: continut / inline-size; }
-body.ui-nou #taburiSus:not(:empty) + #continut { padding-top: 32px; }
-@media (max-width: 1099px) {
-  body.ui-nou #taburiSus { padding: 22px 24px 0; }
-}
-/* pe pagina unei comenzi tabloul de sus dispare — stările rămân în meniul din stânga */
+html.cu-meniu body.ui-nou #taburiSus:not(:empty) + #continut { padding-top: 14px; }
+/* pe pagina unei comenzi butoanele şi stările dispar — stările rămân în meniul din stânga */
 body.ui-nou:has(#continut > .antet) #taburiSus { display: none; }
 
-/* ── tabloul: plăcile în stânga, panoul „Azi" în dreapta ── */
-body.ui-nou #taburiSus { container: tablou / inline-size; }
-.tablou { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 20px; align-items: start; }
-@container tablou (max-width: 1000px) { .tablou { grid-template-columns: minmax(0, 1fr) 270px; gap: 16px; } }
-/* loc puţin (jumătate de ecran cu meniul lat): panoul devine o bandă sub plăci, doar „De făcut"
-   (legătura live e în bara de sus, contul în meniu) */
-@container tablou (max-width: 860px) {
-  .tablou { grid-template-columns: minmax(0, 1fr); }
-  .panou-stare { display: flex; flex-wrap: wrap; gap: 0 28px; padding: 4px 20px; }
-  .panou-stare .panou-cap, .panou-stare .eticheta, .panou-stare div.rand { display: none; }
-  .panou-stare a.rand { flex: 1 1 200px; border: none; }
-}
+/* ── „Ofertă nouă": un rând de butoane, câte unul pe gamă ── */
+.eticheta-sus { margin: 0 2px 6px; font-size: 10.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #6f7684; }
+.placi-game { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
+.gama-btn { display: flex; align-items: center; gap: 9px; height: 40px; padding: 0 12px; min-width: 0;
+            background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+            color: var(--text); text-decoration: none; font-weight: 500; white-space: nowrap; transition: border-color .15s, background .15s; }
+.gama-btn .ic { flex: none; width: 18px; height: 18px; color: var(--text-dim); }
+.gama-btn span { overflow: hidden; text-overflow: ellipsis; }
+.gama-btn:hover { border-color: var(--accent); background: rgba(31, 111, 209, .10); }
+.gama-btn:hover .ic { color: var(--accent); }
 
-.tablou-stanga { container-type: inline-size; }
-.taburi { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.placi-game { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-@container (max-width: 760px) { .placa-gama > .ic { display: none; } }
-@container (max-width: 520px) { .placi-game { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-
-/* o placă: iconiţa într-un pătrat colorat, numele + un rând scurt, numărul, săgeata */
-.placa {
-  display: flex; align-items: center; gap: 14px; min-height: 78px; padding: 14px 16px; text-align: left;
-  font: inherit; color: var(--text); text-decoration: none; cursor: pointer;
-  background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
-  transition: border-color .15s, background .15s;
-}
+/* ── cele patru stări: un rând de plăci joase — iconiţa, numele, numărul ── */
+.taburi { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.placa { display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 14px 0 9px; min-width: 0; text-align: left;
+         font: inherit; color: var(--text); cursor: pointer;
+         background: var(--panel); border: 1px solid var(--line); border-radius: 10px; transition: border-color .15s, background .15s; }
 .placa:hover:not(:disabled) { background: #1f232a; border-color: #3a4049; }
-.placa-ic { flex: none; width: 42px; height: 42px; border-radius: 11px; display: grid; place-items: center;
+.placa-ic { flex: none; width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center;
             background: rgba(77, 163, 255, .12); color: var(--accent); }
-.placa-ic .ic { width: 20px; height: 20px; }
-.placa-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.placa .tab-nume, .placa .placa-nume { font-size: 15px; font-weight: 600; color: var(--text); line-height: 1.3; }
-.placa-sub { font-size: 12.5px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.placa .tab-cate { flex: none; font-size: 24px; font-weight: 650; letter-spacing: -.02em; font-variant-numeric: tabular-nums; color: var(--text); }
-.placa .tab-cate .din { font-size: 12px; font-weight: 500; letter-spacing: 0; }
-.placa > .ic { flex: none; width: 18px; height: 18px; color: #5c6370; transition: transform .15s, color .15s; }
-.placa:hover > .ic { color: var(--text-dim); transform: translateX(2px); }
+.placa-ic .ic { width: 17px; height: 17px; }
+.placa .tab-nume { flex: 1; min-width: 0; font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.placa .tab-cate { flex: none; font-size: 18px; font-weight: 650; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.placa .tab-cate .din { font-size: 11.5px; font-weight: 500; letter-spacing: 0; }
 /* culoarea fiecărei stări — aceeaşi ca eticheta ei (.stare-pastila) */
 .ton-plata .placa-ic      { background: rgba(212, 162, 76, .13);  color: #e5b45a; }
 .ton-comanda .placa-ic    { background: rgba(180, 156, 255, .13); color: #b49cff; }
 .ton-finalizata .placa-ic { background: rgba(107, 155, 122, .16); color: #7cc493; }
 /* tabul arătat acum în listă */
-.taburi .placa.activ { border-color: var(--accent); background: linear-gradient(rgba(31, 111, 209, .13), rgba(31, 111, 209, .13)), var(--panel);
+.taburi .placa.activ { border-color: var(--accent); background: linear-gradient(rgba(31, 111, 209, .14), rgba(31, 111, 209, .14)), var(--panel);
                        box-shadow: inset 0 0 0 1px var(--accent); }
-.taburi .placa.activ > .ic { color: var(--accent); transform: rotate(90deg); }
-/* plăcile gamelor: mai joase */
-.placa-gama { min-height: 64px; padding: 11px 14px; gap: 12px; }
-.placa-gama .placa-ic { width: 38px; height: 38px; border-radius: 10px; background: var(--panel-2); color: var(--text); }
-.placa-gama:hover .placa-ic { background: rgba(77, 163, 255, .14); color: var(--accent); }
+@container tablou (max-width: 900px) {
+  .placi-game { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .taburi { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 
-/* ── panoul „Azi" ── */
-.panou-stare { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px 10px; }
-.panou-cap { display: flex; align-items: center; gap: 12px; padding-bottom: 6px; }
-.panou-cap b { display: block; font-size: 15px; font-weight: 600; }
-.panou-cap span:not(.placa-ic) { display: block; font-size: 13px; color: var(--text-dim); }
-.panou-stare .eticheta { margin: 16px 0 2px; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #6f7684; }
-.panou-stare .rand { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 40px;
-                     border-bottom: 1px solid var(--line); color: var(--text-dim); text-decoration: none; font-size: 13.5px; }
-.panou-stare .rand:last-child, .panou-stare .rand:has(+ .eticheta) { border-bottom: none; }
-.panou-stare a.rand:hover > span { color: var(--text); }
-.panou-stare .rand b { font-weight: 600; color: var(--text); text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.panou-stare .rand b.cald    { color: #e5b45a; }
-.panou-stare .rand b.liniste { color: #7cc493; font-weight: 500; }
-.panou-stare .rand b.info    { color: var(--accent); }
+/* ── lucrul: căutarea + lista în stânga, cardul comenzii alese în dreapta ── */
+.lucru { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 16px; align-items: start; }
+@container continut (max-width: 1000px) { .lucru { grid-template-columns: minmax(0, 1fr) 310px; gap: 12px; } }
+@container continut (max-width: 700px)  { .lucru { grid-template-columns: minmax(0, 1fr); } }
+.lucru-lista { container: lista / inline-size; min-width: 0; }
 
-/* ── lista: titlul cu numărul, „unde caută" ca butoane-pastilă, sortarea ── */
-body.ui-nou .bara-lista { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; min-height: 36px; margin-bottom: 14px; }
-body.ui-nou .bara-lista .titlu-sectiune { margin: 0 6px 0 0; }
-body.ui-nou .bara-lista .spatiu { flex: 1; }
-.titlu-sectiune .cate { display: inline-grid; place-items: center; min-width: 26px; height: 22px; padding: 0 8px; margin-left: 6px; vertical-align: 3px;
-                        border-radius: 999px; background: var(--panel-2); color: var(--text-dim); font-size: 12px; font-weight: 600; }
+.cauta-lista { display: flex; gap: 8px; margin-bottom: 10px; }
+.camp-cauta { flex: 1; display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 8px 0 13px; margin: 0; min-width: 0;
+              background: var(--panel); border: 1px solid var(--line); border-radius: 10px; cursor: text;
+              color: var(--text-dim); font-size: 14px; text-transform: none; letter-spacing: 0; }
+.camp-cauta:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(77, 163, 255, .15); }
+.camp-cauta .ic { flex: none; width: 17px; height: 17px; }
+.camp-cauta input { flex: 1; min-width: 0; width: auto; height: 100%; padding: 0; border: none; background: none; color: var(--text); box-shadow: none; }
+.camp-cauta input:focus { box-shadow: none; }
+.camp-cauta input::-webkit-search-cancel-button { filter: invert(.6); }
+.camp-cauta kbd { flex: none; font: 600 11px 'Inter', system-ui, sans-serif; color: var(--text-dim); padding: 3px 7px;
+                  border: 1px solid var(--line); border-radius: 6px; background: var(--panel-2); }
+#sortare { flex: none; height: 40px; padding: 0 14px; border-radius: 10px; font-size: 13px; white-space: nowrap; }
+#sortare.activ { background: var(--accent-dim); border-color: var(--accent); color: #fff; }
+
+/* „Doar în … / În toate secţiunile" — doar cât se caută, ca butoane-pastilă */
+body.ui-nou .bara-lista { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+body.ui-nou .bara-lista[hidden] { display: none; }
 #unde.segmented { background: none; border: none; padding: 0; gap: 8px; }
-#unde.segmented button { flex: none; padding: 6px 14px; border: 1px solid var(--line); border-radius: 999px; color: var(--text-dim); font-size: 13px; }
+#unde.segmented button { flex: none; padding: 5px 14px; border: 1px solid var(--line); border-radius: 999px; color: var(--text-dim); font-size: 13px; }
 #unde.segmented button:hover:not(.active) { border-color: #3a4049; color: var(--text); }
 #unde.segmented button.active { background: var(--panel-2); border-color: #4a5160; color: var(--text); }
-#sortare { border-radius: 999px; padding: 6px 14px; }
 
 /* tabelul: un card cu margine, stările ca etichete */
-body.ui-nou #tabelLista table.lista { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; border-collapse: separate; border-spacing: 0; overflow: hidden; }
-body.ui-nou table.lista th { background: #191c21; padding: 11px 12px; white-space: nowrap; }
-body.ui-nou table.lista td { padding: 13px 12px; border-bottom: 1px solid var(--line); }
+body.ui-nou #tabelLista table.lista { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; border-collapse: separate; border-spacing: 0; overflow: hidden; }
+body.ui-nou table.lista th { background: #191c21; padding: 9px 12px; white-space: nowrap; }
+body.ui-nou table.lista td { padding: 11px 12px; border-bottom: 1px solid var(--line); }
 body.ui-nou table.lista tbody tr:last-child td { border-bottom: none; }
 body.ui-nou table.lista td[data-c="client"] { font-weight: 500; }
+/* comanda aleasă: fundal de accent + bară în stânga */
+body.ui-nou table.lista tbody tr.selectat td { background: rgba(77, 163, 255, .16); }
+body.ui-nou table.lista tbody tr.selectat td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
+body.ui-nou table.lista tbody tr.selectat:hover td { background: rgba(77, 163, 255, .2); }
 body.ui-nou td[data-c="status"] > strong,
 body.ui-nou .facturat, body.ui-nou .nefacturat,
 body.ui-nou .sticla-da, body.ui-nou .sticla-nu, body.ui-nou .sticla-partial {
@@ -111,34 +99,76 @@ body.ui-nou td[data-c="status"] > strong { color: var(--accent); border-color: r
 body.ui-nou .facturat, body.ui-nou .sticla-da { color: var(--ok); border-color: rgba(107, 155, 122, .45); background: rgba(107, 155, 122, .1); }
 body.ui-nou .nefacturat, body.ui-nou .sticla-nu { color: var(--danger); border-color: rgba(185, 106, 91, .55); background: rgba(185, 106, 91, .1); }
 body.ui-nou .sticla-partial { color: #d4a24c; border-color: rgba(212, 162, 76, .45); background: rgba(212, 162, 76, .1); }
-body.ui-nou .gol.card { border-radius: 14px; }
+body.ui-nou .gol.card { border-radius: 12px; }
 
-/* listă îngustă (jumătate de ecran / meniul lat): fiecare comandă pe două rânduri —
-   număr, client, sistem, dată / apoi stările şi butoanele. Ordinea vine din data-c; ::before rupe rândul. */
-@container continut (max-width: 1000px) {
+/* lista lângă card: creat de / plată / avans / butoanele se văd în card — coloanele lor ies */
+@container lista (max-width: 1060px) {
+  body.ui-nou table.lista [data-c="cine"], body.ui-nou table.lista [data-c="plata"],
+  body.ui-nou table.lista [data-c="avans"], body.ui-nou table.lista [data-c="actiuni"] { display: none; }
+}
+/* listă îngustă: fiecare comandă pe două rânduri — client, sistem, dată / apoi
+   nr. ofertă şi stările. Ordinea vine din data-c; ::before rupe rândul. */
+@container lista (max-width: 700px) {
   body.ui-nou table.lista thead { display: none; }
   body.ui-nou table.lista, body.ui-nou table.lista tbody { display: block; }
   body.ui-nou table.lista tbody tr {
     display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px;
-    padding: 12px 14px 12px 40px; position: relative; border-bottom: 1px solid var(--line);
+    padding: 10px 14px 10px 40px; position: relative; border-bottom: 1px solid var(--line);
   }
   body.ui-nou table.lista tbody tr:last-child { border-bottom: none; }
   body.ui-nou table.lista tbody tr::before { content: ''; flex-basis: 100%; order: 5; height: 0; }
   body.ui-nou table.lista td { padding: 0; border: none; }
-  body.ui-nou td[data-c="pin"] { position: absolute; left: 10px; top: 12px; width: auto; }
+  body.ui-nou table.lista tbody tr.selectat { background: rgba(77, 163, 255, .16); box-shadow: inset 3px 0 0 var(--accent); }
+  body.ui-nou table.lista tbody tr.selectat td { background: none; box-shadow: none; }
+  body.ui-nou td[data-c="pin"] { position: absolute; left: 10px; top: 10px; width: auto; }
   body.ui-nou td[data-c="client"] { order: 2; font-weight: 600; }
   body.ui-nou td[data-c="sistem"] { order: 3; flex: 1 1 0; min-width: 0; color: var(--text-dim); font-size: .84rem;
                                     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   body.ui-nou td[data-c="data"]   { order: 4; font-family: 'JetBrains Mono', ui-monospace, monospace; }
   body.ui-nou td[data-c]:not([data-c="pin"]):not([data-c="client"]):not([data-c="sistem"]):not([data-c="data"]) { order: 6; font-size: .84rem; }
-  body.ui-nou td[data-c="actiuni"] { margin-left: auto; }
-  body.ui-nou td[data-c="cine"]::before  { content: 'de '; }
   body.ui-nou td[data-c="oferta"]::before { content: 'nr. ofertă '; }
   body.ui-nou td[data-c="sticla"]::before { content: 'Sticlă: '; color: var(--text-dim); }
-  body.ui-nou td[data-c="avans"]::before  { content: 'avans '; color: var(--text-dim); }
   body.ui-nou td[data-c="status"] .dim, body.ui-nou td[data-c="sticla"] .dim.mic { display: none; }
   body.ui-nou table.lista tbody tr.grup { padding-left: 14px; }
 }
+
+/* ── cardul comenzii alese (dreapta); fără comandă aleasă: „Azi" ── */
+.card-comanda { position: sticky; top: 14px; max-height: calc(100vh - 28px); overflow: auto;
+                background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; }
+.card-comanda .panou-cap { display: flex; align-items: center; gap: 12px; padding-bottom: 6px; }
+.card-comanda .panou-cap b { display: block; font-size: 15px; font-weight: 600; }
+.card-comanda .panou-cap span:not(.placa-ic) { display: block; font-size: 13px; color: var(--text-dim); }
+.card-comanda .rand { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 38px;
+                      border-bottom: 1px solid var(--line); color: var(--text-dim); text-decoration: none; font-size: 13.5px; }
+.card-comanda a.rand:hover > span { color: var(--text); }
+.card-comanda .rand b { font-weight: 600; color: var(--text); white-space: nowrap; }
+.card-comanda .rand b.cald    { color: #e5b45a; }
+.card-comanda .rand b.liniste { color: #7cc493; font-weight: 500; }
+.card-comanda .rand b.info    { color: var(--accent); }
+.cc-indemn { margin-top: 14px; padding: 12px; border: 1px dashed var(--line); border-radius: 10px; font-size: 13px; color: var(--text); text-align: center; }
+.cc-indemn span { display: block; margin-top: 4px; font-size: 12px; color: var(--text-dim); }
+
+.cc-titlu { display: flex; align-items: flex-start; gap: 8px; }
+.cc-titlu h2 { flex: 1; min-width: 0; font-size: 19px; font-weight: 700; letter-spacing: -.01em; line-height: 1.25; overflow-wrap: anywhere; }
+.cc-inchide { flex: none; width: 28px; height: 28px; padding: 0; display: grid; place-items: center; margin: -2px -6px 0 0;
+              border: none; border-radius: 7px; background: none; color: var(--text-dim); }
+.cc-inchide .ic { width: 16px; height: 16px; }
+.cc-inchide:hover:not(:disabled) { background: var(--panel-2); color: var(--text); border: none; }
+.cc-nr { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; margin-top: 4px; font-size: 13px; color: var(--text-dim); }
+.cc-butoane { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 2px; }
+.cc-butoane button { padding: 7px 12px; font-size: 13px; }
+.cc-eticheta { margin: 14px 0 6px; font-size: 10.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #6f7684; }
+.cc-eticheta .cate { margin-left: 4px; color: var(--text-dim); }
+.cc-perechi { display: grid; grid-template-columns: 80px minmax(0, 1fr); gap: 4px 10px; margin-top: 12px; font-size: 13.5px; }
+.cc-perechi dt { color: var(--text-dim); }
+.cc-perechi dd { margin: 0; overflow-wrap: anywhere; }
+.card-comanda .info-pasi.cc-pasi { grid-template-columns: 96px minmax(0, 1fr); gap: 7px 10px; border: none; padding: 0; }
+.card-comanda .cc-pasi dt { font-size: 10.5px; }
+.card-comanda .cc-pasi dd { font-size: 13px; }
+.cc-produse { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.cc-produse li { display: flex; flex-direction: column; gap: 1px; padding: 8px 10px; background: var(--panel-2); border-radius: 8px; font-size: 13.5px; }
+.cc-produse li span { font-size: 12.5px; color: var(--text-dim); }
+.cc-obs { font-size: 13.5px; white-space: pre-line; }
 
 /* ── detaliul comenzii: cardurile una sub alta ── */
 body.ui-nou #continut:has(> .antet) { display: flex; flex-direction: column; gap: 16px; }
