@@ -12,6 +12,7 @@
 <script src="/live.js"></script>
 <script src="/copiaza.js"></script>
 <script src="/mail-sticla.js"></script>
+<script src="/awb.js"></script>
 <style>
   .sticla-nu { color: var(--danger); font-size: .84rem; }
   .sticla-furnizori { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
@@ -774,6 +775,7 @@ async function renderDetaliu(id) {
           : pas('viitor', 'Finalizat', eComanda ? '<span class="dim">după „Marchează finalizată"</span>' : '')}
       </dl>
     </div>
+    <div id="awbCard"></div>
 
     ${blocTaburi(pozitii, total)}
 
@@ -785,6 +787,7 @@ async function renderDetaliu(id) {
 `;
 
   $('inapoi').addEventListener('click', () => { location.hash = HASH_TAB[tabCurent]; });
+  window.cardAwb?.($('awbCard'), c);
   document.querySelectorAll('.taburi-detaliu button').forEach(b => b.addEventListener('click', () => {
     tabDetaliu = b.dataset.tabd;
     document.querySelectorAll('.taburi-detaliu button').forEach(x => x.classList.toggle('active', x === b));

@@ -108,6 +108,21 @@
       văd doar clienţii cu numele lor în coloana Agent. Parola se vede o singură dată, aici — trimite-o agentului.</div>
   </div>
 
+  <!-- Contul FAN Courier pentru AWB-uri (server/fan.js): se încearcă la FAN înainte de
+       salvare; parola nu se mai trimite niciodată înapoi spre browser -->
+  <div class="panou">
+    <h2>FAN Courier</h2>
+    <div id="fanStare" class="mic" style="margin-bottom:12px">…</div>
+    <form class="agent-nou" id="formFan" autocomplete="off">
+      <label>Utilizator selfAWB <input id="fanUser" spellcheck="false" autocapitalize="none" required></label>
+      <label>Parolă <input id="fanParola" type="password" autocomplete="new-password" required></label>
+      <label>Cod client (clientId) <input id="fanClient" inputmode="numeric" required></label>
+      <button type="submit" class="primar">Salvează</button>
+      <button type="button" id="fanSterge" hidden>Şterge</button>
+    </form>
+    <div id="mesajFan"></div>
+  </div>
+
   <!-- Update din GitHub fără drepturi de administrator pe Windows: serverul porneşte
        sarcina „SDK Actualizare" (SYSTEM) sau, cu cheia GitHub pusă mai jos, descarcă singur
        pachetul gata construit de CI — vezi server/actualizare.js -->
@@ -359,6 +374,35 @@ $('btnActualizeaza').addEventListener('click', async () => {
   if (!urmarire) urmarire = setInterval(stareActualizare, 3000);
 });
 
+// ── FAN Courier ──
+async function stareFan() {
+  const r = await api('/api/fan/stare');
+  if (!r?.ok) return;
+  const s = await r.json();
+  $('fanStare').innerHTML = s.activ
+    ? `<span class="stare-activ">Legătura merge</span> — utilizator <span class="mono">${esc(s.user)}</span>, cod client
+       <span class="mono">${esc(s.clientId)}</span>. Pentru o schimbare scrie din nou toate trei câmpurile.`
+    : '<span class="dim">Nu e configurată — fără ea nu se pot genera AWB-uri din pagina comenzii.</span>';
+  $('fanSterge').hidden = !s.activ;
+}
+async function trimiteFan(corp) {
+  $('mesajFan').innerHTML = corp.user ? '<div class="mesaj">Verific contul la FAN Courier…</div>' : '';
+  const r = await api('/api/fan/cont', { method: 'PUT', body: JSON.stringify(corp) });
+  if (!r) return;
+  if (!r.ok) { $('mesajFan').innerHTML = `<div class="mesaj eroare">${esc(await eroareDin(r))}</div>`; return; }
+  const s = await r.json();
+  $('formFan').reset();
+  $('mesajFan').innerHTML = s.activ ? `<div class="mesaj ok">✓ Contul merge (${esc(s.cont)}) şi e salvat.</div>`
+    : '<div class="mesaj">Legătura cu FAN Courier a fost ştearsă.</div>';
+  stareFan();
+}
+$('formFan').addEventListener('submit', e => {
+  e.preventDefault();
+  trimiteFan({ user: $('fanUser').value, parola: $('fanParola').value, clientId: $('fanClient').value });
+});
+$('fanSterge').addEventListener('click', async () => {
+  if (await confirma('Ştergi legătura cu FAN Courier? Nu se mai pot genera AWB-uri până nu o pui din nou.', 'Şterge')) trimiteFan({});
+});
 
 (async () => {
   const r = await api('/api/eu');
@@ -370,6 +414,7 @@ $('btnActualizeaza').addEventListener('click', async () => {
   }
   incarca();
   incarcaAgenti();
+  stareFan();
   stareActualizare();
 })();
 </script>

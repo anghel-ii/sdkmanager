@@ -145,3 +145,29 @@ CREATE TABLE IF NOT EXISTS scanare (
 
 CREATE INDEX IF NOT EXISTS idx_scanare_usa    ON scanare(usa_id, moment);
 CREATE INDEX IF NOT EXISTS idx_scanare_moment ON scanare(moment);
+
+-- ── AWB-uri FAN Courier (server/fan.js) ─────────────────────────────────────
+-- Un AWB generat din pagina comenzii. Rândul nu se şterge niciodată: ştergerea
+-- la FAN (AWB greşit) doar pune `sters_la`. Starea = ultimul eveniment de la FAN
+-- (tracking din oră în oră), ex. 'S2' = Livrat.
+CREATE TABLE IF NOT EXISTS awb (
+  id          INTEGER PRIMARY KEY,
+  comanda_id  INTEGER NOT NULL REFERENCES comanda(id),
+  numar       TEXT    NOT NULL UNIQUE,          -- nr. AWB de la FAN, ex. "7000172683355"
+  serviciu    TEXT    NOT NULL,                 -- 'Standard' | 'Cont Colector' | …
+  ramburs     REAL    NOT NULL DEFAULT 0,       -- lei de încasat de la destinatar (Cont Colector)
+  colete      INTEGER NOT NULL,
+  greutate    REAL    NOT NULL,                 -- kg
+  cost        REAL,                             -- tariful dat de FAN la generare (fără TVA)
+  destinatar  TEXT,                             -- JSON: numele şi adresa trimise la FAN
+  creat_la    TEXT    NOT NULL,
+  creat_de    INTEGER REFERENCES utilizator(id),
+  stare       TEXT,                             -- id-ul ultimului eveniment ('S2'…); NULL = încă nimic
+  stare_text  TEXT,
+  stare_la    TEXT,                             -- UTC, ca restul datelor din bază
+  livrat_la   TEXT,
+  sters_la    TEXT,
+  sters_de    INTEGER REFERENCES utilizator(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_awb_comanda ON awb(comanda_id);
