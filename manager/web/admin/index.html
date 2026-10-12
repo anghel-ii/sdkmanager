@@ -11,8 +11,9 @@
 <style>
   #continut { padding: 24px; max-width: 1000px; margin: 0 auto; display: grid; gap: 20px; }
 
-  .panou { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px; }
-  .panou h2 { font-size: 1.05rem; margin-bottom: 12px; }
+  .panou { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 22px 24px; }
+  .panou h2 { font-size: 1.05rem; margin-bottom: 14px; }
+  #continut > .pagina-cap { margin-bottom: 4px; }
   .cont-nou { display: grid; grid-template-columns: 1.2fr 1fr 1.2fr auto; gap: 10px; align-items: end; }
   .cont-nou label { margin: 0; }
   @media (max-width: 720px) { .cont-nou { grid-template-columns: 1fr; } }
@@ -43,6 +44,10 @@
 <script src="/bara.js"></script>
 
 <div id="continut">
+  <header class="pagina-cap">
+    <h1>Utilizatori</h1>
+    <p>Conturile colegilor şi ale agenţilor de vânzări, legătura cu Cloudflare şi actualizarea aplicaţiei.</p>
+  </header>
   <!-- Cont nou: doar utilizatorul şi rolul. Omul îşi alege parola la primul
        login (scrie parola de două ori) — vezi postLogin în api/utilizatori.js. -->
   <form class="panou" id="formNou" autocomplete="off">

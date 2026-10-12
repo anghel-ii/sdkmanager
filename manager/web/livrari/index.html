@@ -14,9 +14,7 @@
 <script src="/live.js"></script>
 <style>
   #continut { padding: 20px 24px 40px; max-width: 1500px; margin: 0 auto; }
-  h1 { margin-bottom: 4px; }
-  .sub { color: var(--text-dim); font-size: .88rem; margin-bottom: 16px; }
-  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; margin-bottom: 16px; }
   .card > h2 { font-size: .74rem; text-transform: uppercase; letter-spacing: .05em; color: var(--text-dim); margin-bottom: 10px; }
 
   /* judeţele cu comenzi — butoane comutabile */
@@ -31,7 +29,7 @@
   .plan[hidden] { display: none; }
   .plan { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(380px, 1fr); gap: 16px; align-items: start; }
   @media (max-width: 1150px) { .plan { grid-template-columns: 1fr; } }
-  .harta-card { position: sticky; top: 70px; }
+  .harta-card { position: sticky; top: 80px; }
 
   table.lst { width: 100%; border-collapse: collapse; font-size: .88rem; }
   table.lst th { text-align: left; font-size: .7rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase;
@@ -98,8 +96,10 @@
 <script src="/bara.js"></script>
 
 <div id="continut">
-  <h1>Organizează livrări</h1>
-  <div class="sub">Comenzile în lucru sau finalizate care se livrează cu maşina noastră şi nu sunt încă într-o livrare.</div>
+  <header class="pagina-cap">
+    <h1>Organizează livrări</h1>
+    <p>Comenzile în lucru sau finalizate care se livrează cu maşina noastră şi nu sunt încă într-o livrare.</p>
+  </header>
 
   <div class="card">
     <h2>1 · Alege judeţele</h2>

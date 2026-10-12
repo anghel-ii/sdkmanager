@@ -6,16 +6,23 @@
 <title>Autentificare — Manager comenzi</title>
 <link rel="stylesheet" href="/comun.css">
 <style>
-  body { display: flex; align-items: center; justify-content: center; padding: 20px; }
-  .card { width: 100%; max-width: 380px; }
-  .titlu { margin-bottom: 4px; }
-  .sub { margin-bottom: 24px; }
-  button[type=submit] { width: 100%; }
+  body { display: flex; align-items: center; justify-content: center; padding: 20px;
+         background: radial-gradient(900px 500px at 50% -10%, rgba(31, 111, 209, .16), transparent 70%), var(--bg); }
+  .card { width: 100%; max-width: 400px; padding: 32px; border-radius: 18px; box-shadow: 0 24px 60px rgba(0, 0, 0, .35); }
+  /* marca — aceeaşi ca în meniul din stânga (bara.js) */
+  .logo { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; margin-bottom: 18px; color: #fff;
+          background: linear-gradient(140deg, #3b8ff0, #1c5fbf); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18); }
+  .logo svg { width: 22px; height: 22px; }
+  .titlu { font-size: 26px; font-weight: 700; letter-spacing: -.02em; margin-bottom: 4px; }
+  .sub { margin-bottom: 26px; }
+  button[type=submit] { width: 100%; height: 44px; margin-top: 4px; }
 </style>
 </head>
 <body>
 
 <form class="card" id="formular" autocomplete="on">
+  <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <rect x="4" y="3.5" width="7.5" height="17" rx="1"/><rect x="12.5" y="3.5" width="7.5" height="17" rx="1"/><path d="M9 12h1M14 12h1"/></svg></div>
   <h1 class="titlu">Manager comenzi</h1>
   <div class="sub dim mic">Autentifică-te ca să continui</div>
 

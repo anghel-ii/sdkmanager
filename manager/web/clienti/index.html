@@ -13,10 +13,17 @@
   .bara-lista { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
   .bara-lista .spatiu { flex: 1; }
   #cauta { width: 280px; max-width: 100%; }
-  table.clienti { width: 100%; border-collapse: collapse; font-size: .88rem; }
-  table.clienti th { text-align: left; font-size: .72rem; font-weight: 600; letter-spacing: .05em;
-                     text-transform: uppercase; color: var(--text-dim); padding: 6px 8px; border-bottom: 1px solid var(--line); }
-  table.clienti td { padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  #lista { overflow-x: auto; }
+  table.clienti { width: 100%; border-collapse: separate; border-spacing: 0; font-size: .88rem;
+                  background: var(--panel); border: 1px solid var(--line); border-radius: 14px; }
+  table.clienti th { text-align: left; font-size: .72rem; font-weight: 600; letter-spacing: .05em; background: #191c21;
+                     text-transform: uppercase; color: var(--text-dim); padding: 10px 10px; border-bottom: 1px solid var(--line); }
+  table.clienti th:first-child { border-top-left-radius: 14px; }
+  table.clienti th:last-child { border-top-right-radius: 14px; }
+  table.clienti td { padding: 10px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  table.clienti tbody tr:last-child td { border-bottom: none; }
+  table.clienti td:last-child { min-width: 150px; }
+  table.clienti td:nth-child(6) { overflow-wrap: anywhere; min-width: 140px; }   /* e-mailurile lungi se rup, ca tabelul să încapă */
   table.clienti td.data { white-space: nowrap; }
   .gol { text-align: center; padding: 40px; color: var(--text-dim); }
 
@@ -24,7 +31,7 @@
   #deAprobat { margin-bottom: 28px; }
   #deAprobat h2 { font-size: 1rem; margin-bottom: 10px; }
   #deAprobat h2 .cate { color: var(--accent); margin-left: 6px; }
-  .propunere { background: var(--panel); border: 1px solid #d4a24c; border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; }
+  .propunere { background: var(--panel); border: 1px solid #d4a24c; border-radius: 14px; padding: 16px 18px; margin-bottom: 10px; }
   .propunere .cap { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
   .propunere .cap .spatiu { flex: 1; }
   .propunere .tip { font-size: .72rem; font-weight: 700; letter-spacing: .05em; padding: 2px 8px; border-radius: 999px;
@@ -42,6 +49,10 @@
 <script src="/bara.js"></script>
 
 <div id="continut">
+  <header class="pagina-cap">
+    <h1>Clienţi</h1>
+    <p>Copia bazei de clienţi a agenţilor de vânzări — se actualizează singură. Ce trimit agenţii aşteaptă întâi la „De aprobat".</p>
+  </header>
   <section id="deAprobat" hidden>
     <h2>De aprobat <span class="cate" id="nrPropuneri"></span>
       <span class="dim mic" style="font-weight:400">— trimise de agenţi; intră în lista de clienţi doar după aprobare</span></h2>

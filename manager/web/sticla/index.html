@@ -14,10 +14,11 @@
   #continut { padding: 24px; max-width: 1100px; margin: 0 auto; }
 
   .taburi { display: flex; gap: 8px; margin-bottom: 20px; }
-  .taburi button.activ { background: var(--accent-dim); border-color: var(--accent); color: #fff; font-weight: 600; }
+  .taburi button { border-radius: 999px; padding: 7px 16px; font-size: .9rem; color: var(--text-dim); }
+  .taburi button.activ { background: var(--panel-2); border-color: #4a5160; color: var(--text); font-weight: 600; }
 
-  .furnizor { background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
-              padding: 16px; margin-bottom: 18px; }
+  .furnizor { background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+              padding: 18px 20px; margin-bottom: 18px; }
   .furnizor .cap { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
   .furnizor h2 { font-size: 1.05rem; }
   .furnizor .total { color: var(--text-dim); font-size: .85rem; }
@@ -44,6 +45,10 @@
 <script src="/bara.js"></script>
 
 <div id="continut">
+  <header class="pagina-cap">
+    <h1>Comandă sticlă</h1>
+    <p>Sticla comenzilor acceptate, grupată pe furnizor. Bifezi ce trimiţi şi o comanzi pe mail; după mail trece la „Comandate".</p>
+  </header>
   <div class="taburi">
     <button data-tab="0" class="activ">De comandat</button>
     <button data-tab="1">Comandate</button>
