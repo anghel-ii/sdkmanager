@@ -184,11 +184,12 @@ export function renderRame(box, { rebuild, geamOptionsHtml }) {
   // la coadă, mereu un rând gol (se completează ca să apară următorul)
   const faraGaurire = x.gaurire === FARA_GAURIRE;
   const cuBalama = cu820 && !faraGaurire;                        // balama / plăcuţă
-  const peRama   = cuBalama && x.gaurire === COTE_PE_RAMA;        // cotele sub fiecare rând
-  const cuGauri  = cuBalama && x.gaurire !== DOUA_GAURI && !peRama; // coloana „Găuri" (la sus/jos: mereu 2; la cote: câte cote)
+  // coloana „Găuri" = câte găuri după regula din listă, pt. rândurile FĂRĂ cote (la sus/jos: mereu 2;
+  // la „Cote pe fiecare rama": doar cotele)
+  const cuGauri  = cuBalama && x.gaurire !== DOUA_GAURI && x.gaurire !== COTE_PE_RAMA;
   const COL_RAME = [['h', m.H.at(-1)], ['l', m.L.at(-1)], ['buc', Infinity, true], ...(cuGauri ? [['gauri', Infinity, true]] : [])];
   // cotele sub fiecare rând (laSchimbare e mai jos — se cheamă abia la editare)
-  const coteSub = peRama ? coteRand(COL_RAME.length + 2, () => laSchimbare()) : null;
+  const coteSub = cuBalama ? coteRand(COL_RAME.length + 2, () => laSchimbare()) : null;
   // toate modelele de mâner la vedere; cele fără cod în culoarea aleasă — gri
   const existaInCuloare = v => !state.finish || !!codManer(v, state.finish);
   const COL_MANER = [['model', { variante: MODELE_MANER.map(([v, t]) => [v, t, existaInCuloare(v)]) }],

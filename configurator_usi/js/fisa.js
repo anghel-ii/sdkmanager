@@ -5,7 +5,7 @@ import { currentSpec, currentBom, currentBilling, currentClientPanels } from './
 import { finishesOf, familia } from './familii.js';
 import { findGeam } from './lib/comun/geam.js';
 import { suprapuneriEfective, PROFIL_H_3D } from './lib/confort/index.js';
-import { ASAMBLARE, FARA_GAURIRE, COTE_PE_RAMA, cotaGauri } from './lib/rame/rame.js';
+import { ASAMBLARE, FARA_GAURIRE, cotaGauri } from './lib/rame/rame.js';
 import { detaliiComanda, plataText } from './lib/comun/comanda.js';
 import JsBarcode from 'jsbarcode';
 
@@ -387,7 +387,8 @@ function desenGaurire(x, fata, cote, { inalt = 105, lat = 120 } = {}) {
 // încurce pe omul de la CNC) şi la 831 / 841 / 842 „Gaurire Standard" — acolo profilul
 // are un singur fel de gaură, îl ştie din vedere (userul, 2026-10-02).
 function schiteGaurire(spec, rame) {
-  if (spec.m.grup !== '820' || !rame.gaurire || rame.gaurire === FARA_GAURIRE || !spec.pline.length) return '';
+  if (spec.m.grup !== '820' || rame.gaurire === FARA_GAURIRE || !spec.pline.length) return '';
+  if (!rame.gaurire && !spec.pline.some(x => x.cote?.length)) return '';   // nici regulă, nici cote scrise
   // cu mai multe mărimi, desenele se micşorează ca versoul să rămână pe o foaie:
   // câte 3 pe rând, iar înălţimea scade cu nr. de rânduri (până la 45 mm)
   const n = spec.pline.length, col = Math.min(n, 3), randuri = Math.ceil(n / col);
@@ -395,7 +396,7 @@ function schiteGaurire(spec, rame) {
   const desene = spec.pline.map(x => {
     // strict desenul, cu cotele ramei şi bucăţile deasupra (userul, 2026-10-02: fără explicaţii)
     return `<div class="gaur-desen">
-      <div class="gaur-cap"><b>${x.h} × ${x.l} mm</b> · ${x.buc} buc${rame.gaurire === COTE_PE_RAMA && x.cote.length
+      <div class="gaur-cap"><b>${x.h} × ${x.l} mm</b> · ${x.buc} buc${x.cote?.length
         ? ` · găuri: ${x.cote.map(c => `${virgula1(c.v)} de ${c.de}`).join(', ')}` : ''}</div>
       ${desenGaurire(x, spec.m.fata, cotaGauri(x.h, x.gauri, rame.gaurire, x.cote), marime)}
     </div>`;

@@ -68,8 +68,10 @@ export const FARA_GAURIRE = 'Fara gaurire';   // la toate modelele (userul, 2026
 // găuri doar sus şi jos, la 100 mm de margini = mereu 2 pe ramă (userul, 2026-09-25):
 // nr. de găuri nu se mai scrie pe rând
 export const DOUA_GAURI = '100 mm de margini sus/jos';
-// cotele scrise de om sub fiecare rând de rame, fiecare de sus sau de jos (userul, 2026-10-12);
-// nr. de găuri (deci de balamale) = câte cote are rândul
+// Cotele scrise de om sub fiecare rând de rame (820/822/824), fiecare de sus sau de jos (userul,
+// 2026-10-12). Câmpurile sunt MEREU sub rânduri (în afară de „Fara gaurire"): un rând cu cote are
+// găurile lui (nr. de găuri = câte cote); un rând fără cote urmează regula aleasă din listă.
+// COTE_PE_RAMA = regula „fiecare rând îşi scrie cotele" (un rând fără cote e o eroare).
 export const COTE_PE_RAMA = 'Cote pe fiecare rama';
 export const GAURIRE_820 = [FARA_GAURIRE, DOUA_GAURI, '100 mm sus/jos si la mijloc',
                             '100 mm sus/jos si impartite egal', COTE_PE_RAMA, 'vezi schita pe spate'];   // SCHITA_CLIENT
@@ -80,11 +82,11 @@ export const SCHITA_CLIENT = 'vezi schita pe spate';
 // pt. schiţa de găurire de pe verso (CNC). Prima şi ultima la 100 mm de margini,
 // celelalte împărţite egal între ele („la mijloc" = una la jumătate). null = cotele
 // nu se ştiu de aici (schiţa clientului, găurirea standard INVISIO); [] = fără găuri.
-// `cote` = cotele rândului la COTE_PE_RAMA: [{ v, de: 'sus' | 'jos' }].
+// `cote` = cotele scrise pe rând: [{ v, de: 'sus' | 'jos' }] — când există, ele contează.
 export const MARGINE_GAURA_MM = 100;
 export const cotaDeSus = (h, c) => (c.de === 'jos' ? h - c.v : c.v);
 export function cotaGauri(h, gauri, gaurire, cote = []) {
-  if (gaurire === COTE_PE_RAMA) return cote.map(c => cotaDeSus(h, c)).sort((a, b) => a - b);
+  if (cote.length || gaurire === COTE_PE_RAMA) return cote.map(c => cotaDeSus(h, c)).sort((a, b) => a - b);
   if (!gauri || !gaurire || gaurire === FARA_GAURIRE) return [];
   if (!GAURIRE_820.includes(gaurire) || gaurire === SCHITA_CLIENT) return null;
   if (gauri === 1) return [h / 2];
@@ -271,12 +273,13 @@ export function specRame(model, state) {
   // fără găurire: nicio gaură, deci nici balamale / plăcuţe / şuruburi de balama
   const faraGaurire = r.gaurire === FARA_GAURIRE;
   const douaGauri  = r.gaurire === DOUA_GAURI;
-  const peRama     = m.grup === '820' && r.gaurire === COTE_PE_RAMA;
+  const cuCote     = m.grup === '820' && !faraGaurire;              // câmpurile de cote sub rânduri
+  const peRama     = cuCote && r.gaurire === COTE_PE_RAMA;
 
   const randuri = (r.randuri ?? []).map((x, i) => {
     const h = +x.h || 0, l = +x.l || 0, buc = Math.max(0, Math.round(+x.buc || 0));
-    const cote = peRama ? (x.cote ?? []).filter(c => +c.v > 0).map(c => ({ v: +c.v, de: c.de === 'jos' ? 'jos' : 'sus' })) : [];
-    const gauri = m.grup !== '820' || faraGaurire ? 0 : douaGauri ? 2 : peRama ? cote.length : Math.max(0, Math.round(+x.gauri || 0));
+    const cote = cuCote ? (x.cote ?? []).filter(c => +c.v > 0).map(c => ({ v: +c.v, de: c.de === 'jos' ? 'jos' : 'sus' })) : [];
+    const gauri = !cuCote ? 0 : cote.length ? cote.length : douaGauri ? 2 : peRama ? 0 : Math.max(0, Math.round(+x.gauri || 0));
     if (!h || !l || !buc) {
       if (h && l) erori.push(`rândul ${i + 1}: completează nr. de bucăţi`);
       return { i, gol: true, h, l, buc, gauri, cote };
@@ -331,7 +334,8 @@ export function specRame(model, state) {
   if (!nrRame) erori.push('completează cel puţin un rând de rame (H, L, nr. buc)');
   if (!r.asamblare) erori.push('alege cine asamblează');
   if (r.asamblare === 'noi' && !r.geam) erori.push('alege geamul/oglinda (asamblăm noi)');
-  if (!r.gaurire) erori.push('alege cotele de găurire');
+  // regula din listă trebuie aleasă doar dacă vreun rând n-are cotele lui
+  if (!r.gaurire && (m.grup !== '820' || pline.some(x => !x.cote.length))) erori.push('alege cotele de găurire');
   if (m.grup === '820' && !faraGaurire && !r.balama) erori.push('alege balamaua');
   if (m.grup === '820' && !faraGaurire && !r.placuta) erori.push('alege plăcuţa');
   const det = detaliiComanda(state);
@@ -492,7 +496,7 @@ const MAX_RAME_3D = 12;
 const GOL_INTRE_RAME_MM = 120;
 
 export function pozitiiGauri(h, n, regula, cote = []) {
-  if (regula === COTE_PE_RAMA) return cote.map(c => h - cotaDeSus(h, c));   // 3D: de jos în sus
+  if (cote.length || regula === COTE_PE_RAMA) return cote.map(c => h - cotaDeSus(h, c));   // 3D: de jos în sus
   if (n <= 0) return [];
   if (n === 1) return [h / 2];
   const sus = h - 100, jos = 100;
