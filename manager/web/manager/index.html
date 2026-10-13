@@ -159,6 +159,7 @@
     <div id="continut">Se încarcă…</div>
   </div>
   <div class="acasa-dreapta">
+    <section class="card-taskuri" id="cardCiorne" hidden></section>
     <section class="card-taskuri" id="cardTaskuri"></section>
     <aside class="card-comanda" id="cardComanda" aria-live="polite"></aside>
   </div>
@@ -448,7 +449,32 @@ function asiguraBaraLista() {
     });
     incarcaCard();
     incarcaTaskuri();
+    incarcaCiorne();
   }
+}
+
+// ── Ciornele mele: oferte începute în configurator şi lăsate ca ciornă la plecare (server/ciorne.js) ──
+// Doar când există; Continuă = configuratorul, de unde a rămas; ✕ = o arunci.
+async function incarcaCiorne() {
+  const el = $('cardCiorne');
+  if (!el || !$('tabelLista')) return;
+  const r = await api('/api/ciorne');
+  const ale = r?.ok ? (await r.json()).ciorne : [];
+  el.hidden = !ale.length;
+  el.innerHTML = `
+    <div class="ct-cap"><b>Ciornele mele</b><span class="insigna-num">${ale.length}</span></div>
+    <ul class="ct-lista">${ale.map(c => `
+      <li data-id="${c.id}">
+        <div style="flex:1"><a class="ct-text" href="/configurator/?ciorna=${c.id}" title="Continuă oferta de unde ai rămas">${esc(c.titlu)}</a>
+          <span class="ct-info">salvată ${dataOra(c.modificat_la)}</span></div>
+        <button type="button" class="mic" data-sterge title="Aruncă ciorna">✕</button>
+      </li>`).join('')}</ul>`;
+  el.querySelectorAll('[data-sterge]').forEach(b => b.addEventListener('click', async () => {
+    const li = b.closest('li');
+    if (!(await confirma(`Arunci ciorna „${li.querySelector('.ct-text').textContent}"?`, 'Aruncă'))) return;
+    await api(`/api/ciorne/${li.dataset.id}`, { method: 'DELETE' });
+    incarcaCiorne();
+  }));
 }
 
 // ── Taskurile mele, deasupra cardului comenzii (server/taskuri.js; pagina /taskuri) ──

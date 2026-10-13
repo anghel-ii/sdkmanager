@@ -19,6 +19,7 @@ import { renderUtil } from './ui_util.js';
 import { initSugestiiClienti } from './sugestii-clienti.js';
 import * as cosul from './cos.js';
 import { stareUtilGoala } from './lib/util/util.js';
+import * as ciorna from './ciorna.js';
 
 // Toate accesele la DOM sunt tolerante la elemente lipsă (HTML din cache vechi).
 const $ = id => document.getElementById(id);
@@ -1111,7 +1112,7 @@ async function trimiteOferta(unde = 'oferta') {
   cosul.scrie(cos);
 
   // după salvare: direct pe pagina comenzii din manager (userul, 2026-09-28); coşul s-a golit
-  const laComanda = () => { cosul.goleste(); location.href = '/#comanda/' + r.comanda.id; };
+  const laComanda = () => { ciorna.gata(); cosul.goleste(); location.href = '/#comanda/' + r.comanda.id; };
   if (unde === 'oferta') return laComanda();
 
   const t = await oferta.treceIn(r.comanda.id, unde, plata ?? {});
@@ -1133,6 +1134,7 @@ async function adaugaLaComanda() {
   const r = await oferta.adaugaLaComanda(cos.adaugaLa.id, cosul.transportOData(tot.pozitii, null).map(x => x.pozitie));
   if (r.eroare) { $('btnConfirma').disabled = false; textButoane(); return mesajOferta(esc(r.eroare), 'eroare'); }
   const id = cos.adaugaLa.id;
+  ciorna.gata();
   cosul.goleste();
   location.href = '/#comanda/' + id;
 }
@@ -1287,6 +1289,12 @@ export async function initUI() {
   // „Modifică oferta" din manager: toate produsele ofertei intră în coş, apoi se
   // deschide primul (pe pagina gamei lui); restul se modifică din „Adaugă la ofertă".
   let eroareIncarcare = null;
+  // „Ciornele mele" din manager: coşul ciornei, apoi pagina gamei ei (ecranul se pune mai jos)
+  if (params.get('ciorna')) {
+    const r = await ciorna.reia(params.get('ciorna'));
+    if (r.eroare) eroareIncarcare = r.eroare;
+    else { cosul.scrie(r.cos); return location.replace(cosul.url(r.gama, r.cos.curent != null ? { poz: r.cos.curent } : {})); }
+  }
   if (params.get('adauga')) {
     const r = await cosul.dinAdauga(params.get('adauga'), oferta.incarcaOferta, gama?.id ?? 'suspendata');
     if (r.eroare) eroareIncarcare = r.eroare; else return;
@@ -1364,6 +1372,13 @@ export async function initUI() {
     if (gama.id === 'rame') state.rame = stareRameGoala();
     if (gama.id === 'util') state.util = stareUtilGoala();
   }
+  // ciorna reluată: ecranul de atunci, aşa cum era — şi neterminat
+  const ecran = cosul.activ() && !params.get('fisa') ? ciorna.ecranReluat() : null;
+  if (ecran) {
+    Object.assign(state, ecran.state);
+    gamaActiva = systems[state.system]?.meta.family ?? gamaActiva;
+    [latimeAtinsa, inaltimeAtinsa] = ecran.atinse;
+  }
 
   renderModelList();
 
@@ -1416,6 +1431,7 @@ export async function initUI() {
   // cu ceva deja ales, întâi o întrebare — butonul e lângă „Salvează" şi şterge tot ce nu e salvat
   $('btnClear')?.addEventListener('click', () => {
     if (state.system && !confirm('Goleşti pagina? Tot ce ai configurat aici şi n-ai salvat se pierde.')) return;
+    ciorna.pleaca();
     location.reload();
   });
 
@@ -1447,7 +1463,9 @@ export async function initUI() {
   // „Adaugă la ofertă" — nu şi pe fişa deschisă din manager
   if (!modFisa) {
     // facturarea comasată e în tabul Facturare, nu şi în card
-    cardCos = cosul.initCard($('groupCos'), cos, { curenta: curentaUsi, client: clientPtCos, gamaEcran: currentGama,
+    // `modificat` trece prin coş pe pagina următoare (ciorna.js: se întreabă la plecare)
+    cardCos = cosul.initCard($('groupCos'), cos, { curenta: curentaUsi, client: () => ({ ...clientPtCos(), modificat: ciorna.modificata() }),
+                                                   gamaEcran: currentGama,
                                                    transport: () => liniaTransport(state), facturareInCard: false,
                                                    produse: $('cosProduse'), detalii: detaliiProdus });
     document.addEventListener('cos:schimbat', renderBilling);
@@ -1468,4 +1486,13 @@ export async function initUI() {
 
   // asincron: decide dacă panoul de ofertă are unde să trimită
   oferta.initOferta(renderOferta);
+  // la plecare cu oferta nesalvată: „Salvează ca ciornă" / „Renunţă la ea" / „Rămâi aici"
+  if (!modFisa) ciorna.init({ pagina: 'configurator', cos, gama: currentGama, client: clientPtCos,
+    ecran: () => ({ state, atinse: [latimeAtinsa, inaltimeAtinsa] }),
+    areContinut: () => !!state.system || cos.pozitii.length > 0,
+    titlu: () => {
+      const n = cos.pozitii.length + (state.system && cos.curent == null ? 1 : 0);
+      const ce = systems[state.system]?.meta.label ?? gameJson.game.find(g => g.id === currentGama())?.label ?? 'Ofertă';
+      return `${ce}${n > 1 ? ` + ${n - 1} ${n === 2 ? 'produs' : 'produse'}` : ''} · ${$('clientNume').value.trim() || 'fără client'}`;
+    } });
 }

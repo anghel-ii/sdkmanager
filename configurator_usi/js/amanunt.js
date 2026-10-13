@@ -8,6 +8,7 @@ import { copyRows } from './lib/comun/clipboard.js';
 import { qtyText } from './lib/comun/num.js';
 import { dataRo } from './ora.js';
 import { activeazaCampuri } from './campuri.js';
+import * as ciorna from './ciorna.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  OFERTĂ CU AMĂNUNTUL (amanunt.html) — sertare, mânere, accesorii: produsele
@@ -151,6 +152,7 @@ for (const id of ['clientNume', 'clientTelefon', 'clientAdresa', 'comandaLivrare
 // cu produse deja puse, întâi o întrebare — butonul e lângă „Salvează" şi şterge tot ce nu e salvat
 $('btnClear').addEventListener('click', () => {
   if (linii.some(l => l?.cod) && !confirm('Goleşti pagina? Produsele puse aici şi nesalvate se pierd.')) return;
+  ciorna.pleaca();
   location.reload();
 });
 
@@ -456,7 +458,7 @@ async function trimite(unde) {
   // o nouă apăsare lucrează pe ACEEAŞI ofertă (coşul o ţine minte); gata → coşul se goleşte
   Object.assign(cos, clientPtCos(), { ofertaEditata: r.comanda.id, numar: ofertaNr || r.comanda.numar });
   cosul.scrie(cos);
-  const laComanda = () => { cosul.goleste(); location.href = '/#comanda/' + r.comanda.id; };
+  const laComanda = () => { ciorna.gata(); cosul.goleste(); location.href = '/#comanda/' + r.comanda.id; };
   if (unde === 'oferta') return laComanda();
   const t = await manager.treceIn(r.comanda.id, unde, plata ?? {});
   if (t.eroare) {
@@ -475,6 +477,7 @@ async function adaugaLaComanda() {
   const r = await manager.adaugaLaComanda(cos.adaugaLa.id, cosul.transportOData(tot.pozitii, null).map(x => x.pozitie));
   if (r.eroare) { $('btnConfirma').disabled = false; $('btnConfirma').textContent = TEXT.btnConfirma(); return mesaj(esc(r.eroare), 'eroare'); }
   const id = cos.adaugaLa.id;
+  ciorna.gata();
   cosul.goleste();
   location.href = '/#comanda/' + id;
 }
@@ -558,10 +561,13 @@ const puneClientul = (client, ofertaNr, detalii) => {
       linii = (cos.pozitii[k].pozitie.config.amanunt ?? []).map(l => ({ ...l, debitare: l.debitare?.map(p => ({ ...p })) }));
       $('observatii').value = cos.pozitii[k].pozitie.config.observatii ?? '';
     }
+    const ecran = ciorna.ecranReluat();   // ciorna reluată (?ciorna=<id> în configurator)
+    if (ecran) { linii = ecran.linii; $('observatii').value = ecran.observatii; }
     cosul.scrie(cos);
   }
   if (!modFisa) {
-    card = cosul.initCard($('cardCos'), cos, { curenta, client: clientPtCos, gamaEcran: () => 'amanunt', produse: $('cosProduse'),
+    card = cosul.initCard($('cardCos'), cos, { curenta, client: () => ({ ...clientPtCos(), modificat: ciorna.modificata() }),
+                                               gamaEcran: () => 'amanunt', produse: $('cosProduse'),
                                                transport: () => liniaTransport({ comanda }) });
     document.addEventListener('cos:schimbat', renderOferta);
   } else { $('cardCosSec').hidden = true; $('nouActiuni').hidden = true; }
@@ -569,6 +575,13 @@ const puneClientul = (client, ofertaNr, detalii) => {
   await manager.initOferta(renderOferta);
   if (cos.ofertaEditata) { $('btnConfirma').textContent = TEXT.btnConfirma(); mesaj(`Modifici oferta <strong>${esc(cos.numar ?? '')}</strong>.`, 'ok'); }
   if (eroare) mesaj(esc(eroare), 'eroare');
+  if (!modFisa) ciorna.init({ pagina: 'amanunt', cos, gama: () => 'amanunt', client: clientPtCos,
+    ecran: () => ({ linii, observatii: $('observatii').value }),
+    areContinut: () => cos.pozitii.length > 0 || linii.some(l => l?.cod || String(l?.denumire ?? '').trim()),
+    titlu: () => {
+      const n = cos.pozitii.length - (cos.curent != null ? 1 : 0);   // celelalte produse
+      return `Ofertă cu amănuntul${n ? ` + ${n} ${n === 1 ? 'produs' : 'produse'}` : ''} · ${$('clientNume').value.trim() || 'fără client'}`;
+    } });
   if (params.get('fisa')) {
     if (modFisa) tipareste();
     // managerul încarcă pagina într-un cadru ascuns şi aşteaptă răspunsul

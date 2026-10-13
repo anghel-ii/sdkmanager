@@ -16,6 +16,7 @@ const sticla      = require('./sticla.js');
 const livrari     = require('./livrari.js');
 const taskuri     = require('./taskuri.js');
 const cereri      = require('./cereri.js');
+const ciorne      = require('./ciorne.js');
 const actualizare = require('./actualizare.js');
 const clienti     = require('./clienti.js');
 const ora         = require('./ora.js');
@@ -39,7 +40,7 @@ const ora         = require('./ora.js');
 //   { }                — orice utilizator logat
 //   { rol: 'admin' }   — doar administratorii
 
-const MODULE = [utilizatori, comenzi, scanare, evenimente, sticla, livrari, taskuri, cereri, actualizare, clienti].filter(Boolean);
+const MODULE = [utilizatori, comenzi, scanare, evenimente, sticla, livrari, taskuri, cereri, ciorne, actualizare, clienti].filter(Boolean);
 
 const rute = MODULE.flatMap(m => m.rute).map(([metoda, cale, spec]) => [metoda, cale, spec]);
 const potriveste = router(rute);

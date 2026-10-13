@@ -1,6 +1,7 @@
 import gameJson from './systems/game.json';
 import { copyRows } from './lib/comun/clipboard.js';
 import { qtyText } from './lib/comun/num.js';
+import { pleaca } from './ciorna.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  COŞUL OFERTEI — o ofertă poate avea mai multe produse (userul, 2026-10-01):
@@ -17,13 +18,15 @@ import { qtyText } from './lib/comun/num.js';
 //          client: { nume, telefon, adresa }, ofertaNr, comanda: { livrare, plata, agent },
 //          ofertaEditata: id | null, numar, adaugaLa: { id, numar } | null }
 //  adaugaLa = „Adaugă la comandă" din manager: produsele se ADAUGĂ la o comandă în lucru.
+//  ciornaId = ciorna reluată (ciorna.js); modificat = ceva nesalvat pe paginile de dinainte.
 // ═══════════════════════════════════════════════════════════════════════════
 
 const CHEIE = 'cosOferta';
 const $ = id => document.getElementById(id);
 const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-const gol = () => ({ pozitii: [], curent: null, client: {}, ofertaNr: '', comanda: {}, ofertaEditata: null, numar: null, adaugaLa: null });
+const gol = () => ({ pozitii: [], curent: null, client: {}, ofertaNr: '', comanda: {}, ofertaEditata: null, numar: null, adaugaLa: null,
+             ciornaId: null, modificat: false });
 export const activ = () => new URLSearchParams(location.search).has('cos');
 export function citeste() {
   if (!activ()) return gol();
@@ -183,12 +186,12 @@ export function initCard(el, cos, { curenta, client, gamaEcran, transport, factu
     const cutii = [el, ...(produse ? [produse] : [])];
     const toti = sel => cutii.flatMap(c => [...c.querySelectorAll(sel)]);
     toti('[data-gama]').forEach(b => b.addEventListener('click', () => {
-      if (pune()) location.href = url(b.dataset.gama);
+      if (pune()) { pleaca(); location.href = url(b.dataset.gama); }
     }));
     toti('[data-modifica]').forEach(b => b.addEventListener('click', () => {
       const k = +b.dataset.modifica;
       const gama = cos.pozitii[k].gama;
-      if (pune()) location.href = url(gama, { poz: k });
+      if (pune()) { pleaca(); location.href = url(gama, { poz: k }); }
     }));
     toti('[data-scoate]').forEach(b => b.addEventListener('click', () => {
       const k = +b.dataset.scoate;
