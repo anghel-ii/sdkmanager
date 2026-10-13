@@ -16,6 +16,8 @@ const sticla      = require('./sticla.js');
 const livrari     = require('./livrari.js');
 const taskuri     = require('./taskuri.js');
 const cereri      = require('./cereri.js');
+const tichete     = require('./tichete.js');
+const tablou      = require('./tablou.js');
 const actualizare = require('./actualizare.js');
 const clienti     = require('./clienti.js');
 const ora         = require('./ora.js');
@@ -39,7 +41,7 @@ const ora         = require('./ora.js');
 //   { }                — orice utilizator logat
 //   { rol: 'admin' }   — doar administratorii
 
-const MODULE = [utilizatori, comenzi, scanare, evenimente, sticla, livrari, taskuri, cereri, actualizare, clienti].filter(Boolean);
+const MODULE = [utilizatori, comenzi, scanare, evenimente, sticla, livrari, taskuri, cereri, tichete, tablou, actualizare, clienti].filter(Boolean);
 
 const rute = MODULE.flatMap(m => m.rute).map(([metoda, cale, spec]) => [metoda, cale, spec]);
 const potriveste = router(rute);
@@ -92,6 +94,7 @@ async function trateaza(req, res) {
     '/sticla':      'sticla',    // comanda de sticlă la furnizori
     '/livrari':     'livrari',   // organizează livrările cu maşina noastră
     '/taskuri':     'taskuri',
+    '/tichete':     'tichete',   // probleme / idei de la colegi pt. administrator (server/tichete.js)
     '/cereri':      'cereri',    // cererile (tichetele) pt. conducere: anulări de comenzi   // taskuri + remindere (notificarea o face bara.js)
     '/clienti':     'clienti',   // clienţii adăugaţi de agenţii de vânzări
     '/login':       'login',

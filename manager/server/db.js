@@ -217,6 +217,22 @@ const MIGRATII = [
     d.exec('ALTER TABLE comanda ADD COLUMN fisa_printata_la TEXT');
     d.exec('ALTER TABLE comanda ADD COLUMN fisa_printata_de INTEGER REFERENCES utilizator(id)');
   },
+  // v18 → v19 (2026-10-13): tichetele colegilor pentru administrator — probleme, idei (server/tichete.js)
+  d => d.exec(`
+    CREATE TABLE tichet (
+      id             INTEGER PRIMARY KEY,
+      tip            TEXT NOT NULL,                   -- 'problema' | 'idee' | 'altceva'
+      text           TEXT NOT NULL,
+      pagina         TEXT,                            -- de unde a venit (adresa paginii de dinainte)
+      creat_de       INTEGER NOT NULL REFERENCES utilizator(id),
+      creat_la       TEXT NOT NULL,
+      stare          TEXT NOT NULL DEFAULT 'nou',     -- 'nou' | 'in_lucru' | 'rezolvat' | 'respins'
+      raspuns        TEXT,
+      raspuns_de     INTEGER REFERENCES utilizator(id),
+      modificat_la   TEXT NOT NULL,
+      vazut_de_autor INTEGER NOT NULL DEFAULT 1       -- 0 = adminul a schimbat ceva, autorul n-a văzut încă
+    );
+    CREATE INDEX tichet_stare ON tichet (stare, modificat_la);`),
 ];
 
 // Exportată pt. test.

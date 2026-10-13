@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tichete</title>
+<link rel="stylesheet" href="/comun.css">
+<link rel="stylesheet" href="/nou.css">
+<script src="/dialog.js"></script>
+<script src="/data.js"></script>
+<script src="/live.js"></script>
+<style>
+  #continut { max-width: 1100px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; margin-bottom: 16px; }
+  .titlu-card { font-size: .74rem; text-transform: uppercase; letter-spacing: .05em; color: var(--text-dim); margin-bottom: 10px; }
+  /* formularul: ce fel de tichet (3 butoane), textul, de unde */
+  .tipuri { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  .tipuri label { position: relative; display: inline-flex; align-items: center; gap: 8px; margin: 0; padding: 8px 14px; border: 1px solid var(--line);
+                  border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 14px; color: var(--text);
+                  text-transform: none; letter-spacing: normal; }
+  .tipuri input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; pointer-events: none; }
+  .tipuri label:has(input:checked) { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); background: rgba(31, 111, 209, .12); }
+  .tipuri label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+  #text { width: 100%; min-height: 110px; resize: vertical; }
+  .trimite-rand { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+  .trimite-rand .dim { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* un tichet */
+  .tichet { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 18px; padding: 14px 2px; border-bottom: 1px solid var(--line); }
+  .tichet:last-child { border-bottom: none; }
+  .tichet .text { white-space: pre-wrap; word-break: break-word; margin-top: 6px; }
+  .tichet .info { color: var(--text-dim); font-size: .82rem; margin-top: 6px; }
+  .tichet .raspuns { margin-top: 10px; padding: 10px 12px; border-left: 3px solid var(--accent); background: rgba(77, 163, 255, .06);
+                     border-radius: 0 8px 8px 0; white-space: pre-wrap; word-break: break-word; }
+  .tichet .raspuns small { display: block; color: var(--text-dim); margin-top: 4px; white-space: normal; }
+  .tichet .admin { display: flex; flex-direction: column; gap: 8px; min-width: 260px; }
+  .tichet .admin textarea { min-height: 60px; resize: vertical; }
+  .tichet .admin .butoane { display: flex; gap: 8px; justify-content: flex-end; }
+  .pastila { display: inline-block; padding: 1px 9px; border-radius: 999px; border: 1px solid; font-size: .76rem; font-weight: 600; margin-right: 6px; }
+  .pastila.problema { color: #e8907f; border-color: rgba(201, 96, 76, .5); background: rgba(201, 96, 76, .1); }
+  .pastila.idee     { color: #e5b45a; border-color: rgba(212, 162, 76, .45); background: rgba(212, 162, 76, .1); }
+  .pastila.altceva  { color: var(--text-dim); border-color: var(--line); }
+  .pastila.nou      { color: var(--accent); border-color: rgba(77, 163, 255, .45); background: rgba(77, 163, 255, .1); }
+  .pastila.in_lucru { color: #b49cff; border-color: rgba(180, 156, 255, .45); background: rgba(180, 156, 255, .1); }
+  .pastila.rezolvat { color: #7cc493; border-color: rgba(107, 155, 122, .5); background: rgba(107, 155, 122, .12); }
+  .pastila.respins  { color: var(--text-dim); border-color: var(--line); }
+  .gol { text-align: center; padding: 22px; color: var(--text-dim); }
+  details > summary { cursor: pointer; color: var(--text-dim); }
+  @media (max-width: 760px) { .tichet { grid-template-columns: minmax(0, 1fr); } .tichet .admin { min-width: 0; } }
+</style>
+</head>
+<body class="ui-nou">
+
+<div id="bara"></div>
+<script src="/bara.js"></script>
+
+<div id="continut">
+  <header class="pagina-cap">
+    <h1>Tichete</h1>
+    <p id="subtitlu">Spune-i administratorului ce nu merge sau ce ţi-ar prinde bine în aplicaţie.</p>
+  </header>
+
+  <form class="card" id="formTichet" autocomplete="off">
+    <h2 class="titlu-card">Tichet nou</h2>
+    <div class="tipuri" role="radiogroup" aria-label="Ce fel de tichet">
+      <label><input type="radio" name="tip" value="problema" required>Ceva nu merge</label>
+      <label><input type="radio" name="tip" value="idee">Am o idee</label>
+      <label><input type="radio" name="tip" value="altceva">Altceva</label>
+    </div>
+    <textarea id="text" maxlength="4000" required
+      placeholder="Ce s-a întâmplat (ce ai apăsat, ce ai văzut) sau ce ai vrea să facă aplicaţia…"></textarea>
+    <div class="trimite-rand">
+      <span class="dim mic" id="deUnde"></span>
+      <button type="submit" class="primar">Trimite</button>
+    </div>
+    <div id="mesaj"></div>
+  </form>
+
+  <div class="card"><h2 class="titlu-card" id="titluDeschise">Tichetele mele</h2><div id="deschise">Se încarcă…</div></div>
+  <div class="card" id="cardInchise" hidden><details><summary id="titluInchise"></summary><div id="inchise"></div></details></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+//  Tichete pentru administrator — server/tichete.js. Oricine trimite (ce nu merge,
+//  o idee, altceva) şi îşi vede tichetele cu răspunsul; adminul le vede pe toate,
+//  le schimbă starea (nou → în lucru → rezolvat / respins) şi răspunde.
+//  „De unde" = pagina de pe care ai venit (din meniu), ca adminul să ştie unde să caute.
+// ═══════════════════════════════════════════════════════════════════════════
+const $ = id => document.getElementById(id);
+const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+async function api(cale, optiuni = {}) {
+  const r = await fetch(cale, { headers: { 'Content-Type': 'application/json' }, ...optiuni });
+  if (r.status === 401) { location.href = '/login?redirect=' + encodeURIComponent(location.pathname); return null; }
+  return r;
+}
+const TIP = { problema: 'Ceva nu merge', idee: 'Idee', altceva: 'Altceva' };
+const STARE = { nou: 'Nou', in_lucru: 'În lucru', rezolvat: 'Rezolvat', respins: 'Respins' };
+const deschis = t => t.stare === 'nou' || t.stare === 'in_lucru';
+
+// pagina de pe care ai venit (din aplicaţie) — merge cu tichetul
+const deUnde = (() => {
+  try { const u = new URL(document.referrer); return u.origin === location.origin && u.pathname !== '/tichete' ? u.pathname + u.search + u.hash : ''; }
+  catch { return ''; }
+})();
+$('deUnde').textContent = deUnde ? `Trimis din: ${deUnde}` : '';
+
+let admin = false;
+function randTichet(t) {
+  return `<div class="tichet" data-id="${t.id}">
+    <div>
+      <div><span class="pastila ${t.tip}">${TIP[t.tip] ?? esc(t.tip)}</span><span class="pastila ${t.stare}">${STARE[t.stare] ?? esc(t.stare)}</span></div>
+      <div class="text">${esc(t.text)}</div>
+      <div class="info">${admin ? `de la <b>${esc(t.creat_de_nume)}</b> · ` : ''}${dataOra(t.creat_la)}${
+        t.pagina ? ` · din <a href="${esc(t.pagina)}">${esc(t.pagina)}</a>` : ''}</div>
+      ${t.raspuns ? `<div class="raspuns">${esc(t.raspuns)}<small>${esc(t.raspuns_de_nume ?? 'administratorul')} · ${dataOra(t.modificat_la)}</small></div>` : ''}
+    </div>
+    ${admin ? `<div class="admin">
+      <select class="stare">${Object.entries(STARE).map(([v, n]) => `<option value="${v}"${v === t.stare ? ' selected' : ''}>${n}</option>`).join('')}</select>
+      <textarea class="raspuns-nou" placeholder="Răspuns pentru ${esc(t.creat_de_nume)} (îl vede la el)" maxlength="4000">${esc(t.raspuns ?? '')}</textarea>
+      <div class="butoane"><button class="primar salveaza">Salvează</button></div>
+    </div>` : ''}
+  </div>`;
+}
+
+async function incarca() {
+  const r = await api('/api/tichete');
+  if (!r) return;
+  const d = await r.json();
+  admin = d.admin;
+  $('subtitlu').textContent = admin ? 'Ce îţi scriu colegii: probleme, idei. Schimbi starea şi le răspunzi — văd răspunsul la ei.'
+    : 'Spune-i administratorului ce nu merge sau ce ţi-ar prinde bine în aplicaţie. Răspunsul îl vezi aici.';
+  $('titluDeschise').textContent = admin ? 'De rezolvat' : 'Tichetele mele';
+  const deschise = d.tichete.filter(deschis), inchise = d.tichete.filter(t => !deschis(t));
+  $('deschise').innerHTML = deschise.length ? deschise.map(randTichet).join('')
+    : `<div class="gol">${admin ? 'Nimic de rezolvat.' : 'Niciun tichet deschis.'}</div>`;
+  $('cardInchise').hidden = !inchise.length;
+  $('titluInchise').textContent = `Închise în ultimele 90 de zile (${inchise.length})`;
+  $('inchise').innerHTML = inchise.map(randTichet).join('');
+  document.querySelectorAll('.tichet .salveaza').forEach(b => b.addEventListener('click', async () => {
+    const el = b.closest('.tichet');
+    const rr = await api(`/api/tichete/${el.dataset.id}`, { method: 'PATCH',
+      body: JSON.stringify({ stare: el.querySelector('.stare').value, raspuns: el.querySelector('.raspuns-nou').value }) });
+    if (rr && !rr.ok) alerta((await rr.json().catch(() => ({}))).eroare || 'Operaţia a eşuat.');
+    incarca();
+  }));
+  // răspunsurile tale sunt văzute → insigna din meniu dispare
+  if (!admin && d.tichete.some(t => !t.vazut_de_autor)) {
+    await api('/api/tichete/vazute', { method: 'POST' });
+    window.dispatchEvent(new Event('live:schimbare'));
+  }
+}
+
+$('formTichet').addEventListener('submit', async e => {
+  e.preventDefault();
+  const tip = document.querySelector('input[name=tip]:checked')?.value;
+  const r = await api('/api/tichete', { method: 'POST', body: JSON.stringify({ tip, text: $('text').value, pagina: deUnde || null }) });
+  if (!r) return;
+  if (!r.ok) { $('mesaj').innerHTML = `<div class="mesaj eroare">${esc((await r.json().catch(() => ({}))).eroare || 'Nu s-a trimis.')}</div>`; return; }
+  $('formTichet').reset();
+  $('mesaj').innerHTML = '<div class="mesaj ok">✓ Trimis. Îl vezi mai jos; când răspunde administratorul, apare un număr la „Tichete" în meniu.</div>';
+  incarca();
+});
+
+// actualizare live (nu cât scrii)
+let deReimprospatat = false;
+const reimprospateaza = () => {
+  if (document.activeElement?.matches?.('textarea, select')) { deReimprospatat = true; return; }
+  deReimprospatat = false; incarca();
+};
+document.addEventListener('focusout', () => { if (deReimprospatat) setTimeout(reimprospateaza, 0); });
+(async () => {
+  if (!(await api('/api/eu'))) return;
+  await incarca();
+  urmareste(reimprospateaza);
+})();
+</script>
+</body>
+</html>

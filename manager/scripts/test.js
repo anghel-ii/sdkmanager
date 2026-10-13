@@ -465,7 +465,7 @@ async function main() {
     const idVechi = Number(db2().prepare("INSERT INTO utilizator (nume, user, parola_hash, parola_salt, rol) VALUES ('Vechi', 'vechi', 'x', 'x', 'operator')").run().lastInsertRowid);
     require('../server/db.js').roluriNoi(db2());
     verifica('migraţie: operator → birou', db2().prepare('SELECT rol FROM utilizator WHERE id = ?').get(idVechi).rol === 'birou');
-    verifica('schema la versiunea 18', db2().prepare('PRAGMA user_version').get().user_version === 18);
+    verifica('schema la versiunea 19', db2().prepare('PRAGMA user_version').get().user_version === 19);
   }
 
   console.log('\nFixare şi sortare — per utilizator');
@@ -593,7 +593,7 @@ async function main() {
       verifica('10 parole greşite → blocat 15 minute (429), chiar şi cu parola bună', r.stare === 429 && /mai încearcă peste 15 minute/.test(r.date.eroare), JSON.stringify(r));
       verifica('… alt cont de pe acelaşi calculator merge în continuare', (await cer('POST', '/api/login', { user: 'ana.pop', parola: 'temporara-ana-1' })).stare === 200);
     });
-    verifica('pagina /admin se serveşte', String((await cer('GET', '/admin')).date).includes('Utilizatori'));
+    verifica('pagina /admin se serveşte', String((await cer('GET', '/admin')).date).includes('<title>Administrare'));
   }
 
   console.log('\nRedirect după login');
@@ -943,6 +943,38 @@ async function main() {
     verifica('fişa printată pe o comandă inexistentă → 404', (await cer('POST', '/api/comenzi/999999/fisa')).stare === 404);
     verifica('pagina /cereri se serveşte', String((await cer('GET', '/cereri')).date).includes('<title>Cereri</title>'));
     verifica('/admin află ultimul backup', 'backup' in (await cer('GET', '/api/actualizare')).date);
+  }
+
+  console.log('\nTichete pentru administrator (server/tichete.js) + tabloul din /admin');
+  {
+    const caMaria = async fn => { const k = cookie; cookie = null; await cer('POST', '/api/login', { user: 'maria', parola: 'parola-maria-1' });
+      try { return await fn(); } finally { cookie = k; } };
+    let id;
+    await caMaria(async () => {
+      verifica('tichet fără tip → 400', (await cer('POST', '/api/tichete', { tip: 'x', text: 'ceva nu merge' })).stare === 400);
+      verifica('tichet fără text → 400', (await cer('POST', '/api/tichete', { tip: 'problema', text: ' ' })).stare === 400);
+      const r = await cer('POST', '/api/tichete', { tip: 'problema', text: 'Fişa nu se printează la Rame', pagina: '/configurator/?gama=rame' });
+      verifica('biroul trimite un tichet → 201', r.stare === 201);
+      id = r.date.id;
+      verifica('biroul nu poate schimba starea → 403', (await cer('PATCH', `/api/tichete/${id}`, { stare: 'rezolvat' })).stare === 403);
+    });
+    const l = (await cer('GET', '/api/tichete')).date;
+    verifica('adminul vede tichetul + insigna „noi"', l.admin && l.tichete.some(t => t.id === id && t.creat_de_nume)
+      && (await cer('GET', '/api/sumar')).date.tichete >= 1);
+    verifica('stare necunoscută → 400', (await cer('PATCH', `/api/tichete/${id}`, { stare: 'gata' })).stare === 400);
+    verifica('adminul răspunde + rezolvă', (await cer('PATCH', `/api/tichete/${id}`, { stare: 'rezolvat', raspuns: 'Reparat în versiunea nouă' })).stare === 200);
+    await caMaria(async () => {
+      verifica('autorul vede răspunsul (insignă 1) …', (await cer('GET', '/api/sumar')).date.tichete === 1
+        && (await cer('GET', '/api/tichete')).date.tichete.find(t => t.id === id)?.raspuns === 'Reparat în versiunea nouă');
+      await cer('POST', '/api/tichete/vazute');
+      verifica('… şi după ce deschide pagina, insigna dispare', (await cer('GET', '/api/sumar')).date.tichete === 0);
+      verifica('biroul nu vede tabloul adminului → 403', (await cer('GET', '/api/admin/tablou')).stare === 403);
+    });
+    const t = (await cer('GET', '/api/admin/tablou')).date;
+    verifica('tabloul: activitate pe 7 zile, pe om, server, jurnal', t.zile === 7 && t.activitate.oferte > 0 && Array.isArray(t.peOm)
+      && t.peOm.some(o => o.oferte > 0) && !!t.server.pornit && typeof t.jurnal === 'string', JSON.stringify(t.activitate));
+    verifica('conturile au ultima activitate', (await cer('GET', '/api/utilizatori')).date.utilizatori.some(u => u.vazut_la));
+    verifica('pagina /tichete se serveşte', String((await cer('GET', '/tichete')).date).includes('<title>Tichete</title>'));
   }
 
   console.log('\nTaskuri + remindere (server/taskuri.js)');

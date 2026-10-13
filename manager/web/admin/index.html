@@ -3,141 +3,206 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Utilizatori — Manager comenzi</title>
+<title>Administrare — Manager comenzi</title>
 <link rel="stylesheet" href="/comun.css">
+<link rel="stylesheet" href="/nou.css">
 <script src="/dialog.js"></script>
 <script src="/data.js"></script>
 <script src="/copiaza.js"></script>
+<script src="/live.js"></script>
 <style>
-  #continut { padding: 24px; max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  /* Tabloul adminului (userul, 2026-10-13: „inspiră-te din pagina principală, să văd mai bine informaţiile"):
+     sus plăcile cu ce cere atenţie; stânga tichetele, echipa, agenţii; dreapta serverul şi legăturile. */
+  #continut { max-width: 1500px; }
+  .placi-admin { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin-bottom: 16px; }
+  .placi-admin .placa { height: 58px; text-decoration: none; cursor: default; }
+  .placi-admin a.placa { cursor: pointer; }
+  .placi-admin .placa .tab-nume small { display: block; font-size: 11.5px; font-weight: 500; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; }
+  .placi-admin .tab-cate.mic { font-size: 13px; font-weight: 600; white-space: nowrap; }
+  .tabel-lat { overflow-x: auto; }
+  .ton-rosu .placa-ic  { background: rgba(201, 96, 76, .14); color: #e8907f; }
+  .ton-verde .placa-ic { background: rgba(107, 155, 122, .16); color: #7cc493; }
+  .ton-cald .placa-ic  { background: rgba(212, 162, 76, .13); color: #e5b45a; }
+  .ton-mov .placa-ic   { background: rgba(180, 156, 255, .13); color: #b49cff; }
+  .rosu-text { color: #e8907f; } .verde-text { color: #7cc493; } .cald-text { color: #e5b45a; }
 
-  .panou { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 22px 24px; }
-  .panou h2 { font-size: 1.05rem; margin-bottom: 14px; }
-  #continut > .pagina-cap { margin-bottom: 4px; }
-  .cont-nou { display: grid; grid-template-columns: 1.2fr 1fr 1.2fr auto; gap: 10px; align-items: end; }
-  .cont-nou label { margin: 0; }
-  @media (max-width: 720px) { .cont-nou { grid-template-columns: 1fr; } }
+  .tablou { display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 16px; align-items: start; }
+  .tablou > div { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+  @media (max-width: 1199px) { .tablou { grid-template-columns: minmax(0, 1fr); } .placi-admin { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 
-  table.conturi { width: 100%; border-collapse: collapse; font-size: .88rem; }
-  table.conturi th { text-align: left; font-size: .72rem; font-weight: 600; letter-spacing: .05em;
-                     text-transform: uppercase; color: var(--text-dim); padding: 6px 8px; border-bottom: 1px solid var(--line); }
-  table.conturi td { padding: 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
-  table.conturi select { width: auto; padding: 5px 8px; }
-  td.actiuni { white-space: nowrap; text-align: right; }
-  td.actiuni button { margin-left: 6px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; }
+  .card-cap { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .card-cap h2 { font-size: 15px; font-weight: 600; }
+  .card-cap .spatiu { flex: 1; }
+  .card-cap a { font-size: 12.5px; color: var(--accent); text-decoration: none; }
+  .card-cap .insigna-num { font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 999px; background: var(--panel-2); color: var(--text-dim); }
+  /* rânduri „etichetă … valoare", ca în cardul „Azi" */
+  .rand { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 36px;
+          border-bottom: 1px solid var(--line); font-size: 13.5px; color: var(--text-dim); }
+  .rand:last-of-type { border-bottom: none; }
+  .rand b { color: var(--text); font-weight: 600; text-align: right; overflow-wrap: anywhere; }
+  .butoane { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
   button.mic { padding: 6px 12px; font-size: .82rem; }
   .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
-  .stare-activ { color: var(--ok); }
-  .stare-asteapta { color: #d4a24c; }
-  .stare-dezactivat { color: var(--danger); }
-  #mesajNou .mesaj, #mesajAgent .mesaj { margin-top: 12px; }
-  .agent-nou { display: flex; gap: 10px; align-items: end; flex-wrap: wrap; margin-bottom: 14px; }
-  .agent-nou label { margin: 0; flex: 1; min-width: 220px; }
-  .parola { font-size: 1.1rem; letter-spacing: .05em; }   /* .mesaj ok / eroare vin din comun.css */
-  #jurnal { max-height: 320px; overflow: auto; font-size: .78rem; white-space: pre-wrap;
-            background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 10px; margin-top: 12px; }
+  .gol { color: var(--text-dim); font-size: 13px; padding: 6px 0; }
+
+  /* activitatea: cifrele mari */
+  .cifre { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin-bottom: 14px; }
+  .cifra { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+  .cifra b { display: block; font-size: 22px; font-weight: 650; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .cifra span { font-size: 12px; color: var(--text-dim); }
+
+  /* tabele */
+  table.tab { width: 100%; border-collapse: collapse; font-size: .86rem; }
+  table.tab th { text-align: left; font-size: .7rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase;
+                 color: var(--text-dim); padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  table.tab td { padding: 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  table.tab tr:last-child td { border-bottom: none; }
+  table.tab td.num, table.tab th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  table.tab td small { display: block; color: var(--text-dim); font-size: .76rem; }
+  table.tab select { width: auto; padding: 4px 6px; font-size: .82rem; }
+  td.actiuni { white-space: nowrap; text-align: right; }
+  td.actiuni button { margin-left: 4px; }
+  .punct { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: var(--line); vertical-align: 1px; }
+  .punct.acum { background: #7cc493; box-shadow: 0 0 0 3px rgba(124, 196, 147, .18); }
+  .stare-asteapta { color: #d4a24c; } .stare-dezactivat { color: var(--danger); }
+
+  /* tichetele deschise */
+  .tichet { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: baseline; padding: 9px 0;
+            border-bottom: 1px solid var(--line); text-decoration: none; color: var(--text); font-size: 13.5px; }
+  .tichet:last-of-type { border-bottom: none; }
+  .tichet:hover .t-text { color: var(--accent); }
+  .tichet .t-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tichet small { color: var(--text-dim); font-size: 12px; white-space: nowrap; }
+  .pastila { display: inline-block; padding: 1px 8px; border-radius: 999px; border: 1px solid; font-size: .72rem; font-weight: 600; white-space: nowrap; }
+  .pastila.problema { color: #e8907f; border-color: rgba(201, 96, 76, .5); }
+  .pastila.idee { color: #e5b45a; border-color: rgba(212, 162, 76, .45); }
+  .pastila.altceva { color: var(--text-dim); border-color: var(--line); }
+
+  /* formulare */
+  .cont-nou { display: grid; grid-template-columns: 1.1fr 0.8fr 1.1fr 1.1fr auto; gap: 10px; align-items: end; margin-bottom: 14px; }
+  .cont-nou label, .linie label { margin: 0; }
+  .linie { display: flex; gap: 8px; align-items: end; flex-wrap: wrap; margin-top: 8px; }
+  .linie label { flex: 1; min-width: 200px; }
+  .parola { font-size: 1.1rem; letter-spacing: .05em; }
+  pre.jurnal { max-height: 300px; overflow: auto; font-size: .74rem; white-space: pre-wrap; word-break: break-word;
+               background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px; margin-top: 10px; }
+  details > summary { cursor: pointer; color: var(--text-dim); font-size: 13px; }
+  .legatura + .legatura { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 14px; }
+  @media (max-width: 899px) { .cont-nou { grid-template-columns: 1fr; } .cifre { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 </style>
 </head>
-<body>
+<body class="ui-nou">
 
 <div id="bara"></div>
 <script src="/bara.js"></script>
 
 <div id="continut">
   <header class="pagina-cap">
-    <h1>Utilizatori</h1>
-    <p>Conturile colegilor şi ale agenţilor de vânzări, legătura cu Cloudflare şi actualizarea aplicaţiei.</p>
+    <h1>Administrare</h1>
+    <p>Ce cere atenţie, ce face echipa, conturile şi serverul.</p>
   </header>
-  <!-- Cont nou: utilizatorul, rolul şi o parolă INIŢIALĂ pe care i-o spui colegului
-       (userul, 2026-10-13 — înainte omul o alegea la primul login, deci oricine ştia
-       utilizatorul putea lua contul înaintea lui). -->
-  <form class="panou" id="formNou" autocomplete="off">
-    <h2>Cont nou</h2>
-    <div class="cont-nou">
-      <label>Utilizator
-        <input id="nouUser" placeholder="ex. ana.pop" autocapitalize="none" spellcheck="false" required>
-      </label>
-      <label>Rol
-        <select id="nouRol" required>
-          <option value="" selected disabled>Alege…</option>
-          <option value="birou">birou</option>
-          <option value="conducere">conducere</option>
-          <option value="admin">admin</option>
-        </select>
-      </label>
-      <label>Nume afişat (opţional)
-        <input id="nouNume" placeholder="ex. Ana Pop">
-      </label>
-      <label>Parolă iniţială
-        <input id="nouParola" minlength="8" required autocomplete="off" spellcheck="false" placeholder="min. 8 caractere">
-      </label>
-      <button type="submit" class="primar">Creează</button>
+
+  <!-- plăcile de sus: ce cere atenţie acum -->
+  <div class="placi-admin" id="placi"></div>
+
+  <div class="tablou">
+    <div>
+      <section class="card">
+        <div class="card-cap"><h2>Tichete deschise</h2><span class="insigna-num" id="nrTicheteDeschise"></span><span class="spatiu"></span>
+          <a href="/tichete">Toate →</a></div>
+        <div id="tichete" class="gol">Se încarcă…</div>
+      </section>
+
+      <section class="card">
+        <div class="card-cap"><h2>Activitate</h2><span class="dim mic" id="activitateZile"></span></div>
+        <div class="cifre" id="cifre"></div>
+        <table class="tab" id="echipaActivitate"></table>
+      </section>
+
+      <!-- Conturi: utilizatorul, rolul şi o parolă INIŢIALĂ pe care i-o spui colegului -->
+      <section class="card">
+        <div class="card-cap"><h2>Conturi</h2><span class="spatiu"></span>
+          <button class="mic primar" id="arataContNou" type="button">+ Cont nou</button></div>
+        <form id="formNou" autocomplete="off" hidden>
+          <div class="cont-nou">
+            <label>Utilizator<input id="nouUser" placeholder="ex. ana.pop" autocapitalize="none" spellcheck="false" required></label>
+            <label>Rol
+              <select id="nouRol" required>
+                <option value="" selected disabled>Alege…</option>
+                <option value="birou">birou</option><option value="conducere">conducere</option><option value="admin">admin</option>
+              </select>
+            </label>
+            <label>Nume afişat (opţional)<input id="nouNume" placeholder="ex. Ana Pop"></label>
+            <label>Parolă iniţială<input id="nouParola" minlength="8" required autocomplete="off" spellcheck="false" placeholder="min. 8 caractere"></label>
+            <button type="submit" class="primar">Creează</button>
+          </div>
+        </form>
+        <div id="mesajNou"></div>
+        <div id="lista" class="gol tabel-lat">Se încarcă…</div>
+      </section>
+
+      <!-- Conturile agenţilor de vânzări — stau pe Cloudflare (clienti-agenti/) -->
+      <section class="card">
+        <div class="card-cap"><h2>Agenţi de vânzări</h2><span class="spatiu"></span>
+          <span class="dim mic">intră pe <span class="mono">clienti-agenti.pages.dev</span></span></div>
+        <form class="linie" id="formAgent" autocomplete="off" style="margin:0 0 12px">
+          <label>Cont nou pentru agentul
+            <input id="agentNume" list="numeAgenti" placeholder="numele, exact ca în coloana Agent" required>
+            <datalist id="numeAgenti"></datalist>
+          </label>
+          <button type="submit" class="primar">Creează</button>
+        </form>
+        <div id="mesajAgent"></div>
+        <div id="agenti" class="gol tabel-lat">Se încarcă…</div>
+      </section>
     </div>
-    <div class="dim mic" style="margin-top:10px">Îi spui colegului utilizatorul şi parola iniţială; după ce intră, şi-o poate
-      schimba din contul lui.</div>
-    <div id="mesajNou"></div>
-  </form>
 
-  <div class="panou">
-    <h2>Conturi</h2>
-    <div id="lista">Se încarcă…</div>
-  </div>
+    <div>
+      <!-- Serverul: versiunea, pornirea, baza, backup-ul + update-ul (server/actualizare.js) -->
+      <section class="card">
+        <div class="card-cap"><h2>Server</h2></div>
+        <div class="rand"><span>Versiunea</span><b class="mono" id="versiune">…</b></div>
+        <div class="rand"><span>Pornit</span><b id="pornit">…</b></div>
+        <div class="rand"><span>Baza de date</span><b id="baza">…</b></div>
+        <div class="rand"><span>Ultimul backup</span><b id="backup">…</b></div>
+        <div class="rand"><span>Update fără admin pe Windows</span><b id="modUpdate">…</b></div>
+        <div class="butoane">
+          <button class="mic" id="btnVerifica">Verifică ce e nou</button>
+          <button class="mic primar" id="btnActualizeaza">Actualizează acum</button>
+        </div>
+        <div id="noutati" class="mic" style="margin-top:10px"></div>
+        <pre id="jurnal" class="mono jurnal" hidden></pre>
+        <details style="margin-top:12px"><summary>Jurnalul serverului (ultimele rânduri)</summary><pre class="mono jurnal" id="jurnalServer"></pre></details>
+      </section>
 
-  <!-- Conturile agenţilor de vânzări — stau pe Cloudflare (clienti-agenti/);
-       serverul le citeşte şi le modifică acolo, cu cheia managerului. -->
-  <div class="panou">
-    <h2>Conturi agenţi de vânzări</h2>
-    <!-- cheia managerului pt. Cloudflare: se lipeşte o dată; serverul o încearcă
-         înainte s-o salveze şi n-o mai trimite niciodată înapoi spre browser -->
-    <details id="blocCheie" style="margin-bottom:14px">
-      <summary class="mic">Cheia de legătură cu Cloudflare</summary>
-      <form class="agent-nou" id="formCheie" autocomplete="off" style="margin-top:10px">
-        <label>Cheie (o găseşti pe laptop: <span class="mono">clienti-agenti/.dev.vars</span>)
-          <input id="cheieNoua" type="password" spellcheck="false" required>
-        </label>
-        <button type="submit" class="primar">Salvează</button>
-      </form>
-    </details>
-    <div id="mesajCheie" style="margin-bottom:14px"></div>
-    <form class="agent-nou" id="formAgent" autocomplete="off">
-      <label>Cont nou pentru agentul
-        <input id="agentNume" list="numeAgenti" placeholder="numele, exact ca în coloana Agent" required>
-        <datalist id="numeAgenti"></datalist>
-      </label>
-      <button type="submit" class="primar">Creează</button>
-    </form>
-    <div id="mesajAgent"></div>
-    <div id="agenti">Se încarcă…</div>
-    <div class="dim mic" style="margin-top:10px">Agenţii intră pe <span class="mono">clienti-agenti.pages.dev</span> şi
-      văd doar clienţii cu numele lor în coloana Agent. Parola se vede o singură dată, aici — trimite-o agentului.</div>
-  </div>
-
-  <!-- Update din GitHub fără drepturi de administrator pe Windows: serverul porneşte
-       sarcina „SDK Actualizare" (SYSTEM) sau, cu cheia GitHub pusă mai jos, descarcă singur
-       pachetul gata construit de CI — vezi server/actualizare.js -->
-  <div class="panou">
-    <h2>Actualizare aplicaţie</h2>
-    <div>Versiunea care rulează: <span class="mono" id="versiune">…</span></div>
-    <div id="backupInfo" class="mic" style="margin-top:4px"></div>
-    <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap">
-      <button class="mic" id="btnVerifica">Verifică ce e nou</button>
-      <button class="mic primar" id="btnActualizeaza">Actualizează acum</button>
-    </div>
-    <div id="noutati" class="mic" style="margin-top:10px"></div>
-    <div class="dim mic" style="margin-top:10px">Fă update-ul când nu lucrează nimeni: serverul se opreşte ~1 minut.
-      Dacă testele sau pornirea pică, revine singur la versiunea de dinainte.</div>
-    <pre id="jurnal" class="mono" hidden></pre>
-    <div style="margin-top:14px">
-      <div><strong>Update fără administrator pe Windows</strong> — <span id="modUpdate" class="dim">…</span></div>
-      <div class="dim mic" style="margin:4px 0 8px">Când serverul nu rulează ca administrator, update-ul se ia de pe GitHub cu o cheie
-        doar de citire: github.com → Settings → Developer settings → Fine-grained tokens → Generate new token;
-        Repository access: <span class="mono">anghel-ii/sdkmanager</span>; Permissions: Contents — Read-only.</div>
-      <div style="display:flex; gap:8px; flex-wrap:wrap">
-        <input id="cheieGithub" type="password" autocomplete="off" placeholder="github_pat_…" style="flex:1; min-width:260px">
-        <button class="mic primar" id="btnCheieGithub">Salvează cheia</button>
-        <button class="mic" id="btnStergeCheie" hidden>Şterge cheia</button>
-      </div>
-      <div id="mesajCheie" class="mic" style="margin-top:6px"></div>
+      <!-- Legăturile: Cloudflare (clienţii, agenţii) şi GitHub (update fără admin). Cheile nu se mai trimit înapoi spre browser. -->
+      <section class="card">
+        <div class="card-cap"><h2>Legături</h2></div>
+        <div class="legatura">
+          <div class="rand"><span>Cloudflare (clienţi, agenţi)</span><b id="stareCloudflare">…</b></div>
+          <details id="blocCheie"><summary>Schimbă cheia de legătură</summary>
+            <form class="linie" id="formCheie" autocomplete="off">
+              <label>Cheie (pe laptop: <span class="mono">clienti-agenti/.dev.vars</span>)<input id="cheieNoua" type="password" spellcheck="false" required></label>
+              <button type="submit" class="primar mic">Salvează</button>
+            </form>
+          </details>
+          <div id="mesajCloudflare" class="mic" style="margin-top:6px"></div>
+        </div>
+        <div class="legatura">
+          <div class="rand"><span>GitHub (update fără administrator)</span><b id="stareGithub">…</b></div>
+          <details id="blocGithub"><summary>Cheia GitHub</summary>
+            <div class="dim mic" style="margin:6px 0">github.com → Settings → Developer settings → Fine-grained tokens; Repository access:
+              <span class="mono">anghel-ii/sdkmanager</span>; Permissions: Contents — Read-only.</div>
+            <div class="linie">
+              <input id="cheieGithub" type="password" autocomplete="off" placeholder="github_pat_…" style="flex:1; min-width:200px">
+              <button class="mic primar" id="btnCheieGithub">Salvează</button>
+              <button class="mic" id="btnStergeCheie" hidden>Şterge</button>
+            </div>
+          </details>
+          <div id="mesajGithub" class="mic" style="margin-top:6px"></div>
+        </div>
+      </section>
     </div>
   </div>
 </div>
@@ -154,41 +219,117 @@ async function api(cale, optiuni = {}) {
   return r;
 }
 const eroareDin = async r => (await r.json().catch(() => ({}))).eroare || 'Operaţia a eşuat.';
+const dinSql = s => (s instanceof Date ? s : s ? new Date(String(s).replace(' ', 'T') + (/[zZ]|[+-]\d\d:?\d\d$/.test(s) ? '' : 'Z')) : null);
+const ACUM_MIN = 5;   // „conectat acum" = o cerere în ultimele 5 minute (paginile deschise întreabă serverul la 1 minut)
+const eAcum = s => s && Date.now() - dinSql(s) < ACUM_MIN * 60e3;
+// „acum", „acum 25 min", „azi 14:20", „ieri 09:10", altfel data
+function cand(s) {
+  if (!s) return '—';
+  const d = dinSql(s), min = (Date.now() - d) / 60e3;
+  if (min < ACUM_MIN) return 'acum';
+  if (min < 60) return `acum ${Math.round(min)} min`;
+  const ora = dataOra(d).slice(-5), zi = x => x.toDateString();
+  if (zi(d) === zi(new Date())) return `azi ${ora}`;
+  if (zi(d) === zi(new Date(Date.now() - 864e5))) return `ieri ${ora}`;
+  return dataOra(d);
+}
+// „d67d3a0 — mesajul commitului (13.10.2026 15:32)" → { scurt: „d67d3a0", cand: „13.10.2026 15:32", tot }
+const versiuneScurta = v => { const m = String(v || '').match(/^(\S+)(?: — .*?)?(?: \(([^)]*)\))?$/s);
+  return { scurt: m?.[1] || v || '—', cand: m?.[2] || '', tot: v || '' }; };
+const durata = ms => { const h = ms / 36e5; return h < 1 ? `${Math.round(ms / 6e4)} min` : h < 48 ? `${Math.round(h)} h` : `${Math.round(h / 24)} zile`; };
 
+// ── plăcile de sus ──
+const placa = ({ href, ic, ton = '', nume, sub = '', cate = '', mic = false }) =>
+  `<${href ? `a href="${href}"` : 'div'} class="placa ${ton}"><span class="placa-ic">${window.icoana?.(ic) ?? ''}</span>
+    <span class="tab-nume">${nume}${sub ? `<small>${sub}</small>` : ''}</span><span class="tab-cate${mic ? ' mic' : ''}">${cate}</span></${href ? 'a' : 'div'}>`;
+const stareTablou = { sumar: null, utilizatori: [], actualizare: null };
+function punePlaci() {
+  const { sumar: s, utilizatori, actualizare: a } = stareTablou;
+  const activi = utilizatori.filter(u => u.activ), acum = activi.filter(u => eAcum(u.vazut_la));
+  const b = a?.backup, vechi = a && (!b || Date.now() - Date.parse(b.la) > 26 * 3600e3);
+  $('placi').innerHTML = [
+    placa({ href: '/tichete', ic: 'tichete', ton: s?.tichete ? 'ton-rosu' : '', nume: 'Tichete noi', sub: 'de la colegi', cate: s?.tichete ?? '…' }),
+    placa({ href: '/cereri', ic: 'cereri', ton: s?.cereri ? 'ton-cald' : '', nume: 'Cereri de decis', sub: 'anulări de comenzi', cate: s?.cereri ?? '…' }),
+    placa({ ic: 'clienti', ton: 'ton-verde', nume: 'Conectaţi acum', sub: acum.map(u => esc(u.nume.split(' ')[0])).join(', ') || 'nimeni',
+            cate: utilizatori.length ? `${acum.length}<span class="din"> / ${activi.length}</span>` : '…' }),
+    placa({ ic: 'gata', ton: vechi ? 'ton-rosu' : 'ton-verde', nume: 'Ultimul backup', sub: vechi ? 'verifică discul de backup' : b ? `${b.mb} MB` : '',
+            cate: a ? (b ? cand(new Date(b.la)) : 'niciunul') : '…', mic: true }),
+    placa({ ic: 'lucru', ton: 'ton-mov', nume: 'Versiunea', sub: a?.ruleaza ? 'actualizare în curs…' : esc(versiuneScurta(a?.versiune).cand || 'care rulează'),
+            cate: `<span class="mono">${esc(a ? versiuneScurta(a.versiune).scurt : '…')}</span>`, mic: true }),
+  ].join('');
+}
+
+// ── tichetele deschise ──
+const TIP = { problema: 'Problemă', idee: 'Idee', altceva: 'Altceva' };
+async function incarcaTichete() {
+  const r = await api('/api/tichete');
+  if (!r?.ok) return;
+  const deschise = (await r.json()).tichete.filter(t => t.stare === 'nou' || t.stare === 'in_lucru');
+  $('nrTicheteDeschise').textContent = deschise.length || '';
+  $('tichete').className = deschise.length ? '' : 'gol';
+  $('tichete').innerHTML = deschise.length ? deschise.slice(0, 6).map(t => `
+    <a class="tichet" href="/tichete"><span class="pastila ${t.tip}">${TIP[t.tip] ?? esc(t.tip)}</span>
+      <span class="t-text">${t.stare === 'in_lucru' ? '<span class="dim">[în lucru]</span> ' : ''}${esc(t.text.split('\n')[0])}</span>
+      <small>${esc(t.creat_de_nume)} · ${cand(t.creat_la)}</small></a>`).join('')
+    + (deschise.length > 6 ? `<a class="tichet" href="/tichete"><span></span><span class="dim">încă ${deschise.length - 6} →</span></a>` : '')
+    : 'Niciun tichet deschis. Colegii scriu din meniu, la „Tichete".';
+}
+
+// ── activitatea pe 7 zile + serverul (server/tablou.js) ──
+async function incarcaTablou() {
+  const r = await api('/api/admin/tablou');
+  if (!r?.ok) return;
+  const t = await r.json(), a = t.activitate;
+  $('activitateZile').textContent = `ultimele ${t.zile} zile`;
+  $('cifre').innerHTML = [['Oferte noi', a.oferte], ['Acceptate', a.acceptate], ['Finalizate', a.finalizate], ['Fişe printate', a.fise], ['Anulate', a.anulate]]
+    .map(([n, v]) => `<div class="cifra"><b>${v}</b><span>${n}</span></div>`).join('');
+  const vazut = Object.fromEntries(stareTablou.utilizatori.map(u => [u.id, u.vazut_la]));
+  const oameni = t.peOm.sort((x, y) => (dinSql(vazut[y.id]) ?? 0) - (dinSql(vazut[x.id]) ?? 0));
+  $('echipaActivitate').innerHTML = `<thead><tr><th>Coleg</th><th>Ultima dată în aplicaţie</th><th class="num">Oferte</th>
+      <th class="num">Acceptate</th><th class="num">Finalizate</th></tr></thead>
+    <tbody>${oameni.map(o => `<tr><td>${esc(o.nume)}<small>${esc(o.rol)}</small></td>
+      <td><span class="punct${eAcum(vazut[o.id]) ? ' acum' : ''}"></span>${cand(vazut[o.id])}</td>
+      <td class="num">${o.oferte || '<span class="dim">0</span>'}</td><td class="num">${o.acceptate || '<span class="dim">0</span>'}</td>
+      <td class="num">${o.finalizate || '<span class="dim">0</span>'}</td></tr>`).join('')}</tbody>`;
+  const pornit = new Date(t.server.pornit);
+  $('pornit').textContent = `${dataOra(pornit)} · de ${durata(Date.now() - pornit)}`;
+  $('baza').textContent = `${t.server.bazaMb} MB · Node ${t.server.node}`;
+  $('jurnalServer').textContent = t.jurnal || '(gol)';
+}
+
+// ── conturile ──
 const stare = u => !u.activ ? '<span class="stare-dezactivat">dezactivat</span>'
-  : u.activat ? '<span class="stare-activ">activ</span>'
-  : '<span class="stare-asteapta">aşteaptă prima autentificare</span>';
-
+  : u.activat ? '' : '<span class="stare-asteapta">fără parolă</span>';
 async function incarca() {
   const r = await api('/api/utilizatori');
   if (!r) return;
   if (!r.ok) { $('lista').textContent = await eroareDin(r); return; }
   const { utilizatori } = await r.json();
+  stareTablou.utilizatori = utilizatori;
+  punePlaci();
+  $('lista').className = 'tabel-lat';
   $('lista').innerHTML = `
-    <table class="conturi">
-      <thead><tr><th>Nume</th><th>Utilizator</th><th>Rol</th><th>Stare</th><th>Creat</th><th></th></tr></thead>
+    <table class="tab">
+      <thead><tr><th>Nume</th><th>Utilizator</th><th>Rol</th><th></th></tr></thead>
       <tbody>${utilizatori.map(u => {
         const euInsumi = u.id === eu.id;
-        return `<tr data-id="${u.id}">
-          <td>${esc(u.nume)}${euInsumi ? ' <span class="dim mic">(tu)</span>' : ''}</td>
+        return `<tr data-id="${u.id}"${u.activ ? '' : ' class="dim"'}>
+          <td title="cont creat ${dataOra(u.creat_la)}">${esc(u.nume)}${euInsumi ? ' <span class="dim mic">(tu)</span>' : ''}<small>${stare(u)}</small></td>
           <td class="mono">${esc(u.user)}</td>
-          <td>${euInsumi ? esc(u.rol) : `<select class="rol">${ROLURI.map(r =>
-            `<option${r === u.rol ? ' selected' : ''}>${r}</option>`).join('')}</select>`}</td>
-          <td>${stare(u)}</td>
-          <td class="dim mic">${dataOra(u.creat_la)}</td>
+          <td>${euInsumi ? esc(u.rol) : `<select class="rol">${ROLURI.map(x => `<option${x === u.rol ? ' selected' : ''}>${x}</option>`).join('')}</select>`}</td>
           <td class="actiuni">${euInsumi ? '' : `
-            ${u.activat ? '<button class="mic reset">Resetează parola</button>' : '<button class="mic reset" title="Cont vechi fără parolă — pune-i una">Pune parola</button>'}
+            <button class="mic reset" title="${u.activat ? 'O parolă temporară nouă' : 'Cont vechi fără parolă — pune-i una'}">${u.activat ? 'Parolă nouă' : 'Pune parola'}</button>
             <button class="mic activ ${u.activ ? 'rosu-contur' : 'verde-contur'}">${u.activ ? 'Dezactivează' : 'Reactivează'}</button>`}</td>
         </tr>`;
       }).join('')}</tbody>
     </table>`;
 
-  document.querySelectorAll('tr[data-id]').forEach(tr => {
+  document.querySelectorAll('#lista tr[data-id]').forEach(tr => {
     const id = +tr.dataset.id;
     const u = utilizatori.find(x => x.id === id);
     const patch = async corp => {
-      const r = await api(`/api/utilizatori/${id}`, { method: 'PATCH', body: JSON.stringify(corp) });
-      if (r && !r.ok) await alerta(await eroareDin(r));
+      const rr = await api(`/api/utilizatori/${id}`, { method: 'PATCH', body: JSON.stringify(corp) });
+      if (rr && !rr.ok) await alerta(await eroareDin(rr));
       incarca();
     };
     tr.querySelector('select.rol')?.addEventListener('change', async e => {
@@ -207,31 +348,42 @@ async function incarca() {
   });
 }
 
-let agenti = [];
+$('arataContNou').addEventListener('click', () => { $('formNou').hidden = !$('formNou').hidden; if (!$('formNou').hidden) $('nouUser').focus(); });
+$('formNou').addEventListener('submit', async e => {
+  e.preventDefault();
+  const user = $('nouUser').value.trim().toLowerCase();
+  const r = await api('/api/utilizatori', { method: 'POST',
+    body: JSON.stringify({ user, rol: $('nouRol').value, nume: $('nouNume').value.trim() || undefined, parola: $('nouParola').value }) });
+  if (!r) return;
+  if (!r.ok) { $('mesajNou').innerHTML = `<div class="mesaj eroare">${esc(await eroareDin(r))}</div>`; return; }
+  $('mesajNou').innerHTML = `<div class="mesaj ok">Contul <strong class="mono">${esc(user)}</strong> e creat. Spune-i colegului utilizatorul şi parola iniţială.</div>`;
+  $('formNou').reset();
+  $('formNou').hidden = true;
+  incarca();
+});
 
+// ── agenţii (pe Cloudflare) ──
+let agenti = [];
 async function incarcaAgenti() {
   const r = await api('/api/agenti');
   if (!r) return;
   if (!r.ok) { $('agenti').innerHTML = `<div class="mesaj eroare">${esc(await eroareDin(r))}</div>`; return; }
   const date = await r.json();
+  $('stareCloudflare').innerHTML = date.activ ? '<span class="verde-text">legat</span>' : '<span class="rosu-text">fără cheie</span>';
   $('blocCheie').open = !date.activ;
   $('formAgent').hidden = !date.activ;
-  if (!date.activ) {
-    $('agenti').textContent = 'Lipeşte mai sus cheia de legătură cu Cloudflare — o singură dată; apoi apar aici conturile, iar la „Clienţi" baza de clienţi.';
-    return;
-  }
+  if (!date.activ) { $('agenti').textContent = 'Pune cheia de legătură cu Cloudflare (dreapta, la „Legături") — apoi apar aici conturile agenţilor.'; return; }
   agenti = date.agenti;
-  // numele din coloana Agent care n-au încă un cont — de ales la „Cont nou"
   $('numeAgenti').innerHTML = date.faraCont.map(a => `<option value="${esc(a.nume)}">${a.clienti} clienţi</option>`).join('');
+  $('agenti').className = 'tabel-lat';
   $('agenti').innerHTML = !agenti.length ? 'Niciun cont de agent.' : `
-    <table class="conturi">
-      <thead><tr><th>Nume</th><th>Utilizator</th><th>Stare</th><th>Clienţi</th><th>Logat acum</th><th></th></tr></thead>
-      <tbody>${agenti.map((a, i) => `<tr data-i="${i}">
-        <td>${esc(a.nume)}</td>
+    <table class="tab">
+      <thead><tr><th>Nume</th><th>Utilizator</th><th class="num">Clienţi</th><th>Logat acum</th><th></th></tr></thead>
+      <tbody>${agenti.map((a, i) => `<tr data-i="${i}"${a.activ ? '' : ' class="dim"'}>
+        <td>${esc(a.nume)}${a.activ ? '' : '<small class="stare-dezactivat">dezactivat</small>'}</td>
         <td class="mono">${esc(a.user)}</td>
-        <td>${a.activ ? '<span class="stare-activ">activ</span>' : '<span class="stare-dezactivat">dezactivat</span>'}</td>
-        <td>${a.clienti}</td>
-        <td>${a.sesiuni ? `da${a.sesiuni > 1 ? `, pe ${a.sesiuni} dispozitive` : ''}` : '<span class="dim">nu</span>'}</td>
+        <td class="num">${a.clienti}</td>
+        <td>${a.sesiuni ? `<span class="punct acum"></span>da${a.sesiuni > 1 ? `, pe ${a.sesiuni} dispozitive` : ''}` : '<span class="dim">nu</span>'}</td>
         <td class="actiuni">
           ${a.activ ? '<button class="mic intra" title="Deschide site-ul agenţilor în contul lui, fără să-i schimbi parola">Intră ca agent</button>' : ''}
           <button class="mic parola-noua">Parolă nouă</button>
@@ -248,30 +400,27 @@ async function parolaAgent(nume) {
   if (!r.ok) { $('mesajAgent').innerHTML = `<div class="mesaj eroare">${esc(await eroareDin(r))}</div>`; return; }
   const a = await r.json();
   const text = `https://clienti-agenti.pages.dev\nUser: ${a.user}\nParolă: ${a.parola}`;
-  $('mesajAgent').innerHTML = `<div class="mesaj ok">
+  $('mesajAgent').innerHTML = `<div class="mesaj ok" style="margin-bottom:12px">
     ${a.nou ? 'Cont creat' : 'Parolă nouă (agentul a fost delogat de peste tot)'} pentru <strong>${esc(a.nume)}</strong>:<br>
     user <strong class="mono">${esc(a.user)}</strong> · parolă <strong class="mono parola">${esc(a.parola)}</strong>
     <button class="mic" id="copiazaAgent" type="button">Copiază pentru agent</button>
     ${a.clienti ? `<div class="mic" style="margin-top:6px">Vede ${a.clienti} clienţi.</div>`
       : `<div class="mic" style="margin-top:6px">⚠ Niciun client pe numele „${esc(a.nume)}" — verifică să fie scris exact ca în coloana Agent.</div>`}
   </div>`;
-  $('copiazaAgent').addEventListener('click', async e => {
-    e.target.textContent = await copiazaText(text) ? '✓ Copiat' : 'Nu s-a putut copia';
-  });
+  $('copiazaAgent').addEventListener('click', async e => { e.target.textContent = await copiazaText(text) ? '✓ Copiat' : 'Nu s-a putut copia'; });
   incarcaAgenti();
 }
 
 $('formCheie').addEventListener('submit', async e => {
   e.preventDefault();
-  $('mesajCheie').innerHTML = '<div class="mesaj">Verific cheia pe Cloudflare…</div>';
+  $('mesajCloudflare').innerHTML = 'Verific cheia pe Cloudflare…';
   const r = await api('/api/clienti/cheie', { method: 'PUT', body: JSON.stringify({ cheie: $('cheieNoua').value }) });
   if (!r) return;
-  if (!r.ok) { $('mesajCheie').innerHTML = `<div class="mesaj eroare">${esc(await eroareDin(r))}</div>`; return; }
+  if (!r.ok) { $('mesajCloudflare').innerHTML = `<div class="mesaj eroare">${esc(await eroareDin(r))}</div>`; return; }
   $('formCheie').reset();
-  $('mesajCheie').innerHTML = '<div class="mesaj ok">✓ Cheia merge şi e salvată. Clienţii se preiau acum (pagina „Clienţi").</div>';
+  $('mesajCloudflare').innerHTML = '<span class="verde-text">✓ Cheia merge şi e salvată. Clienţii se preiau acum (pagina „Clienţi").</span>';
   incarcaAgenti();
 });
-
 $('formAgent').addEventListener('submit', async e => {
   e.preventDefault();
   const nume = $('agentNume').value.trim();
@@ -279,7 +428,6 @@ $('formAgent').addEventListener('submit', async e => {
   await parolaAgent(nume);
   $('formAgent').reset();
 });
-
 $('agenti').addEventListener('click', async e => {
   const a = agenti[e.target.closest('tr')?.dataset.i];
   if (!a) return;
@@ -302,85 +450,82 @@ $('agenti').addEventListener('click', async e => {
   }
 });
 
-$('formNou').addEventListener('submit', async e => {
-  e.preventDefault();
-  const user = $('nouUser').value.trim().toLowerCase();
-  const r = await api('/api/utilizatori', { method: 'POST',
-    body: JSON.stringify({ user, rol: $('nouRol').value, nume: $('nouNume').value.trim() || undefined, parola: $('nouParola').value }) });
-  if (!r) return;
-  if (!r.ok) { $('mesajNou').innerHTML = `<div class="mesaj eroare">${esc(await eroareDin(r))}</div>`; return; }
-  $('mesajNou').innerHTML = `<div class="mesaj ok">Contul <strong class="mono">${esc(user)}</strong> e creat. Spune-i colegului
-    utilizatorul şi parola iniţială.</div>`;
-  $('formNou').reset();
-  incarca();
-});
-
-// ── Actualizare ──
+// ── actualizare + backup (server/actualizare.js) ──
 let urmarire = null;
 async function stareActualizare() {
   const r = await fetch('/api/actualizare').catch(() => null);
   if (!r?.ok) { if (urmarire) $('versiune').textContent = 'serverul reporneşte…'; return; }
   const s = await r.json();
-  $('versiune').textContent = s.versiune || '—';
-  // ultimul backup al bazei — roşu dacă e mai vechi de o zi (sau lipseşte)
+  stareTablou.actualizare = s;
+  punePlaci();
+  const v = versiuneScurta(s.versiune);
+  $('versiune').textContent = v.cand ? `${v.scurt} · ${v.cand}` : v.scurt;
+  $('versiune').title = v.tot;
   const b = s.backup, vechi = !b || Date.now() - Date.parse(b.la) > 26 * 3600e3;
-  $('backupInfo').innerHTML = b ? `Ultimul backup al bazei: <b${vechi ? ' style="color:#e8907f"' : ''}>${dataOra(new Date(b.la))}</b> · <span class="mono">${esc(b.fisier)}</span> · ${b.mb} MB${
-    vechi ? ' — <b style="color:#e8907f">mai vechi de o zi, verifică discul de backup</b>' : ''}` : '<b style="color:#e8907f">Niciun backup găsit în folderul de backup.</b>';
+  $('backup').innerHTML = b ? `<span class="${vechi ? 'rosu-text' : ''}" title="${esc(b.fisier)}">${dataOra(new Date(b.la))} · ${b.mb} MB${vechi ? ' — mai vechi de o zi' : ''}</span>`
+    : '<span class="rosu-text">niciunul în folderul de backup</span>';
   $('btnActualizeaza').disabled = !s.disponibil || s.ruleaza;
   $('btnActualizeaza').textContent = s.ruleaza ? 'Actualizare în curs…' : 'Actualizează acum';
   if (!s.disponibil) $('btnActualizeaza').title = 'Merge doar pe serverul Windows';
-  $('modUpdate').textContent = s.areCheie ? 'cheia GitHub e pusă — update-ul merge fără administrator'
-    : 'fără cheie — update-ul are nevoie ca serverul să ruleze ca administrator (SYSTEM)';
+  $('modUpdate').innerHTML = s.areCheie ? '<span class="verde-text">da (cheia GitHub)</span>' : '<span class="cald-text">nu — cere administrator</span>';
+  $('stareGithub').innerHTML = s.areCheie ? '<span class="verde-text">cheia e pusă</span>' : '<span class="dim">fără cheie</span>';
   $('btnStergeCheie').hidden = !s.areCheie;
   if (s.jurnal) { $('jurnal').hidden = false; $('jurnal').textContent = s.jurnal; $('jurnal').scrollTop = 1e9; }
   if (s.ruleaza && !urmarire) urmarire = setInterval(stareActualizare, 3000);
   if (!s.ruleaza && urmarire) { clearInterval(urmarire); urmarire = null; }
 }
-
 $('btnVerifica').addEventListener('click', async () => {
   $('noutati').textContent = 'Întreb GitHub…';
   const r = await api('/api/actualizare/verifica', { method: 'POST' });
   if (!r) return;
   if (!r.ok) { $('noutati').innerHTML = `<div class="mesaj eroare">${esc(await eroareDin(r))}</div>`; return; }
   const { noutati } = await r.json();
-  $('noutati').innerHTML = noutati.length
-    ? `Schimbări noi:<ul class="mono">${noutati.map(n => `<li>${esc(n)}</li>`).join('')}</ul>`
-    : '<span class="stare-activ">Aplicaţia e la zi.</span>';
+  $('noutati').innerHTML = noutati.length ? `Schimbări noi:<ul class="mono">${noutati.map(n => `<li>${esc(n)}</li>`).join('')}</ul>`
+    : '<span class="verde-text">Aplicaţia e la zi.</span>';
 });
-
 async function trimiteCheie(cheie) {
-  $('mesajCheie').textContent = cheie ? 'Verific cheia la GitHub…' : '';
+  $('mesajGithub').textContent = cheie ? 'Verific cheia la GitHub…' : '';
   const r = await api('/api/actualizare/cheie', { method: 'PUT', body: JSON.stringify({ cheie }) });
   if (!r) return;
-  if (!r.ok) { $('mesajCheie').innerHTML = `<div class="mesaj eroare">${esc(await eroareDin(r))}</div>`; return; }
+  if (!r.ok) { $('mesajGithub').innerHTML = `<div class="mesaj eroare">${esc(await eroareDin(r))}</div>`; return; }
   $('cheieGithub').value = '';
-  $('mesajCheie').innerHTML = cheie ? '<span class="stare-activ">Cheia merge — acum poţi face update fără administrator.</span>' : 'Cheia a fost ştearsă.';
+  $('mesajGithub').innerHTML = cheie ? '<span class="verde-text">Cheia merge — acum poţi face update fără administrator.</span>' : 'Cheia a fost ştearsă.';
   stareActualizare();
 }
 $('btnCheieGithub').addEventListener('click', () => { const c = $('cheieGithub').value.trim(); if (c) trimiteCheie(c); });
 $('btnStergeCheie').addEventListener('click', async () => { if (await confirma('Ştergi cheia GitHub?', 'Şterge')) trimiteCheie(''); });
-
 $('btnActualizeaza').addEventListener('click', async () => {
-  if (!await confirma('Actualizezi aplicaţia acum?\n\nServerul se opreşte pentru ~1 minut; cine lucrează în aplicaţie pierde ce n-a salvat.', 'Actualizează')) return;
+  if (!await confirma('Actualizezi aplicaţia acum?\n\nServerul reporneşte în câteva secunde; paginile deschise aşteaptă şi merg mai departe.', 'Actualizează')) return;
   const r = await api('/api/actualizare', { method: 'POST' });
   if (r && !r.ok) return alerta(await eroareDin(r));
-  // sarcina porneşte în câteva sute de ms; urmărim jurnalul până se termină
   setTimeout(stareActualizare, 1500);
   if (!urmarire) urmarire = setInterval(stareActualizare, 3000);
 });
 
+// ── tot tabloul; live (nu cât scrii într-un câmp) + la un minut („ultima dată", „conectaţi acum") ──
+async function incarcaSumar() {
+  const r = await api('/api/sumar');
+  if (r?.ok) { stareTablou.sumar = await r.json(); punePlaci(); }
+}
+async function reimprospateaza() {
+  if (document.activeElement?.matches?.('input, textarea, select')) return;
+  await incarca();
+  await Promise.all([incarcaSumar(), incarcaTichete(), incarcaTablou()]);
+}
 
 (async () => {
   const r = await api('/api/eu');
   if (!r) return;
   eu = (await r.json()).utilizator;
   if (eu.rol !== 'admin') {
-    $('continut').innerHTML = '<div class="panou">Pagina asta e doar pentru administrator. <a href="/">Înapoi la comenzi</a></div>';
+    $('continut').innerHTML = '<div class="card">Pagina asta e doar pentru administrator. <a href="/">Înapoi la comenzi</a></div>';
     return;
   }
-  incarca();
-  incarcaAgenti();
-  stareActualizare();
+  punePlaci();
+  await incarca();   // conturile întâi: „ultima dată" din tabelul de activitate vine de aici
+  incarcaSumar(); incarcaTichete(); incarcaTablou(); incarcaAgenti(); stareActualizare();
+  urmareste(reimprospateaza);
+  setInterval(reimprospateaza, 60e3);
 })();
 </script>
 </body>

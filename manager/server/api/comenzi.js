@@ -586,7 +586,8 @@ const sumar = ctx => json(ctx.res, 200, {
 `).get(),
   sticla: require('../sticla.js').sumarSticla(),   // bucăţi de sticlă de comandat
   deAprobat: require('../clienti.js').nrDeAprobat(), // clienţi noi / modificări de la agenţi, de aprobat
-  cereri: ['admin', 'conducere'].includes(ctx.utilizator.rol) ? require('../cereri.js').nrDeschise() : 0,   // tichete de decis
+  cereri: ['admin', 'conducere'].includes(ctx.utilizator.rol) ? require('../cereri.js').nrDeschise() : 0,   // anulări de decis
+  tichete: require('../tichete.js').deVazut(ctx.utilizator),   // admin: tichete noi; ceilalţi: răspunsuri nevăzute
 });
 
 module.exports = {
