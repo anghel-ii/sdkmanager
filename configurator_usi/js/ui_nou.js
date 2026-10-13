@@ -278,7 +278,8 @@ function actualizeaza() {
     model:   meta ? `${esc(meta.label)}${meta.sketch ? ` <img src="${esc(meta.sketch)}" alt="">` : ''}` : '',
     culoare: swatch ? swatch.innerHTML : '',
     dim:     rame ? buc(spec?.nrRame ?? 0, 'ramă', 'rame') : hGol && lGol
-      ? `${hGol} × ${lGol} mm${areUsi ? ` · ${state.doors} uşi${suprap ? ` · ${suprap} ${suprap === '1' ? 'suprapunere' : 'suprapuneri'}` : ''}` : ''}` : '',
+      ? `${hGol} × ${lGol} mm${areUsi ? ` · ${state.doors} uşi${suprap ? ` · ${suprap} ${suprap === '1' ? 'suprapunere' : 'suprapuneri'}` : ''}` : ''}${
+          meta?.mascareOptiune ? ` · mascare ${['fără', 'faţă', 'faţă şi spate'][state.mascare ?? 0]}` : ''}` : '',
     usi:     `${state.doors || (meta?.doors ?? 0)} uşi · ${noi} asamblate de noi`,
     oferta:  n ? `${n} ${n === 1 ? 'eroare' : 'erori'}` : `${f.lines.length} linii de facturare`,
     cos:     `${document.querySelectorAll('#groupCos .cos-lista li').length} produse în ofertă`,

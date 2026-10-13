@@ -824,6 +824,21 @@ function renderDoorsUI() {
 
   setText('doorsVal', state.doors);
 
+  // Profilul de mascare la alegere (Suspendată Standard — userul, 2026-10-13): fără / faţă / faţă şi spate
+  const mascareBox = $('groupMascare');
+  if (mascareBox) {
+    mascareBox.hidden = !meta.mascareOptiune;
+    if (meta.mascareOptiune) {
+      $('mascareToggle').innerHTML = MASCARE.map((t, v) =>
+        `<button data-v="${v}"${v === (state.mascare ?? 0) ? ' class="active"' : ''}>${t}</button>`).join('');
+      $('mascareToggle').querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => {
+        state.mascare = +btn.dataset.v;
+        renderDoorsUI();
+        rebuild();
+      }));
+    }
+  }
+
   const tracksBox = $('tracksToggle');
   if (!tracksBox) return;
 
@@ -862,6 +877,8 @@ function renderDoorsUI() {
   const valoare = state.doors === 1 ? 0 : dublu;
   tracksBox.innerHTML = `<button class="active" disabled>${valoare}</button>`;
 }
+
+const MASCARE = ['Fără', 'Faţă', 'Faţă şi spate'];   // indexul = nr. de profile de mascare (state.mascare)
 
 // Culori fără şină simplă (AURIU, CUPRU): uşile se pot face doar pe şină dublă,
 // deci minim 2 uşi şi fără opţiunea „0 suprapuneri".

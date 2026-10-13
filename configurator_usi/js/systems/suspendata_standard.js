@@ -5,7 +5,9 @@
 //    lăţime uşă  = (gol + 19 × nr. suprapuneri − 5) ÷ nr. uşi
 //    înălţime    = gol − 62
 //    şină        = doar SIMPLĂ, lungime = lăţimea golului; cu suprapuneri
-//                  vin 2 şine (una pe pistă). Fără profil de mascare.
+//                  vin 2 şine (una pe pistă).
+//    mascare     = la alegere (2026-10-13): fără / faţă / faţă şi spate →
+//                  0 / 1 / 2 profile, pe lungimea şinei (state.mascare).
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { mm } from '../lib/comun/geo.js';
@@ -27,6 +29,7 @@ export const meta = {
   pal:         true,                  // sticlă sau PAL 10mm
   doorsRange:  [2, 7],                // nr. de uşi ales de user (stepper UI)
   suprapuneriObligatorii: true,       // fără varianta „0 suprapuneri" (vezi ui.js)
+  mascareOptiune: true,               // butonul „Mascare şină" fără / faţă / faţă şi spate (ui.js)
   // lăţime: banda de şină din catalog (1201–5800 = lăţimea golului)
   limits:      { width: [1300, 5800], height: [1900, 2700] },
   // Cupru: doar ce acoperă codurile Cupru din NeoManager — şina Cupru e bară de 3,5 m,
@@ -54,6 +57,7 @@ export function spec(state) {
   const doorH = H - 62;
   const rail  = W;
   const nrSine = supr > 0 ? 2 : 1;
+  const mascare = clamp(state.mascare ?? 0, 0, 2);
 
   const parts = {
     opening: { w: W, h: H },
@@ -64,8 +68,8 @@ export function spec(state) {
 
   return {
     ...parts,
-    nrSine,
-    bill: { ...billQuantities(profiles, parts, state), ...billAplicate(parts, state), nrSine },
+    nrSine, mascare,
+    bill: { ...billQuantities(profiles, parts, state), ...billAplicate(parts, state), nrSine, mascare },
     summary: [
       { label: 'Înălţime gol',    value: `${H} mm` },
       { label: 'Lăţime gol',      value: `${W} mm` },
@@ -73,6 +77,7 @@ export function spec(state) {
       { label: 'Lăţimea uşii',    value: `${doorW} mm × ${doors} uşi` },
       { label: 'Nr. suprapuneri', value: `${supr}` },
       { label: 'Lungime şină',    value: `${rail} mm × ${nrSine}` },
+      { label: 'Mascare şină',    value: ['fără', 'faţă', 'faţă şi spate'][mascare] },
     ],
   };
 }
@@ -81,7 +86,7 @@ export function spec(state) {
 export function bom(state, s) {
   return [
     ...doorFrameRows(profiles, s, state, meta.family),
-    ...railRows(s, state, meta.family, 0, s.nrSine),   // fără mascare
+    ...railRows(s, state, meta.family, s.mascare, s.nrSine),   // mascare: 0 / 1 / 2 profile, la alegere
     ...wheelRows(state),
     ...screwRows(state),
     ...glassRows(s, state),
@@ -115,6 +120,7 @@ export const billing = {
   linii: [
     { tip: 'usa',      dim: 'doorWmm',   qty: 'usi' },
     { tip: 'sina',     dim: 'sinaLenMm', qty: 'nrSine' },
+    { tip: 'mascare_sina', dim: 'sinaLenMm', qty: 'mascare' },   // 0 = fără → linia se omite
     { tip: 'divizare', dim: 'innerWmm',  qty: 'divizariBuc' },
 
     { cod: '381', denumire: 'Rotile pentru 1 usa cu rama din aluminiu, opritor si ghidaj cu rulment inclus cod 381',       qty: 'roleSimple',    factor: 0.5, um: 'set' },

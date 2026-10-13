@@ -49,6 +49,7 @@ export const state = {
   divisions: [0],
   doors:    2,       // relevant doar la sisteme cu meta.doorsRange (Confort)
   tracks:    2,       // relevant doar la sisteme cu meta.doorsRange (Confort)
+  mascare:   0,       // profile de mascare a şinei: 0 fără, 1 faţă, 2 faţă şi spate — doar meta.mascareOptiune (Suspendată Standard)
   wheels:    [{ left: 'simpla', right: 'simpla' }],
   assembly:  ['client'],   // implicit asamblează clientul (userul, 2026-09-28)
   geam:       ['GG004'],  // Geam float transparent 4mm GG — doar la assembly 'noi'

@@ -399,6 +399,27 @@ for (const [id, W, H, doors, tracks] of [['confortVerona', 1800, 2100, 2, 2], ['
   console.log('✓ UTIL Roma: oglinda aplicată pe PAL în necesarul clientului (H panou × L PAL − 50), doar pe panourile alese');
 }
 
+// Suspendată Standard (userul, 2026-10-13): mascarea şinei la alegere — fără / faţă / faţă şi spate
+// = 0 / 1 / 2 profile, pe lungimea şinei (= lăţimea golului), în facturare şi în necesar.
+{
+  const { billingLines } = await import('../js/lib/suspendata/billing.js');
+  const sys = systems.suspendataStandard;
+  const doua = x => [structuredClone(x), structuredClone(x)];
+  const cate = mascare => {
+    const st = { ...structuredClone(state), system: sys.meta.id, finish: 'SAMPANIE LUCIOS', width: 2100, height: 2400, doors: 2, mascare,
+      divisions: [0, 0], panels: doua(['sticla']), hPanouri: doua([null]), divProfil: doua([]), assembly: ['client', 'client'],
+      wheels: doua({ left: 'simpla', right: 'simpla' }), amortizare: doua({ left: 'fara', right: 'fara' }), geam: ['GG004', 'GG004'], geamClient: [4, 4],
+      divAplicate: doua({ latime: 'fara', parte: 'fata', verticale: 0, orizontale: 0 }) };
+    const s = sys.spec(st);
+    const fact = billingLines(sys, st, s).lines.filter(l => l.cod === 'M205').reduce((a, l) => a + l.cantitate, 0);
+    const nec = sys.bom(st, s).filter(r => /mascare/i.test(r.label)).reduce((a, r) => a + r.qty, 0);
+    return [fact, nec];
+  };
+  const r = [0, 1, 2].map(cate);
+  if (JSON.stringify(r) !== '[[0,0],[1,1],[2,2]]') { console.error('✗ Standard mascare (facturare, necesar) pt. fără/faţă/faţă şi spate:', JSON.stringify(r)); process.exit(1); }
+  console.log('✓ Suspendată Standard: mascare şină fără / faţă / faţă şi spate = 0 / 1 / 2 profile (M205 la 2100 mm Şampanie)');
+}
+
 // ── Graniţele dintre familii ────────────────────────────────────────────────
 // Codul unei familii (lib/<familie>/ + systems/<prefix>_*.js) importă doar din
 // folderul ei, din lib/comun/, din catalog şi din three — niciodată din altă
