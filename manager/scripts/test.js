@@ -175,6 +175,7 @@ async function main() {
     ['linkul spre sticlă',  'href="/sticla"'],
     ['linkul Acasă',        'href="/"'],
     ['Organizează livrări', 'href="/livrari"'],
+    ['reîncercarea cererilor cât se actualizează serverul', 'Serverul se actualizează'],
     ['Taskuri + reminderele', "fetch('/api/taskuri/scadente')"],
   ]) verifica(`bara comună are ${ce}`, bara.includes(bucata), bucata);
 

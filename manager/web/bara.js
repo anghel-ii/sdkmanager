@@ -15,6 +15,46 @@
 //     class="bara-context" (ex. „Ofertă nouă › Confort") rămâne, lângă marcă.
 // Configuratorul fără manager (Cloudflare, de pe disc) nu găseşte scriptul şi
 // îşi păstrează bara lui.
+
+// ── Update fără oprirea lucrului (userul, 2026-10-13) ─────────────────────────
+// La „Actualizează" serverul se opreşte câteva secunde cât reporneşte. Pagina deschisă
+// rămâne în browser şi merge mai departe; o cerere spre /api care NU ajunge la server
+// (refuzată — serverul porneşte) nu mai dă eroare: aşteaptă şi se retrimite singură până
+// revine serverul (max. 2 minute), cu o bandă „Serverul se actualizează…". O cerere
+// ajunsă la server nu se repetă — la oprire serverul termină întâi cererile în curs.
+(() => {
+  const trimite = window.fetch.bind(window);
+  let inAsteptare = 0, banda = null;
+  const arata = da => {
+    inAsteptare += da ? 1 : -1;
+    if (!banda) {
+      banda = document.createElement('div');
+      banda.style.cssText = 'position:fixed;left:50%;top:12px;transform:translateX(-50%);z-index:2000;padding:8px 16px;'
+        + 'border-radius:999px;background:#4a3a12;border:1px solid #d4a24c;color:#f0c65a;font:600 13px Inter,system-ui,sans-serif;'
+        + 'box-shadow:0 4px 18px rgba(0,0,0,.45)';
+      banda.textContent = '⟳ Serverul se actualizează — aştept să revină; ce ai completat rămâne aici.';
+    }
+    if (inAsteptare > 0 && !banda.isConnected) document.body.appendChild(banda);
+    if (inAsteptare <= 0) banda.remove();
+  };
+  window.fetch = async (cerere, optiuni) => {
+    const adresa = new URL(typeof cerere === 'string' ? cerere : cerere.url, location.href);
+    if (adresa.origin !== location.origin || !adresa.pathname.startsWith('/api/')) return trimite(cerere, optiuni);
+    const pana = Date.now() + 120e3;
+    for (let asteapta = false; ;) {
+      try {
+        const r = await trimite(cerere, optiuni);
+        if (asteapta) arata(false);
+        return r;
+      } catch (e) {
+        if (e.name === 'AbortError' || Date.now() > pana) { if (asteapta) arata(false); throw e; }
+        if (!asteapta) { asteapta = true; arata(true); }
+        await new Promise(gata => setTimeout(gata, 2000));
+      }
+    }
+  };
+})();
+
 (() => {
   // ── iconiţe: linii subţiri, culoarea textului (fără fonturi de iconiţe de pe CDN) ──
   const ICOANE = {
