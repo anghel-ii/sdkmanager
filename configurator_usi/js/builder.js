@@ -1,6 +1,6 @@
 import { state }        from './state.js';
 import { systems }       from './systems/registry.js';
-import { clearGroup }    from './lib/comun/geo.js';
+import { clearGroup, conturGol } from './lib/comun/geo.js';
 import { familia }       from './familii.js';
 import { liniaTransport } from './lib/comun/comanda.js';
 
@@ -25,7 +25,9 @@ export function buildConfig() {
 
   // Flow per model:  spec(state) → build(spec).  Aceeaşi sursă şi pentru readout/BOM.
   _spec = sys.spec(state);
-  sys.build(_doorGroup, state, _spec);
+  // nr. de uşi încă neales (Confort): doar conturul golului, nu uşi „implicite"
+  if (sys.meta.doorsRange && !(state.doors > 0)) conturGol(_doorGroup, state.width, state.height);
+  else sys.build(_doorGroup, state, _spec);
 
   // gama rame n-are gol: ţinta camerei = jumătatea celei mai înalte rame
   _controls.target.set(0, (sys.meta.rame ? Math.max(_spec.opening.h, 800) : state.height) / 2000, 0);

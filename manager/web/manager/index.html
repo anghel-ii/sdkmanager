@@ -568,7 +568,7 @@ function randeazaTabel() {
     <p class="dim mic rezumat">${randuri.length} ${randuri.length === 1 ? 'rezultat' : 'rezultate'} pentru „${esc(cautare.trim())}" — din oferte, aşteaptă plata, în lucru şi finalizate</p>` : ''}
     <table class="lista">
       <thead><tr>
-        <th data-c="pin"></th><th data-c="client">Client</th><th data-c="oferta">Nr. ofertă</th><th data-c="sistem">Sistem</th>${
+        <th data-c="pin" title="📌 fixează o comandă sus în listă (doar pentru tine)"></th><th data-c="client">Client</th><th data-c="oferta">Nr. ofertă</th><th data-c="sistem">Sistem</th>${
           cuStatus ? '<th data-c="status">Status</th>' : ''}${cuSticla ? '<th data-c="sticla">Sticlă</th>' : ''}${cuFacturare
           ? '<th data-c="plata">Plată</th><th class="num" data-c="avans">Avans</th><th data-c="factura">Facturare</th>' : ''}
         <th data-c="cine">Creat de</th><th data-c="data">${titluData}</th><th data-c="actiuni"></th>

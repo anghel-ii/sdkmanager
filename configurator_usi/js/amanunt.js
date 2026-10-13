@@ -189,9 +189,11 @@ $('randuri').addEventListener('input', e => {
     }
     arataSugestii(i);
   } else if (e.target.classList.contains('cant')) {
+    if (faraMinus(e.target)) return;
     linii[i].cantitate = parseFloat(String(e.target.value).replace(',', '.')) || 0;
     actualizeaza();
   } else if (e.target.matches('.deb-l, .deb-b')) {
+    if (faraMinus(e.target)) return;
     const k = +e.target.closest('.piesa').dataset.k, piese = linii[i].debitare;
     const camp = e.target.classList.contains('deb-l') ? 'l' : 'buc';
     // perechea goală de la coadă devine bucată → după ea apare alta goală. Fără să
@@ -212,6 +214,15 @@ $('randuri').addEventListener('input', e => {
     actualizeaza();
   }
 });
+// Cantităţi / lungimi negative nu există (testarea ca începător, 2026-10-13: „-3" trecea,
+// cu doar „1 eroare" fără loc) — câmpul se goleşte şi spunem de ce.
+function faraMinus(camp) {
+  if (!(parseFloat(String(camp.value).replace(',', '.')) < 0)) return false;
+  camp.value = '';
+  camp.dispatchEvent(new Event('input', { bubbles: true }));
+  mesaj('Cantităţile şi lungimile nu pot fi negative — scrie un număr pozitiv.', 'eroare');
+  return true;
+}
 const focusPe = sel => {
   const el = $('randuri').querySelector(sel);
   if (!el) return;

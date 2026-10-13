@@ -254,6 +254,7 @@ function actualizeaza() {
   if (spec) {
     cote.textContent = rame
       ? `${buc(spec.nrRame ?? 0, 'ramă', 'rame')} · ${buc(spec.pline?.length ?? 0, 'mărime', 'mărimi')}`
+      : meta?.doorsRange && !(state.doors > 0) ? `Gol ${state.height} × ${state.width} mm · alege numărul de uşi`
       : `Uşă ${Math.round(spec.door.h)} × ${Math.round(spec.door.w)} mm · ${spec.door.count} ${spec.door.count === 1 ? 'uşă' : 'uşi'}`;
   }
 

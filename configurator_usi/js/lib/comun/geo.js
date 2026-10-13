@@ -14,6 +14,17 @@ export function box(w, h, d, mat, { cast = true, receive = false } = {}) {
 }
 
 // Goleşte recursiv un THREE.Group şi eliberează memoria GPU.
+// Conturul golului (dreptunghi subţire) — cât nu e ales nr. de uşi (Confort), în locul uşilor
+// desenate implicit: 3D-ul arăta „1 uşă" înainte să alegi (testarea ca începător, 2026-10-13).
+export function conturGol(group, latimeMm, inaltimeMm) {
+  const W = mm(latimeMm) / 2, H = mm(inaltimeMm);
+  const linie = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(
+    [new THREE.Vector3(-W, 0, 0), new THREE.Vector3(W, 0, 0), new THREE.Vector3(W, H, 0), new THREE.Vector3(-W, H, 0)]),
+    new THREE.LineDashedMaterial({ color: 0x4da3ff, dashSize: 0.06, gapSize: 0.04 }));
+  linie.computeLineDistances();
+  group.add(linie);
+}
+
 export function clearGroup(g) {
   while (g.children.length) {
     const child = g.children.pop();
