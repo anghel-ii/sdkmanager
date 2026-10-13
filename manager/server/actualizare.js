@@ -229,6 +229,7 @@ async function raporteaza() {
   await trimite();   // rezultatul pe pagină imediat, nu peste 20 s
 }
 function pornesteRaportarea() {
+  if (!config.raportare) return;   // doar serverul firmei (vezi config.raportare)
   const tura = () => raporteaza().catch(e => console.error('Raportarea spre Cloudflare:', e.message));
   tura();
   setInterval(tura, 20 * 1000).unref();

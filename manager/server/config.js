@@ -51,6 +51,10 @@ const config = {
   // Clienţii de la agenţii de vânzări — vezi server/clienti.js
   clientiUrl:   (process.env.MANAGER_CLIENTI_URL ?? 'https://clienti-agenti.pages.dev').replace(/\/$/, ''),
   clientiCheie: process.env.MANAGER_CLIENTI_CHEIE || '',
+  // raportarea spre pagina /admin de pe Cloudflare (update de oriunde): DOAR serverul firmei.
+  // Un manager pornit pe laptop cu aceeaşi bază (cheia clienţilor în ea) s-ar da drept server
+  // şi ar putea prelua cererea de update — implicit doar pe Windows; MANAGER_RAPORTARE=1/0 forţează.
+  raportare: process.env.MANAGER_RAPORTARE ? process.env.MANAGER_RAPORTARE === '1' : process.platform === 'win32',
 
   // Cât ţine o sesiune fără activitate. 30 de zile: omul din atelier se
   // loghează o dată pe telefon şi nu se mai gândeşte la asta.
