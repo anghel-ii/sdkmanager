@@ -465,7 +465,7 @@ async function main() {
     const idVechi = Number(db2().prepare("INSERT INTO utilizator (nume, user, parola_hash, parola_salt, rol) VALUES ('Vechi', 'vechi', 'x', 'x', 'operator')").run().lastInsertRowid);
     require('../server/db.js').roluriNoi(db2());
     verifica('migraţie: operator → birou', db2().prepare('SELECT rol FROM utilizator WHERE id = ?').get(idVechi).rol === 'birou');
-    verifica('schema la versiunea 17', db2().prepare('PRAGMA user_version').get().user_version === 17);
+    verifica('schema la versiunea 18', db2().prepare('PRAGMA user_version').get().user_version === 18);
   }
 
   console.log('\nFixare şi sortare — per utilizator');
@@ -937,6 +937,10 @@ async function main() {
     verifica('a doua decizie → 409', (await cer('POST', `/api/cereri/${ra.id}/respinge`)).stare === 409);
     verifica('respingere → comanda rămâne', (await cer('POST', `/api/cereri/${rb.id}/respinge`, { raspuns: 'Mai vorbim' })).stare === 200
       && (await cer('GET', '/api/comenzi?tip=oferta')).date.comenzi.some(c => c.id === b));
+    verifica('fişa printată: se ţine ora + cine', (await cer('POST', `/api/comenzi/${b}/fisa`)).stare === 200
+      && !!(await cer('GET', `/api/comenzi/${b}`)).date.comanda.fisa_printata_la
+      && (await cer('GET', `/api/comenzi/${b}`)).date.comanda.fisa_printata_de_nume != null);
+    verifica('fişa printată pe o comandă inexistentă → 404', (await cer('POST', '/api/comenzi/999999/fisa')).stare === 404);
     verifica('pagina /cereri se serveşte', String((await cer('GET', '/cereri')).date).includes('<title>Cereri</title>'));
     verifica('/admin află ultimul backup', 'backup' in (await cer('GET', '/api/actualizare')).date);
   }

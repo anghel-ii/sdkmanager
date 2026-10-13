@@ -332,11 +332,12 @@ function detaliu(ctx) {
     SELECT c.*, u.nume AS creat_de_nume, ua.nume AS confirmat_de_nume,
            -- de cât timp a ieşit din oferte (pt. „Înapoi în ofertă"), după ora exactă a serverului
            CAST((julianday(${ACUM()}) - julianday(c.tip_schimbat_la)) * 86400 AS INTEGER) AS secunde_schimbat,
-           uf.nume AS facturat_de_nume, ufi.nume AS finalizat_de_nume
+           uf.nume AS facturat_de_nume, ufi.nume AS finalizat_de_nume, ufp.nume AS fisa_printata_de_nume
       FROM comanda c JOIN utilizator u ON u.id = c.creat_de
       LEFT JOIN utilizator ua  ON ua.id  = c.confirmat_de
       LEFT JOIN utilizator uf  ON uf.id  = c.facturat_de
       LEFT JOIN utilizator ufi ON ufi.id = c.finalizat_de
+      LEFT JOIN utilizator ufp ON ufp.id = c.fisa_printata_de
      WHERE c.id = ?
   `).get(id);
   if (!comanda) return eroare(ctx.res, 404, 'Comandă inexistentă.');
@@ -515,6 +516,16 @@ async function factura(ctx) {
   json(ctx.res, 200, { comanda: db().prepare('SELECT * FROM comanda WHERE id = ?').get(id) });
 }
 
+// Fişa de atelier a pornit la print (butonul „Fişă" din manager — userul, 2026-10-13:
+// să se vadă la comandă când a fost printată). Ţinem ultima dată + cine.
+function fisaPrintata(ctx) {
+  const id = Number(ctx.params.id);
+  const r = db().prepare(`UPDATE comanda SET fisa_printata_la = ${ACUM()}, fisa_printata_de = ? WHERE id = ?`).run(ctx.utilizator.id, id);
+  if (!r.changes) return eroare(ctx.res, 404, 'Comandă inexistentă.');
+  anunta({ comanda: id });
+  json(ctx.res, 200, { ok: true });
+}
+
 // Fixare (pin) — per utilizator: fiecare îşi vede sus doar comenzile LUI
 // fixate. Nu se anunţă celorlalţi (nu-i priveşte).
 async function fixeaza(ctx) {
@@ -596,6 +607,7 @@ module.exports = {
     ['POST', '/api/comenzi/:id/redeschide',  { handler: schimbaFinalizare(false) }],
     ['POST', '/api/comenzi/:id/factura',     { handler: factura }],
     ['POST', '/api/comenzi/:id/fixare',      { handler: fixeaza }],
+    ['POST', '/api/comenzi/:id/fisa',        { handler: fisaPrintata }],
     ['GET',  '/api/preferinte',              { handler: preferinte }],
     ['PUT',  '/api/preferinte',              { handler: salveazaPreferinte }],
   ],

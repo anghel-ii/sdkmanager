@@ -308,9 +308,10 @@ const virgulaLei = n => Number(n).toLocaleString('ro-RO', { minimumFractionDigit
 // încarcă într-un cadru ascuns, iar dialogul de print al fişei apare peste
 // pagina curentă. Cadrul rămâne până la următoarea fişă (scoaterea lui ar
 // închide dialogul de print). Configuratorul răspunde prin postMessage.
-let butonFisa = null;
+let butonFisa = null, fisaComenzii = null;
 // `poz` = produsul ofertei (0, 1, …): fiecare are fişa lui, ca o comandă separată
 function deschideFisa(id, buton, poz = 0) {
+  fisaComenzii = id;
   document.getElementById('cadruFisa')?.remove();
   if (butonFisa) { butonFisa.disabled = false; butonFisa.textContent = butonFisa.dataset.text; }
   butonFisa = buton ?? null;
@@ -326,8 +327,15 @@ function deschideFisa(id, buton, poz = 0) {
 window.addEventListener('message', e => {
   if (e.origin !== location.origin || e.data?.tip !== 'fisa') return;
   if (butonFisa) { butonFisa.disabled = false; butonFisa.textContent = butonFisa.dataset.text; butonFisa = null; }
-  if (e.data.eroare) alerta(e.data.eroare);
+  if (e.data.eroare) return alerta(e.data.eroare);
+  // dialogul de print a pornit — comanda ţine minte când (rândul „Fişa printată" se reîmprospătează live)
+  if (fisaComenzii) api(`/api/comenzi/${fisaComenzii}/fisa`, { method: 'POST' });
+  fisaComenzii = null;
 });
+// „Fişa printată 13/10/2026 14:20 · Ana" — în cardul comenzii şi în pagina ei
+const fisaPrintata = c => `<div class="fisa-printata">🖶 ${c.fisa_printata_la
+  ? `Fişa printată ${dataOra(c.fisa_printata_la)}${c.fisa_printata_de_nume ? ` · ${esc(c.fisa_printata_de_nume)}` : ''}`
+  : 'Fişa nu s-a printat încă'}</div>`;
 
 const statusHtml = st => st
   ? `<strong>${esc(st.operatie)}</strong> <span class="dim mic">· ${dataOra(st.moment)} · ${esc(st.cine)}</span>`
@@ -384,7 +392,7 @@ function puneGame() {
       <div class="gama-btn cu-ciorne"><a class="gama-nou" ${nou}</a><span class="gama-ciorne">${ale.map(c => `
         <a class="ciorna-chip" href="/configurator/?ciorna=${encodeURIComponent(c.id)}"
            title="Continuă ciorna: ${esc(c.titlu)} · salvată ${dataOra(new Date(c.la))} · se şterge după 48 de ore">
-          <small>✎</small><span>${esc(c.client || 'fără client')}</span></a>`).join('')}</span></div>`;
+          <small>✎</small><span>${esc(c.client || 'Continuă')}</span></a>`).join('')}</span></div>`;
   }).join('') || '<p class="dim mic">Configuratorul nu e construit (cd configurator_usi && node build.js).</p>';
 }
 window.addEventListener('storage', e => { if (e.key === 'ciorne') puneGame(); });   // salvată din alt tab
@@ -703,6 +711,7 @@ function cardDetalii({ comanda: c, cerere, pozitii, sticlaLinii = [] }, fise) {
       ${eOferta && !c.anulat ? '<button id="ccModifica">Modifică oferta</button>' : ''}
       <a class="buton" href="/taskuri?comanda=${c.id}" title="Un task / reminder legat de comanda asta">+ Task</a>
     </div>
+    ${fisaPrintata(c)}
     <div class="cc-butoane cc-treceri">${c.tip === 'comanda' && !c.finalizat_la && !c.anulat ? '<button class="primar" data-adauga-la>+ Adaugă la comandă</button>' : ''}${butoaneTreceri(c, minuteInapoi(c))}${butonAnulare(c, cerere)}</div>
     <dl class="cc-perechi">
       ${c.client_telefon ? `<dt>Telefon</dt><dd>${esc(c.client_telefon)}</dd>` : ''}
@@ -985,6 +994,7 @@ async function renderDetaliu(id) {
         <div class="mono nr-comanda">${esc(c.oferta_nr || c.numar)}</div>
         <div class="dim mic">${c.anulat ? '<span class="stare-pastila anulata">Anulată</span>' : `<span class="stare-pastila ${eOferta ? 'oferta' : ePlata ? 'plata' : c.finalizat_la ? 'gata' : 'lucru'}">${eOferta ? 'Ofertă'
           : ePlata ? 'Aşteaptă plata' : c.finalizat_la ? 'Comandă finalizată' : 'Comandă în lucru'}</span>`}</div>
+        ${fisaPrintata(c)}
       </div>
       <div class="spatiu"></div>
       ${pozitii.length > 1

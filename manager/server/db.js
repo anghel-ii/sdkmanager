@@ -212,6 +212,11 @@ const MIGRATII = [
       raspuns    TEXT
     );
     CREATE UNIQUE INDEX cerere_deschisa ON cerere (comanda_id, tip) WHERE stare = 'deschisa';`),
+  // v17 → v18 (2026-10-13): când s-a printat fişa de atelier ultima dată şi de cine (butonul „Fişă" din manager)
+  d => {
+    d.exec('ALTER TABLE comanda ADD COLUMN fisa_printata_la TEXT');
+    d.exec('ALTER TABLE comanda ADD COLUMN fisa_printata_de INTEGER REFERENCES utilizator(id)');
+  },
 ];
 
 // Exportată pt. test.
