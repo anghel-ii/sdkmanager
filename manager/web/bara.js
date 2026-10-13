@@ -66,6 +66,7 @@
     lucru:   '<path d="M20.5 7.5 12 3 3.5 7.5v9L12 21l8.5-4.5z"/><path d="M3.5 7.5 12 12l8.5-4.5M12 12v9"/>',
     gata:    '<circle cx="12" cy="12" r="8.5"/><path d="m8.5 12.2 2.4 2.4 4.6-5"/>',
     cereri:  '<path d="M5 4.5h14v11H9.5L5 19.5z"/><path d="M9 8.5h6M9 11.5h4"/>',
+    tichete: '<path d="M9.5 18h5M10.5 21h3"/><path d="M12 3.5a5.8 5.8 0 0 0-3.4 10.5c.6.5.9 1.1.9 1.8v.2h5v-.2c0-.7.3-1.3.9-1.8A5.8 5.8 0 0 0 12 3.5z"/>',
     taskuri: '<path d="M10 6.5h10M10 12h10M10 17.5h10"/><path d="m3.5 6.5 1.4 1.4 2.3-2.6M3.5 12l1.4 1.4 2.3-2.6M3.5 17.5l1.4 1.4 2.3-2.6"/>',
     sticla:  '<rect x="4.5" y="3.5" width="15" height="17" rx="1.5"/><path d="m8 9.5 3-3M8 14.5l7.5-7.5"/>',
     livrari: '<path d="M14 16.5V6H3.5v10.5h1.8"/><path d="M14 9h3.8l2.7 3.4v4.1h-1.8M9 16.5h6.2"/><circle cx="7.2" cy="16.8" r="1.8"/><circle cx="17" cy="16.8" r="1.8"/>',
@@ -236,9 +237,10 @@
       ${link('/livrari', 'livrari', 'Organizează livrări', 'id="linkLivrari"')}
       ${link('/taskuri', 'taskuri', 'Taskuri', 'id="linkTaskuri"', '<span class="insigna rosie" id="nrTaskuri" title="ajunse la ora reminderului"></span>')}
       ${link('/cereri', 'cereri', 'Cereri', 'id="linkCereri"', '<span class="insigna rosie" id="nrCereri" title="cereri de anulare de decis"></span>')}
+      ${link('/tichete', 'tichete', 'Tichete', 'id="linkTichete"', '<span class="insigna rosie" id="nrTichete"></span>')}
       <div class="grup" id="grupAdmin" hidden><span class="txt">Administrare</span></div>
       ${link('/clienti', 'clienti', 'Clienţi', 'id="linkClienti" hidden', '<span class="insigna cald" id="nrClienti" title="trimise de agenţi, de aprobat"></span>')}
-      ${link('/admin', 'admin', 'Utilizatori', 'id="linkAdmin" hidden')}
+      ${link('/admin', 'admin', 'Tablou admin', 'id="linkAdmin" hidden')}
       <div class="spatiu"></div>
       <div class="meniu-live"><span class="live" title="Actualizare live: pagina se schimbă singură când lucrează altcineva"><span class="da">Conectat</span><span class="nu">Reconectare…</span></span></div>
       <div class="eu">
@@ -264,8 +266,9 @@
       <a href="/sticla" class="buton" id="linkSticla" title="Comandă sticlă">${icoana('sticla')}<span class="txt">Comandă sticlă</span><span class="insigna cald" id="nrSticla"></span></a>
       <a href="/livrari" class="buton" id="linkLivrari" title="Organizează livrări">${icoana('livrari')}<span class="txt">Organizează livrări</span></a>
       <a href="/taskuri" class="buton" id="linkTaskuri" title="Taskuri; numărul = ajunse la ora reminderului">${icoana('taskuri')}<span class="txt">Taskuri</span><span class="insigna rosie" id="nrTaskuri"></span></a>
+      <a href="/tichete" class="buton" id="linkTichete" title="Tichete: ce nu merge, idei — pentru administrator">${icoana('tichete')}<span class="txt">Tichete</span><span class="insigna rosie" id="nrTichete"></span></a>
       <a href="/clienti" class="buton" id="linkClienti" hidden title="Clienţi; numărul = trimise de agenţi, de aprobat">${icoana('clienti')}<span class="txt">Clienţi</span><span class="insigna cald" id="nrClienti"></span></a>
-      <a href="/admin" class="buton" id="linkAdmin" hidden title="Utilizatori">${icoana('admin')}<span class="txt">Utilizatori</span></a>
+      <a href="/admin" class="buton" id="linkAdmin" hidden title="Administrare">${icoana('admin')}<span class="txt">Administrare</span></a>
       <button type="button" id="ofertaNoua" class="primar">${icoana('plus')}Ofertă nouă</button>
       <span id="cine"></span>
       <button type="button" id="iesire" title="Ieşi din cont">${icoana('iesire')}</button>`;
@@ -279,6 +282,7 @@
     pune('#nrSticla', s.sticla);
     pune('#nrClienti', s.deAprobat);
     pune('#nrCereri', s.cereri);   // doar la conducere / admin (biroul primeşte 0)
+    pune('#nrTichete', s.tichete);   // admin: tichete noi; ceilalţi: răspunsuri la tichetele lor, nevăzute
     for (const [t, k] of STARI) pune(`[data-cate-meniu="${t}"]`, s[k]);
     window.dispatchEvent(new CustomEvent('sumar', { detail: s }));
   };

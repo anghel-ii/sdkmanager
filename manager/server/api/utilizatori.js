@@ -62,7 +62,9 @@ const getEu = ctx => json(ctx.res, 200, { utilizator: ctx.utilizator });
 // `activat` = şi-a pus parola (contul creat de admin, folosit cel puţin o dată).
 const listeaza = ctx => json(ctx.res, 200, {
   utilizatori: db().prepare(
-    "SELECT id, nume, user, rol, activ, creat_la, parola_hash != '' AS activat FROM utilizator ORDER BY nume"
+    `SELECT id, nume, user, rol, activ, creat_la, parola_hash != '' AS activat,
+            (SELECT MAX(vazut_la) FROM sesiune s WHERE s.utilizator_id = utilizator.id) AS vazut_la   -- ultima cerere a omului
+       FROM utilizator ORDER BY nume`
   ).all().map(u => ({ ...u, activat: !!u.activat })),
 });
 
