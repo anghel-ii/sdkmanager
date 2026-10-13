@@ -165,14 +165,15 @@ function inlocuiesteSteppere(radacina) {
     const inp = document.createElement('input');
     inp.type = 'number'; inp.min = '0'; inp.step = '1'; inp.inputMode = 'numeric';
     inp.className = 'nou-nr';
-    inp.value = valoare(st);
+    inp.placeholder = '0';
+    inp.value = valoare(st) || '';   // 0 = gol (userul, 2026-10-12: necompletat înseamnă 0)
     const cheie = cheieStepper(st);
-    inp.addEventListener('change', () => seteazaStepper(cheie, parseInt(inp.value, 10)));
+    inp.addEventListener('change', () => seteazaStepper(cheie, inp.value.trim() === '' ? 0 : parseInt(inp.value, 10)));
     st.after(inp);
   });
   // valorile schimbate din altă parte (ex. culoarea forţează nr. de uşi)
   radacina.querySelectorAll('.stepper[data-nou] + .nou-nr').forEach(inp => {
-    if (document.activeElement !== inp) inp.value = valoare(inp.previousElementSibling);
+    if (document.activeElement !== inp) inp.value = valoare(inp.previousElementSibling) || '';
   });
 }
 
@@ -185,7 +186,7 @@ function seteazaStepper(cheie, tinta) {
     if (valoare(document.querySelector(cheie)) === v) break;   // limita stepperului
   }
   const st = document.querySelector(cheie), inp = st?.nextElementSibling;
-  if (inp?.classList.contains('nou-nr')) inp.value = valoare(st);
+  if (inp?.classList.contains('nou-nr')) inp.value = valoare(st) || '';
 }
 
 // ── Fără prescurtări ──

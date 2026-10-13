@@ -148,7 +148,11 @@ function pasi() {
 for (const id of ['clientNume', 'clientTelefon', 'clientAdresa', 'comandaLivrare', 'comandaPlata', 'comandaAgent', 'ofertaNr'])
   for (const ev of ['input', 'change']) $(id).addEventListener(ev, pasi);
 // Goleşte pagina — ca în configurator: produsul de pe ecran de la zero (coşul rămâne)
-$('btnClear').addEventListener('click', () => location.reload());
+// cu produse deja puse, întâi o întrebare — butonul e lângă „Salvează" şi şterge tot ce nu e salvat
+$('btnClear').addEventListener('click', () => {
+  if (linii.some(l => l?.cod) && !confirm('Goleşti pagina? Produsele puse aici şi nesalvate se pierd.')) return;
+  location.reload();
+});
 
 const rand = el => +el.closest('tr').dataset.i;
 const focus = (i, cls) => {

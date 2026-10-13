@@ -1033,6 +1033,13 @@ const clientPtCos = () => ({
   client: { nume: $('clientNume').value, telefon: $('clientTelefon').value, adresa: $('clientAdresa').value },
   ofertaNr: $('ofertaNr').value, comanda: detaliiComanda(state) });
 
+// O cotă scrisă în afara limitelor modelului a fost corectată la limită — spunem, cu ce s-a pus
+// (o cifră în plus, 24000 în loc de 2400, nu trebuie să ajungă tăcut 3400 în ofertă).
+function cotaCorectata(ce, scris, pus, lim) {
+  if (!lim || !Number.isFinite(scris) || scris === pus) return;
+  mesajOferta(`${ce}: ${scris} mm nu se poate la modelul ăsta (${lim[0]}–${lim[1]} mm) — am pus <strong>${pus} mm</strong>. Verifică cota.`, 'eroare');
+}
+
 function mesajOferta(html, fel) {
   const el = $('ofertaMesaj');
   if (el) el.innerHTML = `<div class="oferta-msg ${fel}">${html}</div>`;
@@ -1375,6 +1382,7 @@ export async function initUI() {
     e.target.value = state.height;
     renderWheels();   // la Confort, cota e una din condiţiile care arată cardurile de uşă
     rebuild();
+    cotaCorectata('Înălţimea golului', val, state.height, lim);
   });
   $('widthInput').addEventListener('change', e => {
     const lim = systems[state.system]?.meta.limits?.width;
@@ -1385,11 +1393,15 @@ export async function initUI() {
     e.target.value = state.width;
     renderWheels();
     rebuild();
+    cotaCorectata('Lăţimea golului', val, state.width, lim);
   });
 
-  $('btnFisa')?.addEventListener('click', () => modFisa
-    ? deschideFisa(modFisa.client, modFisa, modFisa)
-    : deschideFisa($('clientNume')?.value, ofertaPtFisa()));
+  $('btnFisa')?.addEventListener('click', () => {
+    // fişa cere o configuraţie (model, culoare, cote) — altfel mesaj aici, nu fereastra browserului
+    if (!modFisa && !currentSpec()) return mesajOferta('Fişa se poate printa după ce alegi modelul, culoarea şi dimensiunile.', 'eroare');
+    if (modFisa) deschideFisa(modFisa.client, modFisa, modFisa);
+    else deschideFisa($('clientNume')?.value, ofertaPtFisa());
+  });
   $('btnConfirma')?.addEventListener('click', () => trimiteOferta('oferta'));
   $('btnComanda')?.addEventListener('click', () => trimiteOferta('comanda'));
   $('btnPlata')?.addEventListener('click', () => trimiteOferta('plata'));
@@ -1401,7 +1413,11 @@ export async function initUI() {
   initSugestiiClienti(agent => { $('comandaAgent').value = agent; state.comanda.agent = agent; rebuild(); });
   // CLEAR PAGE — configuraţie nouă de la zero: reîncărcarea paginii (cu acelaşi
   // ?gama=) readuce exact ecranul iniţial gol, fără stare rămasă pe undeva.
-  $('btnClear')?.addEventListener('click', () => location.reload());
+  // cu ceva deja ales, întâi o întrebare — butonul e lângă „Salvează" şi şterge tot ce nu e salvat
+  $('btnClear')?.addEventListener('click', () => {
+    if (state.system && !confirm('Goleşti pagina? Tot ce ai configurat aici şi n-ai salvat se pierde.')) return;
+    location.reload();
+  });
 
   applyLimits();
   // Ecranul iniţial gol la Confort: applyLimits() nu atinge câmpurile cât
