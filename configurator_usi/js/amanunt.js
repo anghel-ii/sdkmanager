@@ -575,7 +575,7 @@ const puneClientul = (client, ofertaNr, detalii) => {
   await manager.initOferta(renderOferta);
   if (cos.ofertaEditata) { $('btnConfirma').textContent = TEXT.btnConfirma(); mesaj(`Modifici oferta <strong>${esc(cos.numar ?? '')}</strong>.`, 'ok'); }
   if (eroare) mesaj(esc(eroare), 'eroare');
-  if (!modFisa) ciorna.init({ pagina: 'amanunt', cos, gama: () => 'amanunt', client: clientPtCos,
+  if (!modFisa) ciorna.init({ cos, gama: () => 'amanunt', client: clientPtCos,
     ecran: () => ({ linii, observatii: $('observatii').value }),
     areContinut: () => cos.pozitii.length > 0 || linii.some(l => l?.cod || String(l?.denumire ?? '').trim()),
     titlu: () => {

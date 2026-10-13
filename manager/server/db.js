@@ -212,20 +212,6 @@ const MIGRATII = [
       raspuns    TEXT
     );
     CREATE UNIQUE INDEX cerere_deschisa ON cerere (comanda_id, tip) WHERE stare = 'deschisa';`),
-  // v17 → v18 (2026-10-13): ciornele — oferta începută în configurator şi nesalvată, păstrată
-  // la plecare („Salvează ca ciornă"), pe contul omului (server/ciorne.js). Starea e un JSON opac.
-  d => d.exec(`
-    CREATE TABLE ciorna (
-      id            INTEGER PRIMARY KEY,
-      utilizator_id INTEGER NOT NULL REFERENCES utilizator(id) ON DELETE CASCADE,
-      pagina        TEXT NOT NULL,          -- 'configurator' | 'amanunt'
-      gama          TEXT,
-      titlu         TEXT NOT NULL,
-      date_json     TEXT NOT NULL,
-      creat_la      TEXT NOT NULL,
-      modificat_la  TEXT NOT NULL
-    );
-    CREATE INDEX ciorna_utilizator ON ciorna (utilizator_id, modificat_la);`),
 ];
 
 // Exportată pt. test.

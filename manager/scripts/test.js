@@ -465,7 +465,7 @@ async function main() {
     const idVechi = Number(db2().prepare("INSERT INTO utilizator (nume, user, parola_hash, parola_salt, rol) VALUES ('Vechi', 'vechi', 'x', 'x', 'operator')").run().lastInsertRowid);
     require('../server/db.js').roluriNoi(db2());
     verifica('migraţie: operator → birou', db2().prepare('SELECT rol FROM utilizator WHERE id = ?').get(idVechi).rol === 'birou');
-    verifica('schema la versiunea 18', db2().prepare('PRAGMA user_version').get().user_version === 18);
+    verifica('schema la versiunea 17', db2().prepare('PRAGMA user_version').get().user_version === 17);
   }
 
   console.log('\nFixare şi sortare — per utilizator');
@@ -939,25 +939,6 @@ async function main() {
       && (await cer('GET', '/api/comenzi?tip=oferta')).date.comenzi.some(c => c.id === b));
     verifica('pagina /cereri se serveşte', String((await cer('GET', '/cereri')).date).includes('<title>Cereri</title>'));
     verifica('/admin află ultimul backup', 'backup' in (await cer('GET', '/api/actualizare')).date);
-  }
-
-  console.log('\nCiorne (server/ciorne.js) — oferta nesalvată, pe contul omului');
-  {
-    verifica('ciornă pe pagină necunoscută → 400', (await cer('POST', '/api/ciorne', { pagina: 'x', date: {} })).stare === 400);
-    verifica('ciornă fără date → 400', (await cer('POST', '/api/ciorne', { pagina: 'configurator' })).stare === 400);
-    const id = (await cer('POST', '/api/ciorne', { pagina: 'configurator', gama: 'confortGamma', titlu: 'Gamma · Ion', date: { state: { width: 900 } } })).date.id;
-    verifica('ciornă nouă → id', id > 0);
-    verifica('ciornă actualizată, nu dublată', (await cer('POST', '/api/ciorne', { id, pagina: 'configurator', titlu: 'Gamma · Ion', date: { state: { width: 1000 } } })).date.id === id
-      && (await cer('GET', '/api/ciorne')).date.ciorne.filter(c => c.titlu === 'Gamma · Ion').length === 1);
-    verifica('ciorna se citeşte cu starea', (await cer('GET', `/api/ciorne/${id}`)).date.ciorna.date.state.width === 1000);
-    const k = cookie; cookie = null; await cer('POST', '/api/login', { user: 'maria', parola: 'parola-maria-1' });
-    verifica('ciorna altcuiva: nu se vede (404) şi nu se suprascrie', (await cer('GET', `/api/ciorne/${id}`)).stare === 404
-      && (await cer('POST', '/api/ciorne', { id, pagina: 'amanunt', titlu: 'a Mariei', date: {} })).date.id !== id
-      && !(await cer('GET', '/api/ciorne')).date.ciorne.some(c => c.id === id));
-    await cer('DELETE', `/api/ciorne/${id}`);
-    cookie = k;
-    verifica('… nici nu se şterge de altcineva', (await cer('GET', `/api/ciorne/${id}`)).stare === 200);
-    verifica('ştergere → dispare', (await cer('DELETE', `/api/ciorne/${id}`)).stare === 200 && (await cer('GET', `/api/ciorne/${id}`)).stare === 404);
   }
 
   console.log('\nTaskuri + remindere (server/taskuri.js)');

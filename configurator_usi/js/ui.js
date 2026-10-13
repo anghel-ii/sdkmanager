@@ -1289,9 +1289,9 @@ export async function initUI() {
   // „Modifică oferta" din manager: toate produsele ofertei intră în coş, apoi se
   // deschide primul (pe pagina gamei lui); restul se modifică din „Adaugă la ofertă".
   let eroareIncarcare = null;
-  // „Ciornele mele" din manager: coşul ciornei, apoi pagina gamei ei (ecranul se pune mai jos)
+  // „Continuă ciorna" din manager: coşul ciornei, apoi pagina gamei ei (ecranul se pune mai jos)
   if (params.get('ciorna')) {
-    const r = await ciorna.reia(params.get('ciorna'));
+    const r = ciorna.reia(params.get('ciorna'));
     if (r.eroare) eroareIncarcare = r.eroare;
     else { cosul.scrie(r.cos); return location.replace(cosul.url(r.gama, r.cos.curent != null ? { poz: r.cos.curent } : {})); }
   }
@@ -1487,7 +1487,7 @@ export async function initUI() {
   // asincron: decide dacă panoul de ofertă are unde să trimită
   oferta.initOferta(renderOferta);
   // la plecare cu oferta nesalvată: „Salvează ca ciornă" / „Renunţă la ea" / „Rămâi aici"
-  if (!modFisa) ciorna.init({ pagina: 'configurator', cos, gama: currentGama, client: clientPtCos,
+  if (!modFisa) ciorna.init({ cos, gama: currentGama, client: clientPtCos,
     ecran: () => ({ state, atinse: [latimeAtinsa, inaltimeAtinsa] }),
     areContinut: () => !!state.system || cos.pozitii.length > 0,
     titlu: () => {

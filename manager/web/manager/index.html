@@ -159,7 +159,6 @@
     <div id="continut">Se încarcă…</div>
   </div>
   <div class="acasa-dreapta">
-    <section class="card-taskuri" id="cardCiorne" hidden></section>
     <section class="card-taskuri" id="cardTaskuri"></section>
     <aside class="card-comanda" id="cardComanda" aria-live="polite"></aside>
   </div>
@@ -365,10 +364,31 @@ const ICOANA_TAB = { oferta: 'oferta', plata: 'plata', comanda: 'lucru', finaliz
 // pe plăcile înguste, numele din meniul din stânga (cel întreg rămâne în title)
 const NUME_SCURT = { oferta: 'Oferte', plata: 'Aşteaptă plata', comanda: 'În lucru', finalizata: 'Finalizate' };
 
+// „Continuă ciorna" lângă butoanele gamelor: ofertele lăsate ca ciornă la plecarea din configurator.
+// Stau DOAR în browserul ăsta, cel mult 48 de ore (configurator_usi/js/ciorna.js, localStorage „ciorne");
+// aici doar ale contului logat. Una → butonul duce direct la ea; mai multe → lista lor.
+function puneCiorne() {
+  const el = $('ciorneSus');
+  if (!el) return;
+  let ale = [];
+  try { ale = JSON.parse(localStorage.getItem('ciorne') || '[]').filter(c => c.uid === eu?.id && Date.now() - c.la < 48 * 3600e3); } catch { /* fără */ }
+  el.hidden = !ale.length;
+  const sem = JSON.stringify(ale.map(c => [c.id, c.la]));   // la fiecare randare — lista deschisă nu se închide degeaba
+  if (el.dataset.sem === sem) return;
+  el.dataset.sem = sem;
+  const link = c => `/configurator/?ciorna=${encodeURIComponent(c.id)}`;
+  const info = c => `salvată ${dataOra(new Date(c.la))} · se şterge după 48 de ore`;
+  el.innerHTML = ale.length === 1
+    ? `<a class="buton-ciorna" href="${link(ale[0])}" title="${esc(info(ale[0]))}">Continuă ciorna <small>${esc(ale[0].titlu)}</small></a>`
+    : `<details><summary class="buton-ciorna">Continuă ciorna <span class="insigna-num">${ale.length}</span></summary>
+        <div class="ciorne-lista">${ale.map(c => `<a href="${link(c)}">${esc(c.titlu)}<small>${esc(info(c))}</small></a>`).join('')}</div></details>`;
+}
+window.addEventListener('storage', e => { if (e.key === 'ciorne') puneCiorne(); });   // salvată din alt tab
+
 function asiguraTaburi() {
   if (!$('taburiSus').children.length) {
     $('taburiSus').innerHTML = `
-      <div class="eticheta-sus">Ofertă nouă</div>
+      <div class="sus-game"><div class="eticheta-sus">Ofertă nouă</div><div id="ciorneSus" hidden></div></div>
       <div class="placi-game" id="placiGame"></div>
       <div class="taburi">${TABURI.map(([t, n]) => `
         <button data-tab="${t}" class="placa ton-${t}" title="${n}">
@@ -392,6 +412,7 @@ function asiguraTaburi() {
         renderLista();
       }));
   }
+  puneCiorne();
   const toate = ceLista() === 'toate';
   document.querySelectorAll('#taburiSus .taburi button').forEach(b => b.classList.toggle('activ', b.dataset.tab === tabCurent && !toate));
   // în meniul din stânga: starea arătată acum
@@ -449,32 +470,7 @@ function asiguraBaraLista() {
     });
     incarcaCard();
     incarcaTaskuri();
-    incarcaCiorne();
   }
-}
-
-// ── Ciornele mele: oferte începute în configurator şi lăsate ca ciornă la plecare (server/ciorne.js) ──
-// Doar când există; Continuă = configuratorul, de unde a rămas; ✕ = o arunci.
-async function incarcaCiorne() {
-  const el = $('cardCiorne');
-  if (!el || !$('tabelLista')) return;
-  const r = await api('/api/ciorne');
-  const ale = r?.ok ? (await r.json()).ciorne : [];
-  el.hidden = !ale.length;
-  el.innerHTML = `
-    <div class="ct-cap"><b>Ciornele mele</b><span class="insigna-num">${ale.length}</span></div>
-    <ul class="ct-lista">${ale.map(c => `
-      <li data-id="${c.id}">
-        <div style="flex:1"><a class="ct-text" href="/configurator/?ciorna=${c.id}" title="Continuă oferta de unde ai rămas">${esc(c.titlu)}</a>
-          <span class="ct-info">salvată ${dataOra(c.modificat_la)}</span></div>
-        <button type="button" class="mic" data-sterge title="Aruncă ciorna">✕</button>
-      </li>`).join('')}</ul>`;
-  el.querySelectorAll('[data-sterge]').forEach(b => b.addEventListener('click', async () => {
-    const li = b.closest('li');
-    if (!(await confirma(`Arunci ciorna „${li.querySelector('.ct-text').textContent}"?`, 'Aruncă'))) return;
-    await api(`/api/ciorne/${li.dataset.id}`, { method: 'DELETE' });
-    incarcaCiorne();
-  }));
 }
 
 // ── Taskurile mele, deasupra cardului comenzii (server/taskuri.js; pagina /taskuri) ──
