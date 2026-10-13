@@ -286,3 +286,12 @@ body.ui-nou [data-z="info"] .factura-form input { flex: 1 1 110px; }
 .eticheta-curand { padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600;
                    color: #e5b45a; background: rgba(212, 162, 76, .12); border: 1px solid rgba(212, 162, 76, .45); }
 .card.in-curand button:disabled { opacity: .45; cursor: not-allowed; }
+
+/* anularea comenzii: cerută (aşteaptă conducerea) / anulată / respinsă — server/cereri.js */
+.anulare-info { margin: 10px 0 2px; padding: 9px 12px; border-radius: 10px; font-size: 13px; line-height: 1.45;
+                border: 1px solid var(--line); background: var(--panel-2); color: var(--text-dim); }
+.anulare-info b { color: var(--text); }
+.anulare-info a { color: var(--accent); }
+.anulare-info.deschisa { border-color: rgba(212, 162, 76, .45); background: rgba(212, 162, 76, .08); }
+.anulare-info.anulata { border-color: rgba(201, 96, 76, .55); background: rgba(201, 96, 76, .1); }
+.stare-pastila.anulata { color: #e8907f; border-color: rgba(201, 96, 76, .55); background: rgba(201, 96, 76, .1); }

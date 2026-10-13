@@ -4,11 +4,31 @@ const auth = require('../auth.js');
 
 // ── API utilizatori: login, logout, cine sunt, administrare conturi ─────────
 
+// Parole ghicite pe rând (userul, 2026-10-13): după 10 greşeli în 15 minute pe acelaşi cont
+// de pe acelaşi calculator — sau 30 de pe acelaşi calculator, pe orice conturi — login-ul de
+// acolo e blocat până trec 15 minute de la prima greşeală. Ţinut în memorie (o repornire şterge).
+const FEREASTRA_MS = 15 * 60e3;
+const esecuri = new Map();   // cheie → momentele greşelilor din fereastră
+const recente = cheie => (esecuri.get(cheie) ?? []).filter(t => Date.now() - t < FEREASTRA_MS);
+function blocajLogin(ip, user) {
+  for (const [cheie, max] of [[`${ip}|${user}`, 10], [ip, 30]]) {
+    const r = recente(cheie);
+    if (r.length >= max) return Math.ceil((r[0] + FEREASTRA_MS - Date.now()) / 60e3);
+  }
+  return 0;
+}
+function greseala(ip, user) {
+  for (const cheie of [`${ip}|${user}`, ip]) esecuri.set(cheie, [...recente(cheie), Date.now()]);
+}
+
 async function postLogin(ctx) {
   const { req, res } = ctx;
   const { user, parola, parolaConfirmare } = await corpJson(req);
 
   if (!user || !parola) return eroare(res, 400, 'Completează utilizatorul şi parola.');
+  const ip = req.socket.remoteAddress ?? '', cine = String(user).trim().toLowerCase();
+  const minute = blocajLogin(ip, cine);
+  if (minute) return eroare(res, 429, `Prea multe parole greşite — mai încearcă peste ${minute} ${minute === 1 ? 'minut' : 'minute'}.`);
 
   // Cont creat de admin, încă fără parolă: parola scrisă acum devine parola
   // contului, după ce e reintrodusă identic (pagina de login cere confirmarea).
@@ -24,7 +44,8 @@ async function postLogin(ctx) {
 
   const sesiune = auth.login(user, parola);
   // Un singur mesaj pentru orice eşec: nu spunem dacă userul există sau nu.
-  if (!sesiune) return eroare(res, 401, 'Utilizator sau parolă greşită.');
+  if (!sesiune) { greseala(ip, cine); return eroare(res, 401, 'Utilizator sau parolă greşită.'); }
+  esecuri.delete(`${ip}|${cine}`);
 
   json(res, 200, { utilizator: sesiune.utilizator }, { 'Set-Cookie': auth.cookieSesiune(sesiune.token) });
 }
@@ -57,14 +78,14 @@ const ROLURI = ['admin', 'conducere', 'birou'];
 
 async function creeaza(ctx) {
   const { res } = ctx;
-  // De obicei doar utilizator + rol: omul îşi pune parola la primul login.
-  // Numele afişat e opţional (implicit = utilizatorul); parola, opţională.
+  // Utilizator + rol + parola INIŢIALĂ (userul, 2026-10-13): înainte omul îşi alegea parola la
+  // primul login, deci oricine ştia utilizatorul putea „lua" contul înaintea lui. Numele, opţional.
   const corp = await corpJson(ctx.req);
   const { nume, parola, rol } = corp;
   const user = String(corp.user ?? '').trim().toLowerCase();
 
   if (!USER_VALID.test(user))         return eroare(res, 400, 'Utilizator invalid: 2–40 caractere, doar litere mici, cifre, punct, cratimă.');
-  if (parola != null && String(parola).length < 8) return eroare(res, 400, 'Parola trebuie să aibă cel puţin 8 caractere.');
+  if (parola == null || String(parola).length < 8) return eroare(res, 400, 'Pune o parolă iniţială de cel puţin 8 caractere (i-o spui colegului).');
   if (rol && !ROLURI.includes(rol))   return eroare(res, 400, `Rol necunoscut. Valori permise: ${ROLURI.join(', ')}.`);
 
   try {
@@ -89,6 +110,8 @@ async function modifica(ctx) {
   if (reseteazaParola && id === ctx.utilizator.id) {
     return eroare(res, 400, 'Nu îţi poţi reseta singur parola — schimb-o din contul tău.');
   }
+  // resetarea = o parolă TEMPORARĂ pusă de admin (nu cont fără parolă, pe care l-ar putea lua oricine)
+  if (reseteazaParola && parola == null) return eroare(res, 400, 'Pune parola temporară nouă (i-o spui colegului).');
 
   // Nu te poţi dezactiva sau retrograda singur — altfel rămâne firma fără admin.
   // „Dezactivare" = orice valoare falsă (0, false, ""), cum o şi salvează mai jos.
@@ -102,7 +125,6 @@ async function modifica(ctx) {
     if (rol   != null) d.prepare('UPDATE utilizator SET rol   = ? WHERE id = ?').run(rol, id);
     if (activ != null) d.prepare('UPDATE utilizator SET activ = ? WHERE id = ?').run(activ ? 1 : 0, id);
     if (parola != null) auth.schimbaParola(id, parola);
-    if (reseteazaParola) auth.reseteazaParola(id);
   });
 
   json(res, 200, { utilizator: auth.gasesteUtilizator(id) });

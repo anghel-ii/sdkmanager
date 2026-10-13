@@ -5,7 +5,7 @@ const { execFile, spawn } = require('node:child_process');
 const { promisify } = require('node:util');
 const { json, eroare, corpJson } = require('./http.js');
 const { config } = require('./config.js');
-const { db, backup } = require('./db.js');
+const { db, backup, ultimulBackup } = require('./db.js');
 const { acumMs } = require('./ora.js');
 
 // ── Actualizarea aplicaţiei din pagina /admin ───────────────────────────────
@@ -116,6 +116,7 @@ async function dateStare() {
     versiune: textVersiune(await versiuneLocala()),
     ruleaza: fara ? inCurs : await sarcinaRuleaza(),
     jurnal: coadaJurnal(fara ? JURNAL_FARA_ADMIN : JURNAL),
+    backup: ultimulBackup(),   // { fisier, la, mb } — /admin îl arată (roşu dacă e mai vechi de o zi)
   };
 }
 const stare = async ctx => json(ctx.res, 200, await dateStare());

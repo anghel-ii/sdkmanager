@@ -195,6 +195,23 @@ const MIGRATII = [
       facut_la   TEXT
     );
     CREATE INDEX task_pentru ON task (pentru, facut_la);`),
+  // v16 → v17 (2026-10-13): cererile (tichetele) pt. conducere / admin — deocamdată anularea
+  // unei comenzi: oricine o cere cu un motiv, conducerea o aprobă sau o respinge (server/cereri.js).
+  // O singură cerere deschisă de acelaşi fel pe o comandă.
+  d => d.exec(`
+    CREATE TABLE cerere (
+      id         INTEGER PRIMARY KEY,
+      tip        TEXT NOT NULL,                    -- 'anulare'
+      comanda_id INTEGER REFERENCES comanda(id) ON DELETE CASCADE,
+      motiv      TEXT NOT NULL,
+      creat_de   INTEGER NOT NULL REFERENCES utilizator(id),
+      creat_la   TEXT NOT NULL,
+      stare      TEXT NOT NULL DEFAULT 'deschisa', -- deschisa | aprobata | respinsa
+      decis_de   INTEGER REFERENCES utilizator(id),
+      decis_la   TEXT,
+      raspuns    TEXT
+    );
+    CREATE UNIQUE INDEX cerere_deschisa ON cerere (comanda_id, tip) WHERE stare = 'deschisa';`),
 ];
 
 // Exportată pt. test.
@@ -277,6 +294,17 @@ function backup() {
   return dest;
 }
 
+// Cel mai nou backup din folderul de backup — pt. /admin („Ultimul backup", cu avertisment
+// dacă e mai vechi de o zi; userul, 2026-10-13). null = niciunul.
+function ultimulBackup() {
+  let f;
+  try {
+    f = fs.readdirSync(config.backup).filter(x => /^manager-\d{4}-\d{2}-\d{2}\.sqlite$/.test(x))
+      .map(x => ({ x, st: fs.statSync(path.join(config.backup, x)) })).sort((a, b) => b.st.mtimeMs - a.st.mtimeMs)[0];
+  } catch { return null; }
+  return f ? { fisier: path.join(config.backup, f.x), la: f.st.mtime.toISOString(), mb: Math.round(f.st.size / 1e5) / 10 } : null;
+}
+
 // Rulează `fn` într-o tranzacţie; la orice excepţie se anulează tot.
 // Necesar la crearea unei comenzi: ori intră comanda CU poziţiile, liniile şi
 // uşile ei, ori nu intră nimic.
@@ -299,4 +327,4 @@ function inchide() {
   if (_db) { _db.close(); _db = null; }
 }
 
-module.exports = { db, deschide, inchide, backup, tranzactie, hashSesiuniInClar, roluriNoi, ACUM };
+module.exports = { db, deschide, inchide, backup, ultimulBackup, tranzactie, hashSesiuniInClar, roluriNoi, ACUM };

@@ -355,6 +355,7 @@ function detaliu(ctx) {
 
   json(ctx.res, 200, {
     comanda,
+    cerere: require('../cereri.js').cerereComenzii(id),   // anularea cerută / decisă (tichetele conducerii)
     sticla,                          // null = comanda n-are sticlă de comandat
     sticlaLinii: require('../sticla.js').sticlaComenzii(id),   // pe furnizor: mail + bifă
     // codul de bare + istoricul din atelier — doar cu scanarea pornită
@@ -574,6 +575,7 @@ const sumar = ctx => json(ctx.res, 200, {
 `).get(),
   sticla: require('../sticla.js').sumarSticla(),   // bucăţi de sticlă de comandat
   deAprobat: require('../clienti.js').nrDeAprobat(), // clienţi noi / modificări de la agenţi, de aprobat
+  cereri: ['admin', 'conducere'].includes(ctx.utilizator.rol) ? require('../cereri.js').nrDeschise() : 0,   // tichete de decis
 });
 
 module.exports = {

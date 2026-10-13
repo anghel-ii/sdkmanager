@@ -465,7 +465,7 @@ async function main() {
     const idVechi = Number(db2().prepare("INSERT INTO utilizator (nume, user, parola_hash, parola_salt, rol) VALUES ('Vechi', 'vechi', 'x', 'x', 'operator')").run().lastInsertRowid);
     require('../server/db.js').roluriNoi(db2());
     verifica('migraţie: operator → birou', db2().prepare('SELECT rol FROM utilizator WHERE id = ?').get(idVechi).rol === 'birou');
-    verifica('schema la versiunea 16', db2().prepare('PRAGMA user_version').get().user_version === 16);
+    verifica('schema la versiunea 17', db2().prepare('PRAGMA user_version').get().user_version === 17);
   }
 
   console.log('\nFixare şi sortare — per utilizator');
@@ -538,55 +538,60 @@ async function main() {
   verifica('fără linii alese → 400', (await cer('POST', '/api/sticla/comanda', { ids: [] })).stare === 400);
   verifica('pagina /sticla se serveşte', String((await cer('GET', '/sticla')).date).includes('Comandă sticlă'));
 
-  console.log('\nConturi create de admin, activate de utilizator la primul login');
+  console.log('\nConturi: parola iniţială dată de admin; conturile vechi fără parolă se activează la primul login');
   {
     const ca = async fn => { const k = cookie; cookie = null; try { return await fn(); } finally { cookie = k; } };
-    // ca admin
-    const nou = await cer('POST', '/api/utilizatori', { user: ' Ana.Pop ', rol: 'birou' });
-    verifica('admin creează cont DOAR cu utilizator + rol → 201', nou.stare === 201 && nou.date.utilizator?.user === 'ana.pop', JSON.stringify(nou.date));
+    verifica('cont nou FĂRĂ parolă iniţială → 400', (await cer('POST', '/api/utilizatori', { user: 'fara.parola', rol: 'birou' })).stare === 400);
+    const nou = await cer('POST', '/api/utilizatori', { user: ' Ana.Pop ', rol: 'birou', parola: 'parola-ana-0' });
+    verifica('admin creează cont cu parolă iniţială → 201', nou.stare === 201 && nou.date.utilizator?.user === 'ana.pop', JSON.stringify(nou.date));
     verifica('… numele afişat = utilizatorul', nou.date.utilizator?.nume === 'ana.pop');
-    verifica('… contul apare neactivat în listă',
-      (await cer('GET', '/api/utilizatori')).date.utilizatori.find(u => u.user === 'ana.pop')?.activat === false);
-    verifica('utilizator cu caractere nepermise → 400', (await cer('POST', '/api/utilizatori', { user: 'ana pop!', rol: 'birou' })).stare === 400);
-    verifica('utilizator existent → 409', (await cer('POST', '/api/utilizatori', { user: 'ana.pop', rol: 'birou' })).stare === 409);
-
+    verifica('… contul e activ din prima', (await cer('GET', '/api/utilizatori')).date.utilizatori.find(u => u.user === 'ana.pop')?.activat === true);
+    verifica('utilizator cu caractere nepermise → 400', (await cer('POST', '/api/utilizatori', { user: 'ana pop!', rol: 'birou', parola: 'parola-lunga-1' })).stare === 400);
+    verifica('utilizator existent → 409', (await cer('POST', '/api/utilizatori', { user: 'ana.pop', rol: 'birou', parola: 'parola-lunga-1' })).stare === 409);
     await ca(async () => {
-      const r1 = await cer('POST', '/api/login', { user: 'ana.pop', parola: 'parola-ana-1' });
-      verifica('primul login pe cont neactivat → cere confirmarea parolei', r1.stare === 409 && r1.date.activare === true, JSON.stringify(r1));
-      verifica('… fără sesiune încă', cookie === null);
-      verifica('parole diferite → 400, contul rămâne neactivat',
-        (await cer('POST', '/api/login', { user: 'ana.pop', parola: 'parola-ana-1', parolaConfirmare: 'alta-parola-1' })).stare === 400);
-      verifica('parolă prea scurtă → 400',
-        (await cer('POST', '/api/login', { user: 'ana.pop', parola: 'scurt', parolaConfirmare: 'scurt' })).stare === 400);
-      const r2 = await cer('POST', '/api/login', { user: 'ana.pop', parola: 'parola-ana-1', parolaConfirmare: 'parola-ana-1' });
-      verifica('parole identice → cont activat + logat', r2.stare === 200 && !!cookie && r2.date.utilizator?.rol === 'birou');
-      verifica('… sesiunea merge', (await cer('GET', '/api/eu')).date.utilizator?.user === 'ana.pop');
-    });
-    await ca(async () => {
-      verifica('după activare: login normal', (await cer('POST', '/api/login', { user: 'ana.pop', parola: 'parola-ana-1' })).stare === 200);
-      verifica('după activare: altcineva NU mai poate „reactiva" cu altă parolă → 401',
+      verifica('altcineva NU poate „activa" contul cu altă parolă → 401',
         (await cer('POST', '/api/login', { user: 'ana.pop', parola: 'alta-parola-2', parolaConfirmare: 'alta-parola-2' })).stare === 401);
+      verifica('colegul intră cu parola iniţială', (await cer('POST', '/api/login', { user: 'ana.pop', parola: 'parola-ana-0' })).stare === 200);
+    });
+
+    // conturile vechi, create fără parolă: se activează în continuare la primul login
+    creeazaUtilizator({ nume: 'Vechi', user: 'cont.vechi', rol: 'birou' });
+    await ca(async () => {
+      const r1 = await cer('POST', '/api/login', { user: 'cont.vechi', parola: 'parola-veche-1' });
+      verifica('cont vechi neactivat → cere confirmarea parolei', r1.stare === 409 && r1.date.activare === true, JSON.stringify(r1));
+      verifica('… fără sesiune încă', cookie === null);
+      verifica('parole diferite → 400', (await cer('POST', '/api/login', { user: 'cont.vechi', parola: 'parola-veche-1', parolaConfirmare: 'alta-parola-1' })).stare === 400);
+      verifica('parolă prea scurtă → 400', (await cer('POST', '/api/login', { user: 'cont.vechi', parola: 'scurt', parolaConfirmare: 'scurt' })).stare === 400);
+      const r2 = await cer('POST', '/api/login', { user: 'cont.vechi', parola: 'parola-veche-1', parolaConfirmare: 'parola-veche-1' });
+      verifica('parole identice → cont activat + logat', r2.stare === 200 && !!cookie && r2.date.utilizator?.rol === 'birou');
     });
     const ana = (await cer('GET', '/api/utilizatori')).date.utilizatori.find(u => u.user === 'ana.pop');
-    verifica('lista o arată activată', ana.activat === true);
     verifica('lista nu scoate hash-ul / salt-ul', !JSON.stringify(ana).includes('parola'));
 
-    // resetare parolă (parolă uitată)
-    verifica('admin resetează parola → 200', (await cer('PATCH', `/api/utilizatori/${ana.id}`, { reseteazaParola: true })).stare === 200);
-    verifica('… contul e iar neactivat', (await cer('GET', '/api/utilizatori')).date.utilizatori.find(u => u.id === ana.id).activat === false);
+    // resetare parolă (parolă uitată): o parolă TEMPORARĂ, nu cont fără parolă
+    verifica('resetare fără parola temporară → 400', (await cer('PATCH', `/api/utilizatori/${ana.id}`, { reseteazaParola: true })).stare === 400);
+    verifica('admin pune parola temporară → 200', (await cer('PATCH', `/api/utilizatori/${ana.id}`, { reseteazaParola: true, parola: 'temporara-ana-1' })).stare === 200);
+    verifica('… contul rămâne activ (nu poate fi „luat")', (await cer('GET', '/api/utilizatori')).date.utilizatori.find(u => u.id === ana.id).activat === true);
     verifica('… şi sesiunile ei au căzut', !db2().prepare('SELECT 1 FROM sesiune WHERE utilizator_id = ?').get(ana.id));
     await ca(async () => {
-      verifica('… parola veche nu mai merge (cere activare)', (await cer('POST', '/api/login', { user: 'ana.pop', parola: 'parola-ana-1' })).stare === 409);
-      verifica('… îşi pune parolă nouă', (await cer('POST', '/api/login', { user: 'ana.pop', parola: 'parola-ana-2', parolaConfirmare: 'parola-ana-2' })).stare === 200);
+      verifica('… parola veche nu mai merge', (await cer('POST', '/api/login', { user: 'ana.pop', parola: 'parola-ana-0' })).stare === 401);
+      verifica('… intră cu cea temporară', (await cer('POST', '/api/login', { user: 'ana.pop', parola: 'temporara-ana-1' })).stare === 200);
     });
     const eu = (await cer('GET', '/api/eu')).date.utilizator;
-    verifica('adminul NU îşi poate reseta singur parola → 400', (await cer('PATCH', `/api/utilizatori/${eu.id}`, { reseteazaParola: true })).stare === 400);
-    // cont dezactivat, neactivat: nu se poate activa
-    const blocat = (await cer('POST', '/api/utilizatori', { user: 'blocat', rol: 'birou' })).date.utilizator;
+    verifica('adminul NU îşi poate reseta singur parola → 400', (await cer('PATCH', `/api/utilizatori/${eu.id}`, { reseteazaParola: true, parola: 'parola-lunga-7' })).stare === 400);
+    // cont dezactivat: nu intră
+    const blocat = (await cer('POST', '/api/utilizatori', { user: 'blocat', rol: 'birou', parola: 'parola-lunga-9' })).date.utilizator;
     await cer('PATCH', `/api/utilizatori/${blocat.id}`, { activ: false });
     await ca(async () => {
-      verifica('cont dezactivat → nu se poate activa (401)',
-        (await cer('POST', '/api/login', { user: 'blocat', parola: 'parola-lunga-9', parolaConfirmare: 'parola-lunga-9' })).stare === 401);
+      verifica('cont dezactivat → 401', (await cer('POST', '/api/login', { user: 'blocat', parola: 'parola-lunga-9' })).stare === 401);
+    });
+    // parole ghicite pe rând: după 10 greşeli în 15 minute pe acelaşi cont — blocat, chiar şi cu parola bună
+    await cer('POST', '/api/utilizatori', { user: 'lacat', rol: 'birou', parola: 'parola-lacat-1' });
+    await ca(async () => {
+      for (let k = 0; k < 10; k++) await cer('POST', '/api/login', { user: 'lacat', parola: `gresita-${k}` });
+      const r = await cer('POST', '/api/login', { user: 'lacat', parola: 'parola-lacat-1' });
+      verifica('10 parole greşite → blocat 15 minute (429), chiar şi cu parola bună', r.stare === 429 && /mai încearcă peste 15 minute/.test(r.date.eroare), JSON.stringify(r));
+      verifica('… alt cont de pe acelaşi calculator merge în continuare', (await cer('POST', '/api/login', { user: 'ana.pop', parola: 'temporara-ana-1' })).stare === 200);
     });
     verifica('pagina /admin se serveşte', String((await cer('GET', '/admin')).date).includes('Utilizatori'));
   }
@@ -901,6 +906,39 @@ async function main() {
     verifica('adaugă: transportul nu se dublează', transport === 1, `linii transport: ${transport}`);
     await cer('POST', `/api/comenzi/${o}/finalizeaza`);
     verifica('adaugă: la o comandă finalizată → 409', (await cer('POST', `/api/comenzi/${o}/adauga`, { pozitii: [pozitie('confortGamma', 'Confort Gamma', 1, 1200)] })).stare === 409);
+  }
+
+  console.log('\nCereri de anulare (server/cereri.js) — le decide conducerea');
+  {
+    const noua = async nume => (await cer('POST', '/api/comenzi', { client: { nume, telefon: '0700', adresa: 'X' }, ofertaNr: 'AN-' + nume,
+      pozitii: [pozitie('confortGamma', 'Confort Gamma', 1, 1200)] })).date.comanda.id;
+    const a = await noua('Anulez'), b = await noua('Respins');
+    const caMaria = async fn => { const k = cookie; cookie = null; await cer('POST', '/api/login', { user: 'maria', parola: 'parola-maria-1' });
+      try { return await fn(); } finally { cookie = k; } };
+    await caMaria(async () => {
+      verifica('anulare fără motiv → 400', (await cer('POST', `/api/comenzi/${a}/anulare`, { motiv: ' ' })).stare === 400);
+      verifica('biroul cere anularea cu motiv → 201', (await cer('POST', `/api/comenzi/${a}/anulare`, { motiv: 'Clientul a renunţat' })).stare === 201);
+      verifica('a doua cerere pe aceeaşi comandă → 409', (await cer('POST', `/api/comenzi/${a}/anulare`, { motiv: 'iar' })).stare === 409);
+      await cer('POST', `/api/comenzi/${b}/anulare`, { motiv: 'Greşeală' });
+      const id = (await cer('GET', '/api/cereri')).date.cereri.find(r => r.comanda_id === a)?.id;
+      verifica('biroul NU poate aproba → 403', (await cer('POST', `/api/cereri/${id}/aproba`)).stare === 403);
+      const l = (await cer('GET', '/api/cereri')).date;
+      verifica('biroul îşi vede cererile, fără drept de decizie', l.poateDecide === false && l.cereri.length === 2);
+    });
+    const lista = (await cer('GET', '/api/cereri')).date;
+    verifica('conducerea / adminul vede cererile deschise + poate decide', lista.poateDecide && lista.cereri.filter(r => r.stare === 'deschisa').length >= 2);
+    verifica('insigna din meniu: cereri deschise', (await cer('GET', '/api/sumar')).date.cereri >= 2);
+    verifica('pagina comenzii arată cererea', (await cer('GET', `/api/comenzi/${a}`)).date.cerere?.motiv === 'Clientul a renunţat');
+    const ra = lista.cereri.find(r => r.comanda_id === a), rb = lista.cereri.find(r => r.comanda_id === b);
+    verifica('aprobare → 200', (await cer('POST', `/api/cereri/${ra.id}/aproba`, { raspuns: 'OK' })).stare === 200);
+    verifica('… comanda e anulată şi iese din oferte', !(await cer('GET', '/api/comenzi?tip=oferta')).date.comenzi.some(c => c.id === a)
+      && db2().prepare('SELECT anulat FROM comanda WHERE id = ?').get(a).anulat === 1);
+    verifica('… o anulată nu mai poate fi acceptată', (await cer('POST', `/api/comenzi/${a}/accepta`, { plata: 'proforma' })).stare === 400);
+    verifica('a doua decizie → 409', (await cer('POST', `/api/cereri/${ra.id}/respinge`)).stare === 409);
+    verifica('respingere → comanda rămâne', (await cer('POST', `/api/cereri/${rb.id}/respinge`, { raspuns: 'Mai vorbim' })).stare === 200
+      && (await cer('GET', '/api/comenzi?tip=oferta')).date.comenzi.some(c => c.id === b));
+    verifica('pagina /cereri se serveşte', String((await cer('GET', '/cereri')).date).includes('<title>Cereri</title>'));
+    verifica('/admin află ultimul backup', 'backup' in (await cer('GET', '/api/actualizare')).date);
   }
 
   console.log('\nTaskuri + remindere (server/taskuri.js)');

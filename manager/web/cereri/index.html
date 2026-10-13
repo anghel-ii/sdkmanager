@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cereri</title>
+<link rel="stylesheet" href="/comun.css">
+<link rel="stylesheet" href="/nou.css">
+<script src="/dialog.js"></script>
+<script src="/data.js"></script>
+<script src="/live.js"></script>
+<style>
+  #continut { max-width: 1100px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+  .titlu-card { font-size: .74rem; text-transform: uppercase; letter-spacing: .05em; color: var(--text-dim); margin-bottom: 6px; }
+  .cerere { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 16px; padding: 14px 4px; border-bottom: 1px solid var(--line); }
+  .cerere:last-child { border-bottom: none; }
+  .cerere .cap { font-weight: 600; }
+  .cerere .cap a { color: var(--accent); }
+  .cerere .motiv { white-space: pre-wrap; word-break: break-word; margin-top: 4px; }
+  .cerere .info { color: var(--text-dim); font-size: .82rem; margin-top: 4px; }
+  .cerere .decizie { display: flex; flex-direction: column; gap: 8px; align-items: stretch; min-width: 240px; }
+  .cerere .decizie textarea { min-height: 38px; resize: vertical; }
+  .cerere .decizie .butoane { display: flex; gap: 8px; justify-content: flex-end; }
+  .pastila { display: inline-block; padding: 1px 9px; border-radius: 999px; border: 1px solid; font-size: .78rem; font-weight: 600; margin-left: 6px; }
+  .pastila.deschisa { color: #e5b45a; border-color: rgba(212, 162, 76, .45); background: rgba(212, 162, 76, .1); }
+  .pastila.aprobata { color: #e8907f; border-color: rgba(201, 96, 76, .5); background: rgba(201, 96, 76, .1); }
+  .pastila.respinsa { color: var(--text-dim); border-color: var(--line); }
+  .gol { text-align: center; padding: 22px; color: var(--text-dim); }
+  details > summary { cursor: pointer; color: var(--text-dim); }
+</style>
+</head>
+<body class="ui-nou">
+
+<div id="bara"></div>
+<script src="/bara.js"></script>
+
+<div id="continut">
+  <header class="pagina-cap">
+    <h1>Cereri</h1>
+    <p id="subtitlu">Cererile de anulare a comenzilor. Le decide conducerea.</p>
+  </header>
+  <div class="card"><h2 class="titlu-card">De decis</h2><div id="deschise">Se încarcă…</div></div>
+  <div class="card"><details><summary id="istoricTitlu">Decise în ultimele 60 de zile</summary><div id="decise"></div></details></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+//  Cererile (tichetele) pentru conducere — server/cereri.js. Deocamdată anularea
+//  unei comenzi: oricine o cere din pagina comenzii (cu motivul), conducerea sau
+//  adminul o aprobă (comanda devine anulată) ori o respinge, cu un răspuns.
+//  Biroul îşi vede aici doar cererile lui, fără butoane.
+// ═══════════════════════════════════════════════════════════════════════════
+const $ = id => document.getElementById(id);
+const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+async function api(cale, optiuni = {}) {
+  const r = await fetch(cale, { headers: { 'Content-Type': 'application/json' }, ...optiuni });
+  if (r.status === 401) { location.href = '/login?redirect=' + encodeURIComponent(location.pathname); return null; }
+  return r;
+}
+const STARI = { deschisa: 'Aşteaptă decizia', aprobata: 'Anulată', respinsa: 'Respinsă' };
+const TIP_COMANDA = c => (c.comanda_tip === 'oferta' ? 'ofertă' : c.comanda_tip === 'plata' ? 'aşteaptă plata' : c.finalizat_la ? 'finalizată' : 'în lucru');
+
+let poateDecide = false;
+function randCerere(r) {
+  const deschisa = r.stare === 'deschisa';
+  return `<div class="cerere" data-id="${r.id}">
+    <div>
+      <div class="cap">Anulare · <a href="/#comanda/${r.comanda_id}">${esc(r.comanda_nr)} · ${esc(r.client_nume)}</a>
+        <span class="pastila ${r.stare}">${STARI[r.stare]}</span></div>
+      <div class="motiv">${esc(r.motiv)}</div>
+      <div class="info">cerută de <b>${esc(r.creat_de_nume)}</b> · ${dataOra(r.creat_la)} · comanda e ${TIP_COMANDA(r)}${r.factura_nr
+        ? ` · <b>facturată (${esc(r.factura_nr)})</b> — la aprobare, anulează şi factura în NeoManager` : ''}</div>
+      ${deschisa ? '' : `<div class="info">${r.stare === 'aprobata' ? 'aprobată' : 'respinsă'} de <b>${esc(r.decis_de_nume)}</b> · ${dataOra(r.decis_la)}${
+        r.raspuns ? ` — „${esc(r.raspuns)}"` : ''}</div>`}
+    </div>
+    ${deschisa && poateDecide ? `<div class="decizie">
+      <textarea placeholder="Răspuns pentru cine a cerut (opţional)" maxlength="1000"></textarea>
+      <div class="butoane"><button class="respinge">Respinge</button><button class="rosu aproba">Aprobă anularea</button></div>
+    </div>` : ''}
+  </div>`;
+}
+
+async function incarca() {
+  const r = await api('/api/cereri');
+  if (!r) return;
+  const d = await r.json();
+  poateDecide = d.poateDecide;
+  $('subtitlu').textContent = poateDecide ? 'Cererile de anulare a comenzilor — aprobi sau respingi, cu un răspuns pentru cine a cerut.'
+    : 'Cererile tale de anulare a comenzilor şi ce a hotărât conducerea.';
+  const deschise = d.cereri.filter(x => x.stare === 'deschisa'), decise = d.cereri.filter(x => x.stare !== 'deschisa');
+  $('deschise').innerHTML = deschise.length ? deschise.map(randCerere).join('') : '<div class="gol">Nicio cerere de decis.</div>';
+  $('istoricTitlu').textContent = `Decise în ultimele 60 de zile (${decise.length})`;
+  $('decise').innerHTML = decise.map(randCerere).join('');
+  document.querySelectorAll('.cerere .decizie').forEach(el => {
+    const id = el.closest('.cerere').dataset.id;
+    const decide = async (cale, intrebare) => {
+      if (!(await confirma(intrebare, cale === 'aproba' ? 'Aprobă anularea' : 'Respinge'))) return;
+      const rr = await api(`/api/cereri/${id}/${cale}`, { method: 'POST', body: JSON.stringify({ raspuns: el.querySelector('textarea').value }) });
+      if (rr && !rr.ok) alerta((await rr.json().catch(() => ({}))).eroare || 'Operaţia a eşuat.');
+      incarca();
+    };
+    el.querySelector('.aproba').addEventListener('click', () => decide('aproba', 'Aprobi anularea? Comanda iese din liste, din sticla de comandat şi din livrări.'));
+    el.querySelector('.respinge').addEventListener('click', () => decide('respinge', 'Respingi cererea? Comanda rămâne cum e.'));
+  });
+}
+
+// actualizare live (nu cât scrii un răspuns)
+let deReimprospatat = false;
+const reimprospateaza = () => {
+  if (document.activeElement?.matches?.('textarea')) { deReimprospatat = true; return; }
+  deReimprospatat = false; incarca();
+};
+document.addEventListener('focusout', () => { if (deReimprospatat) setTimeout(reimprospateaza, 0); });
+(async () => {
+  if (!(await api('/api/eu'))) return;
+  await incarca();
+  urmareste(reimprospateaza);
+})();
+</script>
+</body>
+</html>

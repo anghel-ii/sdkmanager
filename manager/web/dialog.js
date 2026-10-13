@@ -38,6 +38,35 @@ function fereastraMesaj(text, butoane, obligatoriu = false) {
   });
 }
 
+// Un text de scris (ex. motivul anulării): fereastra cu un câmp mare + Renunţă / Trimite.
+// → textul scris (cel puţin `min` caractere) sau null la Renunţă / Esc.
+function cereText(text, { trimite = 'Trimite', loc = '', min = 3 } = {}) {
+  return new Promise(rezolva => {
+    const d = document.createElement('dialog');
+    d.className = 'mesaj-dialog';
+    const p = document.createElement('p');
+    p.textContent = text;
+    const camp = document.createElement('textarea');
+    camp.rows = 4; camp.placeholder = loc; camp.maxLength = 1000;
+    camp.style.cssText = 'width:100%;margin:10px 0 4px;resize:vertical';
+    const bara = document.createElement('div');
+    bara.className = 'butoane';
+    const renunta = document.createElement('button'), ok = document.createElement('button');
+    renunta.type = ok.type = 'button';
+    renunta.textContent = 'Renunţă'; ok.textContent = trimite; ok.className = 'primar'; ok.disabled = true;
+    camp.addEventListener('input', () => { ok.disabled = camp.value.trim().length < min; });
+    let gata = null;
+    renunta.onclick = () => d.close();
+    ok.onclick = () => { gata = camp.value.trim(); d.close(); };
+    bara.append(renunta, ok);
+    d.append(p, camp, bara);
+    d.addEventListener('close', () => { d.remove(); rezolva(gata); });
+    document.body.append(d);
+    d.showModal();
+    camp.focus();
+  });
+}
+
 const alerta   = text => fereastraMesaj(text, [['OK', undefined, true]]);
 const confirma = (text, da = 'Da') => fereastraMesaj(text, [['Renunţă', false], [da, true, true]]);
 const intreabaObligatoriu = (text, da, nu) => fereastraMesaj(text, [[nu, false], [da, true, true]], true);

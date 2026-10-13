@@ -48,8 +48,9 @@
     <h1>Utilizatori</h1>
     <p>Conturile colegilor şi ale agenţilor de vânzări, legătura cu Cloudflare şi actualizarea aplicaţiei.</p>
   </header>
-  <!-- Cont nou: doar utilizatorul şi rolul. Omul îşi alege parola la primul
-       login (scrie parola de două ori) — vezi postLogin în api/utilizatori.js. -->
+  <!-- Cont nou: utilizatorul, rolul şi o parolă INIŢIALĂ pe care i-o spui colegului
+       (userul, 2026-10-13 — înainte omul o alegea la primul login, deci oricine ştia
+       utilizatorul putea lua contul înaintea lui). -->
   <form class="panou" id="formNou" autocomplete="off">
     <h2>Cont nou</h2>
     <div class="cont-nou">
@@ -67,10 +68,13 @@
       <label>Nume afişat (opţional)
         <input id="nouNume" placeholder="ex. Ana Pop">
       </label>
+      <label>Parolă iniţială
+        <input id="nouParola" minlength="8" required autocomplete="off" spellcheck="false" placeholder="min. 8 caractere">
+      </label>
       <button type="submit" class="primar">Creează</button>
     </div>
-    <div class="dim mic" style="margin-top:10px">Colegul intră pe pagina de login cu utilizatorul de aici şi parola pe care
-      şi-o alege; i se cere s-o scrie de două ori, apoi contul e activ. Creează contul abia când îi spui lui.</div>
+    <div class="dim mic" style="margin-top:10px">Îi spui colegului utilizatorul şi parola iniţială; după ce intră, şi-o poate
+      schimba din contul lui.</div>
     <div id="mesajNou"></div>
   </form>
 
@@ -114,6 +118,7 @@
   <div class="panou">
     <h2>Actualizare aplicaţie</h2>
     <div>Versiunea care rulează: <span class="mono" id="versiune">…</span></div>
+    <div id="backupInfo" class="mic" style="margin-top:4px"></div>
     <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap">
       <button class="mic" id="btnVerifica">Verifică ce e nou</button>
       <button class="mic primar" id="btnActualizeaza">Actualizează acum</button>
@@ -172,7 +177,7 @@ async function incarca() {
           <td>${stare(u)}</td>
           <td class="dim mic">${dataOra(u.creat_la)}</td>
           <td class="actiuni">${euInsumi ? '' : `
-            ${u.activat ? '<button class="mic reset">Resetează parola</button>' : ''}
+            ${u.activat ? '<button class="mic reset">Resetează parola</button>' : '<button class="mic reset" title="Cont vechi fără parolă — pune-i una">Pune parola</button>'}
             <button class="mic activ ${u.activ ? 'rosu-contur' : 'verde-contur'}">${u.activ ? 'Dezactivează' : 'Reactivează'}</button>`}</td>
         </tr>`;
       }).join('')}</tbody>
@@ -191,8 +196,9 @@ async function incarca() {
       else e.target.value = u.rol;
     });
     tr.querySelector('button.reset')?.addEventListener('click', async () => {
-      if (await confirma(`Resetezi parola lui ${u.nume}?\n\nContul redevine neactivat şi e scos din toate sesiunile; la următorul login îşi alege o parolă nouă (o scrie de două ori).`, 'Resetează parola'))
-        patch({ reseteazaParola: true });
+      const parola = await cereText(`Parola temporară nouă pentru ${u.nume} (min. 8 caractere) — i-o spui lui.\n\nE scos din toate sesiunile; intră cu parola asta şi o poate schimba apoi din contul lui.`,
+        { trimite: 'Pune parola', loc: 'parola temporară', min: 8 });
+      if (parola) patch({ reseteazaParola: true, parola });
     });
     tr.querySelector('button.activ')?.addEventListener('click', async () => {
       const text = u.activ ? `Dezactivezi contul lui ${u.nume}? Nu se mai poate autentifica.` : `Reactivezi contul lui ${u.nume}?`;
@@ -300,11 +306,11 @@ $('formNou').addEventListener('submit', async e => {
   e.preventDefault();
   const user = $('nouUser').value.trim().toLowerCase();
   const r = await api('/api/utilizatori', { method: 'POST',
-    body: JSON.stringify({ user, rol: $('nouRol').value, nume: $('nouNume').value.trim() || undefined }) });
+    body: JSON.stringify({ user, rol: $('nouRol').value, nume: $('nouNume').value.trim() || undefined, parola: $('nouParola').value }) });
   if (!r) return;
   if (!r.ok) { $('mesajNou').innerHTML = `<div class="mesaj eroare">${esc(await eroareDin(r))}</div>`; return; }
   $('mesajNou').innerHTML = `<div class="mesaj ok">Contul <strong class="mono">${esc(user)}</strong> e creat. Spune-i colegului
-    să intre pe pagina de login cu utilizatorul ăsta şi parola pe care şi-o alege.</div>`;
+    utilizatorul şi parola iniţială.</div>`;
   $('formNou').reset();
   incarca();
 });
@@ -316,6 +322,10 @@ async function stareActualizare() {
   if (!r?.ok) { if (urmarire) $('versiune').textContent = 'serverul reporneşte…'; return; }
   const s = await r.json();
   $('versiune').textContent = s.versiune || '—';
+  // ultimul backup al bazei — roşu dacă e mai vechi de o zi (sau lipseşte)
+  const b = s.backup, vechi = !b || Date.now() - Date.parse(b.la) > 26 * 3600e3;
+  $('backupInfo').innerHTML = b ? `Ultimul backup al bazei: <b${vechi ? ' style="color:#e8907f"' : ''}>${dataOra(new Date(b.la))}</b> · <span class="mono">${esc(b.fisier)}</span> · ${b.mb} MB${
+    vechi ? ' — <b style="color:#e8907f">mai vechi de o zi, verifică discul de backup</b>' : ''}` : '<b style="color:#e8907f">Niciun backup găsit în folderul de backup.</b>';
   $('btnActualizeaza').disabled = !s.disponibil || s.ruleaza;
   $('btnActualizeaza').textContent = s.ruleaza ? 'Actualizare în curs…' : 'Actualizează acum';
   if (!s.disponibil) $('btnActualizeaza').title = 'Merge doar pe serverul Windows';
