@@ -1,13 +1,12 @@
 import { stareOferta } from './manager.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  CIORNE (userul, 2026-10-13) — oferta începută şi nesalvată. La plecarea din
-//  pagină pe bara de sus (Comenzi, Ofertă nouă, Taskuri, …) întrebăm:
-//  „Salvează ca ciornă" / „Renunţă la ea" / „Rămâi aici". Ciornele stau DOAR în
-//  browserul ăsta (localStorage, nu pleacă la server) şi cel mult 48 de ore; se reiau
-//  din pagina principală: în dreapta plăcii gamei ei („Ofertă nouă")
+//  CIORNE (userul, 2026-10-13) — oferta începută şi nesalvată se păstrează SINGURĂ
+//  ca ciornă când pleci din pagină (bara de sus, înapoi, F5, închiderea tabului) —
+//  fără întrebări; doar „Goleşte pagina" întreabă (şi aruncă ciorna). Ciornele stau
+//  DOAR în browserul ăsta (localStorage, nu pleacă la server) şi cel mult 48 de ore;
+//  se reiau din pagina principală, din dreapta plăcii gamei („Ofertă nouă")
 //  (→ /configurator/?ciorna=<id>). Ciorna = coşul (cos.js) + ecranul paginii.
-//  F5 / închiderea tabului: browserul arată doar întrebarea lui („Părăseşti site-ul?").
 // ═══════════════════════════════════════════════════════════════════════════
 
 const CHEIE = 'ciornaEcran';
@@ -18,8 +17,8 @@ export function toate() {
   try { return JSON.parse(localStorage.getItem(LISTA) || '[]').filter(c => Date.now() - c.la < VIATA_MS); } catch { return []; }
 }
 const sterge = id => { try { localStorage.setItem(LISTA, JSON.stringify(toate().filter(c => c.id !== id))); } catch { /* fără */ } };
-let voita = false;   // plecare cerută de pagină (salvare, alt produs din coş) — fără întrebare
-let baza = null;     // ce era pe ecran la pornire: oferta deschisă / ciorna reluată, neatinse, nu se întreabă
+let voita = false;   // plecare cerută de pagină (salvare, alt produs din coş, Goleşte) — fără ciornă
+let baza = null;     // ce era pe ecran la ultima păstrare / la pornire (oferta deschisă, ciorna reluată, neatinse)
 let p = null;        // { cos, ecran, client, areContinut, titlu, gama } — de la pagină
 
 export const pleaca = () => { voita = true; };
@@ -47,54 +46,31 @@ export function gata() {
   if (p?.cos.ciornaId) sterge(p.cos.ciornaId);
 }
 
+// „Goleşte pagina" (după confirmare): ce era pe ecran se aruncă, cu tot cu ciorna lui. Produsele
+// rămase în coş (alte pagini ale ofertei) rămân nesalvate → la plecare devin o ciornă nouă.
+export function goleste() {
+  voita = true;
+  if (!p) return;
+  if (p.cos.ciornaId) sterge(p.cos.ciornaId);
+  p.cos.ciornaId = null;
+  p.cos.modificat = p.cos.pozitii.length > 0;
+}
+
+// la plecare — fără alert/confirm (pagina se închide); memoria plină = fără ciornă
 function salveaza() {
   const id = p.cos.ciornaId ?? String(Date.now());
   const c = { id, uid: stareOferta().utilizator?.id, gama: p.gama(), titlu: p.titlu(), client: p.client().client?.nume?.trim(), la: Date.now(),
               date: { cos: { ...p.cos, ...p.client(), modificat: false, ciornaId: undefined }, ecran: p.ecran() } };
-  try {
-    localStorage.setItem(LISTA, JSON.stringify([c, ...toate().filter(x => x.id !== id)].slice(0, MAX)));
-    return true;
-  } catch {
-    alert('Ciorna nu s-a putut păstra (memoria browserului e plină sau blocată). Rămâi pe pagină şi salvează oferta.');
-    return false;
-  }
-}
-
-// „Salvează ca ciornă" | „Renunţă la ea" | „Rămâi aici" (şi Esc) → 'ciorna' | 'renunta' | ''
-function intreaba() {
-  return new Promise(raspuns => {
-    const d = document.createElement('dialog');
-    d.className = 'dialog-plata dialog-ciorna';
-    d.innerHTML = `<form method="dialog">
-      <h3>Oferta nu e salvată</h3>
-      <p class="dim mic">O păstrezi ca ciornă pe calculatorul ăsta? O reiei din pagina principală, din butonul gamei
-        („Ofertă nouă") — stă acolo 48 de ore.</p>
-      <div class="dialog-butoane">
-        <button value="" class="fisa-print">Rămâi aici</button>
-        <button value="renunta" class="fisa-print">Renunţă la ea</button>
-        <button value="ciorna" class="oferta-confirma">Salvează ca ciornă</button>
-      </div></form>`;
-    d.addEventListener('close', () => { d.remove(); raspuns(d.returnValue); });
-    document.body.append(d);
-    d.showModal();
-    d.querySelector('.oferta-confirma').focus();
-  });
+  try { localStorage.setItem(LISTA, JSON.stringify([c, ...toate().filter(x => x.id !== id)].slice(0, MAX))); } catch { return; }
+  // înapoi pe pagină (butonul Înapoi al browserului) = aceeaşi ciornă, actualizată, nu una nouă
+  p.cos.ciornaId = id;
+  p.cos.modificat = false;
+  baza = semnatura();
 }
 
 export function init(pagina) {
   p = pagina;
   baza = semnatura();
-  // plecarea din bara comună (bara.js): întâi întrebarea, apoi acelaşi clic, lăsat să treacă
-  document.addEventListener('click', async e => {
-    const el = /** @type {HTMLElement | null} */ (e.target instanceof Element ? e.target.closest('#bara a[href], #bara button') : null);
-    if (!el || voita || !modificata()) return;
-    e.preventDefault();
-    e.stopImmediatePropagation();
-    const r = await intreaba();
-    if (!r || (r === 'ciorna' && !salveaza())) return;
-    if (r === 'renunta' && p.cos.ciornaId) sterge(p.cos.ciornaId);   // renunţi la oferta reluată → şi la ciorna ei
-    voita = true;
-    el.click();
-  }, true);
-  addEventListener('beforeunload', e => { if (!voita && modificata()) e.preventDefault(); });
+  addEventListener('pagehide', () => { if (!voita && modificata()) salveaza(); });
+  addEventListener('pageshow', e => { if (e.persisted) voita = false; });   // revenit cu Înapoi: lucrul continuă
 }

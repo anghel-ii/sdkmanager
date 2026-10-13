@@ -1431,7 +1431,8 @@ export async function initUI() {
   // cu ceva deja ales, întâi o întrebare — butonul e lângă „Salvează" şi şterge tot ce nu e salvat
   $('btnClear')?.addEventListener('click', () => {
     if (state.system && !confirm('Goleşti pagina? Tot ce ai configurat aici şi n-ai salvat se pierde.')) return;
-    ciorna.pleaca();
+    ciorna.goleste();
+    cosul.scrie(cos);
     location.reload();
   });
 

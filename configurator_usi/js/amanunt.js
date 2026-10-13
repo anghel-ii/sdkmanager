@@ -152,7 +152,8 @@ for (const id of ['clientNume', 'clientTelefon', 'clientAdresa', 'comandaLivrare
 // cu produse deja puse, întâi o întrebare — butonul e lângă „Salvează" şi şterge tot ce nu e salvat
 $('btnClear').addEventListener('click', () => {
   if (linii.some(l => l?.cod) && !confirm('Goleşti pagina? Produsele puse aici şi nesalvate se pierd.')) return;
-  ciorna.pleaca();
+  ciorna.goleste();
+  cosul.scrie(cos);
   location.reload();
 });
 
