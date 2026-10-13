@@ -5,13 +5,13 @@ import { stareOferta } from './manager.js';
 //  pagină pe bara de sus (Comenzi, Ofertă nouă, Taskuri, …) întrebăm:
 //  „Salvează ca ciornă" / „Renunţă la ea" / „Rămâi aici". Ciornele stau DOAR în
 //  browserul ăsta (localStorage, nu pleacă la server) şi cel mult 48 de ore; se reiau
-//  din pagina principală, cu „Continuă ciorna" lângă butoanele gamelor
+//  din pagina principală: în dreapta plăcii gamei ei („Ofertă nouă")
 //  (→ /configurator/?ciorna=<id>). Ciorna = coşul (cos.js) + ecranul paginii.
 //  F5 / închiderea tabului: browserul arată doar întrebarea lui („Părăseşti site-ul?").
 // ═══════════════════════════════════════════════════════════════════════════
 
 const CHEIE = 'ciornaEcran';
-// ciornele: [{ id, uid, gama, titlu, la (ms), date: { cos, ecran } }] — aceeaşi cheie o citeşte
+// ciornele: [{ id, uid, gama, titlu, client, la (ms), date: { cos, ecran } }] — aceeaşi cheie o citeşte
 // pagina principală a managerului (web/manager/index.html), doar pe ale contului logat (uid)
 const LISTA = 'ciorne', VIATA_MS = 48 * 3600e3, MAX = 10;
 export function toate() {
@@ -49,7 +49,7 @@ export function gata() {
 
 function salveaza() {
   const id = p.cos.ciornaId ?? String(Date.now());
-  const c = { id, uid: stareOferta().utilizator?.id, gama: p.gama(), titlu: p.titlu(), la: Date.now(),
+  const c = { id, uid: stareOferta().utilizator?.id, gama: p.gama(), titlu: p.titlu(), client: p.client().client?.nume?.trim(), la: Date.now(),
               date: { cos: { ...p.cos, ...p.client(), modificat: false, ciornaId: undefined }, ecran: p.ecran() } };
   try {
     localStorage.setItem(LISTA, JSON.stringify([c, ...toate().filter(x => x.id !== id)].slice(0, MAX)));
@@ -67,8 +67,8 @@ function intreaba() {
     d.className = 'dialog-plata dialog-ciorna';
     d.innerHTML = `<form method="dialog">
       <h3>Oferta nu e salvată</h3>
-      <p class="dim mic">O păstrezi ca ciornă pe calculatorul ăsta? O reiei din pagina principală, cu „Continuă ciorna" —
-        stă acolo 48 de ore.</p>
+      <p class="dim mic">O păstrezi ca ciornă pe calculatorul ăsta? O reiei din pagina principală, din butonul gamei
+        („Ofertă nouă") — stă acolo 48 de ore.</p>
       <div class="dialog-butoane">
         <button value="" class="fisa-print">Rămâi aici</button>
         <button value="renunta" class="fisa-print">Renunţă la ea</button>

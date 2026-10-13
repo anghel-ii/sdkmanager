@@ -1289,7 +1289,7 @@ export async function initUI() {
   // „Modifică oferta" din manager: toate produsele ofertei intră în coş, apoi se
   // deschide primul (pe pagina gamei lui); restul se modifică din „Adaugă la ofertă".
   let eroareIncarcare = null;
-  // „Continuă ciorna" din manager: coşul ciornei, apoi pagina gamei ei (ecranul se pune mai jos)
+  // ciorna din pagina principală (placa gamei): coşul ciornei, apoi pagina gamei ei (ecranul se pune mai jos)
   if (params.get('ciorna')) {
     const r = ciorna.reia(params.get('ciorna'));
     if (r.eroare) eroareIncarcare = r.eroare;

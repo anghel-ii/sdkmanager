@@ -364,42 +364,41 @@ const ICOANA_TAB = { oferta: 'oferta', plata: 'plata', comanda: 'lucru', finaliz
 // pe plăcile înguste, numele din meniul din stânga (cel întreg rămâne în title)
 const NUME_SCURT = { oferta: 'Oferte', plata: 'Aşteaptă plata', comanda: 'În lucru', finalizata: 'Finalizate' };
 
-// „Continuă ciorna" lângă butoanele gamelor: ofertele lăsate ca ciornă la plecarea din configurator.
-// Stau DOAR în browserul ăsta, cel mult 48 de ore (configurator_usi/js/ciorna.js, localStorage „ciorne");
-// aici doar ale contului logat. Una → butonul duce direct la ea; mai multe → lista lor.
-function puneCiorne() {
-  const el = $('ciorneSus');
-  if (!el) return;
-  let ale = [];
-  try { ale = JSON.parse(localStorage.getItem('ciorne') || '[]').filter(c => c.uid === eu?.id && Date.now() - c.la < 48 * 3600e3); } catch { /* fără */ }
-  el.hidden = !ale.length;
-  const sem = JSON.stringify(ale.map(c => [c.id, c.la]));   // la fiecare randare — lista deschisă nu se închide degeaba
+// Plăcile „Ofertă nouă" + ciornele: ofertele lăsate ca ciornă la plecarea din configurator stau DOAR
+// în browserul ăsta, cel mult 48 de ore (configurator_usi/js/ciorna.js, localStorage „ciorne"); aici doar
+// ale contului logat. O ciornă apare în dreapta plăcii gamei ei: clic acolo = o continui; în rest = ofertă nouă.
+let game = null;
+function puneGame() {
+  const el = $('placiGame');
+  if (!el || !game) return;
+  let ciorne = [];
+  try { ciorne = JSON.parse(localStorage.getItem('ciorne') || '[]').filter(c => c.uid === eu?.id && Date.now() - c.la < 48 * 3600e3); } catch { /* fără */ }
+  const sem = JSON.stringify(ciorne.map(c => [c.id, c.la]));   // se cheamă la fiecare randare — refăcute doar la schimbare
   if (el.dataset.sem === sem) return;
   el.dataset.sem = sem;
-  const link = c => `/configurator/?ciorna=${encodeURIComponent(c.id)}`;
-  const info = c => `salvată ${dataOra(new Date(c.la))} · se şterge după 48 de ore`;
-  el.innerHTML = ale.length === 1
-    ? `<a class="buton-ciorna" href="${link(ale[0])}" title="${esc(info(ale[0]))}">Continuă ciorna <small>${esc(ale[0].titlu)}</small></a>`
-    : `<details><summary class="buton-ciorna">Continuă ciorna <span class="insigna-num">${ale.length}</span></summary>
-        <div class="ciorne-lista">${ale.map(c => `<a href="${link(c)}">${esc(c.titlu)}<small>${esc(info(c))}</small></a>`).join('')}</div></details>`;
+  el.innerHTML = game.map(x => {
+    const nou = `href="/configurator/?gama=${encodeURIComponent(x.id)}" title="Ofertă nouă — ${esc(x.label)}: ${esc(subGama(x))} · ${esc(x.descriere ?? '')}">
+      ${icoana(x.id)}<span>${esc(x.id === 'amanunt' ? 'Amănunt' : x.label)}</span>`;
+    const ale = ciorne.filter(c => c.gama === x.id);
+    return !ale.length ? `<a class="gama-btn" ${nou}</a>` : `
+      <div class="gama-btn cu-ciorne"><a class="gama-nou" ${nou}</a><span class="gama-ciorne">${ale.map(c => `
+        <a class="ciorna-chip" href="/configurator/?ciorna=${encodeURIComponent(c.id)}"
+           title="Continuă ciorna: ${esc(c.titlu)} · salvată ${dataOra(new Date(c.la))} · se şterge după 48 de ore">
+          <small>✎</small><span>${esc(c.client || 'fără client')}</span></a>`).join('')}</span></div>`;
+  }).join('') || '<p class="dim mic">Configuratorul nu e construit (cd configurator_usi && node build.js).</p>';
 }
-window.addEventListener('storage', e => { if (e.key === 'ciorne') puneCiorne(); });   // salvată din alt tab
+window.addEventListener('storage', e => { if (e.key === 'ciorne') puneGame(); });   // salvată din alt tab
 
 function asiguraTaburi() {
   if (!$('taburiSus').children.length) {
     $('taburiSus').innerHTML = `
-      <div class="sus-game"><div class="eticheta-sus">Ofertă nouă</div><div id="ciorneSus" hidden></div></div>
+      <div class="eticheta-sus">Ofertă nouă</div>
       <div class="placi-game" id="placiGame"></div>
       <div class="taburi">${TABURI.map(([t, n]) => `
         <button data-tab="${t}" class="placa ton-${t}" title="${n}">
           <span class="placa-ic">${icoana(ICOANA_TAB[t])}</span><span class="tab-nume">${NUME_SCURT[t]}</span><span class="tab-cate" data-cate="${t}"></span>
         </button>`).join('')}</div>`;
-    incarcaGame().then(g => {
-      $('placiGame').innerHTML = (g?.game ?? []).map(x => `
-        <a class="gama-btn" href="/configurator/?gama=${encodeURIComponent(x.id)}" title="Ofertă nouă — ${esc(x.label)}: ${esc(subGama(x))} · ${esc(x.descriere ?? '')}">
-          ${icoana(x.id)}<span>${esc(x.id === 'amanunt' ? 'Amănunt' : x.label)}</span></a>`).join('')
-        || '<p class="dim mic">Configuratorul nu e construit (cd configurator_usi && node build.js).</p>';
-    });
+    incarcaGame().then(g => { game = g?.game ?? []; puneGame(); });
     document.querySelectorAll('#taburiSus .taburi button').forEach(b =>
       b.addEventListener('click', () => {
         tabCurent = b.dataset.tab;
@@ -412,7 +411,7 @@ function asiguraTaburi() {
         renderLista();
       }));
   }
-  puneCiorne();
+  puneGame();
   const toate = ceLista() === 'toate';
   document.querySelectorAll('#taburiSus .taburi button').forEach(b => b.classList.toggle('activ', b.dataset.tab === tabCurent && !toate));
   // în meniul din stânga: starea arătată acum
