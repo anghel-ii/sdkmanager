@@ -18,8 +18,6 @@ const denumireFaraCod = d => String(d ?? '')
   .replace(/\s{2,}/g, ' ').replace(/[\s,]+$/, '').trim();
 
 async function trimiteMailSticla(furnizor, linii) {
-  // modul test (bara.js): mailul ar pleca pe bune la furnizor
-  if (window.modTest) return alerta('În modul test mailul către furnizor nu se deschide.\nPoţi marca sticla ca trimisă — rămâne doar în test.');
   const peModel = new Map();
   for (const l0 of linii) {
     const l = { ...l0, denumire: denumireFaraCod(l0.denumire) };
@@ -28,9 +26,11 @@ async function trimiteMailSticla(furnizor, linii) {
     m.set(cota, (m.get(cota) ?? 0) + l.buc);
     peModel.set(l.denumire, m);
   }
-  const corp = [...peModel].map(([model, cote]) =>
+  // modul test (bara.js pune window.modTest): mailul se deschide, dar spune clar că e de test
+  const test = window.modTest ? 'COMANDĂ DE TEST — NU SE EXECUTĂ\r\n\r\n' : '';
+  const corp = test + [...peModel].map(([model, cote]) =>
     [model, ...[...cote].map(([cota, buc]) => `${cota}x${buc}`)].join('\r\n')).join('\r\n\r\n');
-  const subiect = `Comandă sticlă — ${dataOra(new Date()).slice(0, 10)}`;   // zz/ll/aaaa, din /data.js
+  const subiect = `${test ? '[TEST] ' : ''}Comandă sticlă — ${dataOra(new Date()).slice(0, 10)}`;   // zz/ll/aaaa, din /data.js
   const catre = encodeURIComponent(furnizor.email || '');
   let url = `mailto:${catre}?subject=${encodeURIComponent(subiect)}&body=${encodeURIComponent(corp)}`;
   if (url.length > 1900) {
