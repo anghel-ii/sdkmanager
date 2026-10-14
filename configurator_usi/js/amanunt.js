@@ -1,7 +1,7 @@
 import produse from './catalog/amanunt.json';
 import * as manager from './manager.js';
 import * as cosul from './cos.js';
-import { cautator, debitare } from './amanunt-calcul.js';
+import { cautator, debitare, sePoatePeJumatate } from './amanunt-calcul.js';
 import { initSugestiiClienti } from './sugestii-clienti.js';
 import { LIVRARE, AGENTI, PLATI, plataText, liniaTransport, campuriLipsa, focusCamp } from './lib/comun/comanda.js';
 import { copyRows } from './lib/comun/clipboard.js';
@@ -31,9 +31,10 @@ const peDenumire = new Map(produse.map(p => [p.denumire, p]));
 let linii = [];
 // Lăţimea pânzei de tăiere, în mm — se pierde la fiecare tăietură. 0 = nu se ţine cont.
 const TAIERE_MM = 0;
-// Produsele vândute şi pe jumătate de bară — cantitatea merge din 0,5 în 0,5 (userul, 2026-10-14).
-// Pe rând, „Dă bara întreagă" (l.intreaga): clientul ia şi restul barei → bare întregi.
-const PE_JUMATATE = new Set(['412']);
+// Produsele vândute şi pe jumătate de bară — cantitatea merge din 0,5 în 0,5 (userul, 2026-10-14):
+// toate profilele Gola la bară, în afară de cele cupru. Pe rând, „Dă bara întreagă" (l.intreaga):
+// clientul ia şi restul barei → bare întregi.
+const PE_JUMATATE = new Set(produse.filter(sePoatePeJumatate).map(p => p.cod));
 const peJumatate = l => PE_JUMATATE.has(l?.cod) && !l.intreaga;
 const deb = l => (l?.bara ? debitare(l.debitare, l.bara, TAIERE_MM, peJumatate(l)) : null);
 const cantitate = l => deb(l)?.nr ?? (peJumatate(l) ? Math.ceil(l.cantitate * 2) / 2 : l.cantitate);

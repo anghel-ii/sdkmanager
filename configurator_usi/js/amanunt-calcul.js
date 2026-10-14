@@ -27,7 +27,10 @@ export function cautator(produse) {
 // care încape" (First Fit Decreasing — aceeaşi ca la divizările aplicate UTIL).
 // `taiere` = lăţimea pânzei: fiecare bucată ia l + taiere, iar bara B + taiere
 // (ultima bucată dintr-o bară nu mai are tăietură după ea).
-// `peJumatate` (ex. codul 412, userul 2026-10-14): bara se vinde şi pe jumătate — o bară
+// Ce se vinde şi pe jumătate de bară (userul, 2026-10-14): profilele Gola la bară, fără cele cupru.
+export const sePoatePeJumatate = p => !!p.bara && /^gola\b/i.test(p.denumire) && !/cupru/i.test(p.denumire);
+
+// `peJumatate` (ex. Gola, userul 2026-10-14): bara se vinde şi pe jumătate — o bară
 // începută din care se foloseşte cel mult jumătate se numără 0,5 (restul ei = din jumătate).
 // Întoarce null când nu e nicio bucată completată.
 export function debitare(bucati, bara, taiere = 0, peJumatate = false) {

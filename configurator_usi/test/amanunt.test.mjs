@@ -1,7 +1,7 @@
 // node test/amanunt.test.mjs — produsele ofertei cu amănuntul + căutarea din pagină
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { cautator, normal, debitare } from '../js/amanunt-calcul.js';
+import { cautator, normal, debitare, sePoatePeJumatate } from '../js/amanunt-calcul.js';
 
 const produse = JSON.parse(fs.readFileSync(new URL('../js/catalog/amanunt.json', import.meta.url)));
 assert.ok(produse.length > 500, `prea puţine produse: ${produse.length}`);
@@ -30,7 +30,12 @@ assert.equal(debitare([{ l: 2100, buc: 2 }], 4200).nr, 1, 'fix cât bara → o b
 assert.equal(debitare([{ l: 2100, buc: 2 }], 4200, 3).nr, 2, 'cu pânza de 3 mm nu mai încap două');
 assert.deepEqual(debitare([{ l: 5000, buc: 1 }], 4200).preaLungi, [5000], 'bucata mai lungă decât bara');
 assert.equal(debitare([{ l: '', buc: '' }], 4200), null, 'nicio bucată → fără debitare');
-// pe jumătate de bară (codul 412): bara folosită cel mult pe jumătate = 0,5
+// pe jumătate de bară: toate profilele Gola la bară, fără cupru; accesoriile (capete, colţuri) nu sunt la bară
+const peJum = new Set(produse.filter(sePoatePeJumatate).map(p => p.cod));
+assert.ok(peJum.has('412') && peJum.has('733N') && peJum.has('410'), 'Gola C / verticală / corp suspendat — pe jumătate');
+assert.ok(!['544', '543', '545', '435', '436'].some(c => peJum.has(c)), 'Gola cupru — doar bare întregi');
+assert.ok(!peJum.has('455') && [...peJum].every(c => produse.find(p => p.cod === c).bara), 'accesoriile nu, doar ce e la bară');
+// bara folosită cel mult pe jumătate = 0,5
 assert.deepEqual(debitare([{ l: 1000, buc: 1 }], 4200, 0, true), { nr: 0.5, resturi: [1100], preaLungi: [], bucati: 1 });
 assert.equal(debitare([{ l: 2000, buc: 3 }], 4200, 0, true).nr, 1.5, '3 × 2000: o bară + o jumătate');
 assert.equal(debitare([{ l: 2100, buc: 1 }], 4200, 0, true).nr, 0.5, 'fix cât jumătatea → 0,5');
