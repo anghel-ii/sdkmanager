@@ -4,21 +4,37 @@
 // fără diacritice şi litere mari: „mâner" găseşte „Maner"
 export const normal = t => String(t ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
+// ghilimelele şi semnele nu contează: „Gola ''C''" → „gola c" (cifrele cu virgulă rămân: „4,2")
+const curat = t => normal(t).replace(/[^a-z0-9,.]+/g, ' ').trim();
+
 // Fiecare cuvânt scris trebuie să apară în denumire sau în cod, în orice ordine:
-// „maner auriu 128" găseşte „Maner … finisaj auriu periat, 128 mm". Primele vin
-// codul exact, apoi denumirile care încep cu ce ai scris, apoi restul (alfabetic).
+// „maner auriu 128" găseşte „Maner … finisaj auriu periat, 128 mm". Ordinea: codul exact;
+// apoi câte cuvinte scrise sunt cuvinte ÎNTREGI din denumire („gola c" → Gola „C" înaintea lui
+// „Gola corp…", unde „c" doar începe „corp"); apoi câte încep un cuvânt; apoi denumirile care
+// încep cu primul cuvânt scris; în rest, ordinea alfabetică a listei (userul, 2026-10-14).
 export function cautator(produse) {
-  const index = produse.map(p => ({ p, text: normal(`${p.denumire} ${p.cod}`), den: normal(p.denumire), cod: normal(p.cod) }));
+  const index = produse.map((p, i) => {
+    const text = curat(`${p.denumire} ${p.cod}`);
+    return { p, i, text, cuvinte: text.split(' '), cod: normal(p.cod) };
+  });
   return (q, max = 30) => {
     const tot = normal(q).trim();
-    const cuvinte = tot.split(/\s+/).filter(Boolean);
-    if (!cuvinte.length) return [];
-    const loc = x => (x.cod === tot ? 0 : x.den.startsWith(tot) ? 1 : 2);
+    const cerute = curat(q).split(' ').filter(Boolean);
+    if (!cerute.length) return [];
+    const scor = x => [
+      x.cod === tot ? 0 : 1,
+      -cerute.filter(c => x.cuvinte.includes(c)).length,
+      -cerute.filter(c => x.cuvinte.some(w => w.startsWith(c))).length,
+      x.cuvinte[0].startsWith(cerute[0]) ? 0 : 1,
+      x.i,
+    ];
+    const compara = (a, b) => { for (let k = 0; k < a.s.length; k++) if (a.s[k] !== b.s[k]) return a.s[k] - b.s[k]; return 0; };
     return index
-      .filter(x => cuvinte.every(c => x.text.includes(c)))
-      .sort((a, b) => loc(a) - loc(b))   // sortarea e stabilă: în rest rămâne ordinea alfabetică a listei
+      .filter(x => cerute.every(c => x.text.includes(c)))
+      .map(x => ({ x, s: scor(x) }))
+      .sort(compara)
       .slice(0, max)
-      .map(x => x.p);
+      .map(({ x }) => x.p);
   };
 }
 

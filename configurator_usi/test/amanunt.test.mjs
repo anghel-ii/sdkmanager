@@ -16,6 +16,12 @@ assert.deepEqual(cauta('mâner AURIU').map(p => p.cod), gasite.map(p => p.cod), 
 const cuCod = produse.find(p => /^\d{3}$/.test(p.cod));
 assert.equal(cauta(cuCod.cod)[0].cod, cuCod.cod, 'codul exact vine primul');
 assert.deepEqual(cauta('   '), [], 'nimic scris → nicio sugestie');
+// „gola c" → întâi Gola „C" (cuvântul întreg „c"), nu Gola corp… / capete / colţuri; ghilimelele nu contează
+const golaC = /^Gola ("C"|''C'')/;
+assert.ok(cauta('gola c').slice(0, 8).every(p => golaC.test(p.denumire)), cauta('gola c').slice(0, 8).map(p => p.denumire).join(' | '));
+assert.deepEqual(cauta('gola "c"').map(p => p.cod), cauta('gola c').map(p => p.cod), 'cu sau fără ghilimele');
+assert.ok(/^Gola ''J''/.test(cauta('gola j alb')[0].denumire), 'gola j alb → Gola „J" alb');
+assert.ok(cauta('gola j alb 26').slice(0, 3).some(p => p.cod === '411'), 'o bucată de cuvânt găseşte în continuare (26 în 57X26)');
 
 // produsele la bară: lungimea din denumire, peste 1,5 m
 const bara = cod => produse.find(p => p.cod === cod)?.bara;
