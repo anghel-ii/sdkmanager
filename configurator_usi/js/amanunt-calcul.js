@@ -1,40 +1,45 @@
 // Calculele ofertei cu amănuntul — căutarea în produse (js/catalog/amanunt.json)
 // şi debitarea pe bare — separate de pagină, ca să le verifice şi testul (fără browser).
 
+import MiniSearch from 'minisearch';
+
 // fără diacritice şi litere mari: „mâner" găseşte „Maner"
 export const normal = t => String(t ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
-// ghilimelele şi semnele nu contează: „Gola ''C''" → „gola c" (cifrele cu virgulă rămân: „4,2")
-const curat = t => normal(t).replace(/[^a-z0-9,.]+/g, ' ').trim();
+// Cuvintele: litere sau cifre — ghilimelele şi semnele nu contează („Gola ''C''" → gola, c),
+// „57X26" = 57 + 26, „4,2" = 4 + 2, iar literele se despart de cifre („TB500" = tb + 500, „L128" = l + 128).
+const cuvinte = t => normal(t).split(/[^a-z0-9]+|(?<=\d)x(?=\d)|(?<=[a-z])(?=\d)|(?<=\d)(?=[a-z])/).filter(Boolean);
 
-// Fiecare cuvânt scris trebuie să apară în denumire sau în cod, în orice ordine:
-// „maner auriu 128" găseşte „Maner … finisaj auriu periat, 128 mm". Ordinea: codul exact;
-// apoi câte cuvinte scrise sunt cuvinte ÎNTREGI din denumire („gola c" → Gola „C" înaintea lui
-// „Gola corp…", unde „c" doar începe „corp"); apoi câte încep un cuvânt; apoi denumirile care
-// încep cu primul cuvânt scris; în rest, ordinea alfabetică a listei (userul, 2026-10-14).
+// Căutarea în produse (userul, 2026-10-14: „un search care e deja bun") — MiniSearch: ordonare
+// BM25 pe cuvinte, început de cuvânt („gol c" → Gola „C") şi greşeli de tastare („manr" → mâner).
+// Toate cuvintele scrise trebuie găsite, în orice ordine; codul scris exact vine primul.
 export function cautator(produse) {
-  const index = produse.map((p, i) => {
-    const text = curat(`${p.denumire} ${p.cod}`);
-    return { p, i, text, cuvinte: text.split(' '), cod: normal(p.cod) };
+  const primul = produse.map(p => cuvinte(p.denumire)[0] ?? '');
+  const ms = new MiniSearch({
+    // codul rămâne întreg („731ALB"), ca „alb" să nu conteze de două ori; litere/cifre se despart doar în denumire
+    idField: 'i', fields: ['denumire', 'cod'], processTerm: t => t,
+    tokenize: (t, camp) => (camp === 'cod' ? normal(t).split(/[^a-z0-9]+/).filter(Boolean) : cuvinte(t)),
+    searchOptions: {
+      // început de cuvânt de la 2 caractere: „c" singur e exact „C" (nu „cu", „canal", „cod"…)
+      combineWith: 'AND', prefix: t => t.length >= 2, boost: { cod: 2 },
+      // greşeli de tastare doar la cuvintele de litere, de la 4 în sus (la cifre „600" nu e „500")
+      fuzzy: t => (/^[a-z]{4,}$/.test(t) ? 0.2 : 0),
+      // lungimea denumirii nu contează (altfel „Gola C cu canal pentru led" ar trece, fiind scurtă,
+      // înaintea lui Gola „C" 4,2 m); urcă produsele a căror denumire ÎNCEPE cu un cuvânt scris
+      // („gola c" → Gola „C" înaintea capetelor şi colţurilor pentru gola C)
+      bm25: { k: 1.2, b: 0, d: 0.5 },
+      // (doar cuvinte de 3+ litere: „c" din „gola c" nu urcă „Capăt…")
+      boostDocument: (id, termen) => (termen.length >= 3 && primul[id].startsWith(termen) ? 2 : 1),
+    },
   });
+  ms.addAll(produse.map((p, i) => ({ i, denumire: p.denumire, cod: p.cod })));
   return (q, max = 30) => {
+    if (!cuvinte(q).length) return [];
     const tot = normal(q).trim();
-    const cerute = curat(q).split(' ').filter(Boolean);
-    if (!cerute.length) return [];
-    const scor = x => [
-      x.cod === tot ? 0 : 1,
-      -cerute.filter(c => x.cuvinte.includes(c)).length,
-      -cerute.filter(c => x.cuvinte.some(w => w.startsWith(c))).length,
-      x.cuvinte[0].startsWith(cerute[0]) ? 0 : 1,
-      x.i,
-    ];
-    const compara = (a, b) => { for (let k = 0; k < a.s.length; k++) if (a.s[k] !== b.s[k]) return a.s[k] - b.s[k]; return 0; };
-    return index
-      .filter(x => cerute.every(c => x.text.includes(c)))
-      .map(x => ({ x, s: scor(x) }))
-      .sort(compara)
-      .slice(0, max)
-      .map(({ x }) => x.p);
+    const exact = produse.filter(p => normal(p.cod) === tot);
+    // la scor egal, ordinea alfabetică a listei
+    const gasite = ms.search(q).sort((a, b) => b.score - a.score || a.id - b.id).map(r => produse[r.id]);
+    return [...exact, ...gasite.filter(p => !exact.includes(p))].slice(0, max);
   };
 }
 

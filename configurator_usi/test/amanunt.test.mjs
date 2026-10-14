@@ -20,8 +20,11 @@ assert.deepEqual(cauta('   '), [], 'nimic scris → nicio sugestie');
 const golaC = /^Gola ("C"|''C'')/;
 assert.ok(cauta('gola c').slice(0, 8).every(p => golaC.test(p.denumire)), cauta('gola c').slice(0, 8).map(p => p.denumire).join(' | '));
 assert.deepEqual(cauta('gola "c"').map(p => p.cod), cauta('gola c').map(p => p.cod), 'cu sau fără ghilimele');
-assert.ok(/^Gola ''J''/.test(cauta('gola j alb')[0].denumire), 'gola j alb → Gola „J" alb');
-assert.ok(cauta('gola j alb 26').slice(0, 3).some(p => p.cod === '411'), 'o bucată de cuvânt găseşte în continuare (26 în 57X26)');
+assert.ok(cauta('gola j alb').slice(0, 3).every(p => /^Gola ("J"|''J'').*alb/.test(p.denumire)), 'gola j alb → Gola „J" alb');
+assert.ok(cauta('gola j alb 26').slice(0, 3).some(p => p.cod === '411'), '26 găseşte „57X26"');
+assert.equal(cauta('tandembox alb 500')[0]?.cod, 'TB500A', 'mărimea din cod: 500 în „TB500"');
+assert.ok(/^Gola ''C'' 4,2 m finisaj negru/.test(cauta('gol c negru')[0].denumire), 'început de cuvânt: „gol" → Gola');
+assert.ok(cauta('manr auriu 128').length && cauta('manr auriu 128').every(p => /^maner/i.test(p.denumire)), 'greşeală de tastare: manr → maner');
 
 // produsele la bară: lungimea din denumire, peste 1,5 m
 const bara = cod => produse.find(p => p.cod === cod)?.bara;
