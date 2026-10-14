@@ -30,4 +30,9 @@ assert.equal(debitare([{ l: 2100, buc: 2 }], 4200).nr, 1, 'fix cât bara → o b
 assert.equal(debitare([{ l: 2100, buc: 2 }], 4200, 3).nr, 2, 'cu pânza de 3 mm nu mai încap două');
 assert.deepEqual(debitare([{ l: 5000, buc: 1 }], 4200).preaLungi, [5000], 'bucata mai lungă decât bara');
 assert.equal(debitare([{ l: '', buc: '' }], 4200), null, 'nicio bucată → fără debitare');
+// pe jumătate de bară (codul 412): bara folosită cel mult pe jumătate = 0,5
+assert.deepEqual(debitare([{ l: 1000, buc: 1 }], 4200, 0, true), { nr: 0.5, resturi: [1100], preaLungi: [], bucati: 1 });
+assert.equal(debitare([{ l: 2000, buc: 3 }], 4200, 0, true).nr, 1.5, '3 × 2000: o bară + o jumătate');
+assert.equal(debitare([{ l: 2100, buc: 1 }], 4200, 0, true).nr, 0.5, 'fix cât jumătatea → 0,5');
+assert.equal(debitare([{ l: 3000, buc: 1 }], 4200, 0, true).nr, 1, 'bucata mai lungă decât jumătatea → bară întreagă');
 console.log(`✓ oferta cu amănuntul: ${produse.length} produse (${produse.filter(p => p.bara).length} la bară), căutarea şi debitarea merg`);

@@ -31,11 +31,13 @@ const peDenumire = new Map(produse.map(p => [p.denumire, p]));
 let linii = [];
 // Lăţimea pânzei de tăiere, în mm — se pierde la fiecare tăietură. 0 = nu se ţine cont.
 const TAIERE_MM = 0;
-const deb = l => (l?.bara ? debitare(l.debitare, l.bara, TAIERE_MM) : null);
-const cantitate = l => deb(l)?.nr ?? l.cantitate;
+// Produsele vândute şi pe jumătate de bară — cantitatea merge din 0,5 în 0,5 (userul, 2026-10-14)
+const PE_JUMATATE = new Set(['412']);
+const deb = l => (l?.bara ? debitare(l.debitare, l.bara, TAIERE_MM, PE_JUMATATE.has(l.cod)) : null);
+const cantitate = l => deb(l)?.nr ?? (PE_JUMATATE.has(l.cod) ? Math.ceil(l.cantitate * 2) / 2 : l.cantitate);
 const textDebitare = l => {
   const d = deb(l);
-  return d ? `${(l.debitare ?? []).filter(p => +p.l > 0 && +p.buc > 0).map(p => `${p.buc} × ${p.l} mm`).join(', ')} → ${d.nr} ${d.nr === 1 ? 'bară' : 'bare'} de ${l.bara} mm` : null;
+  return d ? `${(l.debitare ?? []).filter(p => +p.l > 0 && +p.buc > 0).map(p => `${p.buc} × ${p.l} mm`).join(', ')} → ${virgula(d.nr)} ${d.nr === 1 ? 'bară' : 'bare'} de ${l.bara} mm` : null;
 };
 // livrare / plată / agent — aceeaşi formă ca state.comanda din configurator
 const comanda = { livrare: null, agent: null, plata: null };
@@ -99,7 +101,7 @@ const rezultatHtml = l => {
   const d = deb(l);
   if (!d) return '<span class="dim">scrie lungimea şi nr. de bucăţi — se calculează din câte bare ies</span>';
   if (d.preaLungi.length) return `<span class="avert">⚠ ${d.preaLungi.join(' / ')} mm nu încape într-o bară de ${l.bara} mm</span>`;
-  return `→ <strong>${d.nr} ${d.nr === 1 ? 'bară' : 'bare'}</strong> <span class="dim">· ${d.bucati} buc · rest: ${d.resturi.map(r => `${r} mm`).join(', ')}</span>`;
+  return `→ <strong>${virgula(d.nr)} ${d.nr === 1 ? 'bară' : 'bare'}</strong> <span class="dim">· ${d.bucati} buc · rest: ${d.resturi.map(r => `${r} mm`).join(', ')}</span>`;
 };
 const celulaCod = l => (l?.cod ? esc(l.cod) : String(l?.denumire ?? '').trim() ? '<span class="avert">alege din listă</span>' : '');
 
