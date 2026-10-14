@@ -31,13 +31,15 @@ const peDenumire = new Map(produse.map(p => [p.denumire, p]));
 let linii = [];
 // Lăţimea pânzei de tăiere, în mm — se pierde la fiecare tăietură. 0 = nu se ţine cont.
 const TAIERE_MM = 0;
-// Produsele vândute şi pe jumătate de bară — cantitatea merge din 0,5 în 0,5 (userul, 2026-10-14)
+// Produsele vândute şi pe jumătate de bară — cantitatea merge din 0,5 în 0,5 (userul, 2026-10-14).
+// Pe rând, „Dă bara întreagă" (l.intreaga): clientul ia şi restul barei → bare întregi.
 const PE_JUMATATE = new Set(['412']);
-const deb = l => (l?.bara ? debitare(l.debitare, l.bara, TAIERE_MM, PE_JUMATATE.has(l.cod)) : null);
-const cantitate = l => deb(l)?.nr ?? (PE_JUMATATE.has(l.cod) ? Math.ceil(l.cantitate * 2) / 2 : l.cantitate);
+const peJumatate = l => PE_JUMATATE.has(l?.cod) && !l.intreaga;
+const deb = l => (l?.bara ? debitare(l.debitare, l.bara, TAIERE_MM, peJumatate(l)) : null);
+const cantitate = l => deb(l)?.nr ?? (peJumatate(l) ? Math.ceil(l.cantitate * 2) / 2 : l.cantitate);
 const textDebitare = l => {
   const d = deb(l);
-  return d ? `${(l.debitare ?? []).filter(p => +p.l > 0 && +p.buc > 0).map(p => `${p.buc} × ${p.l} mm`).join(', ')} → ${virgula(d.nr)} ${d.nr === 1 ? 'bară' : 'bare'} de ${l.bara} mm` : null;
+  return d ? `${(l.debitare ?? []).filter(p => +p.l > 0 && +p.buc > 0).map(p => `${p.buc} × ${p.l} mm`).join(', ')} → ${virgula(d.nr)} ${d.nr === 1 ? 'bară' : 'bare'} de ${l.bara} mm${l.intreaga ? ' (ia şi restul barei)' : ''}` : null;
 };
 // livrare / plată / agent — aceeaşi formă ca state.comanda din configurator
 const comanda = { livrare: null, agent: null, plata: null };
@@ -88,6 +90,8 @@ const debitareHtml = (l, i) => {
   const piese = l.debitare ?? [];
   return `<tr class="debitare" data-i="${i}"><td></td><td colspan="5"><div class="deb">
     <span class="deb-titlu">Debitare <span class="dim">· bară de ${l.bara} mm</span></span>
+    ${PE_JUMATATE.has(l.cod) ? `<button class="deb-intreaga${l.intreaga ? ' activ' : ''}" type="button" aria-pressed="${!!l.intreaga}"
+      title="Clientul ia şi restul barei — se facturează bare întregi, nu jumătăţi">${l.intreaga ? '✓ Bara întreagă' : 'Dă bara întreagă'}</button>` : ''}
     ${[...piese, { l: '', buc: '' }].map((p, k) => piesaHtml(p, k, k < piese.length)).join('')}
     <span class="deb-rez">${rezultatHtml(l)}</span></div></td></tr>`;
 };
@@ -237,6 +241,8 @@ const focusPe = sel => {
 $('randuri').addEventListener('click', e => {
   const b = e.target.closest('button.sterge');
   if (b) { linii.splice(rand(b), 1); randeaza(); focus(linii.length, 'produs'); }
+  const bi = e.target.closest('button.deb-intreaga');
+  if (bi) { const i = rand(bi); linii[i].intreaga = !linii[i].intreaga; randeaza(); }
   const x = e.target.closest('button.deb-x');
   if (x) {
     const i = rand(x);
