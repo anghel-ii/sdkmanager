@@ -232,7 +232,7 @@
       ${link('/', 'acasa', 'Acasă')}
       <div class="grup"><span class="txt">Comenzi</span></div>
       ${STARI.map(([t, , h, ic, n]) => link('/' + h, ic, n, `data-tab="${t}"`, `<span class="insigna" data-cate-meniu="${t}"></span>`)).join('')}
-      <div class="grup"><span class="txt">Atelier</span></div>
+      <div class="grup"><span class="txt">Operaţiuni</span></div>
       ${link('/sticla', 'sticla', 'Comandă sticlă', 'id="linkSticla"', '<span class="insigna cald" id="nrSticla"></span>')}
       ${link('/livrari', 'livrari', 'Organizează livrări', 'id="linkLivrari"')}
       ${link('/taskuri', 'taskuri', 'Taskuri', 'id="linkTaskuri"', '<span class="insigna rosie" id="nrTaskuri" title="ajunse la ora reminderului"></span>')}
