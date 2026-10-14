@@ -310,7 +310,8 @@ function listeaza(ctx) {
            (SELECT COUNT(*) FROM pozitie p WHERE p.comanda_id = c.id) AS nr_pozitii,
            ${config.scanare ? `(${ULTIMA_SCANARE})` : 'NULL'} AS ultima,
            (${STICLA}) AS sticla_brut,
-           EXISTS (SELECT 1 FROM fixare f WHERE f.comanda_id = c.id AND f.utilizator_id = ?) AS fixat
+           EXISTS (SELECT 1 FROM fixare f WHERE f.comanda_id = c.id AND f.utilizator_id = ?) AS fixat,
+           NOT ${require('../cereri.js').FARA_CERERE} AS pe_hold   -- anulare cerută, nedecisă
       FROM comanda c
       JOIN utilizator u ON u.id = c.creat_de
      WHERE ${filtru} AND c.anulat = 0

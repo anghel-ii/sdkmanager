@@ -606,7 +606,7 @@ function randeazaTabel() {
         <tr data-id="${c.id}" class="${c.fixat ? 'fixat' : ''}${c.id === selectat ? ' selectat' : ''}">
           <td class="pin" data-c="pin"><button class="btn-pin${c.fixat ? ' activ' : ''}" data-id="${c.id}"
                 title="${c.fixat ? 'Scoate de sus' : 'Fixează sus (doar pentru tine)'}">📌</button></td>
-          <td data-c="client">${esc(c.client_nume)}${totul && c.client_telefon ? `<div class="nr-mic mono">${esc(c.client_telefon)}</div>` : ''}</td>
+          <td data-c="client">${esc(c.client_nume)}${c.pe_hold ? ' <span class="stare-pastila anulata" title="Anulare cerută — comanda e oprită până decide conducerea">anulare cerută</span>' : ''}${totul && c.client_telefon ? `<div class="nr-mic mono">${esc(c.client_telefon)}</div>` : ''}</td>
           <td class="mono" data-c="oferta">${esc(c.oferta_nr || c.numar)}</td>
           <td data-c="sistem">${esc(c.sistem ?? '—')}</td>
           ${cuStatus ? `<td data-c="status">${statusHtml(c.status)}</td>` : ''}
@@ -749,6 +749,7 @@ async function incarcaCard() {
   const fise = d.pozitii.length > 1 ? numeFise(d.pozitii, await incarcaGame()) : [];
   if (id !== selectat || !$('tabelLista')) return;
   el.innerHTML = cardDetalii(d, fise);
+  opresteActiuni(el, d.cerere);
   leagaTreceri(el, d.comanda, () => mergiLa(id));
   $('ccInchide').addEventListener('click', () => selecteaza(null));
   $('ccDeschide').addEventListener('click', () => { location.hash = '#comanda/' + id; });
@@ -793,11 +794,17 @@ function blocAnulare(c, r) {
   const decis = r && `${r.stare === 'aprobata' ? 'aprobată' : 'respinsă'} de ${esc(r.decis_de_nume)} · ${dataOra(r.decis_la)}${r.raspuns ? ` — „${esc(r.raspuns)}"` : ''}`;
   if (c.anulat) return `<div class="anulare-info anulata"><b>Comandă anulată</b>${r ? ` · motiv: „${esc(r.motiv)}" (cerută de ${esc(r.creat_de_nume)}) · ${decis}` : ''}</div>`;
   if (r?.stare === 'deschisa') return `<div class="anulare-info deschisa"><b>Anulare cerută</b> de ${esc(r.creat_de_nume)} · ${dataOra(r.creat_la)} — „${esc(r.motiv)}".
-    Aşteaptă decizia conducerii${['admin', 'conducere'].includes(eu?.rol) ? ' — <a href="/cereri">decide în Cereri</a>' : ''}.</div>`;
+    Comanda e oprită până decide conducerea${['admin', 'conducere'].includes(eu?.rol) ? ' — <a href="/cereri">decide în Cereri</a>' : ''}.</div>`;
   if (r?.stare === 'respinsa') return `<div class="anulare-info"><b>Cererea de anulare</b> a fost ${decis}.</div>`;
   return '';
 }
 const butonAnulare = (c, r) => (c.anulat || r?.stare === 'deschisa' ? '' : '<button class="rosu-contur" data-anuleaza title="Cere anularea — o aprobă conducerea">Anulează…</button>');
+// „Pe hold" (userul, 2026-10-14): cât cererea de anulare aşteaptă decizia, de pe comandă dispar
+// toate operaţiile (fişa, treceri, facturare, sticlă, livrare, modificări); rămân doar vederea şi
+// taskurile. Serverul le refuză oricum (index.js) — aici doar nu le arătăm degeaba.
+const ACTIUNI = '[data-trecere], [data-adauga-la], #modifica, #ccModifica, #fisaDetaliu, .fisa-poz, .cc-fisa, '
+  + '#schimbaLivrare, .factura-form, #anuleazaFactura, .sticla-comanda, .sticla-anuleaza, .sticla-da';
+const opresteActiuni = (el, cerere) => { if (cerere?.stare === 'deschisa') el.querySelectorAll(ACTIUNI).forEach(b => b.remove()); };
 
 // `dupa()` — după o trecere reuşită (pagina comenzii se redesenează, cardul trece la tabul nou)
 function leagaTreceri(root, c, dupa) {
@@ -1058,6 +1065,7 @@ async function renderDetaliu(id) {
 
 `;
 
+  opresteActiuni($('continut'), cerere);
   $('inapoi').addEventListener('click', () => { location.hash = HASH_TAB[tabCurent]; });
   document.querySelectorAll('.taburi-detaliu button').forEach(b => b.addEventListener('click', () => {
     tabDetaliu = b.dataset.tabd;

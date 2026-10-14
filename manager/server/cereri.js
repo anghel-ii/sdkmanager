@@ -18,6 +18,11 @@ const DIN = `FROM cerere r JOIN utilizator uc ON uc.id = r.creat_de LEFT JOIN ut
 // pt. pagina comenzii: ultima cerere de anulare (deschisă sau decisă)
 const cerereComenzii = id => db().prepare(`SELECT ${CAMPURI} ${DIN} WHERE r.comanda_id = ? AND r.tip = 'anulare'
   ORDER BY r.id DESC LIMIT 1`).get(id) ?? null;
+// „Pe hold" (userul, 2026-10-14): o comandă cu cerere de anulare nedecisă nu mai apare la
+// sticlă şi la livrări, iar operaţiile pe ea sunt refuzate (index.js) — până decide conducerea.
+// FARA_CERERE se pune în WHERE-ul unei interogări cu comanda ca alias `c`.
+const FARA_CERERE = "NOT EXISTS (SELECT 1 FROM cerere r WHERE r.comanda_id = c.id AND r.stare = 'deschisa')";
+const peHold = id => !!db().prepare("SELECT 1 FROM cerere WHERE comanda_id = ? AND stare = 'deschisa'").get(id);
 // pt. insigna din meniu (conducere / admin)
 const nrDeschise = () => db().prepare("SELECT COUNT(*) AS n FROM cerere WHERE stare = 'deschisa'").get().n;
 
@@ -67,7 +72,7 @@ const decide = aproba => async ctx => {
 };
 
 module.exports = {
-  cerereComenzii, nrDeschise,
+  cerereComenzii, nrDeschise, FARA_CERERE, peHold,
   rute: [
     ['POST', '/api/comenzi/:id/anulare',     { handler: cereAnulare }],
     ['GET',  '/api/cereri',                  { handler: lista }],

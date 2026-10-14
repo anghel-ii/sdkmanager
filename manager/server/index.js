@@ -68,12 +68,22 @@ async function trateaza(req, res) {
     }
 
     const ctx = { req, res, params, utilizator };
+    // Comanda cu cerere de anulare nedecisă e „pe hold" (cereri.js): nicio operaţie pe ea până
+    // decide conducerea — în afară de cererea însăşi şi de pinul personal. Toate operaţiile pe
+    // o comandă trec pe aici (/api/comenzi/:id/…), deci verificarea stă o singură dată.
+    const peComanda = req.method !== 'GET' && /^\/api\/comenzi\/(\d+)(\/[\w-]+)?$/.exec(cale);
+    const opreste = () => {
+      if (!peComanda || ['/anulare', '/fixare'].includes(peComanda[2]) || !cereri.peHold(+peComanda[1])) return false;
+      eroare(res, 409, 'Comanda are o cerere de anulare — e oprită până decide conducerea.');
+      return true;
+    };
     // Modul test: cererea merge pe copia bazei (server/db.js, „Modul test"). Contul
     // (parola, sesiunea) şi tichetele către admin rămân pe bune.
     if (utilizator?.mod_test && !PE_BUNE.some(p => cale === p || cale.startsWith(p + '/'))) {
       if (cale.startsWith('/api/clienti/propuneri/')) return eroare(res, 403, 'În modul test nu se aprobă clienţi — aprobarea ar ajunge pe bune.');
-      return inTest(() => spec.handler(ctx));
+      return inTest(() => opreste() || spec.handler(ctx));
     }
+    if (opreste()) return;
     try { return await spec.handler(ctx); } finally { sincronizeaza(); }   // ce s-a scris pe bune intră şi în copia de test
   }
 

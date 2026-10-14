@@ -1,6 +1,7 @@
 const { db, tranzactie, ACUM } = require('./db.js');
 const { json, eroare, corpJson } = require('./http.js');
 const { anunta } = require('./evenimente.js');
+const { FARA_CERERE } = require('./cereri.js');
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  COMANDĂ STICLĂ — tot ce trebuie comandat la furnizori, grupat pe furnizor.
@@ -61,7 +62,7 @@ function lista(ctx) {
       JOIN pozitie p ON p.id = l.pozitie_id
       JOIN comanda c ON c.id = p.comanda_id
       LEFT JOIN utilizator u ON u.id = l.comandat_de
-     WHERE l.lista = 'sticla' AND c.tip = 'comanda' AND c.anulat = 0
+     WHERE l.lista = 'sticla' AND c.tip = 'comanda' AND c.anulat = 0 AND ${FARA_CERERE}
        AND l.comandat_la IS ${comandate ? 'NOT NULL' : 'NULL'}
        ${comandate ? 'AND c.finalizat_la IS NULL' : ''}   -- „comandate": doar comenzile încă în lucru
      ORDER BY ${comandate ? 'l.comandat_la DESC,' : ''} c.creat_la, l.idx
@@ -81,7 +82,9 @@ function marcheaza(comandat) {
     if (!ids.length) return eroare(ctx.res, 400, 'Nicio linie aleasă.');
     const n = tranzactie(d => {
       const st = d.prepare(`UPDATE pozitie_linie SET comandat_la = ${comandat ? ACUM() : 'NULL'},
-                              comandat_de = ? WHERE id = ? AND lista = 'sticla'`);
+                              comandat_de = ? WHERE id = ? AND lista = 'sticla'
+                              AND NOT EXISTS (SELECT 1 FROM pozitie p JOIN cerere r ON r.comanda_id = p.comanda_id
+                                               AND r.stare = 'deschisa' WHERE p.id = pozitie_linie.pozitie_id)`);
       return ids.reduce((s, id) => s + Number(st.run(comandat ? ctx.utilizator.id : null, id).changes), 0);
     });
     anunta({ sticla: true });
@@ -93,7 +96,7 @@ function marcheaza(comandat) {
 const sumarSticla = () => db().prepare(`
   SELECT COALESCE(SUM(l.cantitate), 0) AS buc FROM pozitie_linie l
     JOIN pozitie p ON p.id = l.pozitie_id JOIN comanda c ON c.id = p.comanda_id
-   WHERE l.lista = 'sticla' AND l.comandat_la IS NULL AND c.tip = 'comanda' AND c.anulat = 0`).get().buc;
+   WHERE l.lista = 'sticla' AND l.comandat_la IS NULL AND c.tip = 'comanda' AND c.anulat = 0 AND ${FARA_CERERE}`).get().buc;
 
 module.exports = {
   furnizorDupaCod, sumarSticla, sticlaComenzii,

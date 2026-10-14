@@ -945,6 +945,34 @@ async function main() {
     verifica('/admin află ultimul backup', 'backup' in (await cer('GET', '/api/actualizare')).date);
   }
 
+  console.log('\nAnulare cerută → comanda „pe hold" până decide conducerea');
+  {
+    const adresa = 'Str. Lunga 1, Pascani, Iasi';
+    const r = await cer('POST', '/api/comenzi', { client: { nume: 'Client Hold', telefon: '0700', adresa },
+      detalii: { livrare: 'Cu masina noastra' }, ofertaNr: 'HOLD-1',
+      pozitii: [{ ...pozitie('confortGamma', 'Confort Gamma', 1, 1200), linii: { facturare: [{ cod: 'X', denumire: 'X', cantitate: 1 }],
+        sticla: [{ cod: 'GG004', denumire: 'Geam float 4mm GG004', um: 'buc', cantitate: 1, debitare: '1000 × 500 mm' }] } }] });
+    const id = r.date.comanda.id;
+    await cer('POST', `/api/comenzi/${id}/accepta`, { plata: 'proforma', telefon: '0700', adresa });
+    const laSticla = async () => (await cer('GET', '/api/sticla')).date.linii.some(l => l.comanda_id === id);
+    const laLivrari = async () => (await cer('GET', '/api/livrari/candidati')).date.comenzi.some(c => c.id === id);
+    verifica('înainte de cerere: apare la sticlă şi la livrări', await laSticla() && await laLivrari());
+    await cer('POST', `/api/comenzi/${id}/anulare`, { motiv: 'Clientul se mai gândeşte' });
+    verifica('pe hold: nu mai apare la sticlă', !(await laSticla()));
+    verifica('pe hold: nu mai apare la livrări', !(await laLivrari()));
+    verifica('pe hold: rămâne în listă, marcată', (await cer('GET', '/api/comenzi?tip=comanda')).date.comenzi.find(c => c.id === id)?.pe_hold === 1);
+    for (const [cale, corp] of [['finalizeaza'], ['factura', { numar: 'F-HOLD' }], ['livrare', { livrare: 'Ridicare personala' }], ['fisa'],
+                                ['adauga', { pozitii: [pozitie('confortGamma', 'Confort Gamma', 1, 1200)] }]])
+      verifica(`pe hold: „${cale}" → 409`, (await cer('POST', `/api/comenzi/${id}/${cale}`, corp)).stare === 409);
+    const linieSticla = db2().prepare("SELECT l.id FROM pozitie_linie l JOIN pozitie p ON p.id = l.pozitie_id WHERE p.comanda_id = ? AND l.lista = 'sticla'").get(id).id;
+    verifica('pe hold: sticla ei nu se poate marca trimisă', (await cer('POST', '/api/sticla/comanda', { ids: [linieSticla] })).date.actualizate === 0);
+    verifica('pe hold: pinul personal merge', (await cer('POST', `/api/comenzi/${id}/fixare`, { fixat: true })).stare === 200);
+    const rid = (await cer('GET', '/api/cereri')).date.cereri.find(x => x.comanda_id === id).id;
+    await cer('POST', `/api/cereri/${rid}/respinge`, { raspuns: 'Continuăm' });
+    verifica('respinsă: revine la sticlă şi la livrări', await laSticla() && await laLivrari());
+    verifica('respinsă: se lucrează din nou pe ea', (await cer('POST', `/api/comenzi/${id}/finalizeaza`)).stare === 200);
+  }
+
   console.log('\nTichete pentru administrator (server/tichete.js) + tabloul din /admin');
   {
     const caMaria = async fn => { const k = cookie; cookie = null; await cer('POST', '/api/login', { user: 'maria', parola: 'parola-maria-1' });

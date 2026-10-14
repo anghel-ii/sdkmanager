@@ -1,6 +1,7 @@
 const { db, tranzactie, ACUM } = require('./db.js');
 const { json, eroare, corpJson } = require('./http.js');
 const { anunta } = require('./evenimente.js');
+const { FARA_CERERE } = require('./cereri.js');
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  ORGANIZEAZĂ LIVRĂRI (userul, 2026-10-06) — comenzile care se livrează cu
@@ -67,7 +68,7 @@ function cuDetalii(randuri) {
 function candidati(ctx) {
   const r = db().prepare(`
     SELECT ${CAMPURI} FROM comanda c
-     WHERE c.tip = 'comanda' AND c.anulat = 0 AND lower(trim(c.livrare)) = ?
+     WHERE c.tip = 'comanda' AND c.anulat = 0 AND lower(trim(c.livrare)) = ? AND ${FARA_CERERE}
        AND NOT EXISTS (SELECT 1 FROM livrare_comanda lc WHERE lc.comanda_id = c.id)
      ORDER BY c.creat_la`).all(CU_MASINA);
   json(ctx.res, 200, { comenzi: cuDetalii(r), judete: JUDETE });
@@ -108,6 +109,7 @@ function livrari(ctx) {
                              LEFT JOIN utilizator u ON u.id = l.creat_de ORDER BY l.data, l.id`).all();
   const comenzi = cuDetalii(db().prepare(`
     SELECT ${CAMPURI}, lc.livrare_id, lc.ordine FROM livrare_comanda lc JOIN comanda c ON c.id = lc.comanda_id
+     WHERE ${FARA_CERERE}
      ORDER BY lc.livrare_id, lc.ordine`).all());
   json(ctx.res, 200, { livrari: ls.map(l => ({ ...l, comenzi: comenzi.filter(c => c.livrare_id === l.id) })) });
 }
@@ -121,9 +123,9 @@ async function creeaza(ctx) {
   if (!ids.length) return eroare(ctx.res, 400, 'Bifează cel puţin o comandă.');
   if (new Set(ids).size !== ids.length) return eroare(ctx.res, 400, 'O comandă apare de două ori.');
 
-  const bune = new Set(db().prepare(`SELECT id FROM comanda WHERE tip = 'comanda' AND anulat = 0 AND lower(trim(livrare)) = ?
-                                     AND id IN (${ids.map(() => '?').join(',')})`).all(CU_MASINA, ...ids).map(r => r.id));
-  if (bune.size !== ids.length) return eroare(ctx.res, 400, 'Unele comenzi nu se livrează cu maşina noastră sau nu sunt acceptate.');
+  const bune = new Set(db().prepare(`SELECT id FROM comanda c WHERE tip = 'comanda' AND anulat = 0 AND lower(trim(livrare)) = ?
+                                     AND ${FARA_CERERE} AND id IN (${ids.map(() => '?').join(',')})`).all(CU_MASINA, ...ids).map(r => r.id));
+  if (bune.size !== ids.length) return eroare(ctx.res, 400, 'Unele comenzi nu se livrează cu maşina noastră, nu sunt acceptate sau au o cerere de anulare.');
 
   try {
     const id = tranzactie(d => {
