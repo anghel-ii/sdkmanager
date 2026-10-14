@@ -166,6 +166,9 @@
     #meniu .eu .txt { min-width: 0; flex: 1; line-height: 1.25; }
     #meniu .eu b { display: block; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     #meniu .eu small { display: block; font-size: 11.5px; color: var(--text-dim); }
+    #meniu #schimbaParola { display: block; padding: 0; margin-top: 2px; font: inherit; font-size: 11.5px; color: var(--accent);
+      background: none; border: none; cursor: pointer; }
+    #meniu #schimbaParola:hover { text-decoration: underline; }
     #meniu #iesire { flex: none; display: flex; align-items: center; gap: 5px; height: 28px; padding: 0 8px; font: inherit; font-size: 12.5px;
       color: var(--text-dim); background: none; border: 1px solid var(--line); border-radius: 7px; cursor: pointer; }
     #meniu #iesire:hover { color: #e8907f; border-color: rgba(201,96,76,.6); background: rgba(201,96,76,.08); }
@@ -245,7 +248,7 @@
       <div class="meniu-live"><span class="live" title="Actualizare live: pagina se schimbă singură când lucrează altcineva"><span class="da">Conectat</span><span class="nu">Reconectare…</span></span></div>
       <div class="eu">
         <span class="avatar" id="initiale"></span>
-        <span class="txt"><b id="cine"></b><small id="rolEu"></small></span>
+        <span class="txt"><b id="cine"></b><small id="rolEu"></small><button type="button" id="schimbaParola">Schimbă parola</button></span>
         <button type="button" id="iesire" title="Ieşi din cont">${icoana('iesire')}<span class="txt">Ieşi</span></button>
       </div>`;
     nav.querySelector('#comutaMeniu').addEventListener('click', () => {
@@ -302,6 +305,39 @@
     if (c) { c.focus(); c.select(); } else location.href = '/?cauta';
   });
 
+  // „Schimbă parola" din meniu — POST /api/eu/parola cere parola de acum; sesiunea de
+  // aici rămâne deschisă, celelalte (alte calculatoare) se închid
+  function schimbaParola() {
+    const d = document.createElement('dialog');
+    d.className = 'mesaj-dialog';
+    d.innerHTML = `<form>
+      <p class="camp"><b>Schimbă parola</b></p>
+      <div class="camp"><label for="parolaAcum">Parola de acum</label><input id="parolaAcum" type="password" autocomplete="current-password" required></div>
+      <div class="camp"><label for="parolaNoua">Parola nouă (cel puţin 8 caractere)</label><input id="parolaNoua" type="password" autocomplete="new-password" minlength="8" required></div>
+      <div class="camp"><label for="parolaNoua2">Scrie din nou parola nouă</label><input id="parolaNoua2" type="password" autocomplete="new-password" required></div>
+      <div class="mesaj eroare" hidden></div>
+      <div class="butoane"><button type="button" class="renunta">Renunţă</button><button class="primar">Schimbă parola</button></div>
+    </form>`;
+    const mesaj = d.querySelector('.mesaj');
+    const arata = text => { mesaj.textContent = text; mesaj.hidden = false; };
+    d.querySelector('.renunta').addEventListener('click', () => d.close());
+    d.addEventListener('close', () => d.remove());
+    d.querySelector('form').addEventListener('submit', async e => {
+      e.preventDefault();
+      const [acum, noua, noua2] = ['parolaAcum', 'parolaNoua', 'parolaNoua2'].map(id => d.querySelector('#' + id).value);
+      if (noua !== noua2) return arata('Parola nouă nu e la fel în cele două câmpuri.');
+      const r = await fetch('/api/eu/parola', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ parolaCurenta: acum, parolaNoua: noua }) }).catch(() => null);
+      const date = await r?.json().catch(() => null);
+      if (!r?.ok) return arata(date?.eroare || 'Serverul nu răspunde. Încearcă din nou.');
+      d.close();
+      const gata = 'Parola a fost schimbată. Pe alte calculatoare intri din nou, cu parola nouă.';
+      typeof alerta === 'function' ? alerta(gata) : alert(gata);
+    });
+    document.body.append(d);
+    d.showModal();
+  }
+
   window.puneBara = el => {
     const context = [...el.querySelectorAll('.bara-context')];
     const nav = cuMeniu ? meniu() : null;
@@ -316,6 +352,7 @@
       await fetch('/api/logout', { method: 'POST' });
       location.href = '/login';
     });
+    nav?.querySelector('#schimbaParola').addEventListener('click', schimbaParola);
 
     fetch('/api/eu').then(r => (r.ok ? r.json() : null)).then(d => {
       const eu = d?.utilizator;
