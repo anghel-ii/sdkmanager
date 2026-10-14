@@ -9,7 +9,8 @@ const _emitWarning = process.emitWarning;
 process.emitWarning = (w, ...rest) =>
   String(w).includes('SQLite is an experimental') ? undefined : _emitWarning.call(process, w, ...rest);
 
-const { DatabaseSync } = require('node:sqlite');
+const { DatabaseSync, constants: SQL } = require('node:sqlite');
+const { AsyncLocalStorage } = require('node:async_hooks');
 
 // ── Baza de date ─────────────────────────────────────────────────────────────
 // node:sqlite, acelaşi modul folosit de configurator la catalog. Sincron, deci
@@ -26,27 +27,126 @@ const ACUM = () => _acum;
 
 function db() {
   if (!_db) throw new Error('Baza de date nu e deschisă — cheamă deschide() întâi.');
-  return _db;
+  return _inTest.getStore() ? copieTest() : _db;
 }
 
 function deschide() {
   if (_db) return _db;
 
   fs.mkdirSync(path.dirname(config.db), { recursive: true });
-  _db = new DatabaseSync(config.db);
-
-  // WAL: cititorii nu blochează scriitorul. Contează când cineva scanează de pe
-  // telefon exact când altcineva deschide lista de comenzi.
-  _db.exec('PRAGMA journal_mode = WAL');
-  _db.exec('PRAGMA foreign_keys = ON');
-  _db.exec('PRAGMA busy_timeout = 5000');
-  if (typeof _db.function === 'function') {
-    _db.function('acum', { deterministic: false }, require('./ora.js').acumSql);
-    _acum = 'acum()';
-  }
+  _db = configureaza(new DatabaseSync(config.db));
 
   migreaza();
+  // copia de test (dacă există) se ţine la zi de la pornire — altfel s-ar pierde ce se face pe bune până la prima cerere de test
+  if (modTestPosibil && fs.existsSync(caleTest())) copieTest();
+  setInterval(sincronizeaza, 30e3).unref();   // şi ce scriu timerele (clienţii de pe Cloudflare), nu doar cererile
   return _db;
+}
+
+function configureaza(d) {
+  // WAL: cititorii nu blochează scriitorul. Contează când cineva scanează de pe
+  // telefon exact când altcineva deschide lista de comenzi.
+  d.exec('PRAGMA journal_mode = WAL');
+  d.exec('PRAGMA foreign_keys = ON');
+  d.exec('PRAGMA busy_timeout = 5000');
+  if (typeof d.function === 'function') {
+    d.function('acum', { deterministic: false }, require('./ora.js').acumSql);
+    _acum = 'acum()';
+  }
+  return d;
+}
+
+// ── Modul test (userul, 2026-10-14) ──────────────────────────────────────────
+// Utilizatorii bifaţi de admin lucrează pe o COPIE comună a bazei (<baza>-test.sqlite):
+// ce se face pe bune apare şi în copie, ce se face în test nu ajunge în baza reală.
+// Cererile lor rulează în inTest(fn), unde db() dă copia. Baza reală ţine o sesiune
+// SQLite (lista modificărilor ei); sincronizeaza() o aplică pe copie după fiecare cerere.
+// La conflict câştigă baza reală, dar doar pe coloanele schimbate pe bune. Rândurile
+// create în test primesc id-uri ≥ ID_TEST, ca să nu se bată cu cele care vin din baza reală.
+const _inTest = new AsyncLocalStorage();
+const ID_TEST = 1e9;
+const modTestPosibil = typeof DatabaseSync.prototype.createSession === 'function';   // Node ≥ 22.12
+let _test = null, _testBrut = null, _sesiune = null;
+const caleTest = () => config.db.replace(/(\.sqlite)?$/, '-test.sqlite');
+const inTest = fn => _inTest.run(true, fn);
+const esteTest = () => _inTest.getStore() === true;
+
+function copieTest() {
+  if (_test) return _test;
+  if (fs.existsSync(caleTest())) {
+    const d = new DatabaseSync(caleTest());
+    const versiune = x => x.prepare('PRAGMA user_version').get().user_version;
+    if (versiune(d) === versiune(_db)) return pornesteTest(d);
+    d.close();   // altă schemă (după un update cu migraţie) → copie nouă
+  }
+  return refaTest();
+}
+
+// Copie nouă din baza reală — tot ce s-a lucrat în test se pierde.
+function refaTest() {
+  if (!modTestPosibil) throw Object.assign(new Error('Modul test cere Node 22.12 sau mai nou pe server.'), { cod: 409 });
+  inchideTest();
+  for (const f of ['', '-wal', '-shm']) fs.rmSync(caleTest() + f, { force: true });
+  _db.exec(`VACUUM INTO '${caleTest().replace(/'/g, "''")}'`);
+  return pornesteTest(new DatabaseSync(caleTest()));
+}
+
+// Sincron, fără nimic între copie şi sesiune: nicio modificare reală nu scapă.
+function pornesteTest(d) {
+  _testBrut = configureaza(d);
+  _test = cuIdTest(d);
+  _sesiune = _db.createSession();
+  return _test;
+}
+
+function inchideTest() {
+  _sesiune?.close();
+  _testBrut?.close();
+  _sesiune = _testBrut = _test = null;
+}
+
+function sincronizeaza() {
+  if (!_sesiune) return;
+  try {
+    const schimbari = _sesiune.changeset();
+    _sesiune.close();
+    _sesiune = _db.createSession();
+    if (schimbari.length) _testBrut.applyChangeset(schimbari, {
+      filter: tabel => tabel !== 'sesiune',
+      onConflict: tip => tip === SQL.SQLITE_CHANGESET_DATA || tip === SQL.SQLITE_CHANGESET_CONFLICT
+        ? SQL.SQLITE_CHANGESET_REPLACE : SQL.SQLITE_CHANGESET_OMIT,
+    });
+  } catch (e) {
+    console.error('Modul test: sincronizarea copiei a eşuat:', e.message);
+  }
+}
+
+// Copia, cu INSERT-urile mutate peste ID_TEST: SQLite dă max(id)+1, deci după primul
+// rând mutat într-un tabel restul vin singure peste ID_TEST. (Rândul tocmai inserat n-are
+// încă copii care să-l refere; INSERT ... ON CONFLICT se lasă în pace — acolo
+// lastInsertRowid poate fi al altui rând.)
+function cuIdTest(d) {
+  const cuId = new Map();
+  const areId = t => {
+    if (!cuId.has(t)) {
+      const pk = d.prepare(`PRAGMA table_info(${t})`).all().filter(c => c.pk);
+      cuId.set(t, pk.length === 1 && pk[0].name === 'id' && /int/i.test(pk[0].type));
+    }
+    return cuId.get(t);
+  };
+  const leaga = (o, k) => (typeof o[k] === 'function' ? o[k].bind(o) : o[k]);
+  return new Proxy(d, { get: (_, k) => k !== 'prepare' ? leaga(d, k) : sql => {
+    const st = d.prepare(sql);
+    const t = /^\s*INSERT\s+INTO\s+(\w+)/i.exec(sql)?.[1];
+    if (!t || /ON\s+CONFLICT/i.test(sql) || !areId(t)) return st;
+    return new Proxy(st, { get: (_, k) => k !== 'run' ? leaga(st, k) : (...a) => {
+      const r = st.run(...a);
+      const id = Number(r.lastInsertRowid);
+      if (r.changes !== 1 || id >= ID_TEST) return r;
+      d.prepare(`UPDATE ${t} SET id = ? WHERE id = ?`).run(ID_TEST + id, id);
+      return { ...r, lastInsertRowid: ID_TEST + id };
+    } });
+  } });
 }
 
 // Schema de bază e idempotentă (`IF NOT EXISTS`), deci se rulează la fiecare
@@ -233,6 +333,8 @@ const MIGRATII = [
       vazut_de_autor INTEGER NOT NULL DEFAULT 1       -- 0 = adminul a schimbat ceva, autorul n-a văzut încă
     );
     CREATE INDEX tichet_stare ON tichet (stare, modificat_la);`),
+  // v19 → v20 (2026-10-14): modul test, bifat de admin pe fiecare cont (vezi „Modul test" mai sus)
+  d => d.exec('ALTER TABLE utilizator ADD COLUMN mod_test INTEGER NOT NULL DEFAULT 0'),
 ];
 
 // Exportată pt. test.
@@ -345,7 +447,10 @@ function tranzactie(fn) {
 // Închidere curată (la oprirea serverului): SQLite scrie WAL-ul în fişierul
 // principal, ca manager.sqlite să fie complet şi fără -wal alături.
 function inchide() {
+  sincronizeaza();
+  inchideTest();
   if (_db) { _db.close(); _db = null; }
 }
 
-module.exports = { db, deschide, inchide, backup, ultimulBackup, tranzactie, hashSesiuniInClar, roluriNoi, ACUM };
+module.exports = { db, deschide, inchide, backup, ultimulBackup, tranzactie, hashSesiuniInClar, roluriNoi, ACUM,
+  inTest, esteTest, sincronizeaza, copieTest, refaTest, modTestPosibil };

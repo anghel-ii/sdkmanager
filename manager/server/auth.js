@@ -31,7 +31,7 @@ function verificaParola(parola, hash, salt) {
 
 // ── Utilizatori ──────────────────────────────────────────────────────────────
 
-const PUBLIC = 'id, nume, user, rol, activ, creat_la';   // niciodată hash/salt
+const PUBLIC = 'id, nume, user, rol, activ, creat_la, mod_test';   // niciodată hash/salt
 
 // Fără parolă = cont NEACTIVAT (hash şi salt goale): adminul creează doar
 // utilizatorul şi rolul, iar omul îşi alege parola la primul login (vezi

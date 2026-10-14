@@ -1,5 +1,5 @@
 const { json, eroare, corpJson } = require('../http.js');
-const { db, tranzactie } = require('../db.js');
+const { db, tranzactie, copieTest, refaTest, modTestPosibil } = require('../db.js');
 const auth = require('../auth.js');
 
 // ── API utilizatori: login, logout, cine sunt, administrare conturi ─────────
@@ -62,7 +62,7 @@ const getEu = ctx => json(ctx.res, 200, { utilizator: ctx.utilizator });
 // `activat` = şi-a pus parola (contul creat de admin, folosit cel puţin o dată).
 const listeaza = ctx => json(ctx.res, 200, {
   utilizatori: db().prepare(
-    `SELECT id, nume, user, rol, activ, creat_la, parola_hash != '' AS activat,
+    `SELECT id, nume, user, rol, activ, creat_la, mod_test, parola_hash != '' AS activat,
             (SELECT MAX(vazut_la) FROM sesiune s WHERE s.utilizator_id = utilizator.id) AS vazut_la   -- ultima cerere a omului
        FROM utilizator ORDER BY nume`
   ).all().map(u => ({ ...u, activat: !!u.activat })),
@@ -103,7 +103,10 @@ async function modifica(ctx) {
   const id = Number(ctx.params.id);
   if (!auth.gasesteUtilizator(id)) return eroare(res, 404, 'Utilizator inexistent.');
 
-  const { nume, rol, activ, parola, reseteazaParola } = await corpJson(ctx.req);
+  const { nume, rol, activ, parola, reseteazaParola, modTest } = await corpJson(ctx.req);
+  // modul test — nu pentru admin: ar lucra pe copie şi la conturi, actualizări, agenţi
+  if (modTest && (rol ?? auth.gasesteUtilizator(id).rol) === 'admin') return eroare(res, 400, 'Un administrator nu poate fi pus în modul test.');
+  if (modTest && !modTestPosibil) return eroare(res, 409, 'Modul test cere Node 22.12 sau mai nou pe server.');
   // Toate validările ÎNAINTE de orice scriere — altfel o parolă prea scurtă
   // dădea 400, dar numele/rolul de dinainte rămâneau deja salvate.
   if (rol && !ROLURI.includes(rol)) return eroare(res, 400, `Rol necunoscut. Valori permise: ${ROLURI.join(', ')}.`);
@@ -127,7 +130,9 @@ async function modifica(ctx) {
     if (rol   != null) d.prepare('UPDATE utilizator SET rol   = ? WHERE id = ?').run(rol, id);
     if (activ != null) d.prepare('UPDATE utilizator SET activ = ? WHERE id = ?').run(activ ? 1 : 0, id);
     if (parola != null) auth.schimbaParola(id, parola);
+    if (modTest != null || rol === 'admin') d.prepare('UPDATE utilizator SET mod_test = ? WHERE id = ?').run(modTest && rol !== 'admin' ? 1 : 0, id);
   });
+  if (modTest) copieTest();   // primul cont pus în test face copia
 
   json(res, 200, { utilizator: auth.gasesteUtilizator(id) });
 }
@@ -159,5 +164,7 @@ module.exports = {
     ['GET',  '/api/utilizatori',     { rol: 'admin', handler: listeaza }],
     ['POST', '/api/utilizatori',     { rol: 'admin', handler: creeaza }],
     ['PATCH','/api/utilizatori/:id', { rol: 'admin', handler: modifica }],
+    // copia de test refăcută din baza reală — ce s-a lucrat în test se pierde
+    ['POST', '/api/test/reface',     { rol: 'admin', handler: ctx => { refaTest(); json(ctx.res, 200, { ok: true }); } }],
   ],
 };

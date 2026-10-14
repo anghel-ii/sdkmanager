@@ -18,6 +18,8 @@ const denumireFaraCod = d => String(d ?? '')
   .replace(/\s{2,}/g, ' ').replace(/[\s,]+$/, '').trim();
 
 async function trimiteMailSticla(furnizor, linii) {
+  // modul test (bara.js): mailul ar pleca pe bune la furnizor
+  if (window.modTest) return alerta('În modul test mailul către furnizor nu se deschide.\nPoţi marca sticla ca trimisă — rămâne doar în test.');
   const peModel = new Map();
   for (const l0 of linii) {
     const l = { ...l0, denumire: denumireFaraCod(l0.denumire) };

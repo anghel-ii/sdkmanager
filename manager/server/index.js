@@ -3,7 +3,7 @@ const https = require('node:https');
 const fs    = require('node:fs');
 
 const { config } = require('./config.js');
-const { deschide, inchide, backup } = require('./db.js');
+const { deschide, inchide, backup, inTest, sincronizeaza } = require('./db.js');
 const { eroare, redirect, serveste, router } = require('./http.js');
 const auth = require('./auth.js');
 
@@ -45,6 +45,7 @@ const MODULE = [utilizatori, comenzi, scanare, evenimente, sticla, livrari, task
 
 const rute = MODULE.flatMap(m => m.rute).map(([metoda, cale, spec]) => [metoda, cale, spec]);
 const potriveste = router(rute);
+const PE_BUNE = ['/api/login', '/api/logout', '/api/eu', '/api/tichete'];   // şi în modul test
 
 // ── Cererea ──────────────────────────────────────────────────────────────────
 
@@ -66,7 +67,14 @@ async function trateaza(req, res) {
       return eroare(res, 403, 'Nu ai drepturile necesare pentru operaţia asta.');
     }
 
-    return spec.handler({ req, res, params, utilizator });
+    const ctx = { req, res, params, utilizator };
+    // Modul test: cererea merge pe copia bazei (server/db.js, „Modul test"). Contul
+    // (parola, sesiunea) şi tichetele către admin rămân pe bune.
+    if (utilizator?.mod_test && !PE_BUNE.some(p => cale === p || cale.startsWith(p + '/'))) {
+      if (cale.startsWith('/api/clienti/propuneri/')) return eroare(res, 403, 'În modul test nu se aprobă clienţi — aprobarea ar ajunge pe bune.');
+      return inTest(() => spec.handler(ctx));
+    }
+    try { return await spec.handler(ctx); } finally { sincronizeaza(); }   // ce s-a scris pe bune intră şi în copia de test
   }
 
   // Scanarea din atelier — navigare/fereastră de la pagina de pe Cloudflare

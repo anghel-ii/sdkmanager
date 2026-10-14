@@ -123,6 +123,7 @@
       <!-- Conturi: utilizatorul, rolul şi o parolă INIŢIALĂ pe care i-o spui colegului -->
       <section class="card">
         <div class="card-cap"><h2>Conturi</h2><span class="spatiu"></span>
+          <button class="mic" id="refaTest" type="button" title="Copia pe care lucrează conturile în modul test, luată din nou din baza reală">Reface copia de test</button>
           <button class="mic primar" id="arataContNou" type="button">+ Cont nou</button></div>
         <form id="formNou" autocomplete="off" hidden>
           <div class="cont-nou">
@@ -310,13 +311,14 @@ async function incarca() {
   $('lista').className = 'tabel-lat';
   $('lista').innerHTML = `
     <table class="tab">
-      <thead><tr><th>Nume</th><th>Utilizator</th><th>Rol</th><th></th></tr></thead>
+      <thead><tr><th>Nume</th><th>Utilizator</th><th>Rol</th><th title="Lucrează pe o copie a bazei: vede tot ce e pe bune, dar ce face el nu ajunge în baza reală">Mod test</th><th></th></tr></thead>
       <tbody>${utilizatori.map(u => {
         const euInsumi = u.id === eu.id;
         return `<tr data-id="${u.id}"${u.activ ? '' : ' class="dim"'}>
           <td title="cont creat ${dataOra(u.creat_la)}">${esc(u.nume)}${euInsumi ? ' <span class="dim mic">(tu)</span>' : ''}<small>${stare(u)}</small></td>
           <td class="mono">${esc(u.user)}</td>
           <td>${euInsumi ? esc(u.rol) : `<select class="rol">${ROLURI.map(x => `<option${x === u.rol ? ' selected' : ''}>${x}</option>`).join('')}</select>`}</td>
+          <td>${u.rol === 'admin' ? '' : `<input type="checkbox" class="modtest"${u.mod_test ? ' checked' : ''} aria-label="Mod test pentru ${esc(u.nume)}">`}</td>
           <td class="actiuni">${euInsumi ? '' : `
             <button class="mic reset" title="${u.activat ? 'O parolă temporară nouă' : 'Cont vechi fără parolă — pune-i una'}">${u.activat ? 'Parolă nouă' : 'Pune parola'}</button>
             <button class="mic activ ${u.activ ? 'rosu-contur' : 'verde-contur'}">${u.activ ? 'Dezactivează' : 'Reactivează'}</button>`}</td>
@@ -341,6 +343,13 @@ async function incarca() {
         { trimite: 'Pune parola', loc: 'parola temporară', min: 8 });
       if (parola) patch({ reseteazaParola: true, parola });
     });
+    tr.querySelector('input.modtest')?.addEventListener('change', async e => {
+      const text = e.target.checked
+        ? `Pui ${u.nume} în modul test?\n\nVede tot ce e pe bune, dar ce face de acum nu ajunge în baza reală. Pe pagină apare un chenar portocaliu.`
+        : `Scoţi ${u.nume} din modul test?\n\nDe acum lucrează din nou pe bune.`;
+      if (await confirma(text, e.target.checked ? 'Pune în test' : 'Scoate din test')) patch({ modTest: e.target.checked });
+      else e.target.checked = !e.target.checked;
+    });
     tr.querySelector('button.activ')?.addEventListener('click', async () => {
       const text = u.activ ? `Dezactivezi contul lui ${u.nume}? Nu se mai poate autentifica.` : `Reactivezi contul lui ${u.nume}?`;
       if (await confirma(text, u.activ ? 'Dezactivează' : 'Reactivează')) patch({ activ: !u.activ });
@@ -348,6 +357,11 @@ async function incarca() {
   });
 }
 
+$('refaTest').addEventListener('click', async () => {
+  if (!(await confirma('Refaci copia de test din baza reală?\n\nTot ce s-a lucrat în modul test se pierde.', 'Reface copia'))) return;
+  const r = await api('/api/test/reface', { method: 'POST' });
+  if (r) await alerta(r.ok ? 'Copia de test e refăcută din baza reală.' : await eroareDin(r));
+});
 $('arataContNou').addEventListener('click', () => { $('formNou').hidden = !$('formNou').hidden; if (!$('formNou').hidden) $('nouUser').focus(); });
 $('formNou').addEventListener('submit', async e => {
   e.preventDefault();

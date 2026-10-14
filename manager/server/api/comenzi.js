@@ -1,5 +1,5 @@
 const { json, eroare, corpJson } = require('../http.js');
-const { db, tranzactie, ACUM } = require('../db.js');
+const { db, tranzactie, ACUM, esteTest } = require('../db.js');
 const { acumMs } = require('../ora.js');
 const { config } = require('../config.js');
 const { anunta, anuntaUtilizator } = require('../evenimente.js');
@@ -39,8 +39,10 @@ function urmatorulNumar(d, an) {
   const ultim = d.prepare(
     'SELECT numar FROM comanda WHERE numar LIKE ? ORDER BY numar DESC LIMIT 1'
   ).get(`OF-${an}-%`);
-  // zero-padding pe 4 cifre → sortarea ca text e şi sortare numerică
-  return String(Number(ultim?.numar.slice(-4) ?? 0) + 1).padStart(4, '0');
+  // zero-padding pe 4 cifre → sortarea ca text e şi sortare numerică.
+  // În modul test numerele pornesc de la 9001, ca să nu se bată cu ofertele reale care
+  // intră în copie (numărul e unic). ponytail: ajunge cât firma face sub 9000 de oferte pe an.
+  return String(Math.max(Number(ultim?.numar.slice(-4) ?? 0), esteTest() ? 9000 : 0) + 1).padStart(4, '0');
 }
 
 // Codul de bare al comenzii: <an2><numar4>, ex. "260042" — scurt, uşor de

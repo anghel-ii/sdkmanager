@@ -465,7 +465,7 @@ async function main() {
     const idVechi = Number(db2().prepare("INSERT INTO utilizator (nume, user, parola_hash, parola_salt, rol) VALUES ('Vechi', 'vechi', 'x', 'x', 'operator')").run().lastInsertRowid);
     require('../server/db.js').roluriNoi(db2());
     verifica('migraţie: operator → birou', db2().prepare('SELECT rol FROM utilizator WHERE id = ?').get(idVechi).rol === 'birou');
-    verifica('schema la versiunea 19', db2().prepare('PRAGMA user_version').get().user_version === 19);
+    verifica('schema la versiunea 20', db2().prepare('PRAGMA user_version').get().user_version === 20);
   }
 
   console.log('\nFixare şi sortare — per utilizator');
@@ -1032,6 +1032,48 @@ async function main() {
     verifica('/api/ora dă ora exactă', Math.abs((await cer('GET', '/api/ora')).date.acum - (Date.now() + 5 * 60e3)) < 2000);
     verifica('„Înapoi în ofertă" numără după ora exactă', (await cer('POST', `/api/comenzi/${o.date.comanda.id}/inapoi-oferta`)).stare === 200);
     ora._seteaza(0);
+  }
+
+  console.log('\nModul test — copie comună: ce e pe bune apare în test, ce e în test nu apare pe bune');
+  {
+    const { inTest } = require('../server/db.js');
+    const inCopie = sql => inTest(() => db2().prepare(sql).all());
+    const pePeBune = sql => db2().prepare(sql).all();
+    const an = new Date().getFullYear();
+    creeazaUtilizator({ nume: 'Tina Test', user: 'tina', parola: 'parola-tina-1', rol: 'birou' });
+    const tina = db2().prepare("SELECT id FROM utilizator WHERE user = 'tina'").get().id;
+    await cer('POST', '/api/login', { user: 'admin', parola: 'parola-admin-1' });
+    const adminId = db2().prepare("SELECT id FROM utilizator WHERE user = 'admin'").get().id;
+    verifica('adminul nu poate fi pus în modul test', (await cer('PATCH', `/api/utilizatori/${adminId}`, { modTest: true })).stare === 400);
+    verifica('admin pune un cont în modul test', (await cer('PATCH', `/api/utilizatori/${tina}`, { modTest: true })).stare === 200);
+    verifica('copia de test e făcută', fs.existsSync(process.env.MANAGER_DB.replace(/\.sqlite$/, '-test.sqlite')));
+    const reala = await cer('POST', '/api/comenzi', { client: { nume: 'Client Real MT' }, ofertaNr: 'MT-R1', pozitii: [pozitie('confortGamma', 'Confort Gamma', 2, 1600)] });
+
+    await cer('POST', '/api/login', { user: 'tina', parola: 'parola-tina-1' });
+    verifica('/api/eu spune că e în modul test', (await cer('GET', '/api/eu')).date.utilizator.mod_test === 1);
+    verifica('în test se vede oferta făcută pe bune', (await cer('GET', '/api/comenzi')).date.comenzi.some(c => c.client_nume === 'Client Real MT'));
+    const t = await cer('POST', '/api/comenzi', { client: { nume: 'Client Doar Test' }, ofertaNr: 'MT-T1', pozitii: [pozitie('confortGamma', 'Confort Gamma', 2, 1600)] });
+    verifica('oferta din test: id peste 1e9, număr de la 9001', t.stare === 201 && t.date.comanda.id >= 1e9 && t.date.comanda.numar === `OF-${an}-9001`,
+      JSON.stringify(t.date));
+    verifica('oferta din test NU e în baza reală', !pePeBune("SELECT 1 FROM comanda WHERE client_nume = 'Client Doar Test'").length);
+    verifica('poziţiile ei stau în copie, legate de ea', inCopie(`SELECT comanda_id FROM pozitie WHERE comanda_id = ${t.date.comanda.id}`).length === 1);
+    verifica('în test: oferta reală trece la „Aşteaptă plata"', (await cer('POST', `/api/comenzi/${reala.date.comanda.id}/asteapta-plata`)).stare === 200);
+    verifica('… dar pe bune rămâne ofertă', pePeBune(`SELECT tip FROM comanda WHERE id = ${reala.date.comanda.id}`)[0].tip === 'oferta');
+    verifica('tichetul din test ajunge pe bune la admin', (await cer('POST', '/api/tichete', { tip: 'idee', text: 'din modul test' })).stare === 201
+      && pePeBune("SELECT 1 FROM tichet WHERE text = 'din modul test'").length === 1);
+
+    await cer('POST', '/api/login', { user: 'admin', parola: 'parola-admin-1' });
+    await cer('POST', `/api/comenzi/${reala.date.comanda.id}/accepta`, { plata: 'proforma', avans: 0, telefon: '0700', adresa: 'Str. Reala 1' });
+    const r2 = await cer('POST', '/api/comenzi', { client: { nume: 'Client Real MT 2' }, ofertaNr: 'MT-R2', pozitii: [pozitie('confortGamma', 'Confort Gamma', 2, 1600)] });
+    verifica('ce se face pe bune ajunge în copie (acceptarea, oferta nouă cu id-ul ei)',
+      inCopie(`SELECT tip FROM comanda WHERE id = ${reala.date.comanda.id}`)[0]?.tip === 'comanda'
+      && inCopie(`SELECT 1 FROM comanda WHERE id = ${r2.date.comanda.id} AND client_nume = 'Client Real MT 2'`).length === 1);
+    verifica('oferta de test rămâne în copie după sincronizare', inCopie("SELECT 1 FROM comanda WHERE client_nume = 'Client Doar Test'").length === 1);
+    verifica('„Reface copia de test" o ia de la zero', (await cer('POST', '/api/test/reface')).stare === 200
+      && !inCopie("SELECT 1 FROM comanda WHERE client_nume = 'Client Doar Test'").length
+      && inCopie(`SELECT 1 FROM comanda WHERE id = ${r2.date.comanda.id}`).length === 1);
+    verifica('scos din modul test', (await cer('PATCH', `/api/utilizatori/${tina}`, { modTest: false })).stare === 200
+      && pePeBune(`SELECT mod_test FROM utilizator WHERE id = ${tina}`)[0].mod_test === 0);
   }
 
   console.log('\nBackup');
