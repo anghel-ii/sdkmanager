@@ -34,12 +34,13 @@ async function trimite(ctx) {
   const corp = await corpJson(ctx.req);
   const text = String(corp.text ?? '').trim().slice(0, 4000);
   if (!TIPURI.includes(corp.tip)) return eroare(ctx.res, 400, 'Alege ce fel de tichet e.');
-  if (text.length < 5) return eroare(ctx.res, 400, 'Scrie pe scurt ce s-a întâmplat sau ce ai vrea.');
   const pagina = corp.pagina ? String(corp.pagina).slice(0, 300) : null;
   // „+ Tichet" de pe o comandă: tichetul e mereu pe bune (index.js), comanda o căutăm unde lucrează omul (test sau nu)
   const comandaId = corp.comanda_id == null ? null : Number(corp.comanda_id);
   const exista = () => db().prepare('SELECT 1 FROM comanda WHERE id = ?').get(comandaId);
   if (comandaId !== null && !(ctx.utilizator.mod_test ? inTest(exista) : exista())) return eroare(ctx.res, 400, 'Comandă inexistentă.');
+  // fără minim de caractere (userul, 2026-10-15); gol doar dacă e pus pe o comandă
+  if (!text && comandaId === null) return eroare(ctx.res, 400, 'Scrie pe scurt ce s-a întâmplat sau ce ai vrea.');
   const r = db().prepare(`INSERT INTO tichet (tip, text, pagina, comanda_id, creat_de, creat_la, modificat_la)
     VALUES (?, ?, ?, ?, ?, ${ACUM()}, ${ACUM()})`).run(corp.tip, text, pagina, comandaId, ctx.utilizator.id);
   anunta({ tichet: Number(r.lastInsertRowid) });

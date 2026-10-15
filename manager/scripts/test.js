@@ -999,6 +999,9 @@ async function main() {
       const t = (await cer('GET', '/api/tichete')).date.tichete.find(x => x.id === pe.date.id);
       verifica('tichet legat de comandă: numărul + clientul în listă', pe.stare === 201 && t?.comanda_id === c.id
         && t.comanda_nr === c.nr && t.comanda_client === c.client_nume, JSON.stringify(t));
+      verifica('fără minim de caractere; gol doar pe o comandă', (await cer('POST', '/api/tichete', { tip: 'idee', text: 'x' })).stare === 201
+        && (await cer('POST', '/api/tichete', { tip: 'problema', text: '', comanda_id: c.id })).stare === 201
+        && (await cer('POST', '/api/tichete', { tip: 'problema', text: '' })).stare === 400);
       verifica('… comandă inexistentă → 400', (await cer('POST', '/api/tichete', { tip: 'problema', text: 'Nu există', comanda_id: 999999 })).stare === 400);
     }
     verifica('adminul răspunde + rezolvă', (await cer('PATCH', `/api/tichete/${id}`, { stare: 'rezolvat', raspuns: 'Reparat în versiunea nouă' })).stare === 200);
