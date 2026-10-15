@@ -467,7 +467,7 @@ async function main() {
     const idVechi = Number(db2().prepare("INSERT INTO utilizator (nume, user, parola_hash, parola_salt, rol) VALUES ('Vechi', 'vechi', 'x', 'x', 'operator')").run().lastInsertRowid);
     require('../server/db.js').roluriNoi(db2());
     verifica('migraţie: operator → birou', db2().prepare('SELECT rol FROM utilizator WHERE id = ?').get(idVechi).rol === 'birou');
-    verifica('schema la versiunea 20', db2().prepare('PRAGMA user_version').get().user_version === 20);
+    verifica('schema la versiunea 21', db2().prepare('PRAGMA user_version').get().user_version === 21);
   }
 
   console.log('\nFixare şi sortare — per utilizator');
@@ -992,6 +992,15 @@ async function main() {
     verifica('adminul vede tichetul + insigna „noi"', l.admin && l.tichete.some(t => t.id === id && t.creat_de_nume)
       && (await cer('GET', '/api/sumar')).date.tichete >= 1);
     verifica('stare necunoscută → 400', (await cer('PATCH', `/api/tichete/${id}`, { stare: 'gata' })).stare === 400);
+    {
+      // „+ Tichet" de pe o comandă: tichetul ţine minte comanda, lista îi arată numărul şi clientul
+      const c = db2().prepare('SELECT id, COALESCE(oferta_nr, numar) AS nr, client_nume FROM comanda LIMIT 1').get();
+      const pe = await cer('POST', '/api/tichete', { tip: 'problema', text: 'Fişa iese greşit aici', comanda_id: c.id });
+      const t = (await cer('GET', '/api/tichete')).date.tichete.find(x => x.id === pe.date.id);
+      verifica('tichet legat de comandă: numărul + clientul în listă', pe.stare === 201 && t?.comanda_id === c.id
+        && t.comanda_nr === c.nr && t.comanda_client === c.client_nume, JSON.stringify(t));
+      verifica('… comandă inexistentă → 400', (await cer('POST', '/api/tichete', { tip: 'problema', text: 'Nu există', comanda_id: 999999 })).stare === 400);
+    }
     verifica('adminul răspunde + rezolvă', (await cer('PATCH', `/api/tichete/${id}`, { stare: 'rezolvat', raspuns: 'Reparat în versiunea nouă' })).stare === 200);
     await caMaria(async () => {
       verifica('autorul vede răspunsul (insignă 1) …', (await cer('GET', '/api/sumar')).date.tichete === 1
@@ -1091,6 +1100,9 @@ async function main() {
     verifica('… dar pe bune rămâne ofertă', pePeBune(`SELECT tip FROM comanda WHERE id = ${reala.date.comanda.id}`)[0].tip === 'oferta');
     verifica('tichetul din test ajunge pe bune la admin', (await cer('POST', '/api/tichete', { tip: 'idee', text: 'din modul test' })).stare === 201
       && pePeBune("SELECT 1 FROM tichet WHERE text = 'din modul test'").length === 1);
+    verifica('tichet pe oferta din test: ajunge pe bune, cu legătura ei', (await cer('POST', '/api/tichete',
+      { tip: 'problema', text: 'pe oferta de test', comanda_id: t.date.comanda.id })).stare === 201
+      && pePeBune("SELECT comanda_id FROM tichet WHERE text = 'pe oferta de test'")[0]?.comanda_id === t.date.comanda.id);
 
     await cer('POST', '/api/login', { user: 'admin', parola: 'parola-admin-1' });
     await cer('POST', `/api/comenzi/${reala.date.comanda.id}/accepta`, { plata: 'proforma', avans: 0, telefon: '0700', adresa: 'Str. Reala 1' });

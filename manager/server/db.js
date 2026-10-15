@@ -335,6 +335,9 @@ const MIGRATII = [
     CREATE INDEX tichet_stare ON tichet (stare, modificat_la);`),
   // v19 → v20 (2026-10-14): modul test, bifat de admin pe fiecare cont (vezi „Modul test" mai sus)
   d => d.exec('ALTER TABLE utilizator ADD COLUMN mod_test INTEGER NOT NULL DEFAULT 0'),
+  // v20 → v21 (2026-10-15): tichetul legat de o comandă / ofertă („+ Tichet" de pe comandă). Fără REFERENCES:
+  // tichetele stau mereu în baza reală, iar o ofertă făcută în modul test există doar în copie.
+  d => d.exec('ALTER TABLE tichet ADD COLUMN comanda_id INTEGER'),
 ];
 
 // Exportată pt. test.

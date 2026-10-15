@@ -710,6 +710,7 @@ function cardDetalii({ comanda: c, cerere, pozitii, sticlaLinii = [] }, fise) {
         : '<button class="cc-fisa" data-poz="0" title="Deschide fişa comenzii pentru printare">🖶 Printează fişa</button>'}
       ${eOferta && !c.anulat ? '<button id="ccModifica">Modifică oferta</button>' : ''}
       <a class="buton" href="/taskuri?comanda=${c.id}" title="Un task / reminder legat de comanda asta">+ Task</a>
+      <a class="buton" href="/tichete?comanda=${c.id}" title="Un tichet pentru administrator despre comanda asta">+ Tichet</a>
     </div>
     ${fisaPrintata(c)}
     <div class="cc-butoane cc-treceri">${c.tip === 'comanda' && !c.finalizat_la && !c.anulat ? '<button class="primar" data-adauga-la>+ Adaugă la comandă</button>' : ''}${butoaneTreceri(c, minuteInapoi(c))}${butonAnulare(c, cerere)}</div>
@@ -1011,6 +1012,7 @@ async function renderDetaliu(id) {
       ${eComanda && !c.finalizat_la && !c.anulat ? '<button class="primar" data-adauga-la>+ Adaugă la comandă</button>' : ''}
       ${butoaneTreceri(c, minuteInapoi(c))}
       <button id="taskNou" title="Un task / reminder legat de comanda asta">+ Task</button>
+      <button id="tichetNou" title="Un tichet pentru administrator despre comanda asta">+ Tichet</button>
       ${butonAnulare(c, cerere)}
     </div>
     ${blocAnulare(c, cerere)}
@@ -1108,6 +1110,7 @@ async function renderDetaliu(id) {
 
   $('fisaDetaliu')?.addEventListener('click', e => deschideFisa(id, e.currentTarget));
   $('taskNou').addEventListener('click', () => { location.href = `/taskuri?comanda=${id}`; });
+  $('tichetNou').addEventListener('click', () => { location.href = `/tichete?comanda=${id}`; });
   document.querySelectorAll('button.fisa-poz').forEach(b => b.addEventListener('click', () => deschideFisa(id, b, +b.dataset.poz)));
 
 }

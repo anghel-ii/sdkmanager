@@ -1,4 +1,4 @@
-const { db, ACUM } = require('./db.js');
+const { db, ACUM, inTest } = require('./db.js');
 const { json, eroare, corpJson } = require('./http.js');
 const { anunta } = require('./evenimente.js');
 
@@ -12,8 +12,10 @@ const { anunta } = require('./evenimente.js');
 const TIPURI = ['problema', 'idee', 'altceva'];
 const STARI = ['nou', 'in_lucru', 'rezolvat', 'respins'];
 const eAdmin = ctx => ctx.utilizator.rol === 'admin';
-const CAMPURI = `t.*, uc.nume AS creat_de_nume, ur.nume AS raspuns_de_nume
-  FROM tichet t JOIN utilizator uc ON uc.id = t.creat_de LEFT JOIN utilizator ur ON ur.id = t.raspuns_de`;
+const CAMPURI = `t.*, uc.nume AS creat_de_nume, ur.nume AS raspuns_de_nume,
+    COALESCE(c.oferta_nr, c.numar) AS comanda_nr, c.client_nume AS comanda_client
+  FROM tichet t JOIN utilizator uc ON uc.id = t.creat_de LEFT JOIN utilizator ur ON ur.id = t.raspuns_de
+  LEFT JOIN comanda c ON c.id = t.comanda_id`;
 
 // insigna din meniu: adminul — tichetele noi; ceilalţi — ale lor cu un răspuns / o stare nouă nevăzută
 const deVazut = u => (u.rol === 'admin'
@@ -34,8 +36,12 @@ async function trimite(ctx) {
   if (!TIPURI.includes(corp.tip)) return eroare(ctx.res, 400, 'Alege ce fel de tichet e.');
   if (text.length < 5) return eroare(ctx.res, 400, 'Scrie pe scurt ce s-a întâmplat sau ce ai vrea.');
   const pagina = corp.pagina ? String(corp.pagina).slice(0, 300) : null;
-  const r = db().prepare(`INSERT INTO tichet (tip, text, pagina, creat_de, creat_la, modificat_la)
-    VALUES (?, ?, ?, ?, ${ACUM()}, ${ACUM()})`).run(corp.tip, text, pagina, ctx.utilizator.id);
+  // „+ Tichet" de pe o comandă: tichetul e mereu pe bune (index.js), comanda o căutăm unde lucrează omul (test sau nu)
+  const comandaId = corp.comanda_id == null ? null : Number(corp.comanda_id);
+  const exista = () => db().prepare('SELECT 1 FROM comanda WHERE id = ?').get(comandaId);
+  if (comandaId !== null && !(ctx.utilizator.mod_test ? inTest(exista) : exista())) return eroare(ctx.res, 400, 'Comandă inexistentă.');
+  const r = db().prepare(`INSERT INTO tichet (tip, text, pagina, comanda_id, creat_de, creat_la, modificat_la)
+    VALUES (?, ?, ?, ?, ?, ${ACUM()}, ${ACUM()})`).run(corp.tip, text, pagina, comandaId, ctx.utilizator.id);
   anunta({ tichet: Number(r.lastInsertRowid) });
   json(ctx.res, 201, { id: Number(r.lastInsertRowid) });
 }

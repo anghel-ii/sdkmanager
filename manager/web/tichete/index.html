@@ -23,6 +23,9 @@
   .tipuri label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
   #text { width: 100%; min-height: 110px; resize: vertical; }
   .trimite-rand { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+  .legat { margin-top: 10px; font-size: .88rem; }
+  .legat[hidden] { display: none; }
+  .legat button { padding: 4px 9px; font-size: .78rem; }
   .trimite-rand .dim { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   /* un tichet */
   .tichet { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 18px; padding: 14px 2px; border-bottom: 1px solid var(--line); }
@@ -68,6 +71,7 @@
     </div>
     <textarea id="text" maxlength="4000" required
       placeholder="Ce s-a întâmplat (ce ai apăsat, ce ai văzut) sau ce ai vrea să facă aplicaţia…"></textarea>
+    <div class="legat" id="legat" hidden></div>
     <div class="trimite-rand">
       <span class="dim mic" id="deUnde"></span>
       <button type="submit" class="primar">Trimite</button>
@@ -104,13 +108,29 @@ const deUnde = (() => {
 })();
 $('deUnde').textContent = deUnde ? `Trimis din: ${deUnde}` : '';
 
+// comanda de care se leagă tichetul nou („+ Tichet" de pe comandă — ca la taskuri)
+let comanda = Number(new URLSearchParams(location.search).get('comanda')) || null;
+async function arataComanda() {
+  $('legat').hidden = !comanda;
+  if (!comanda) return;
+  const r = await api(`/api/comenzi/${comanda}`);
+  if (!r?.ok) { comanda = null; $('legat').hidden = true; return; }
+  const c = (await r.json()).comanda;
+  $('legat').innerHTML = `Despre ${c.tip === 'oferta' ? 'oferta' : 'comanda'} <a href="/#comanda/${c.id}">${esc(c.oferta_nr || c.numar)} · ${esc(c.client_nume)}</a>
+    <button type="button" class="mic" id="scoateComanda" title="Tichet fără comandă">×</button>`;
+  $('scoateComanda').addEventListener('click', () => { comanda = null; history.replaceState(null, '', '/tichete'); arataComanda(); });
+}
+// pe tichet: comanda lui (din baza reală — o ofertă făcută în modul test nu e acolo)
+const laComanda = t => !t.comanda_id ? '' : ' · despre ' + (t.comanda_nr
+  ? `<a href="/#comanda/${t.comanda_id}">${esc(t.comanda_nr)} · ${esc(t.comanda_client)}</a>` : 'o ofertă din modul test');
+
 let admin = false;
 function randTichet(t) {
   return `<div class="tichet" data-id="${t.id}">
     <div>
       <div><span class="pastila ${t.tip}">${TIP[t.tip] ?? esc(t.tip)}</span><span class="pastila ${t.stare}">${STARE[t.stare] ?? esc(t.stare)}</span></div>
       <div class="text">${esc(t.text)}</div>
-      <div class="info">${admin ? `de la <b>${esc(t.creat_de_nume)}</b> · ` : ''}${dataOra(t.creat_la)}${
+      <div class="info">${admin ? `de la <b>${esc(t.creat_de_nume)}</b> · ` : ''}${dataOra(t.creat_la)}${laComanda(t)}${
         t.pagina ? ` · din <a href="${esc(t.pagina)}">${esc(t.pagina)}</a>` : ''}</div>
       ${t.raspuns ? `<div class="raspuns">${esc(t.raspuns)}<small>${esc(t.raspuns_de_nume ?? 'administratorul')} · ${dataOra(t.modificat_la)}</small></div>` : ''}
     </div>
@@ -153,10 +173,11 @@ async function incarca() {
 $('formTichet').addEventListener('submit', async e => {
   e.preventDefault();
   const tip = document.querySelector('input[name=tip]:checked')?.value;
-  const r = await api('/api/tichete', { method: 'POST', body: JSON.stringify({ tip, text: $('text').value, pagina: deUnde || null }) });
+  const r = await api('/api/tichete', { method: 'POST', body: JSON.stringify({ tip, text: $('text').value, pagina: deUnde || null, comanda_id: comanda }) });
   if (!r) return;
   if (!r.ok) { $('mesaj').innerHTML = `<div class="mesaj eroare">${esc((await r.json().catch(() => ({}))).eroare || 'Nu s-a trimis.')}</div>`; return; }
   $('formTichet').reset();
+  comanda = null; history.replaceState(null, '', '/tichete'); arataComanda();
   $('mesaj').innerHTML = '<div class="mesaj ok">✓ Trimis. Îl vezi mai jos; când răspunde administratorul, apare un număr la „Tichete" în meniu.</div>';
   incarca();
 });
@@ -170,6 +191,7 @@ const reimprospateaza = () => {
 document.addEventListener('focusout', () => { if (deReimprospatat) setTimeout(reimprospateaza, 0); });
 (async () => {
   if (!(await api('/api/eu'))) return;
+  arataComanda();
   await incarca();
   urmareste(reimprospateaza);
 })();
