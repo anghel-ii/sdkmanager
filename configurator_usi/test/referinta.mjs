@@ -320,6 +320,20 @@ for (const [id, W, H, doors, tracks] of [['confortVerona', 1800, 2100, 2, 2], ['
   nrCazuri++;
 }
 
+// Peria laterală: pe ORICE uşă asamblată de client, şi pe cea numai din PAL — necesarul = facturarea
+// (userul, 2026-10-15: Verona 3 uşi, a treia doar PAL → necesar 10,5 m, facturare 15,5 m)
+for (const [id, doors, cod] of [['confortVerona', 3, '274'], ['luxVent', 3, '164'], ['suspendataA', 1, '274']]) {
+  const sys = systems[id], lim = sys.meta.limits;
+  const intre = ([a, b], x) => Math.min(b, Math.max(a, x));
+  stareUsi(sys, { W: intre(lim.width, doors * 900 + 200), H: intre(lim.height, 2100), finish: finishesOf(sys.meta)[0].id,
+    doors, tracks: 2, varianta: 'B' });
+  const u = doors - 1;   // ultima uşă: un singur panou, PAL
+  state.divisions[u] = 0; state.panels[u] = ['pal']; state.hPanouri[u] = [null]; state.divProfil[u] = [];
+  buildConfig();
+  const n = currentBom().find(r => r.code === cod)?.qty, f = currentBilling().lines.find(l => l.cod === cod)?.cantitate;
+  if (!(n > 0 && n === f)) { console.error(`✗ ${id}: peria ${cod} — necesar ${n}, facturare ${f}`); process.exit(1); }
+}
+
 // Rame (userul, 2026-09-25): „100 mm de margini sus/jos" = mereu 2 găuri pe ramă,
 // oricât scrie pe rând; mânerul se aşază pe bare de 3000 mm (2 × 1400 = o bară).
 {

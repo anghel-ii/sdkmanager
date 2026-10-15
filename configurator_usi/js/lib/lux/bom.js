@@ -71,16 +71,17 @@ export function clientPanelRows(spec, state) {
   ];
 }
 
-// Piesele NOASTRE care însoţesc sticla, pentru uşile asamblate de CLIENT:
-// garnitura (cu codul dat de grosimea declarată) şi peria laterală. Geamul în
-// sine nu apare aici — vezi clientPanelRows. Uşile asamblate de noi nu pun
-// nimic din astea în colet (se consumă la montaj).
+// Piesele NOASTRE pentru uşile asamblate de CLIENT: garnitura (doar unde e geam,
+// cu codul dat de grosimea declarată) şi peria laterală — pe ORICE uşă, şi pe cea
+// numai din PAL: n-are legătură cu umplutura (userul, 2026-10-15). Geamul în sine
+// nu apare aici — vezi clientPanelRows. Uşile asamblate de noi nu pun nimic din
+// astea în colet (se consumă la montaj).
 export function glassRows(spec, state) {
-  const perDoor = glassPerDoor(spec, state).filter(g => g.client && g.glassHs.some(h => h > 0));
-  if (!perDoor.length) return [];
+  const client = glassPerDoor(spec, state).filter(g => g.client);
+  if (!client.length) return [];
 
   const byGarnitura = new Map();   // cod garnitură → { grosime, m }
-  for (const g of perDoor) {
+  for (const g of client.filter(u => u.glassHs.some(h => h > 0))) {
     const cod = garnituraCod(g.grosime);
     const e = byGarnitura.get(cod) ?? { grosime: g.grosime, m: 0 };
     e.m += g.gasketM;
@@ -91,7 +92,7 @@ export function glassRows(spec, state) {
     line(cod, GARNITURA_DENUMIRE[cod], ceilHalf(m), 'm'));
 
   const doorH = spec.door.h;
-  rows.push(line('164', 'Perie laterala 5x5 mm cod 164', ceilHalf(perDoor.length * 2 * doorH / 1000), 'm'));
+  rows.push(line('164', 'Perie laterala 5x5 mm cod 164', ceilHalf(client.length * 2 * doorH / 1000), 'm'));
 
   return rows;
 }
