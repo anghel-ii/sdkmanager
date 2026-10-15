@@ -22,9 +22,11 @@ export const meta = {
   pal:      true,   // panouri de sticlă sau PAL 10mm (userul, 2026-09-21)
   doors:   2,
   sketch:   'assets/schita_b.png',
-  limits:   { width: [1300, 2800], height: [1900, 2700] },   // acoperit de catalog (uşă ≤2000, şină ≤5800)
+  // lăţimea minimă = cel mai mic gol cu uşa ≥ 601 mm (userul, 2026-10-15: „nu are voie mai îngustă de 600”; 601 = cel mai
+  // mic cod, USA001) şi cu cod de şină (de la 1201 mm; la Cupru de la orice lungime) — verificat în test/referinta.mjs
+  limits:   { width: [1167, 2800], height: [1900, 2700] },   // acoperit de catalog (uşă ≤2000, şină ≤5800)
   // Cupru: doar ce acoperă codurile Cupru din NeoManager — şina Cupru e bară de 3,5 m.
-  limitsFinisaj: { CUPRU: { width: [1300, 1746] } },
+  limitsFinisaj: { CUPRU: { width: [1167, 1746] } },
   finishes: FINISAJE_STANDARD,
 };
 

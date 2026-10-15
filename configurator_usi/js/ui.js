@@ -905,17 +905,18 @@ const doorsRangeOf = meta => meta?.limitsFinisaj?.[state.finish]?.doors ?? meta?
 
 // ── Limite de gol (per model) ───────────────────────────────────────────────
 
+// Limitele de acum. Unele finisaje au limite mai strânse decât restul (ex. CUPRU la Confort,
+// lăţime max 3500 în loc de 5800) — meta.limitsFinisaj suprascrie doar ce diferă, restul vine
+// din meta.limits; lăţimea poate depinde şi de nr. de uşi (widthUsi, ex. Suspendată Standard).
+function limiteGol(meta) {
+  const s = meta.limitsFinisaj?.[state.finish], lim = meta.limits;
+  return { w: s?.widthUsi?.[state.doors] ?? lim.widthUsi?.[state.doors] ?? s?.width ?? lim.width, h: s?.height ?? lim.height };
+}
+
 function applyLimits() {
   const meta = systems[state.system]?.meta;
-  const lim  = meta?.limits;
-  if (!lim) return;
-
-  // Unele finisaje au limite mai strânse decât restul (ex. CUPRU la Confort,
-  // lăţime max 3500 în loc de 5800) — meta.limitsFinisaj suprascrie doar ce
-  // diferă, restul vine din meta.limits.
-  const suprascriere = meta.limitsFinisaj?.[state.finish];
-  const [wMin, wMax] = suprascriere?.widthUsi?.[state.doors] ?? suprascriere?.width ?? lim.width;
-  const [hMin, hMax] = suprascriere?.height ?? lim.height;
+  if (!meta?.limits) return;
+  const { w: [wMin, wMax], h: [hMin, hMax] } = limiteGol(meta);
 
   state.width  = clamp(state.width,  wMin, wMax);
   state.height = clamp(state.height, hMin, hMax);
@@ -1414,7 +1415,7 @@ export async function initUI() {
     e.target.value = state.height;
     renderWheels();   // la Confort, cota e una din condiţiile care arată cardurile de uşă
     rebuild();
-    cotaCorectata('Înălţimea golului', val, state.height, lim);
+    cotaCorectata('Înălţimea golului', val, state.height, lim && limiteGol(systems[state.system].meta).h);
   });
   $('widthInput').addEventListener('change', e => {
     const lim = systems[state.system]?.meta.limits?.width;
@@ -1425,7 +1426,7 @@ export async function initUI() {
     e.target.value = state.width;
     renderWheels();
     rebuild();
-    cotaCorectata('Lăţimea golului', val, state.width, lim);
+    cotaCorectata('Lăţimea golului', val, state.width, lim && limiteGol(systems[state.system].meta).w);
   });
 
   $('btnFisa')?.addEventListener('click', () => {
