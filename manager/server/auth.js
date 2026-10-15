@@ -83,12 +83,16 @@ function login(user, parola) {
   if (!verificaParola(String(parola || ''), rand.parola_hash, rand.parola_salt)) return null;
   if (!rand.activ) return null;
 
+  return { token: sesiuneNoua(rand.id), utilizator: gasesteUtilizator(rand.id) };
+}
+
+// sesiune nouă → tokenul în clar (în DB doar hash-ul lui); şi releul de pe Cloudflare (releu.js)
+function sesiuneNoua(utilizatorId) {
   const token = crypto.randomBytes(32).toString('base64url');
   const expira = new Date(Date.now() + config.sesiuneZile * 864e5).toISOString().replace('T', ' ').slice(0, 19);
   db().prepare('INSERT INTO sesiune (token, utilizator_id, expira_la) VALUES (?, ?, ?)')
-      .run(hashToken(token), rand.id, expira);
-
-  return { token, utilizator: gasesteUtilizator(rand.id) };
+      .run(hashToken(token), utilizatorId, expira);
+  return token;
 }
 
 const logout = token => {
@@ -146,6 +150,6 @@ function tokenDinCerere(req) {
 module.exports = {
   hashParola, verificaParola,
   creeazaUtilizator, gasesteUtilizator, schimbaParola, contNeactivat, reseteazaParola,
-  login, logout, dinToken, curataSesiuni,
+  login, logout, dinToken, curataSesiuni, sesiuneNoua,
   cookieSesiune, cookieSters, tokenDinCerere,
 };

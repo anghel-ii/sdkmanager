@@ -27,6 +27,9 @@ const key  = process.env.MANAGER_TLS_KEY  || path.join(RADACINA, 'certs', 'privk
 // pornească din cauza unei căi implicite care nu s-a completat niciodată.
 const tlsGata = fs.existsSync(cert) && fs.existsSync(key);
 
+// serverul firmei (Windows) — doar el raportează la Cloudflare şi ţine releul; MANAGER_RAPORTARE=1/0 forţează
+const peServer = process.env.MANAGER_RAPORTARE ? process.env.MANAGER_RAPORTARE === '1' : process.platform === 'win32';
+
 const config = {
   radacina: RADACINA,
   https:    tlsGata,
@@ -54,7 +57,10 @@ const config = {
   // raportarea spre pagina /admin de pe Cloudflare (update de oriunde): DOAR serverul firmei.
   // Un manager pornit pe laptop cu aceeaşi bază (cheia clienţilor în ea) s-ar da drept server
   // şi ar putea prelua cererea de update — implicit doar pe Windows; MANAGER_RAPORTARE=1/0 forţează.
-  raportare: process.env.MANAGER_RAPORTARE ? process.env.MANAGER_RAPORTARE === '1' : process.platform === 'win32',
+  raportare: peServer,
+  // releul spre tabloul de admin de pe Cloudflare (admin-distanta/, server/releu.js) — tot doar serverul
+  // firmei; MANAGER_RELEU_URL îl porneşte oriunde (proba pe laptop: ws://127.0.0.1:8787/_releu).
+  releuUrl: process.env.MANAGER_RELEU_URL || (peServer ? 'wss://sdk-admin.iacob2anghel2004.workers.dev/_releu' : ''),
 
   // Cât ţine o sesiune fără activitate. 30 de zile: omul din atelier se
   // loghează o dată pe telefon şi nu se mai gândeşte la asta.

@@ -72,11 +72,16 @@ function upgrade(req, socket) {
 function anunta() {
   const test = esteTest();
   for (const s of conexiuni.keys()) if (!test || deTest.has(s)) trimite(s, { tip: 'schimbare' });
+  if (!test) for (const f of ascultatori) f({ tip: 'schimbare' });
 }
 
 function anuntaUtilizator(utilizatorId) {
   for (const [s, uid] of conexiuni) if (uid === utilizatorId) trimite(s, { tip: 'personal' });
+  for (const f of ascultatori) f({ tip: 'personal' }, utilizatorId);
 }
+
+// paginile deschise prin releul de pe Cloudflare (server/releu.js) — aceleaşi mesaje, pe alt drum
+const ascultatori = new Set();
 
 // La oprirea serverului: cadru „close" şi socket închis pe fiecare conexiune —
 // altfel server.close() aştepta la nesfârşit tab-urile deschise (ping la 25 s).
@@ -85,4 +90,4 @@ function inchideToate() {
   conexiuni.clear();
 }
 
-module.exports = { anunta, anuntaUtilizator, upgrade, inchideToate, rute: [] };
+module.exports = { anunta, anuntaUtilizator, upgrade, inchideToate, ascultatori, rute: [] };

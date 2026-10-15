@@ -1104,6 +1104,23 @@ async function main() {
       && pePeBune(`SELECT mod_test FROM utilizator WHERE id = ${tina}`)[0].mod_test === 0);
   }
 
+  console.log('\nReleul spre tabloul de admin de pe Cloudflare (server/releu.js)');
+  {
+    const { executa } = require('../server/releu.js');
+    const zlib = require('node:zlib');
+    const corp = r => JSON.parse((r.antete['content-encoding'] ? zlib.gunzipSync : x => x)(Buffer.from(r.corp, 'base64')));
+    const eu = await executa(baza, { id: 'a', metoda: 'GET', cale: '/api/eu', antete: {} });
+    verifica('cererea de pe Cloudflare rulează ca adminul', eu.id === 'a' && eu.stare === 200 && corp(eu).utilizator.rol === 'admin', JSON.stringify(eu));
+    require('../server/db.js').db().exec('DELETE FROM sesiune');   // ex. adminul şi-a schimbat parola
+    verifica('… şi după ce sesiunile au fost şterse', corp(await executa(baza, { id: 'b', metoda: 'GET', cale: '/api/eu', antete: {} })).utilizator?.rol === 'admin');
+    const t = await executa(baza, { id: 'c', metoda: 'POST', cale: '/api/tichete', antete: { 'content-type': 'application/json' },
+      corp: Buffer.from(JSON.stringify({ tip: 'idee', text: 'scris de pe Cloudflare' })).toString('base64') });
+    verifica('scrie (POST cu corp)', t.stare === 201 && corp(t).id > 0, JSON.stringify(t));
+    const pag = await executa(baza, { id: 'd', metoda: 'GET', cale: '/admin', antete: {} });
+    verifica('pagina vine comprimată, fără cookie-ul serverului', pag.stare === 200 && pag.antete['content-encoding'] === 'gzip'
+      && !('set-cookie' in pag.antete) && zlib.gunzipSync(Buffer.from(pag.corp, 'base64')).toString().includes('<html'));
+  }
+
   console.log('\nBackup');
   const dest = require('../server/db.js').backup();
   verifica('backup scris pe disc', fs.existsSync(dest) && fs.statSync(dest).size > 0);

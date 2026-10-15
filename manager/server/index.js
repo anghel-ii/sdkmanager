@@ -21,6 +21,7 @@ const tablou      = require('./tablou.js');
 const actualizare = require('./actualizare.js');
 const clienti     = require('./clienti.js');
 const ora         = require('./ora.js');
+const releu       = require('./releu.js');
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  Serverul managerului de comenzi
@@ -161,6 +162,7 @@ function porneste() {
     console.log(`  configurator : ${config.dist}${fs.existsSync(config.dist) ? '' : '  ⚠ neconstruit'}`);
 
     console.log(`  scanare      : ${config.scanare ? 'pornită' : 'oprită (MANAGER_SCANARE=1 o porneşte)'}`);
+    releu.porneste(server.address().port);   // tabloul de admin de pe Cloudflare (doar serverul firmei)
 
     // camera telefonului (scanarea) cere HTTPS
     if (!config.https && config.scanare) {

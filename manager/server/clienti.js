@@ -171,7 +171,7 @@ async function puneCheie({ req, res }) {
 }
 
 module.exports = {
-  preia, porneste, nrDeAprobat, laCF, activ,
+  preia, porneste, nrDeAprobat, laCF, activ, cheie,
   rute: [
     ['GET',  '/api/clienti',       { handler: lista, rol: CLIENTI }],
     ['GET',  '/api/clienti/cauta', { handler: cauta }],
