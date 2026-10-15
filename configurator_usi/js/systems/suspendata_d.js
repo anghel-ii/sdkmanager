@@ -25,9 +25,10 @@ export const meta = {
   sketch:   'assets/schita_d.png',
   // lăţimea minimă = cel mai mic gol cu uşa ≥ 601 mm (userul, 2026-10-15: „nu are voie mai îngustă de 600”; 601 = cel mai
   // mic cod, USA001) şi cu cod de şină (de la 1201 mm; la Cupru de la orice lungime) — verificat în test/referinta.mjs
-  limits:   { width: [557, 1900], height: [1900, 2700] },   // acoperit de catalog (uşă ≤2000)
-  // Cupru: doar ce acoperă codurile Cupru din NeoManager — uşa Cupru max 1500 mm (USA409).
-  limitsFinisaj: { CUPRU: { width: [532, 1431] } },
+  // maximul: şina ≤ 5800 mm, cât e bara (userul, 2026-10-15); uşă peste 2000 mm → fără cod, eroarea se vede
+  limits:   { width: [557, 2856], height: [1900, 2700] },
+  // Cupru: şina Cupru e bară de 3,5 m → golul maxim la şină ≤ 3500 (uşa peste 1500 n-are cod Cupru → eroare).
+  limitsFinisaj: { CUPRU: { width: [532, 1706] } },
   finishes: FINISAJE_STANDARD,
 };
 

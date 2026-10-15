@@ -30,15 +30,13 @@ export const meta = {
   doorsRange:  [2, 7],                // nr. de uşi ales de user (stepper UI)
   suprapuneriObligatorii: true,       // fără varianta „0 suprapuneri" (vezi ui.js)
   mascareOptiune: true,               // butonul „Mascare şină" fără / faţă / faţă şi spate (ui.js)
-  // lăţime: banda de şină din catalog (1201–5800 = lăţimea golului)
-  // lăţimea pe nr. de uşi (userul, 2026-10-15): uşa ≥ 601 mm — „nu are voie mai îngustă de 600”, 601 = cel mai mic
-  // cod (USA001) — şi ≤ 2000 mm (cel mai mare cod; contează doar la 2 uşi); şina = golul are cod de la 1201 mm (la
-  // Cupru de la orice lungime). Uşa = (gol + 19 × suprapuneri − 5) ÷ uşi. Verificat în test/referinta.mjs.
+  // lăţimea pe nr. de uşi (userul, 2026-10-15): minimul — uşa ≥ 601 mm („nu are voie mai îngustă de 600”, 601 = cel
+  // mai mic cod, USA001) şi şina = golul cu cod de la 1201 mm (Cupru de la orice lungime); maximul — şina ≤ 5800, cât
+  // e bara (uşă peste 2000 → fără cod, eroarea se vede). Uşa = (gol + 19 × suprapuneri − 5) ÷ uşi. Test: referinta.mjs.
   limits:      { width: [1201, 5800], height: [1900, 2700],
-                 widthUsi: { 2: [1201, 3986], 3: [1769, 5800], 4: [2369, 5800], 5: [2932, 5800], 6: [3532, 5800], 7: [4114, 5800] } },
-  // Cupru: doar ce acoperă codurile Cupru din NeoManager — şina Cupru e bară de 3,5 m,
-  // uşa max 1500 (USA409): cu 2 uşi golul max 2986; de la 6 uşi nu mai încap în 3,5 m.
-  limitsFinisaj: { CUPRU: { width: [1187, 3500], widthUsi: { 2: [1187, 2986], 3: [1769, 3500], 4: [2369, 3500], 5: [2932, 3500] }, doors: [2, 5] } },
+                 widthUsi: { 2: [1201, 5800], 3: [1769, 5800], 4: [2369, 5800], 5: [2932, 5800], 6: [3532, 5800], 7: [4114, 5800] } },
+  // Cupru: şina Cupru e bară de 3,5 m → golul max 3500; de la 6 uşi, uşile (≥ 601) nu mai încap în 3,5 m.
+  limitsFinisaj: { CUPRU: { width: [1187, 3500], widthUsi: { 2: [1187, 3500], 3: [1769, 3500], 4: [2369, 3500], 5: [2932, 3500] }, doors: [2, 5] } },
   finishes:    FINISAJE_STANDARD,
 };
 

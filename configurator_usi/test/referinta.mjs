@@ -335,7 +335,8 @@ for (const [id, doors, cod] of [['confortVerona', 3, '274'], ['luxVent', 3, '164
 }
 
 // Suspendate — lăţimea golului (userul, 2026-10-15): minimul = cel mai mic gol la care uşa are ≥ 601 mm (cel mai mic
-// cod) şi toate codurile există (fără divizare); cu 1 mm mai puţin nu mai merge. La maxim — tot valid.
+// cod) şi toate codurile există (fără divizare); cu 1 mm mai puţin nu mai merge. Maximul = cel mai mare gol cu şina
+// ≤ 5800 mm, cât e bara (Cupru 3500); acolo uşa poate rămâne fără cod — eroarea o văd colegii.
 // Aceeaşi ordine ca limiteGol din ui.js.
 for (const sys of Object.values(systems).filter(s => s.meta.family === 'suspendata')) {
   const m = sys.meta;
@@ -348,8 +349,10 @@ for (const sys of Object.values(systems).filter(s => s.meta.family === 'suspenda
         buildConfig();
         return currentSpec().door.w >= 601 && !currentBilling().errors.some(e => /cod/i.test(e));
       };
-      if (!merge(wMin) || merge(wMin - 1) || !merge(wMax)) {
-        console.error(`✗ ${m.id} ${finish} ${doors} uşi: gol ${wMin}–${wMax} — merge la ${wMin - 1}? ${merge(wMin - 1)}, la ${wMin}? ${merge(wMin)}, la ${wMax}? ${merge(wMax)}`);
+      const bara = finish === 'CUPRU' ? 3500 : 5800;
+      const sina = W => { stareUsi(sys, { W, H: 2100, finish, doors, tracks: 2, varianta: 'D' }); return sys.spec(state).rail.length; };
+      if (!merge(wMin) || merge(wMin - 1) || sina(wMax) > bara || sina(wMax + 1) <= bara) {
+        console.error(`✗ ${m.id} ${finish} ${doors} uşi: gol ${wMin}–${wMax} — merge la ${wMin - 1}? ${merge(wMin - 1)}, la ${wMin}? ${merge(wMin)}; şina la ${wMax}: ${sina(wMax)}, la ${wMax + 1}: ${sina(wMax + 1)}`);
         process.exit(1);
       }
     }
