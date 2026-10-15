@@ -90,6 +90,15 @@ function pickQty(qty, bill) {
   return typeof qty === 'number' ? qty : (bill?.[qty] ?? 0);
 }
 
+// Articolul din catalog pt. tip + finisaj + cotă (banda [lmin, lmax]) — şi la facturare, şi la necesar (bom.js).
+// Divizarea mai scurtă decât prima bandă ia codul primei benzi (userul, 2026-10-15: „facturăm şi dacă div e 500
+// tot la 601-700") — la uşile înguste (sub 639 mm) bara iese sub 601.
+export function articolPentru(articole, tip, finisaj, dimMm) {
+  const ale = (articole ?? []).filter(a => a.tip === tip && (a.finisaj == null || a.finisaj === finisaj));
+  const cota = tip === 'divizare' && ale.length ? Math.max(dimMm, Math.min(...ale.map(a => a.lmin ?? 0))) : dimMm;
+  return ale.find(a => (a.lmin == null || cota >= a.lmin) && (a.lmax == null || cota <= a.lmax));
+}
+
 function resolveLine(articole, linie, ctx) {
   const { finisaj, bill } = ctx;
   const cant = ceil2(pickQty(linie.qty, bill) * (linie.factor ?? 1));
@@ -101,12 +110,7 @@ function resolveLine(articole, linie, ctx) {
   }
 
   const dimMm = pickQty(linie.dim, bill);
-  const hit = (articole ?? []).find(a =>
-    a.tip === linie.tip &&
-    (a.finisaj == null || a.finisaj === finisaj) &&
-    (a.lmin == null || dimMm >= a.lmin) &&
-    (a.lmax == null || dimMm <= a.lmax)
-  );
+  const hit = articolPentru(articole, linie.tip, finisaj, dimMm);
 
   return hit
     ? { cod: hit.cod, denumire: hit.denumire ?? null, um: hit.um ?? 'buc', cantitate: cant }

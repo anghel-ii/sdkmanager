@@ -335,7 +335,7 @@ for (const [id, doors, cod] of [['confortVerona', 3, '274'], ['luxVent', 3, '164
 }
 
 // Suspendate — lăţimea golului (userul, 2026-10-15): minimul = cel mai mic gol la care uşa are ≥ 601 mm (cel mai mic
-// cod) şi toate codurile există (fără divizare); cu 1 mm mai puţin nu mai merge. Maximul = cel mai mare gol cu şina
+// cod) şi toate codurile există (cu divizare — bara sub 601 ia DIV-ul de 601-700); cu 1 mm mai puţin nu mai merge. Maximul = cel mai mare gol cu şina
 // ≤ 5800 mm, cât e bara (Cupru 3500); acolo uşa poate rămâne fără cod — eroarea o văd colegii.
 // Aceeaşi ordine ca limiteGol din ui.js.
 for (const sys of Object.values(systems).filter(s => s.meta.family === 'suspendata')) {
@@ -345,7 +345,7 @@ for (const sys of Object.values(systems).filter(s => s.meta.family === 'suspenda
     for (let doors = d0; doors <= d1; doors++) {
       const [wMin, wMax] = s?.widthUsi?.[doors] ?? m.limits.widthUsi?.[doors] ?? s?.width ?? m.limits.width;
       const merge = W => {
-        stareUsi(sys, { W, H: 2100, finish, doors, tracks: 2, varianta: 'D' });
+        stareUsi(sys, { W, H: 2100, finish, doors, tracks: 2, varianta: 'A' });
         buildConfig();
         return currentSpec().door.w >= 601 && !currentBilling().errors.some(e => /cod/i.test(e));
       };

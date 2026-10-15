@@ -2,6 +2,7 @@ import { garnituraCod, GARNITURA_DENUMIRE, glassPerDoor } from './geam.js';
 import { ceilHalf } from './num.js';
 import catalog from '../../catalog/catalog.generated.json';
 import { FINISAJE_STANDARD } from './finish.js';
+import { articolPentru } from './billing.js';
 
 // ── Necesar de materiale (BOM) ───────────────────────────────────────────────
 // O linie de BOM = { code, label, qty, unit, cut? }
@@ -28,13 +29,11 @@ export const line = (code, label, qty, unit, cut) => ({ code, label, qty, unit, 
 export const clientDoors = state => (state.assembly ?? []).filter(a => a === 'client').length;
 
 // Codul din catalogul familiei pt. un rând de necesar: tip + finisaj + bandă de
-// mărime [lmin, lmax] (ca la facturare — vezi resolveLine în lib/suspendata/billing.js).
+// mărime [lmin, lmax] — aceeaşi căutare ca la facturare (articolPentru în billing.js).
 // Denumirea vine din catalog când există; altfel rămâne eticheta dată. Fără cod
 // → rândul o spune apăsat (⚠ LIPSĂ COD), nu se pierde printre celelalte.
 function catalogLine(family, tip, finisaj, dimMm, label, qty, unit, cut) {
-  const art = (catalog[family] ?? []).find(a => a.tip === tip &&
-    (a.finisaj == null || a.finisaj === finisaj) &&
-    (a.lmin == null || dimMm >= a.lmin) && (a.lmax == null || dimMm <= a.lmax));
+  const art = articolPentru(catalog[family], tip, finisaj, dimMm);
   return art
     ? line(art.cod, art.denumire || label, qty, unit, cut)
     : line('⚠ LIPSĂ COD', `${label} — fără cod pt. ${finisaj} · ${Math.round(dimMm)} mm`, qty, unit, cut);
