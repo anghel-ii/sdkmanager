@@ -354,7 +354,8 @@
     });
     nav?.querySelector('#schimbaParola').addEventListener('click', schimbaParola);
 
-    fetch('/api/eu').then(r => (r.ok ? r.json() : null)).then(d => {
+    let laDistanta = false;   // prin tabloul de pe Cloudflare (server/releu.js)
+    fetch('/api/eu').then(r => { laDistanta = r.headers.has('x-distanta'); return r.ok ? r.json() : null; }).then(d => {
       const eu = d?.utilizator;
       if (!eu) return;
       radacina.querySelector('#cine').textContent = eu.nume;
@@ -377,6 +378,10 @@
       } catch {}
       radacina.querySelector('#linkAdmin').hidden = eu.rol !== 'admin';     // conturile — doar admin
       radacina.querySelector('#linkClienti').hidden = eu.rol === 'birou';   // clienţii — nu şi biroul (userul, 2026-10-02)
+      // de la distanţă se deschid doar tabloul de admin şi tichetele (releu.js le blochează pe restul) → restul meniului dispare
+      if (laDistanta) radacina.querySelectorAll('#ofertaNoua, .grup:not(#grupAdmin), a[href]:not(.marca)').forEach(el => {
+        if (!['/admin', '/tichete'].includes(el.getAttribute('href'))) el.hidden = true;
+      });
       if (!nav) return;
       nav.querySelector('#grupAdmin').hidden = eu.rol === 'birou';          // fără clienţi şi fără conturi
       nav.querySelector('#rolEu').textContent = ROLURI[eu.rol] ?? eu.rol;

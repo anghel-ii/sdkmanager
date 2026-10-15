@@ -1119,6 +1119,17 @@ async function main() {
     const pag = await executa(baza, { id: 'd', metoda: 'GET', cale: '/admin', antete: {} });
     verifica('pagina vine comprimată, fără cookie-ul serverului', pag.stare === 200 && pag.antete['content-encoding'] === 'gzip'
       && !('set-cookie' in pag.antete) && zlib.gunzipSync(Buffer.from(pag.corp, 'base64')).toString().includes('<html'));
+    // de la distanţă doar tabloul de admin şi tichetele (userul, 2026-10-15)
+    const nr = () => require('../server/db.js').db().prepare('SELECT COUNT(*) AS n FROM comanda').get().n, inainte = nr();
+    const blocate = await Promise.all([['GET', '/api/comenzi'], ['POST', '/api/comenzi'], ['GET', '/sticla'], ['GET', '/configurator/'],
+      ['GET', '/api/clienti'], ['POST', '/api/comenzi/1/accepta'], ['GET', '/api/eux']]
+      .map(([metoda, cale], i) => executa(baza, { id: 'e' + i, metoda, cale, antete: {} })));
+    verifica('comenzile, operaţiunile, clienţii, configuratorul → 403, nimic scris', blocate.every(r => r.stare === 403) && nr() === inainte,
+      blocate.map(r => r.stare).join());
+    const acasa = await executa(baza, { id: 'f', metoda: 'GET', cale: '/?nou', antete: {} });
+    verifica('„/" duce la tabloul de admin', acasa.stare === 302 && acasa.antete.location === '/admin');
+    const tablou = await executa(baza, { id: 'g', metoda: 'GET', cale: '/api/admin/tablou', antete: {} });
+    verifica('tabloul + marcajul pt. meniu', tablou.stare === 200 && tablou.antete['x-distanta'] === '1');
   }
 
   console.log('\nBackup');
