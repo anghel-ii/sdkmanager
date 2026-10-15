@@ -318,7 +318,7 @@ async function incarca() {
           <td title="cont creat ${dataOra(u.creat_la)}">${esc(u.nume)}${euInsumi ? ' <span class="dim mic">(tu)</span>' : ''}<small>${stare(u)}</small></td>
           <td class="mono">${esc(u.user)}</td>
           <td>${euInsumi ? esc(u.rol) : `<select class="rol">${ROLURI.map(x => `<option${x === u.rol ? ' selected' : ''}>${x}</option>`).join('')}</select>`}</td>
-          <td>${u.rol === 'admin' ? '' : `<input type="checkbox" class="modtest"${u.mod_test ? ' checked' : ''} aria-label="Mod test pentru ${esc(u.nume)}">`}</td>
+          <td>${u.rol === 'admin' ? '<span class="dim" title="Comenzile adminului merg mereu pe copia de test; administrarea, pe bune">mereu</span>' : `<input type="checkbox" class="modtest"${u.mod_test ? ' checked' : ''} aria-label="Mod test pentru ${esc(u.nume)}">`}</td>
           <td class="actiuni">${euInsumi ? '' : `
             <button class="mic reset" title="${u.activat ? 'O parolă temporară nouă' : 'Cont vechi fără parolă — pune-i una'}">${u.activat ? 'Parolă nouă' : 'Pune parola'}</button>
             <button class="mic activ ${u.activ ? 'rosu-contur' : 'verde-contur'}">${u.activ ? 'Dezactivează' : 'Reactivează'}</button>`}</td>

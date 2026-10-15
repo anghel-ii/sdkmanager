@@ -15,6 +15,8 @@ Object.assign(process.env, {
 });
 delete process.env.MANAGER_SCANARE;
 
+// adminul face aici comenzi pe bune; „adminul mereu în test” are secţiunea lui (test.js, Modul test)
+process.env.MANAGER_ADMIN_TEST = '0';
 const { porneste } = require('../server/index.js');
 const { creeazaUtilizator } = require('../server/auth.js');
 

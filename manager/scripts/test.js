@@ -18,6 +18,8 @@ process.env.MANAGER_TLS_KEY  = path.join(TEMP, 'inexistent.pem');
 // o testăm PORNITĂ aici, ca să nu putrezească până o reactivăm. Modul oprit
 // îl verifică scripts/test-fara-scanare.js.
 process.env.MANAGER_SCANARE  = '1';
+// adminul face aici comenzi pe bune; „adminul mereu în test” are secţiunea lui (test.js, Modul test)
+process.env.MANAGER_ADMIN_TEST = '0';
 
 const { porneste } = require('../server/index.js');
 const { creeazaUtilizator } = require('../server/auth.js');
@@ -1102,6 +1104,21 @@ async function main() {
       && inCopie(`SELECT 1 FROM comanda WHERE id = ${r2.date.comanda.id}`).length === 1);
     verifica('scos din modul test', (await cer('PATCH', `/api/utilizatori/${tina}`, { modTest: false })).stare === 200
       && pePeBune(`SELECT mod_test FROM utilizator WHERE id = ${tina}`)[0].mod_test === 0);
+
+    // adminul mereu în test (userul, 2026-10-15) — cum rulează pe server
+    const { config } = require('../server/config.js');
+    config.adminInTest = true;
+    verifica('admin: /api/eu spune că e în modul test', (await cer('GET', '/api/eu')).date.utilizator.mod_test === 1);
+    const a = await cer('POST', '/api/comenzi', { client: { nume: 'Client Admin Test' }, ofertaNr: 'MT-A1', pozitii: [pozitie('confortGamma', 'Confort Gamma', 2, 1600)] });
+    verifica('admin: oferta lui merge doar în copie', a.stare === 201 && a.date.comanda.id >= 1e9
+      && !pePeBune("SELECT 1 FROM comanda WHERE client_nume = 'Client Admin Test'").length);
+    verifica('admin: nu poate atinge comanda reală', (await cer('POST', `/api/comenzi/${r2.date.comanda.id}/asteapta-plata`)).stare === 200
+      && pePeBune(`SELECT tip FROM comanda WHERE id = ${r2.date.comanda.id}`)[0].tip === 'oferta');
+    const cont = await cer('POST', '/api/utilizatori', { nume: 'Nou Pe Bune', user: 'noupebune', parola: 'parola-noua-12', rol: 'birou' });
+    verifica('admin: administrarea (conturi) rămâne pe bune', cont.stare === 201 && pePeBune("SELECT 1 FROM utilizator WHERE user = 'noupebune'").length === 1,
+      JSON.stringify(cont));
+    verifica('admin: tabloul arată datele reale', (await cer('GET', '/api/admin/tablou')).stare === 200);
+    config.adminInTest = false;
   }
 
   console.log('\nReleul spre tabloul de admin de pe Cloudflare (server/releu.js)');

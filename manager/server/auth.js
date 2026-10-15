@@ -59,8 +59,12 @@ function reseteazaParola(id) {
   db().prepare('DELETE FROM sesiune WHERE utilizator_id = ?').run(id);
 }
 
-const gasesteUtilizator = id =>
-  db().prepare(`SELECT ${PUBLIC} FROM utilizator WHERE id = ?`).get(id) ?? null;
+// adminul e MEREU în modul test (config.adminInTest) — administrarea şi clienţii rămân pe bune (index.js)
+function gasesteUtilizator(id) {
+  const u = db().prepare(`SELECT ${PUBLIC} FROM utilizator WHERE id = ?`).get(id) ?? null;
+  if (u?.rol === 'admin' && config.adminInTest) u.mod_test = 1;
+  return u;
+}
 
 function schimbaParola(id, parola) {
   const { hash, salt } = hashParola(parola);

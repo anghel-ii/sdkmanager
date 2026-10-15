@@ -80,7 +80,10 @@ async function trateaza(req, res) {
     };
     // Modul test: cererea merge pe copia bazei (server/db.js, „Modul test"). Contul
     // (parola, sesiunea) şi tichetele către admin rămân pe bune.
-    if (utilizator?.mod_test && !PE_BUNE.some(p => cale === p || cale.startsWith(p + '/'))) {
+    // adminul e mereu în test (auth.js), dar administrarea (rutele doar pt. admin) şi clienţii merg pe bune — nu ating comenzile
+    const peBune = PE_BUNE.some(p => cale === p || cale.startsWith(p + '/'))
+      || (utilizator?.rol === 'admin' && ([].concat(spec.rol ?? []).join() === 'admin' || cale.startsWith('/api/clienti')));
+    if (utilizator?.mod_test && !peBune) {
       if (cale.startsWith('/api/clienti/propuneri/')) return eroare(res, 403, 'În modul test nu se aprobă clienţi — aprobarea ar ajunge pe bune.');
       return inTest(() => opreste() || spec.handler(ctx));
     }

@@ -62,6 +62,11 @@ const config = {
   // firmei; MANAGER_RELEU_URL îl porneşte oriunde (proba pe laptop: ws://127.0.0.1:8787/_releu).
   releuUrl: process.env.MANAGER_RELEU_URL || (peServer ? 'wss://sdk-admin.iacob2anghel2004.workers.dev/_releu' : ''),
 
+  // Adminul lucrează MEREU în modul test (userul, 2026-10-15: „să testez şi eu problemele, dar să nu fie
+  // afectate comenzile"): comenzile lui merg pe copia de test; administrarea şi clienţii, pe bune.
+  // MANAGER_ADMIN_TEST=0 îl scoate (ex. suita de teste, care face comenzi cu adminul).
+  adminInTest: process.env.MANAGER_ADMIN_TEST !== '0',
+
   // Cât ţine o sesiune fără activitate. 30 de zile: omul din atelier se
   // loghează o dată pe telefon şi nu se mai gândeşte la asta.
   sesiuneZile: 30,
