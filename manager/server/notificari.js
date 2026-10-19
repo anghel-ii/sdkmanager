@@ -3,7 +3,7 @@ const { json, eroare } = require('./http.js');
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  NOTIFICĂRI (userul, 2026-10-19). Ce primeşte un om — deocamdată: un răspuns
-//  sau o stare nouă la tichetul lui (server/tichete.js) — stă în stânga jos, pe
+//  sau o stare nouă la tichetul lui (server/tichete.js) — stă în dreapta jos, pe
 //  orice pagină a managerului (web/bara.js), se adună una sub alta şi dispare
 //  DOAR când apasă X. Ţinute aici, nu în browser: rămân la reîncărcare, pe orice
 //  calculator. Mereu pe bune (index.js PE_BUNE), şi pentru cei în demo.

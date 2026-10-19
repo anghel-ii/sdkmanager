@@ -123,21 +123,21 @@
     .insigna.cald { background: var(--accent-dim); color: #fff; }
     .insigna.rosie { background: #a3412f; color: #fff; }
     /* reminderele fără notificare Windows: casete în colţul paginii (server/taskuri.js) */
-    #caseteTaskuri { position: fixed; right: 16px; bottom: 16px; z-index: 1000; display: flex; flex-direction: column; gap: 8px;
-      max-width: 360px; font-family: 'Inter', system-ui, sans-serif; font-size: 14px; }
+    /* colţul din dreapta jos: notificările (sus) + reminderele de taskuri (jos), într-o singură coloană */
+    #colt { position: fixed; right: 16px; bottom: 16px; z-index: 1000; width: 340px; max-width: calc(100vw - 32px);
+      max-height: calc(100vh - 32px); overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+    #colt:empty { display: none; }
+    #caseteTaskuri { display: flex; flex-direction: column; gap: 8px; font-family: 'Inter', system-ui, sans-serif; font-size: 14px; }
+    #caseteTaskuri:empty { display: none; }
     #caseteTaskuri > div { background: var(--panel-2, #21252c); color: var(--text, #e9ebee); border: 1px solid #c9604c;
       border-radius: 10px; padding: 12px 14px; box-shadow: 0 6px 24px rgba(0,0,0,.45); }
     #caseteTaskuri .dim { color: var(--text-dim, #8b92a0); font-size: 13px; margin: 4px 0 8px; }
     #caseteTaskuri a { color: var(--accent, #4da3ff); margin-right: 12px; }
     #caseteTaskuri button { font: inherit; font-size: 13px; padding: 4px 10px; border-radius: 6px; cursor: pointer;
       border: 1px solid var(--line, #2c313a); background: var(--panel, #1b1e24); color: inherit; }
-    /* notificările omului (server/notificari.js): stânga jos, lângă meniu, se adună; pleacă doar cu X */
-    #notificari { position: fixed; left: calc(var(--meniu-l, 0px) + 16px); bottom: 16px; z-index: 1000; width: 340px;
-      max-width: calc(100vw - 32px); max-height: calc(100vh - 32px); overflow-y: auto; display: flex; flex-direction: column; gap: 8px;
-      font-family: 'Inter', system-ui, sans-serif; font-size: 13.5px; }
+    /* notificările omului (server/notificari.js): dreapta jos (în #colt), se adună; pleacă doar cu X */
+    #notificari { display: flex; flex-direction: column; gap: 8px; font-family: 'Inter', system-ui, sans-serif; font-size: 13.5px; }
     #notificari:empty { display: none; }
-    /* configuratorul (fără meniul din stânga): stânga jos sunt butoanele de salvare / fişă — acolo, dreapta sus, peste 3D */
-    html:not(.cu-meniu) #notificari { left: auto; right: 16px; bottom: auto; top: 112px; max-height: calc(100vh - 128px); }
     #notificari .nt { position: relative; background: var(--panel-2, #21252c); color: var(--text, #e9ebee); border: 1px solid #3d6fae;
       border-left: 4px solid #4da3ff; border-radius: 10px; padding: 10px 34px 10px 12px; box-shadow: 0 6px 24px rgba(0,0,0,.45); cursor: pointer; }
     #notificari .nt:hover { border-color: #4da3ff; }
@@ -234,7 +234,7 @@
     #bara.compacta #iesire { padding: 0 9px; }
     @media (max-width: 1379px) { #bara.compacta .buton .txt { display: none; } #bara.compacta .buton { padding: 0 9px; } }
     @media (max-width: 1100px) { #bara.compacta #cine { display: none; } }
-    @media print { #bara, #meniu, #caseteTaskuri, #notificari { display: none !important; } html.cu-meniu body { padding-left: 0; } }`;
+    @media print { #bara, #meniu, #colt { display: none !important; } html.cu-meniu body { padding-left: 0; } }`;
   document.head.appendChild(stil);
 
   // meniul restrâns se ţine minte în browser; fără alegere: restrâns la jumătate de ecran
@@ -424,8 +424,18 @@
     incarcaNotificari();   // de la distanţă (releul) ruta e refuzată → nimic
   };
 
+  // Colţul din dreapta jos (#colt): notificările sus, reminderele de taskuri jos — se adună, nu se suprapun.
+  function colt(id) {
+    let c = document.getElementById('colt');
+    if (!c) { c = document.createElement('div'); c.id = 'colt'; document.body.appendChild(c); }
+    const el = document.createElement('div');
+    el.id = id;
+    if (id === 'notificari') c.prepend(el); else c.appendChild(el);
+    return el;
+  }
+
   // ── Notificările mele (server/notificari.js; userul, 2026-10-19): ex. răspuns la tichetul meu.
-  // Stânga jos, una sub alta; rămân (şi la reîncărcare, pe orice pagină) până apeşi X. Clic pe ea =
+  // Dreapta jos, una sub alta; rămân (şi la reîncărcare, pe orice pagină) până apeşi X. Clic pe ea =
   // pagina ei, dar nu se închide. Fiecare apare o dată şi ca notificare Windows (dacă e pornită).
   const ORA_N = new Intl.DateTimeFormat('ro-RO', { timeZone: 'Europe/Bucharest', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
   const escN = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -433,8 +443,8 @@
     const r = await fetch('/api/notificari').catch(() => null);
     if (!r?.ok) return;
     const { notificari } = await r.json();
-    let el = document.getElementById('notificari');
-    if (!el) { el = document.createElement('div'); el.id = 'notificari'; el.setAttribute('aria-live', 'polite'); document.body.appendChild(el); }
+    const el = document.getElementById('notificari') ?? colt('notificari');
+    el.setAttribute('aria-live', 'polite');
     el.innerHTML = notificari.map(n => `<div class="nt" data-id="${n.id}" data-link="${escN(n.link ?? '')}" title="${n.link ? 'Deschide' : ''}">
       <button type="button" class="x" title="Închide notificarea" aria-label="Închide">×</button>
       <b>${escN(n.titlu)}</b>${n.text ? `<div class="txt">${escN(n.text)}</div>` : ''}
@@ -478,8 +488,7 @@
       n.onclick = () => { window.open('/taskuri', 'taskuri'); n.close(); };
       return;
     }
-    let cutie = document.getElementById('caseteTaskuri');
-    if (!cutie) { cutie = document.createElement('div'); cutie.id = 'caseteTaskuri'; document.body.appendChild(cutie); }
+    const cutie = document.getElementById('caseteTaskuri') ?? colt('caseteTaskuri');
     const c = document.createElement('div');
     c.innerHTML = '<b></b><div class="dim"></div><a href="/taskuri" target="taskuri">Deschide taskurile</a><button type="button">Închide</button>';
     c.querySelector('b').textContent = titlu;
