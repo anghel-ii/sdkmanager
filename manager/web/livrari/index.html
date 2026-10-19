@@ -50,6 +50,8 @@
   select.judet.lipsa { border-color: #d4a24c; color: #e5b45a; }
   input.incasat { width: 110px; padding: 6px 8px; text-align: right; font-family: 'JetBrains Mono', ui-monospace, monospace; }
   input.incasat.salvat { border-color: var(--ok); }
+  textarea.obs { width: 190px; min-height: 38px; padding: 6px 8px; font-size: .84rem; resize: vertical; }
+  textarea.obs.salvat { border-color: var(--ok); }
   .fara-punct { color: #e5b45a; font-size: .78rem; }
   button.mic { padding: 4px 9px; font-size: .78rem; }
   a.buton { display: inline-block; padding: 5px 10px; font-size: .8rem; border: 1px solid var(--accent-dim); border-radius: 6px;
@@ -239,7 +241,7 @@ function randeazaPlan() {
   let k = 0;
   $('tabel').innerHTML = `<table class="lst">
     <thead><tr><th class="bifa"><input type="checkbox" id="toate" ${v.every(c => !debifate.has(c.id)) ? 'checked' : ''}></th><th></th>
-      <th>Client</th><th>Produse</th><th>Adresă</th><th>Ofertă</th><th>Preţ</th></tr></thead>
+      <th>Client</th><th>Produse</th><th>Adresă</th><th>Observaţii livrare</th><th>Ofertă</th><th>Preţ</th></tr></thead>
     <tbody>${v.map(c => {
       const bif = !debifate.has(c.id);
       const nr = bif ? ++k : null;
@@ -254,6 +256,7 @@ function randeazaPlan() {
               ${c.judet ? '' : '<option value="" selected>— alege judeţul —</option>'}
               ${judete.map(j => `<option${j === c.judet ? ' selected' : ''}>${esc(j)}</option>`).join('')}</select>
             ${c.lat == null ? ` <span class="fara-punct">nu e pe hartă</span> <button class="mic pune">📍 Pune pe hartă</button>` : ''}</div></td>
+        <td><textarea class="obs" rows="2" maxlength="300" placeholder="ex. sună înainte, descărcare la rampă">${esc(c.observatii_livrare ?? '')}</textarea></td>
         <td>${data(c.creat_la)}<div class="mic-dim">${c.finalizat_la ? 'finalizată' : 'în lucru'}</div></td>
         <td><input class="incasat" inputmode="decimal" placeholder="0" value="${c.de_incasat ?? ''}">
             <div class="mic-dim">${esc(PLATI[c.plata] ?? '')}${c.avans > 0 ? ` · avans ${lei(c.avans)}` : ''}</div></td>
@@ -277,6 +280,13 @@ function randeazaPlan() {
       c.de_incasat = inp.value.trim() === '' ? null : Number(inp.value.replace(',', '.'));
       inp.classList.add('salvat'); setTimeout(() => inp.classList.remove('salvat'), 1200);
       randeazaTotal();
+    });
+    const obs = tr.querySelector('textarea.obs');
+    obs.addEventListener('change', async () => {
+      const r = await api(`/api/livrari/comanda/${id}`, { method: 'PUT', body: JSON.stringify({ observatii_livrare: obs.value }) });
+      if (r && !r.ok) { obs.value = c.observatii_livrare ?? ''; return alerta(await eroareDin(r)); }
+      c.observatii_livrare = obs.value.trim() || null;
+      obs.classList.add('salvat'); setTimeout(() => obs.classList.remove('salvat'), 1200);
     });
     tr.querySelector('.pune')?.addEventListener('click', () => {
       punePeHarta = id;
@@ -502,7 +512,8 @@ function cardLivrare(l) {
         <td class="ordine"><span class="bulina">${k + 1}</span></td>
         <td><div class="client">${esc(c.client_nume)}${c.demo ? DEMO : ''}</div><div class="mic-dim mono">${esc(c.numar)}</div></td>
         <td>${esc(c.client_telefon ?? '—')}</td>
-        <td>${esc(c.client_adresa ?? '—')}${c.judet ? `<div class="mic-dim">${esc(c.judet)}</div>` : ''}</td>
+        <td>${esc(c.client_adresa ?? '—')}${c.judet ? `<div class="mic-dim">${esc(c.judet)}</div>` : ''}${
+          c.observatii_livrare ? `<div class="mic-dim">📝 ${esc(c.observatii_livrare)}</div>` : ''}</td>
         <td class="produse">${c.produse.map(p => `<div>${esc(p)}</div>`).join('')}</td>
         <td>${c.de_incasat ? lei(c.de_incasat) : '<span class="dim">—</span>'}${c.plata ? `<div class="mic-dim">${esc(PLATI[c.plata] ?? c.plata)}</div>` : ''}</td>
       </tr>`).join('')}</tbody>
@@ -524,7 +535,7 @@ function borderouHtml(l) {
     const celula = k => `<td${k === 'factura' ? ' class="numerar"' : ''}>${col === k && c.de_incasat != null ? lei2(p) : ''}</td>`;
     return `<tr>
       <td class="firma">${esc(c.client_nume)}${c.demo ? ' (DEMO)' : ''}</td>
-      <td>${[c.client_telefon, c.observatii].filter(Boolean).map(esc).join('<br>')}</td>
+      <td>${[c.client_telefon, c.observatii_livrare].filter(Boolean).map(esc).join('<br>')}</td>
       <td>${esc(c.client_adresa ?? '')}</td>
       <td>${c.de_incasat != null ? lei2(p) : ''}</td>${celula('bon')}${celula('factura')}${celula('op')}<td></td></tr>`;
   }).join('');
@@ -569,10 +580,10 @@ function randeazaProgramate() {
   });
 }
 
-// ── Pornire + actualizare live (nu în timp ce scrii o sumă) ──
+// ── Pornire + actualizare live (nu în timp ce scrii o sumă sau observaţii) ──
 let deReimprospatat = false;
 const reimprospateaza = () => {
-  if (document.activeElement?.matches?.('input, select')) { deReimprospatat = true; return; }
+  if (document.activeElement?.matches?.('input, select, textarea')) { deReimprospatat = true; return; }
   deReimprospatat = false; incarca();
 };
 document.addEventListener('focusout', () => { if (deReimprospatat) setTimeout(reimprospateaza, 0); });

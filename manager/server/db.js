@@ -461,6 +461,8 @@ const MIGRATII = [
   // v25 → v26 (2026-10-19): când s-a schimbat ultima dată livrarea / adresa unei comenzi acceptate — dacă fişa
   // era deja printată, la finalizare se întreabă dacă s-a completat de mână (până la o fişă reprintată)
   d => d.exec('ALTER TABLE comanda ADD COLUMN livrare_modificata_la TEXT'),
+  // v26 → v27 (2026-10-19): observaţiile de livrare, scrise la Organizează livrări — pe borderou (nu cele din ofertă)
+  d => d.exec('ALTER TABLE comanda ADD COLUMN observatii_livrare TEXT'),
 ];
 
 // Exportată pt. test.

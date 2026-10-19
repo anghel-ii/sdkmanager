@@ -467,7 +467,7 @@ async function main() {
     const idVechi = Number(db2().prepare("INSERT INTO utilizator (nume, user, parola_hash, parola_salt, rol) VALUES ('Vechi', 'vechi', 'x', 'x', 'operator')").run().lastInsertRowid);
     require('../server/db.js').roluriNoi(db2());
     verifica('migraţie: operator → birou', db2().prepare('SELECT rol FROM utilizator WHERE id = ?').get(idVechi).rol === 'birou');
-    verifica('schema la versiunea 26', db2().prepare('PRAGMA user_version').get().user_version === 26);
+    verifica('schema la versiunea 27', db2().prepare('PRAGMA user_version').get().user_version === 27);
   }
 
   console.log('\nFixare şi sortare — per utilizator');
@@ -963,6 +963,14 @@ async function main() {
     verifica('livrări: judeţ ales de mână', (await cer('PUT', `/api/livrari/comanda/${faraJ}`, { judet: 'Neamț' })).stare === 200);
     verifica('livrări: judeţ necunoscut → 400', (await cer('PUT', `/api/livrari/comanda/${faraJ}`, { judet: 'Atlantida' })).stare === 400);
     verifica('livrări: suma de încasat (virgulă) se salvează', (await cer('PUT', `/api/livrari/comanda/${iasi}`, { de_incasat: '1250,5' })).stare === 200);
+    {
+      const id0 = db2().prepare("SELECT id FROM comanda WHERE lower(livrare) = 'cu masina noastra' AND tip = 'comanda' LIMIT 1").get().id;
+      const pune = v => cer('PUT', `/api/livrari/comanda/${id0}`, { observatii_livrare: v });
+      verifica('livrări: observaţiile de livrare se salvează şi apar la candidaţi (nu cele din ofertă)', (await pune('  Sună înainte  ')).stare === 200
+        && (await cer('GET', '/api/livrari/candidati')).date.comenzi.find(c => c.id === id0)?.observatii_livrare === 'Sună înainte');
+      verifica('livrări: observaţii goale → şterse', (await pune('')).stare === 200
+        && db2().prepare('SELECT observatii_livrare FROM comanda WHERE id = ?').get(id0).observatii_livrare === null);
+    }
     verifica('livrări: sumă negativă → 400', (await cer('PUT', `/api/livrari/comanda/${iasi}`, { de_incasat: '-3' })).stare === 400);
     verifica('livrări: coordonate în afara României → 400', (await cer('PUT', `/api/livrari/comanda/${iasi}`, { lat: 51.5, lon: -0.1 })).stare === 400);
     verifica('livrări: coordonatele din România se salvează', (await cer('PUT', `/api/livrari/comanda/${iasi}`, { lat: 47.24, lon: 26.72, geo_adresa: 'x' })).stare === 200);
