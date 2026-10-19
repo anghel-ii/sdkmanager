@@ -80,10 +80,15 @@ const rand = (fisier, sql) => { const d = new DatabaseSync(fisier, { readOnly: t
 
 // O acţiune: rulează, apoi verifică ce s-a schimbat în fiecare bază faţă de înainte.
 // `real` / `birou` / `admin` = tabelele care AU VOIE să se schimbe acolo (restul — neatinse).
+// Copiile la zi înainte de o „poză": o cerere DIN DEMO sincronizează lanţul înainte să răspundă (index.js),
+// pe când una reală o face abia după ce a trimis răspunsul — pe un calculator lent (CI-ul GitHub),
+// poza de după ea ar prinde copiile înainte de sincronizare.
+const laZi = () => cer('ana', 'GET', '/api/sumar');
 async function actiune(nume, fn, { real = [], birou, admin, stare = s => s >= 200 && s < 300 } = {}) {
+  await laZi();
   const inainte = { real: instantaneu(DB), birou: fs.existsSync(BIROU) && instantaneu(BIROU), admin: fs.existsSync(ADMIN) && instantaneu(ADMIN) };
   const r = await fn();
-  await cer('bogdan', 'GET', '/api/eu');   // o cerere reală: lanţul se sincronizează
+  await laZi();
   const dupa = { real: instantaneu(DB), birou: fs.existsSync(BIROU) && instantaneu(BIROU), admin: fs.existsSync(ADMIN) && instantaneu(ADMIN) };
   const sr = schimbate(inainte.real, dupa.real).filter(t => !real.includes(t));
   verifica(`${nume}: ${r.stare}, baza reală neatinsă${real.length ? ` (în afară de ${real.join(', ')})` : ''}`,
@@ -144,6 +149,7 @@ async function main() {
   const idR1 = r1.date.comanda.id;
   const idR2 = await comanda('bogdan', 'Real Doi', 'R-2');   // comandă în lucru, cu sticlă, cu maşina noastră
   const idR3 = await comanda('bogdan', 'Real Trei', 'R-3');
+  await laZi();
   verifica('copiile de demo au apărut (birou + admin)', fs.existsSync(BIROU) && fs.existsSync(ADMIN));
   verifica('ce e real ajunge în demo birou şi în demo admin',
     rand(BIROU, `SELECT tip FROM comanda WHERE id = ${idR2}`)[0]?.tip === 'comanda' && rand(ADMIN, `SELECT tip FROM comanda WHERE id = ${idR2}`)[0]?.tip === 'comanda');
@@ -283,6 +289,7 @@ async function main() {
     (await gaseste('ana', idR4))?.factura_nr === 'F-REAL' && !(await gaseste('ana', idR4))?.demo
     && (await gaseste('admin', idR4))?.factura_nr === 'F-REAL' && !(await gaseste('admin', idR4))?.demo);
   await cer('bogdan', 'POST', `/api/comenzi/${idR2}/finalizeaza`);
+  await laZi();
   verifica('pe bune, R-2 finalizată → aşa şi în ambele demo-uri', !!(await gaseste('ana', idR2))?.finalizat_la && !!(await gaseste('admin', idR2))?.finalizat_la);
   verifica('id-urile nu se bat: ofertele anei şi adminului încă acolo', !!(await gaseste('ana', idA)) && !!(await gaseste('admin', idAd)) && !!(await gaseste('admin', idA)));
 
@@ -313,6 +320,7 @@ async function main() {
 
   // ── 5. Repornirea serverului ──
   console.log('\nRepornire');
+  await laZi();
   const inainte = { real: instantaneu(DB), birou: instantaneu(BIROU), admin: instantaneu(ADMIN) };
   await opreste();
   await porneste();
@@ -347,6 +355,7 @@ async function main() {
   const ad2 = (await cer('admin', 'POST', '/api/comenzi', oferta('Admin după reset', 'AD-10'))).date.comanda;
   verifica('… şi adminul face din nou oferte în demo-ul lui (9501+), fără să ajungă la ana',
     +ad2.numar.slice(-4) > 9500 && !(await gaseste('ana', ad2.id)));
+  await laZi();
   verifica('după resetări: cererea aprobată de admin rămâne aprobată, nu reapare', !(await cer('admin', 'GET', '/api/cereri')).date.cereri.some(x => x.comanda_id === idR7 && x.stare === 'deschisa')
     && rand(ADMIN, `SELECT anulat FROM comanda WHERE id = ${idR7}`)[0]?.anulat === 1);
   verifica('resetarea nu se poate cere decât de admin', (await cer('bogdan', 'POST', '/api/test/reface', { copie: 'colegi' })).stare === 403
@@ -354,6 +363,7 @@ async function main() {
 
   // ── 7. Update cu migraţie: copiile vechi se refac singure, baza reală neatinsă ──
   console.log('\nUpdate cu migraţie (copii cu altă versiune de schemă)');
+  await laZi();
   const realInainte = instantaneu(DB);
   await opreste();
   for (const f of [BIROU, ADMIN]) { const d = new DatabaseSync(f); d.exec('PRAGMA user_version = 1'); d.close(); }
