@@ -467,7 +467,7 @@ async function main() {
     const idVechi = Number(db2().prepare("INSERT INTO utilizator (nume, user, parola_hash, parola_salt, rol) VALUES ('Vechi', 'vechi', 'x', 'x', 'operator')").run().lastInsertRowid);
     require('../server/db.js').roluriNoi(db2());
     verifica('migraţie: operator → birou', db2().prepare('SELECT rol FROM utilizator WHERE id = ?').get(idVechi).rol === 'birou');
-    verifica('schema la versiunea 25', db2().prepare('PRAGMA user_version').get().user_version === 25);
+    verifica('schema la versiunea 26', db2().prepare('PRAGMA user_version').get().user_version === 26);
   }
 
   console.log('\nFixare şi sortare — per utilizator');
@@ -740,6 +740,26 @@ async function main() {
     verifica('… → Ridicare personala: transportul iese din facturare', (await livr('Ridicare personala')).stare === 200 && transport() === 0);
     verifica('livrarea unei oferte → 409 (se schimbă din „Modifică oferta")',
       (await cer('POST', `/api/comenzi/${oc.date.comanda.id}/livrare`, { livrare: 'Curier ramburs' })).stare === 409);
+    // adresa + livrarea după ce s-a printat fişa (userul, 2026-10-19): de completat de mână, până la o reprintare
+    {
+      const det = async () => (await cer('GET', `/api/comenzi/${pid}`)).date.comanda;
+      verifica('fişă neprintată: schimbarea adresei nu cere nimic', (await cer('POST', `/api/comenzi/${pid}/livrare`, { adresa: 'Str. Unu 1, Cluj-Napoca, Cluj' })).stare === 200
+        && (await det()).client_adresa === 'Str. Unu 1, Cluj-Napoca, Cluj' && (await det()).fisa_de_completat === false);
+      verifica('adresă goală → 400', (await cer('POST', `/api/comenzi/${pid}/livrare`, { adresa: '  ' })).stare === 400);
+      // ordinea din realitate: adresa schimbată acum 2 ore, fişa printată acum o oră
+      db2().prepare(`UPDATE comanda SET livrare_modificata_la = datetime('now', '-2 hours') WHERE id = ?`).run(pid);
+      db2().prepare(`INSERT INTO fisa_printare (comanda_id, poz, la, de) VALUES (?, 0, datetime('now', '-1 hour'), NULL)`).run(pid);
+      const inainte = (await det()).livrare_modificata_la;
+      verifica('nimic schimbat → 200, fără oră de modificare nouă', (await cer('POST', `/api/comenzi/${pid}/livrare`, { adresa: 'Str. Unu 1, Cluj-Napoca, Cluj' })).stare === 200
+        && (await det()).livrare_modificata_la === inainte && (await det()).fisa_de_completat === false);
+      verifica('adresa schimbată după printare → fişa de completat de mână', (await cer('POST', `/api/comenzi/${pid}/livrare`, { adresa: 'Str. Doi 2, Iași' })).stare === 200
+        && (await det()).client_adresa === 'Str. Doi 2, Iași' && (await det()).fisa_de_completat === true);
+      await cer('POST', `/api/comenzi/${pid}/fisa`, { poz: 0 });
+      verifica('fişa reprintată după modificare → nu mai e nimic de completat', (await det()).fisa_de_completat === false);
+      db2().prepare(`UPDATE fisa_printare SET la = datetime('now', '-1 hour') WHERE comanda_id = ?`).run(pid);
+      verifica('doar livrarea schimbată după printare → tot de completat', (await cer('POST', `/api/comenzi/${pid}/livrare`, { livrare: 'Curier ramburs' })).stare === 200
+        && (await det()).fisa_de_completat === true && (await det()).client_adresa === 'Str. Doi 2, Iași');
+    }
     const cate = async tip => (await cer('GET', '/api/comenzi?tip=' + tip)).date.comenzi.length;
     const peTaburi = await cate('oferta') + await cate('plata') + await cate('comanda') + await cate('finalizata');
     verifica('căutarea globală: tip=toate = cele patru taburi la un loc', peTaburi > 1 && await cate('toate') === peTaburi, `${peTaburi}`);

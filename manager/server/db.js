@@ -458,6 +458,9 @@ const MIGRATII = [
       inchisa_la    TEXT                             -- NULL = încă pe ecran
     );
     CREATE INDEX notificare_deschise ON notificare (utilizator_id, inchisa_la);`),
+  // v25 → v26 (2026-10-19): când s-a schimbat ultima dată livrarea / adresa unei comenzi acceptate — dacă fişa
+  // era deja printată, la finalizare se întreabă dacă s-a completat de mână (până la o fişă reprintată)
+  d => d.exec('ALTER TABLE comanda ADD COLUMN livrare_modificata_la TEXT'),
 ];
 
 // Exportată pt. test.

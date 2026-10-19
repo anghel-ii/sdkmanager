@@ -348,6 +348,9 @@ function detaliu(ctx) {
   `).get(id);
   if (!comanda) return eroare(ctx.res, 404, 'Comandă inexistentă.');
   if (comenziDemo().has(id)) comanda.demo = true;
+  // livrarea / adresa schimbate după ce s-a printat fişa (vreun produs fără reprintare de atunci) — de completat de mână
+  comanda.fisa_de_completat = !!comanda.livrare_modificata_la && !!db().prepare(`SELECT 1 FROM (SELECT MAX(la) AS ultima
+    FROM fisa_printare WHERE comanda_id = ? GROUP BY poz) WHERE ultima < ? LIMIT 1`).get(id, comanda.livrare_modificata_la);
 
   const pozitii = db().prepare('SELECT * FROM pozitie WHERE comanda_id = ? ORDER BY idx').all(id);
   const linii   = db().prepare(`
@@ -387,17 +390,24 @@ function detaliu(ctx) {
 // personala" nu se facturează) şi livrarea din configuraţiile salvate (de acolo o ia fişa).
 const LIVRARI = ['Ridicare personala', 'Curier ramburs', 'Curier op avans', 'Curier op la termen', 'Cu masina noastra'];
 const TRANSPORT = { cod: 'CHLTTRMANIP', denumire: 'Cheltuieli de Transport si Manipulare', um: 'buc', cantitate: 1 };
+// Livrarea şi / sau adresa unei comenzi în lucru / care aşteaptă plata (userul, 2026-10-08; adresa 2026-10-19).
+// { livrare?, adresa? } — ce lipseşte rămâne. O schimbare ţine minte când (livrare_modificata_la): dacă fişa
+// era deja printată, pagina cere completarea ei de mână, şi întreabă din nou la finalizare.
 async function schimbaLivrare(ctx) {
   const id = Number(ctx.params.id);
-  const { livrare } = await corpJson(ctx.req);
+  const corp = await corpJson(ctx.req);
   const c = db().prepare('SELECT * FROM comanda WHERE id = ?').get(id);
   if (!c)                 return eroare(ctx.res, 404, 'Comandă inexistentă.');
   if (c.anulat)           return eroare(ctx.res, 400, 'Comanda e anulată.');
   if (c.tip === 'oferta') return eroare(ctx.res, 409, 'La o ofertă livrarea se schimbă din „Modifică oferta".');
   if (c.finalizat_la)     return eroare(ctx.res, 409, 'Comanda e finalizată.');
+  const livrare = 'livrare' in corp ? corp.livrare : c.livrare;
   if (!LIVRARI.includes(livrare)) return eroare(ctx.res, 400, 'Alege modul de livrare.');
+  const adresa = 'adresa' in corp ? text(corp.adresa, 300) : c.client_adresa;
+  if ('adresa' in corp && !adresa) return eroare(ctx.res, 400, 'Completează adresa.');
+  if (livrare === c.livrare && adresa === c.client_adresa) return json(ctx.res, 200, { comanda: c });   // nimic schimbat
   tranzactie(d => {
-    d.prepare('UPDATE comanda SET livrare = ? WHERE id = ?').run(livrare, id);
+    d.prepare(`UPDATE comanda SET livrare = ?, client_adresa = ?, livrare_modificata_la = ${ACUM()} WHERE id = ?`).run(livrare, adresa, id);
     const poz = d.prepare('SELECT id, config_json FROM pozitie WHERE comanda_id = ? ORDER BY idx').all(id);
     for (const p of poz) {
       const cfg = JSON.parse(p.config_json);

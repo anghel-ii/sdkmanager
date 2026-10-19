@@ -122,6 +122,23 @@
 
 <!-- ACCEPTARE OFERTĂ — modalitatea de plată e obligatorie; avansul opţional
      (0 = fără avans). Vezi POST /api/comenzi/:id/accepta. -->
+<!-- livrarea + adresa unei comenzi în lucru / care aşteaptă plata (userul, 2026-10-19) -->
+<dialog id="dialogLivrare" class="fereastra" aria-labelledby="titluLivrare">
+  <form method="dialog" id="formLivrare">
+    <div class="fereastra-cap"><h2 id="titluLivrare">Livrarea şi adresa</h2></div>
+    <label class="camp">Mod de livrare
+      <select id="livNoua" required></select>
+    </label>
+    <label class="camp">Adresa de livrare
+      <input id="livAdresa" type="text" autocomplete="off" required data-adresa>
+    </label>
+    <div class="butoane">
+      <button type="button" id="livRenunta">Renunţă</button>
+      <button type="submit" class="verde" id="livOk">Salvează</button>
+    </div>
+  </form>
+</dialog>
+
 <dialog id="dialogAccepta" class="fereastra" aria-labelledby="titluAccepta">
   <form method="dialog" id="formAccepta">
     <div class="fereastra-cap"><h2 id="titluAccepta">Acceptă oferta</h2></div>
@@ -874,7 +891,14 @@ function leagaTreceri(root, c, dupa) {
     ['asteapta-plata', 'Trimiţi oferta la „Aşteaptă plata"?'],
     ['inapoi-oferta', 'O întorci în oferte? De acolo o poţi accepta sau trimite la „Aşteaptă plata".'],
   ]) buton(t)?.addEventListener('click', async () => { if (await confirma(intrebare)) posteaza(t); });
-  for (const t of ['finalizeaza', 'redeschide']) buton(t)?.addEventListener('click', () => posteaza(t));
+  buton('redeschide')?.addEventListener('click', () => posteaza('redeschide'));
+  // livrarea / adresa schimbate după ce s-a printat fişa (şi nereprintată de atunci): s-a completat de mână?
+  buton('finalizeaza')?.addEventListener('click', async () => {
+    if (c.fisa_de_completat && !(await intreabaObligatoriu(`Livrarea sau adresa s-au schimbat după ce s-a printat fişa.\n\n`
+      + `Ai completat de mână, pe fişa de comandă, modificarea?\nLivrare: ${c.livrare ?? '—'}\nAdresă: ${c.client_adresa ?? '—'}`,
+      'Da, am completat — finalizează', 'Nu încă'))) return;
+    posteaza('finalizeaza');
+  });
   // butonul dispare singur când trec cele 10 minute
   if (msInapoi(c) > 0) setTimeout(() => buton('inapoi-oferta')?.remove(), msInapoi(c));
   // Acceptare: dialogul cere modalitatea de plată (obligatoriu) şi avansul.
@@ -1068,7 +1092,7 @@ async function renderDetaliu(id) {
         </dl>
         ${c.livrare || c.agent || c.tip_facturare || c.plata ? `<dl class="perechi info-detalii">
           <dt>Livrare</dt><dd id="livrareDd">${esc(c.livrare ?? '—')}${(eComanda || ePlata) && !c.finalizat_la
-            ? ' <button class="mic" id="schimbaLivrare" title="Schimbă modul de livrare">schimbă</button>' : ''}</dd>
+            ? ' <button class="mic" id="schimbaLivrare" title="Schimbă modul de livrare şi / sau adresa">Modifică livrarea / adresa</button>' : ''}</dd>
           <dt>Metodă de plată</dt><dd>${esc(PLATI[c.plata] ?? '—')}</dd>
           ${c.tip_facturare ? `<dt>Tip factură</dt><dd>${esc(c.tip_facturare)}</dd>` : ''}
           <dt>Agent</dt><dd>${esc(c.agent ?? '—')}</dd></dl>` : ''}
@@ -1119,24 +1143,37 @@ async function renderDetaliu(id) {
   // Aşteaptă plata / Acceptă / Plată primită / Finalizată / Redeschide / Înapoi în ofertă
   leagaTreceri($('continut').querySelector('.antet'), c, () => renderDetaliu(id));
   Adresa.marcheaza($('continut'));
-  // modul de livrare la comenzile în lucru / care aşteaptă plata (userul, 2026-10-08)
+  // livrarea şi adresa la comenzile în lucru / care aşteaptă plata (userul, 2026-10-08; adresa 2026-10-19).
+  // Cu fişa deja printată: după salvare, un OK obligatoriu — „completează de mână pe fişa de comandă".
   $('schimbaLivrare')?.addEventListener('click', () => {
-    $('livrareDd').innerHTML = `<select id="livrareNoua">${LIVRARI.map(v =>
-      `<option${v === c.livrare ? ' selected' : ''}>${esc(v)}</option>`).join('')}</select>
-      <button class="mic primar" id="salveazaLivrare">Salvează</button> <button class="mic" id="renuntaLivrare">Renunţă</button>`;
-    $('renuntaLivrare').addEventListener('click', () => renderDetaliu(id));
-    $('salveazaLivrare').addEventListener('click', async () => {
-      const livrare = $('livrareNoua').value;
-      if (livrare === c.livrare) return renderDetaliu(id);
+    const dlg = $('dialogLivrare');
+    $('livNoua').innerHTML = LIVRARI.map(v => `<option${v === c.livrare ? ' selected' : ''}>${esc(v)}</option>`).join('');
+    $('livAdresa').value = c.client_adresa ?? '';
+    $('livOk').disabled = false;
+    $('livRenunta').onclick = () => dlg.close();
+    $('formLivrare').onsubmit = async e => {
+      e.preventDefault();
+      const livrare = $('livNoua').value, adresa = $('livAdresa').value.trim();
+      if (livrare === c.livrare && adresa === (c.client_adresa ?? '')) return dlg.close();   // nimic schimbat
       // transportul se facturează la orice livrare în afară de ridicarea personală
       const transport = (livrare === 'Ridicare personala') !== (c.livrare === 'Ridicare personala');
       if (transport && !(await confirma(`Livrarea devine „${livrare}" — ${livrare === 'Ridicare personala'
         ? 'linia de transport se scoate din facturare' : 'se adaugă linia de transport în facturare'}.${c.factura_nr
         ? ' Atenţie: comanda e deja facturată — verifică factura.' : ''} Continui?`))) return;
-      const rr = await api(`/api/comenzi/${id}/livrare`, { method: 'POST', body: JSON.stringify({ livrare }) });
-      if (rr && !rr.ok) alerta((await rr.json().catch(() => ({}))).eroare || 'Operaţia a eşuat.');
+      $('livOk').disabled = true;
+      const rr = await api(`/api/comenzi/${id}/livrare`, { method: 'POST', body: JSON.stringify({ livrare, adresa }) });
+      $('livOk').disabled = false;
+      if (!rr) return;
+      if (!rr.ok) return alerta((await rr.json().catch(() => ({}))).eroare || 'Operaţia a eşuat.');
+      dlg.close();
+      if (printari.length) {
+        const ce = [livrare !== c.livrare && `Livrare: ${livrare}`, adresa !== (c.client_adresa ?? '') && `Adresă: ${adresa}`].filter(Boolean).join('\n');
+        await fereastraMesaj(`Fişa comenzii a fost deja printată.\n\nNu uita să completezi de mână, pe fişa de comandă, modificarea:\n${ce}`,
+          [['OK', true, true]], true);
+      }
       renderDetaliu(id);
-    });
+    };
+    dlg.showModal();
   });
   leagaFacturare($('continut'), () => renderDetaliu(id));
   leagaSticla(sticlaLinii, () => renderDetaliu(id));
