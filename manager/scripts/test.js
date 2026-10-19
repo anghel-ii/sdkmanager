@@ -1140,6 +1140,18 @@ async function main() {
     verifica('scos din modul test', (await cer('PATCH', `/api/utilizatori/${tina}`, { modTest: false })).stare === 200
       && pePeBune(`SELECT mod_test FROM utilizator WHERE id = ${tina}`)[0].mod_test === 0);
 
+    // pe server (2026-10-19) copia era ţinută deschisă după un update cu migraţie → EPERM şi serverul nu mai pornea.
+    // Aici: în locul copiei e un folder, deci copia nu se poate nici deschide, nici şterge — baza tot trebuie să pornească.
+    {
+      const dir = fs.mkdtempSync(path.join(TEMP, 'copie-blocata-'));
+      fs.mkdirSync(path.join(dir, 'b-test.sqlite'));
+      const r = require('node:child_process').spawnSync(process.execPath, ['-e',
+        "require('./server/db.js').deschide(); console.log('PORNIT')"],
+        { cwd: path.join(__dirname, '..'), env: { ...process.env, MANAGER_DB: path.join(dir, 'b.sqlite') }, encoding: 'utf8' });
+      verifica('copia de test blocată nu opreşte pornirea', r.status === 0 && r.stdout.includes('PORNIT')
+        && r.stderr.includes('Modul test: copia nu s-a putut deschide'), r.stderr.slice(0, 300));
+    }
+
     // adminul mereu în test (userul, 2026-10-15) — cum rulează pe server
     const { config } = require('../server/config.js');
     config.adminInTest = true;

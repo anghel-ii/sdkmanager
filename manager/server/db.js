@@ -37,8 +37,12 @@ function deschide() {
   _db = configureaza(new DatabaseSync(config.db));
 
   migreaza();
-  // copia de test (dacă există) se ţine la zi de la pornire — altfel s-ar pierde ce se face pe bune până la prima cerere de test
-  if (modTestPosibil && fs.existsSync(caleTest())) copieTest();
+  // copia de test (dacă există) se ţine la zi de la pornire — altfel s-ar pierde ce se face pe bune până la prima cerere de test.
+  // Dacă nu merge (Windows, 2026-10-19: după update copia era încă ţinută deschisă → EPERM), serverul porneşte oricum:
+  // copia se reface la prima cerere din modul test.
+  if (modTestPosibil && fs.existsSync(caleTest())) {
+    try { copieTest(); } catch (e) { console.error('Modul test: copia nu s-a putut deschide la pornire —', e.message); }
+  }
   setInterval(sincronizeaza, 30e3).unref();   // şi ce scriu timerele (clienţii de pe Cloudflare), nu doar cererile
   return _db;
 }
@@ -86,7 +90,8 @@ function copieTest() {
 function refaTest() {
   if (!modTestPosibil) throw Object.assign(new Error('Modul test cere Node 22.12 sau mai nou pe server.'), { cod: 409 });
   inchideTest();
-  for (const f of ['', '-wal', '-shm']) fs.rmSync(caleTest() + f, { force: true });
+  // pe Windows fişierul poate fi încă ţinut câteva clipe (serverul vechi care se opreşte, antivirusul) — mai încearcă
+  for (const f of ['', '-wal', '-shm']) fs.rmSync(caleTest() + f, { force: true, maxRetries: 10, retryDelay: 300 });
   _db.exec(`VACUUM INTO '${caleTest().replace(/'/g, "''")}'`);
   return pornesteTest(new DatabaseSync(caleTest()));
 }
