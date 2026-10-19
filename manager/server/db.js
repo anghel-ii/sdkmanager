@@ -445,6 +445,19 @@ const MIGRATII = [
     );
     INSERT INTO furnizor (cod, nume, email) VALUES ('GG', 'GoldenGlass', 'comenzi@goldenglass.ro'), ('OVI', 'OviBest', ''),
       ('CS', 'CS', ''), ('HD', 'HD', ''), ('CG', 'CG', ''), ('TG', 'TG', '');`),
+  // v24 → v25 (2026-10-19): notificările unui om (răspuns / stare nouă la tichetul lui) — stau în stânga jos
+  // până le închide el cu X (server/notificari.js, web/bara.js)
+  d => d.exec(`
+    CREATE TABLE notificare (
+      id            INTEGER PRIMARY KEY,
+      utilizator_id INTEGER NOT NULL REFERENCES utilizator(id) ON DELETE CASCADE,
+      titlu         TEXT NOT NULL,
+      text          TEXT NOT NULL DEFAULT '',
+      link          TEXT,                            -- unde duce un clic pe ea (ex. /tichete)
+      creat_la      TEXT NOT NULL,
+      inchisa_la    TEXT                             -- NULL = încă pe ecran
+    );
+    CREATE INDEX notificare_deschise ON notificare (utilizator_id, inchisa_la);`),
 ];
 
 // Exportată pt. test.

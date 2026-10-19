@@ -11,6 +11,7 @@ const { anunta } = require('./evenimente.js');
 
 const TIPURI = ['problema', 'idee', 'altceva'];
 const STARI = ['nou', 'in_lucru', 'rezolvat', 'respins'];
+const ETICHETA = { nou: 'nou', in_lucru: 'în lucru', rezolvat: 'rezolvat', respins: 'respins' };
 const eAdmin = ctx => ctx.utilizator.rol === 'admin';
 const CAMPURI = `t.*, uc.nume AS creat_de_nume, ur.nume AS raspuns_de_nume,
     COALESCE(c.oferta_nr, c.numar) AS comanda_nr, c.client_nume AS comanda_client
@@ -59,6 +60,17 @@ async function modifica(ctx) {
   if (stare === t.stare && raspuns === t.raspuns) return json(ctx.res, 200, { ok: true });
   db().prepare(`UPDATE tichet SET stare = ?, raspuns = ?, raspuns_de = ?, modificat_la = ${ACUM()}, vazut_de_autor = ? WHERE id = ?`)
     .run(stare, raspuns, ctx.utilizator.id, t.creat_de === ctx.utilizator.id ? 1 : 0, id);
+  // autorul primeşte o notificare (stânga jos, până o închide — server/notificari.js; userul, 2026-10-19)
+  if (t.creat_de !== ctx.utilizator.id) {
+    const raspunsNou = raspuns && raspuns !== t.raspuns, stareNoua = stare !== t.stare;
+    require('./notificari.js').notifica(t.creat_de, {
+      titlu: raspunsNou ? 'Răspuns la tichetul tău' : `Tichetul tău: ${ETICHETA[stare]}`,
+      text: [`„${t.text.length > 90 ? t.text.slice(0, 90) + '…' : t.text}”`,
+        raspunsNou && `${ctx.utilizator.nume}: ${raspuns.length > 220 ? raspuns.slice(0, 220) + '…' : raspuns}`,
+        raspunsNou && stareNoua && `Stare: ${ETICHETA[stare]}`].filter(Boolean).join('\n'),
+      link: '/tichete',
+    });
+  }
   anunta({ tichet: id });
   json(ctx.res, 200, { ok: true });
 }

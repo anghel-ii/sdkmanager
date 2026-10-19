@@ -467,7 +467,7 @@ async function main() {
     const idVechi = Number(db2().prepare("INSERT INTO utilizator (nume, user, parola_hash, parola_salt, rol) VALUES ('Vechi', 'vechi', 'x', 'x', 'operator')").run().lastInsertRowid);
     require('../server/db.js').roluriNoi(db2());
     verifica('migraţie: operator → birou', db2().prepare('SELECT rol FROM utilizator WHERE id = ?').get(idVechi).rol === 'birou');
-    verifica('schema la versiunea 24', db2().prepare('PRAGMA user_version').get().user_version === 24);
+    verifica('schema la versiunea 25', db2().prepare('PRAGMA user_version').get().user_version === 25);
   }
 
   console.log('\nFixare şi sortare — per utilizator');
@@ -1098,6 +1098,25 @@ async function main() {
       verifica('… şi după ce deschide pagina, insigna dispare', (await cer('GET', '/api/sumar')).date.tichete === 0);
       verifica('biroul nu vede tabloul adminului → 403', (await cer('GET', '/api/admin/tablou')).stare === 403);
     });
+    // notificările autorului (server/notificari.js, 2026-10-19): rămân până le închide el cu X
+    await cer('PATCH', `/api/tichete/${id}`, { stare: 'in_lucru' });   // doar starea
+    await cer('PATCH', `/api/tichete/${id}`, { stare: 'in_lucru' });   // nimic schimbat → nicio notificare
+    await caMaria(async () => {
+      await cer('POST', '/api/tichete/vazute');   // deschiderea paginii Tichete NU le închide
+      const n = (await cer('GET', '/api/notificari')).date.notificari;
+      verifica('autorul are 2 notificări (răspunsul, apoi starea), în ordine, cu textul tichetului', n.length === 2
+        && n[0].titlu === 'Răspuns la tichetul tău' && n[0].text.includes('Fişa nu se printează la Rame') && n[0].text.includes('Reparat în versiunea nouă')
+        && n[0].text.includes('Stare: rezolvat') && n[1].titlu === 'Tichetul tău: în lucru' && n[1].link === '/tichete', JSON.stringify(n));
+      verifica('X → se închide doar aia', (await cer('POST', `/api/notificari/${n[0].id}/inchide`)).stare === 200
+        && (await cer('GET', '/api/notificari')).date.notificari.map(x => x.id).join() === String(n[1].id));
+      verifica('închisă de două ori → 404', (await cer('POST', `/api/notificari/${n[0].id}/inchide`)).stare === 404);
+    });
+    const deAlMariei = db2().prepare("SELECT id FROM notificare WHERE inchisa_la IS NULL ORDER BY id DESC LIMIT 1").get().id;
+    verifica('nu poţi închide notificarea altcuiva → 404', (await cer('POST', `/api/notificari/${deAlMariei}/inchide`)).stare === 404);
+    verifica('cine schimbă nu primeşte notificare (adminul n-are niciuna)', (await cer('GET', '/api/notificari')).date.notificari.length === 0);
+    const alMeu = (await cer('POST', '/api/tichete', { tip: 'idee', text: 'al adminului' })).date.id;
+    await cer('PATCH', `/api/tichete/${alMeu}`, { stare: 'rezolvat', raspuns: 'gata' });
+    verifica('tichetul meu, schimbat de mine → fără notificare', (await cer('GET', '/api/notificari')).date.notificari.length === 0);
     const t = (await cer('GET', '/api/admin/tablou')).date;
     verifica('tabloul: activitate pe 7 zile, pe om, server, jurnal', t.zile === 7 && t.activitate.oferte > 0 && Array.isArray(t.peOm)
       && t.peOm.some(o => o.oferte > 0) && !!t.server.pornit && typeof t.jurnal === 'string', JSON.stringify(t.activitate));

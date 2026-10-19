@@ -258,6 +258,14 @@ async function main() {
   verifica('mailul schimbat de admin: pe bune, la bogdan şi la ana (lanţ)', rand(DB, "SELECT email FROM furnizor WHERE cod = 'GG'")[0].email === 'nou@goldenglass.ro'
     && (await cer('bogdan', 'GET', '/api/sticla/furnizori')).date.furnizori.find(f => f.cod === 'GG').email === 'nou@goldenglass.ro'
     && (await cer('ana', 'GET', '/api/sticla/furnizori')).date.furnizori.find(f => f.cod === 'GG').email === 'nou@goldenglass.ro');
+  await actiune('admin: răspunde la tichetul anei → PE BUNE, cu notificare', async () => {
+    const t = (await cer('admin', 'GET', '/api/tichete')).date.tichete.find(x => x.text === 'tichet din demo');
+    return cer('admin', 'PATCH', `/api/tichete/${t.id}`, { stare: 'rezolvat', raspuns: 'am văzut' });
+  }, { real: ['tichet', 'notificare'], birou: ['tichet', 'notificare'], admin: ['tichet', 'notificare'] });
+  const nAna = (await cer('ana', 'GET', '/api/notificari')).date.notificari;
+  verifica('ana (în demo) primeşte notificarea, şi o închide pe bune', nAna.length === 1 && nAna[0].titlu === 'Răspuns la tichetul tău'
+    && (await cer('ana', 'POST', `/api/notificari/${nAna[0].id}/inchide`)).stare === 200
+    && !!rand(DB, `SELECT inchisa_la FROM notificare WHERE id = ${nAna[0].id}`)[0]?.inchisa_la, JSON.stringify(nAna));
   await actiune('admin: cont nou (administrarea merge PE BUNE)', () => cer('admin', 'POST', '/api/utilizatori', { user: 'nou', nume: 'Nou', rol: 'birou', parola: PAROLA }),
     { real: ['utilizator'], birou: ['utilizator'], admin: ['utilizator'] });
   verifica('ana nu vede oferta adminului, nici schimbările lui', !(await gaseste('ana', idAd))

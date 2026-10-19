@@ -18,6 +18,7 @@ const livrari     = require('./livrari.js');
 const taskuri     = require('./taskuri.js');
 const cereri      = require('./cereri.js');
 const tichete     = require('./tichete.js');
+const notificari  = require('./notificari.js');
 const tablou      = require('./tablou.js');
 const actualizare = require('./actualizare.js');
 const clienti     = require('./clienti.js');
@@ -43,11 +44,11 @@ const releu       = require('./releu.js');
 //   { }                — orice utilizator logat
 //   { rol: 'admin' }   — doar administratorii
 
-const MODULE = [utilizatori, comenzi, scanare, evenimente, sticla, livrari, taskuri, cereri, tichete, tablou, actualizare, clienti].filter(Boolean);
+const MODULE = [utilizatori, comenzi, scanare, evenimente, sticla, livrari, taskuri, cereri, tichete, notificari, tablou, actualizare, clienti].filter(Boolean);
 
 const rute = MODULE.flatMap(m => m.rute).map(([metoda, cale, spec]) => [metoda, cale, spec]);
 const potriveste = router(rute);
-const PE_BUNE = ['/api/login', '/api/logout', '/api/eu', '/api/tichete'];   // şi în modul test
+const PE_BUNE = ['/api/login', '/api/logout', '/api/eu', '/api/tichete', '/api/notificari'];   // şi în modul test
 
 // ── Cererea ──────────────────────────────────────────────────────────────────
 
