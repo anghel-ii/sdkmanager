@@ -11,7 +11,28 @@
 <script src="/copiaza.js"></script>
 <script src="/mail-sticla.js"></script>
 <style>
-  #continut { padding: 24px; max-width: 1100px; margin: 0 auto; }
+  #continut { padding: 24px; max-width: 1440px; margin: 0 auto; }
+  /* lista pe furnizori în stânga, mailurile furnizorilor în dreapta */
+  .doua { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; align-items: start; }
+  @media (max-width: 1100px) { .doua { grid-template-columns: 1fr; } }
+
+  .card-mail { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px;
+               position: sticky; top: 16px; }
+  .card-mail h2 { font-size: 1rem; margin-bottom: 2px; }
+  .card-mail > p { font-size: .8rem; margin-bottom: 10px; }
+  .fm { padding: 11px 0; border-top: 1px solid var(--line); }
+  .fm-cap { display: flex; align-items: center; gap: 8px; }
+  .fm-cap .spatiu { flex: 1; }
+  .fm-cod { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: .74rem; color: var(--text-dim); }
+  .fm-email { font-size: .86rem; margin-top: 3px; word-break: break-all; }
+  .fm-email.lipsa { color: #d4a24c; }
+  .fm-cine { font-size: .74rem; color: var(--text-dim); margin-top: 3px; }
+  .fm-edit { margin-top: 6px; display: grid; gap: 6px; }
+  .fm-edit input { width: 100%; padding: 7px 9px; font-size: .86rem; }
+  .fm-edit .butoane { display: flex; gap: 6px; justify-content: flex-end; }
+  .fm-edit .eroare { font-size: .78rem; color: #e8907f; }
+  .fm.salvat { animation: salvat 1.6s ease-out; }
+  @keyframes salvat { from { background: rgba(63, 166, 106, .22); } to { background: transparent; } }
 
   .taburi { display: flex; gap: 8px; margin-bottom: 20px; }
   .taburi button { border-radius: 999px; padding: 7px 16px; font-size: .9rem; color: var(--text-dim); }
@@ -53,7 +74,14 @@
     <button data-tab="0" class="activ">De comandat</button>
     <button data-tab="1">Comandate</button>
   </div>
-  <div id="lista">Se încarcă…</div>
+  <div class="doua">
+    <div id="lista">Se încarcă…</div>
+    <aside class="card-mail">
+      <h2>Mailuri furnizori</h2>
+      <p class="dim">Adresa la care pleacă „Trimite comanda pe mail". Mai multe adrese — separate prin virgulă.</p>
+      <div id="furnizoriMail"></div>
+    </aside>
+  </div>
 </div>
 
 
@@ -179,6 +207,73 @@ function randeaza() {
   });
 }
 
+// ── Mailurile furnizorilor (userul, 2026-10-19 — tichet: adresa GoldenGlass greşită) ──
+// Modifică → câmpul; Salvează → confirmarea, apoi serverul (server/sticla.js) verifică adresa.
+// Adminul o schimbă pe bune (deşi e în demo pe comenzi), un coleg în demo doar în demo.
+let furnizori = [], inLucru = null;   // inLucru = codul furnizorului deschis la modificare
+const ADRESA = /^[^\s@,;<>"]+@[^\s@,;<>"]+\.[^\s@,;<>"]{2,}$/;
+const adrese = t => String(t).split(/[\s,;]+/).map(a => a.trim().toLowerCase()).filter(Boolean);
+
+async function incarcaFurnizori() {
+  const r = await api('/api/sticla/furnizori');
+  if (!r?.ok) return;
+  furnizori = (await r.json()).furnizori;
+  // şi furnizorii din coduri care încă n-au rând (ex. un prefix nou de sticlă)
+  for (const l of linii) if (!furnizori.some(f => f.cod === l.furnizor.cod)) furnizori.push({ cod: l.furnizor.cod, nume: l.furnizor.nume, email: '' });
+  if (!inLucru) randeazaFurnizori();
+}
+
+function randeazaFurnizori(salvat) {
+  $('furnizoriMail').innerHTML = furnizori.map(f => `
+    <div class="fm${f.cod === salvat ? ' salvat' : ''}" data-cod="${esc(f.cod)}">
+      <div class="fm-cap"><b>${esc(f.nume)}</b>${f.nume !== f.cod ? `<span class="fm-cod">${esc(f.cod)}</span>` : ''}
+        <span class="spatiu"></span>${f.cod === inLucru ? '' : '<button type="button" class="mic modifica">Modifică</button>'}</div>
+      ${f.cod === inLucru ? `<div class="fm-edit">
+          <input type="text" value="${esc(f.email)}" placeholder="comenzi@furnizor.ro" autocomplete="off" spellcheck="false" aria-label="Adresa de e-mail pentru ${esc(f.nume)}">
+          <div class="eroare" hidden></div>
+          <div class="butoane"><button type="button" class="mic renunta">Renunţă</button><button type="button" class="mic primar salveaza">Salvează</button></div>
+        </div>`
+      : `<div class="fm-email${f.email ? '' : ' lipsa'}">${f.email ? esc(f.email) : 'fără adresă — o scrii în mail'}</div>
+         ${f.modificat_la ? `<div class="fm-cine">schimbată de ${esc(f.modificat_de_nume ?? '—')} · ${dataOra(f.modificat_la)}</div>` : ''}`}
+    </div>`).join('');
+
+  $('furnizoriMail').querySelectorAll('.modifica').forEach(b => b.addEventListener('click', () => {
+    inLucru = b.closest('.fm').dataset.cod;
+    randeazaFurnizori();
+    const camp = $('furnizoriMail').querySelector('.fm-edit input');
+    camp.focus(); camp.select();
+  }));
+  const ed = $('furnizoriMail').querySelector('.fm-edit');
+  if (!ed) return;
+  const f = furnizori.find(x => x.cod === inLucru);
+  const camp = ed.querySelector('input'), err = ed.querySelector('.eroare');
+  const arata = t => { err.textContent = t; err.hidden = !t; };
+  const renunta = () => { inLucru = null; randeazaFurnizori(); };
+  const salveaza = async () => {
+    const nou = adrese(camp.value);
+    const gresita = nou.find(a => !ADRESA.test(a));
+    if (gresita) { arata(`„${gresita}" nu e o adresă de e-mail bună.`); camp.focus(); return; }
+    const text = [...new Set(nou)].join(', ');
+    if (text === f.email) return renunta();   // nimic schimbat
+    if (!(await confirma(`Schimbi adresa de comenzi pentru ${f.nume}?\n\nDin: ${f.email || '— (fără adresă)'}\nÎn: ${text || '— (fără adresă)'}\n\n`
+      + 'De acum, „Trimite comanda pe mail" pleacă la adresa nouă.', 'Da, schimbă'))) { camp.focus(); return; }
+    const r = await api(`/api/sticla/furnizori/${encodeURIComponent(f.cod)}`, { method: 'PUT', body: JSON.stringify({ email: text }) });
+    if (!r) return;
+    if (!r.ok) { arata((await r.json().catch(() => ({}))).eroare || 'Nu s-a salvat — încearcă din nou.'); return; }
+    Object.assign(f, (await r.json()).furnizor);
+    inLucru = null;
+    randeazaFurnizori(f.cod);
+    await incarca();   // butoanele „Trimite pe mail" — cu adresa nouă
+  };
+  ed.querySelector('.renunta').addEventListener('click', renunta);
+  ed.querySelector('.salveaza').addEventListener('click', salveaza);
+  camp.addEventListener('input', () => arata(''));
+  camp.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); salveaza(); }
+    if (e.key === 'Escape') { e.preventDefault(); renunta(); }
+  });
+}
+
 document.querySelectorAll('.taburi button').forEach(b => b.addEventListener('click', () => {
   comandate = b.dataset.tab === '1';
   document.querySelectorAll('.taburi button').forEach(x => x.classList.toggle('activ', x === b));
@@ -189,8 +284,10 @@ document.querySelectorAll('.taburi button').forEach(b => b.addEventListener('cli
   const r = await api('/api/eu');
   if (!r) return;
   await incarca();
-  // actualizare live — comenzi noi acceptate, linii marcate de alţi colegi
-  urmareste(incarca);
+  await incarcaFurnizori();
+  // actualizare live — comenzi noi acceptate, linii marcate de alţi colegi, o adresă schimbată de altcineva
+  // (cât modifici tu o adresă, cardul nu se redesenează peste ce scrii)
+  urmareste(async () => { await incarca(); await incarcaFurnizori(); });
 })();
 
 </script>

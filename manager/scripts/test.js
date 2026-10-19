@@ -467,7 +467,7 @@ async function main() {
     const idVechi = Number(db2().prepare("INSERT INTO utilizator (nume, user, parola_hash, parola_salt, rol) VALUES ('Vechi', 'vechi', 'x', 'x', 'operator')").run().lastInsertRowid);
     require('../server/db.js').roluriNoi(db2());
     verifica('migraţie: operator → birou', db2().prepare('SELECT rol FROM utilizator WHERE id = ?').get(idVechi).rol === 'birou');
-    verifica('schema la versiunea 23', db2().prepare('PRAGMA user_version').get().user_version === 23);
+    verifica('schema la versiunea 24', db2().prepare('PRAGMA user_version').get().user_version === 24);
   }
 
   console.log('\nFixare şi sortare — per utilizator');
@@ -572,6 +572,28 @@ async function main() {
     (await cer('GET', '/api/sticla')).date.linii.length === 3);
   verifica('fără linii alese → 400', (await cer('POST', '/api/sticla/comanda', { ids: [] })).stare === 400);
   verifica('pagina /sticla se serveşte', String((await cer('GET', '/sticla')).date).includes('Comandă sticlă'));
+
+  console.log('\nMailurile furnizorilor (cardul din Comandă sticlă)');
+  {
+    const fz = async () => (await cer('GET', '/api/sticla/furnizori')).date.furnizori;
+    const gg = async () => (await fz()).find(f => f.cod === 'GG');
+    verifica('lista: furnizorii din migraţie, GoldenGlass cu adresa veche', (await fz()).length >= 6 && (await gg())?.email === 'comenzi@goldenglass.ro');
+    const s1 = await cer('PUT', '/api/sticla/furnizori/GG', { email: '  Comenzi@GoldenGlass.RO ; vanzari@goldenglass.ro, comenzi@goldenglass.ro ' });
+    verifica('schimbare: mai multe adrese, curăţate (litere mici, fără dubluri) + cine şi când',
+      s1.stare === 200 && s1.date.furnizor.email === 'comenzi@goldenglass.ro, vanzari@goldenglass.ro'
+      && s1.date.furnizor.modificat_de_nume === 'Admin Test' && !!s1.date.furnizor.modificat_la, JSON.stringify(s1.date));
+    verifica('adresa nouă ajunge la liniile de sticlă (butonul „Trimite pe mail")',
+      (await cer('GET', '/api/sticla?comandate=1')).date.linii.concat((await cer('GET', '/api/sticla')).date.linii)
+        .filter(l => l.furnizor.cod === 'GG').every(l => l.furnizor.email === 'comenzi@goldenglass.ro, vanzari@goldenglass.ro'));
+    verifica('adresă greşită → 400, nesalvată', (await cer('PUT', '/api/sticla/furnizori/GG', { email: 'goldenglass.ro' })).stare === 400
+      && (await gg()).email === 'comenzi@goldenglass.ro, vanzari@goldenglass.ro');
+    verifica('una bună + una greşită → 400 (nu se salvează pe jumătate)', (await cer('PUT', '/api/sticla/furnizori/GG', { email: 'a@b.ro, x@' })).stare === 400);
+    verifica('gol → fără adresă (se scrie în mail)', (await cer('PUT', '/api/sticla/furnizori/OVI', { email: '' })).stare === 200 && (await fz()).find(f => f.cod === 'OVI').email === '');
+    verifica('furnizor nou (prefix apărut în coduri) → se adaugă', (await cer('PUT', '/api/sticla/furnizori/xy', { email: 'x@y.ro' })).stare === 200
+      && (await fz()).find(f => f.cod === 'XY')?.email === 'x@y.ro');
+    verifica('cod ciudat → 400', (await cer('PUT', '/api/sticla/furnizori/G1', { email: 'x@y.ro' })).stare === 400);
+    await cer('PUT', '/api/sticla/furnizori/GG', { email: 'comenzi@goldenglass.ro' });
+  }
 
   console.log('\nConturi: parola iniţială dată de admin; conturile vechi fără parolă se activează la primul login');
   {

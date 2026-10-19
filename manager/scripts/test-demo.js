@@ -249,6 +249,15 @@ async function main() {
     rand(DB, `SELECT stare FROM cerere WHERE comanda_id = ${idR7}`)[0]?.stare === 'aprobata'
     && !(await cer('admin', 'GET', '/api/cereri')).date.cereri.some(x => x.stare === 'deschisa' && [idR7, idR8].includes(x.comanda_id)));
   await actiune('admin: task', () => cer('admin', 'POST', '/api/taskuri', { text: 'task admin', pentru: anaId }), { birou: NIMIC, admin: C });
+  await actiune('ana: schimbă mailul unui furnizor — doar în demo', () => cer('ana', 'PUT', '/api/sticla/furnizori/GG', { email: 'demo@ana.ro' }),
+    { birou: ['furnizor'], admin: ['furnizor'] });
+  verifica('mailul schimbat de ana nu e pe bune', rand(DB, "SELECT email FROM furnizor WHERE cod = 'GG'")[0].email === 'comenzi@goldenglass.ro'
+    && (await cer('bogdan', 'GET', '/api/sticla/furnizori')).date.furnizori.find(f => f.cod === 'GG').email === 'comenzi@goldenglass.ro');
+  await actiune('admin: schimbă mailul unui furnizor → PE BUNE', () => cer('admin', 'PUT', '/api/sticla/furnizori/GG', { email: 'nou@goldenglass.ro' }),
+    { real: ['furnizor'], birou: ['furnizor'], admin: ['furnizor'] });
+  verifica('mailul schimbat de admin: pe bune, la bogdan şi la ana (lanţ)', rand(DB, "SELECT email FROM furnizor WHERE cod = 'GG'")[0].email === 'nou@goldenglass.ro'
+    && (await cer('bogdan', 'GET', '/api/sticla/furnizori')).date.furnizori.find(f => f.cod === 'GG').email === 'nou@goldenglass.ro'
+    && (await cer('ana', 'GET', '/api/sticla/furnizori')).date.furnizori.find(f => f.cod === 'GG').email === 'nou@goldenglass.ro');
   await actiune('admin: cont nou (administrarea merge PE BUNE)', () => cer('admin', 'POST', '/api/utilizatori', { user: 'nou', nume: 'Nou', rol: 'birou', parola: PAROLA }),
     { real: ['utilizator'], birou: ['utilizator'], admin: ['utilizator'] });
   verifica('ana nu vede oferta adminului, nici schimbările lui', !(await gaseste('ana', idAd))

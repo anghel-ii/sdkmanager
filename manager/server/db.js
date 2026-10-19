@@ -433,6 +433,18 @@ const MIGRATII = [
     CREATE INDEX fisa_printare_comanda ON fisa_printare (comanda_id, la);
     INSERT INTO fisa_printare (comanda_id, poz, la, de)
       SELECT id, 0, fisa_printata_la, fisa_printata_de FROM comanda WHERE fisa_printata_la IS NOT NULL;`),
+  // v23 → v24 (2026-10-19): furnizorii de sticlă cu adresa de comenzi — până acum în cod (server/sticla.js),
+  // acum modificabilă din pagina Comandă sticlă (tichet: adresa GoldenGlass greşită); cine şi când a schimbat-o
+  d => d.exec(`
+    CREATE TABLE furnizor (
+      cod          TEXT PRIMARY KEY,                -- prefixul codului de sticlă: GG001 → GG
+      nume         TEXT NOT NULL,
+      email        TEXT NOT NULL DEFAULT '',        -- una sau mai multe, „a@x.ro, b@y.ro"; gol = o scrii în mail
+      modificat_la TEXT,
+      modificat_de INTEGER REFERENCES utilizator(id)
+    );
+    INSERT INTO furnizor (cod, nume, email) VALUES ('GG', 'GoldenGlass', 'comenzi@goldenglass.ro'), ('OVI', 'OviBest', ''),
+      ('CS', 'CS', ''), ('HD', 'HD', ''), ('CG', 'CG', ''), ('TG', 'TG', '');`),
 ];
 
 // Exportată pt. test.
