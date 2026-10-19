@@ -3,7 +3,7 @@ const https = require('node:https');
 const fs    = require('node:fs');
 
 const { config } = require('./config.js');
-const { deschide, inchide, backup, inTest, sincronizeaza } = require('./db.js');
+const { deschide, inchide, backup, inTest, copiaLui, sincronizeaza } = require('./db.js');
 const { eroare, redirect, serveste, router } = require('./http.js');
 const auth = require('./auth.js');
 
@@ -85,7 +85,7 @@ async function trateaza(req, res) {
       || (utilizator?.rol === 'admin' && ([].concat(spec.rol ?? []).join() === 'admin' || cale.startsWith('/api/clienti')));
     if (utilizator?.mod_test && !peBune) {
       if (cale.startsWith('/api/clienti/propuneri/')) return eroare(res, 403, 'În modul test nu se aprobă clienţi — aprobarea ar ajunge pe bune.');
-      return inTest(() => opreste() || spec.handler(ctx));
+      return inTest(() => opreste() || spec.handler(ctx), copiaLui(utilizator));   // adminul pe copia lui
     }
     if (opreste()) return;
     try { return await spec.handler(ctx); } finally { sincronizeaza(); }   // ce s-a scris pe bune intră şi în copia de test

@@ -1189,7 +1189,7 @@ async function main() {
         "require('./server/db.js').deschide(); console.log('PORNIT')"],
         { cwd: path.join(__dirname, '..'), env: { ...process.env, MANAGER_DB: path.join(dir, 'b.sqlite') }, encoding: 'utf8' });
       verifica('copia de test blocată nu opreşte pornirea', r.status === 0 && r.stdout.includes('PORNIT')
-        && r.stderr.includes('Modul test: copia nu s-a putut deschide'), r.stderr.slice(0, 300));
+        && r.stderr.includes('nu s-a putut deschide la pornire'), r.stderr.slice(0, 300));
     }
 
     // adminul mereu în test (userul, 2026-10-15) — cum rulează pe server
@@ -1205,6 +1205,20 @@ async function main() {
     verifica('admin: administrarea (conturi) rămâne pe bune', cont.stare === 201 && pePeBune("SELECT 1 FROM utilizator WHERE user = 'noupebune'").length === 1,
       JSON.stringify(cont));
     verifica('admin: tabloul arată datele reale', (await cer('GET', '/api/admin/tablou')).stare === 200);
+    // demo-ul adminului e separat de al colegilor (userul, 2026-10-19)
+    const inCopiaAdmin = sql => inTest(() => db2().prepare(sql).all(), 'admin');
+    verifica('admin: oferta lui e în copia LUI, nu în a colegilor',
+      inCopiaAdmin("SELECT 1 FROM comanda WHERE client_nume = 'Client Admin Test'").length === 1
+      && !inCopie("SELECT 1 FROM comanda WHERE client_nume = 'Client Admin Test'").length);
+    verifica('admin: comanda reală trecută de el la plată — aşa doar în copia lui',
+      inCopiaAdmin(`SELECT tip FROM comanda WHERE id = ${r2.date.comanda.id}`)[0]?.tip === 'plata'
+      && inCopie(`SELECT tip FROM comanda WHERE id = ${r2.date.comanda.id}`)[0]?.tip === 'oferta');
+    verifica('admin: vede DEMO doar ce a făcut el', (await cer('GET', '/api/comenzi')).date.comenzi.find(c => c.client_nume === 'Client Admin Test')?.demo === true);
+    verifica('„Reface demo-ul meu" goleşte doar copia adminului', (await cer('POST', '/api/test/reface', { copie: 'admin' })).stare === 200
+      && !inCopiaAdmin("SELECT 1 FROM comanda WHERE client_nume = 'Client Admin Test'").length
+      && inCopie(`SELECT 1 FROM comanda WHERE id = ${r2.date.comanda.id}`).length === 1);
+    verifica('reface o copie necunoscută → 400', (await cer('POST', '/api/test/reface', { copie: 'x' })).stare === 400);
+    verifica('există două fişiere de copie', fs.existsSync(process.env.MANAGER_DB.replace(/\.sqlite$/, '-test-admin.sqlite')));
     config.adminInTest = false;
   }
 

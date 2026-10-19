@@ -1,5 +1,5 @@
 const { json, eroare, corpJson } = require('../http.js');
-const { db, tranzactie, copieTest, refaTest, modTestPosibil } = require('../db.js');
+const { db, tranzactie, copieTest, refaTest, modTestPosibil, COPII } = require('../db.js');
 const auth = require('../auth.js');
 
 // ── API utilizatori: login, logout, cine sunt, administrare conturi ─────────
@@ -132,7 +132,7 @@ async function modifica(ctx) {
     if (parola != null) auth.schimbaParola(id, parola);
     if (modTest != null || rol === 'admin') d.prepare('UPDATE utilizator SET mod_test = ? WHERE id = ?').run(modTest && rol !== 'admin' ? 1 : 0, id);
   });
-  if (modTest) copieTest();   // primul cont pus în test face copia
+  if (modTest) copieTest('colegi');   // primul cont pus în test face copia colegilor
 
   json(res, 200, { utilizator: auth.gasesteUtilizator(id) });
 }
@@ -164,7 +164,12 @@ module.exports = {
     ['GET',  '/api/utilizatori',     { rol: 'admin', handler: listeaza }],
     ['POST', '/api/utilizatori',     { rol: 'admin', handler: creeaza }],
     ['PATCH','/api/utilizatori/:id', { rol: 'admin', handler: modifica }],
-    // copia de test refăcută din baza reală — ce s-a lucrat în test se pierde
-    ['POST', '/api/test/reface',     { rol: 'admin', handler: ctx => { refaTest(); json(ctx.res, 200, { ok: true }); } }],
+    // o copie de test refăcută din baza reală — ce s-a lucrat pe ea se pierde; { copie: 'colegi' | 'admin' }
+    ['POST', '/api/test/reface',     { rol: 'admin', handler: async ctx => {
+      const copie = (await corpJson(ctx.req)).copie ?? 'colegi';
+      if (!COPII.includes(copie)) return eroare(ctx.res, 400, 'Copie necunoscută.');
+      refaTest(copie);
+      json(ctx.res, 200, { ok: true });
+    } }],
   ],
 };

@@ -1,6 +1,6 @@
 const crypto = require('node:crypto');
 const auth = require('./auth.js');
-const { esteTest } = require('./db.js');
+const { copiaLui, copiaCurenta } = require('./db.js');
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  ACTUALIZARE LIVE — serverul ÎMPINGE schimbările spre pagini (WebSocket)
@@ -27,7 +27,7 @@ const { esteTest } = require('./db.js');
 
 const GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
 const conexiuni = new Map();   // socket → id utilizator
-const deTest = new WeakSet();  // socketurile celor în modul test
+const deTest = new WeakMap();  // socketurile celor în modul test → copia lor (colegi / admin)
 
 // cadru WebSocket server→client (nemascat): text (0x1), ping (0x9), close (0x8)
 function cadru(opcode, date = Buffer.alloc(0)) {
@@ -57,7 +57,7 @@ function upgrade(req, socket) {
                `Sec-WebSocket-Accept: ${accept}\r\n\r\n`);
   socket.setNoDelay(true);
   conexiuni.set(socket, utilizator.id);
-  if (utilizator.mod_test) deTest.add(socket);
+  if (utilizator.mod_test) deTest.set(socket, copiaLui(utilizator));
 
   const ping = setInterval(() => { if (!socket.destroyed) socket.write(cadru(0x9)); }, 25000);
   const inchide = () => { clearInterval(ping); conexiuni.delete(socket); };
@@ -68,10 +68,10 @@ function upgrade(req, socket) {
   socket.on('error', inchide);
 }
 
-// o schimbare făcută în modul test o află doar cei în modul test (cele reale, toţi)
+// o schimbare făcută într-o copie de test o află doar cei de pe copia aia (cele reale, toţi)
 function anunta() {
-  const test = esteTest();
-  for (const s of conexiuni.keys()) if (!test || deTest.has(s)) trimite(s, { tip: 'schimbare' });
+  const test = copiaCurenta();
+  for (const s of conexiuni.keys()) if (!test || deTest.get(s) === test) trimite(s, { tip: 'schimbare' });
   if (!test) for (const f of ascultatori) f({ tip: 'schimbare' });
 }
 

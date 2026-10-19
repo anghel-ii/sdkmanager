@@ -123,7 +123,8 @@
       <!-- Conturi: utilizatorul, rolul şi o parolă INIŢIALĂ pe care i-o spui colegului -->
       <section class="card">
         <div class="card-cap"><h2>Conturi</h2><span class="spatiu"></span>
-          <button class="mic" id="refaTest" type="button" title="Copia pe care lucrează conturile în modul test, luată din nou din baza reală">Reface copia de test</button>
+          <button class="mic" data-reface="colegi" type="button" title="Copia comună pe care lucrează colegii puşi în modul test, luată din nou din baza reală">Reface demo colegi</button>
+          <button class="mic" data-reface="admin" type="button" title="Copia ta (adminul e mereu în demo pe comenzi), luată din nou din baza reală">Reface demo-ul meu</button>
           <button class="mic primar" id="arataContNou" type="button">+ Cont nou</button></div>
         <form id="formNou" autocomplete="off" hidden>
           <div class="cont-nou">
@@ -357,11 +358,13 @@ async function incarca() {
   });
 }
 
-$('refaTest').addEventListener('click', async () => {
-  if (!(await confirma('Refaci copia de test din baza reală?\n\nTot ce s-a lucrat în modul test se pierde.', 'Reface copia'))) return;
-  const r = await api('/api/test/reface', { method: 'POST' });
-  if (r) await alerta(r.ok ? 'Copia de test e refăcută din baza reală.' : await eroareDin(r));
-});
+// două copii de test (2026-10-19): a colegilor puşi în modul test şi a adminului — fiecare se reface separat
+document.querySelectorAll('[data-reface]').forEach(b => b.addEventListener('click', async () => {
+  const ale = b.dataset.reface === 'admin' ? 'tău (ce ai încercat tu pe comenzi)' : 'colegilor puşi în modul test';
+  if (!(await confirma(`Refaci din baza reală demo-ul ${ale}?\n\nTot ce s-a lucrat în el se pierde.`, 'Reface'))) return;
+  const r = await api('/api/test/reface', { method: 'POST', body: JSON.stringify({ copie: b.dataset.reface }) });
+  if (r) await alerta(r.ok ? `Demo-ul ${ale} e refăcut din baza reală.` : await eroareDin(r));
+}));
 $('arataContNou').addEventListener('click', () => { $('formNou').hidden = !$('formNou').hidden; if (!$('formNou').hidden) $('nouUser').focus(); });
 $('formNou').addEventListener('submit', async e => {
   e.preventDefault();

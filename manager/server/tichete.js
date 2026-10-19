@@ -1,4 +1,4 @@
-const { db, ACUM, inTest } = require('./db.js');
+const { db, ACUM, inTest, copiaLui } = require('./db.js');
 const { json, eroare, corpJson } = require('./http.js');
 const { anunta } = require('./evenimente.js');
 
@@ -38,7 +38,7 @@ async function trimite(ctx) {
   // „+ Tichet" de pe o comandă: tichetul e mereu pe bune (index.js), comanda o căutăm unde lucrează omul (test sau nu)
   const comandaId = corp.comanda_id == null ? null : Number(corp.comanda_id);
   const exista = () => db().prepare('SELECT 1 FROM comanda WHERE id = ?').get(comandaId);
-  if (comandaId !== null && !(ctx.utilizator.mod_test ? inTest(exista) : exista())) return eroare(ctx.res, 400, 'Comandă inexistentă.');
+  if (comandaId !== null && !(ctx.utilizator.mod_test ? inTest(exista, copiaLui(ctx.utilizator)) : exista())) return eroare(ctx.res, 400, 'Comandă inexistentă.');
   // fără minim de caractere (userul, 2026-10-15); gol doar dacă e pus pe o comandă
   if (!text && comandaId === null) return eroare(ctx.res, 400, 'Scrie pe scurt ce s-a întâmplat sau ce ai vrea.');
   const r = db().prepare(`INSERT INTO tichet (tip, text, pagina, comanda_id, creat_de, creat_la, modificat_la)
