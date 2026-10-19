@@ -636,10 +636,10 @@ function randeazaTabel() {
         <th data-c="cine">Creat de</th><th data-c="data">${titluData}</th><th data-c="actiuni"></th>
       </tr></thead>
       <tbody>${randuri.map((c, i) => `${titluGrup(c, i)}
-        <tr data-id="${c.id}" class="${c.fixat ? 'fixat' : ''}${c.id === selectat ? ' selectat' : ''}">
+        <tr data-id="${c.id}" class="${c.fixat ? 'fixat' : ''}${c.id === selectat ? ' selectat' : ''}${c.demo ? ' demo' : ''}">
           <td class="pin" data-c="pin"><button class="btn-pin${c.fixat ? ' activ' : ''}" data-id="${c.id}"
                 title="${c.fixat ? 'Scoate de sus' : 'Fixează sus (doar pentru tine)'}">📌</button></td>
-          <td data-c="client">${esc(c.client_nume)}${c.pe_hold ? ' <span class="stare-pastila anulata" title="Anulare cerută — comanda e oprită până decide conducerea">anulare cerută</span>' : ''}${totul && c.client_telefon ? `<div class="nr-mic mono">${esc(c.client_telefon)}</div>` : ''}</td>
+          <td data-c="client">${esc(c.client_nume)}${c.demo ? ` ${DEMO}` : ''}${c.pe_hold ? ' <span class="stare-pastila anulata" title="Anulare cerută — comanda e oprită până decide conducerea">anulare cerută</span>' : ''}${totul && c.client_telefon ? `<div class="nr-mic mono">${esc(c.client_telefon)}</div>` : ''}</td>
           <td class="mono" data-c="oferta">${esc(c.oferta_nr || c.numar)}</td>
           <td data-c="sistem">${esc(c.sistem ?? '—')}</td>
           ${cuStatus ? `<td data-c="status">${statusHtml(c.status)}</td>` : ''}
@@ -726,6 +726,8 @@ const rezumatProdus = p => (p.sistem === 'amanunt' ? `${p.linii.facturare.length
   : /^rama/.test(p.sistem ?? '') ? `${p.finisaj} · ${p.nr_usi} rame · max. ${p.inaltime} × ${p.latime} mm`
   : `${p.finisaj} · gol ${p.inaltime} × ${p.latime} mm · ${p.nr_usi} ${p.nr_usi === 1 ? 'uşă' : 'uşi'}`);
 
+// modul test: comanda făcută / schimbată în test (nu mai e ca pe bune) — „demo" din API
+const DEMO = '<span class="stare-pastila demo" title="Făcută sau schimbată în modul test — pe bune nu e aşa">DEMO</span>';
 // adresa se verifică (judeţ + localitate din listă, /adresa.js) doar când chiar se livrează
 const deVerificat = c => c.livrare && c.livrare !== 'Ridicare personala' ? ' data-verifica-adresa' : '';
 
@@ -737,7 +739,7 @@ function cardDetalii({ comanda: c, cerere, pozitii, sticlaLinii = [], fise: prin
   return `
     <div class="cc-titlu"><h2>${esc(c.client_nume)}</h2>
       <button class="cc-inchide" id="ccInchide" title="Închide (Esc)" aria-label="Închide">${icoana('inchide')}</button></div>
-    <div class="cc-nr"><span class="mono">${esc(c.oferta_nr || c.numar)}</span><span class="stare-pastila ${c.anulat ? 'anulata' : cls}">${c.anulat ? 'Anulată' : stare}</span></div>
+    <div class="cc-nr"><span class="mono">${esc(c.oferta_nr || c.numar)}</span><span class="stare-pastila ${c.anulat ? 'anulata' : cls}">${c.anulat ? 'Anulată' : stare}</span>${c.demo ? DEMO : ''}</div>
     ${blocAnulare(c, cerere)}
     <div class="cc-butoane">
       <button class="primar" id="ccDeschide" title="Pagina comenzii (dublu-click sau Enter pe rând)">Deschide comanda</button>
@@ -1038,7 +1040,7 @@ async function renderDetaliu(id) {
         <h1>${esc(c.client_nume)}</h1>
         <div class="mono nr-comanda">${esc(c.oferta_nr || c.numar)}</div>
         <div class="dim mic">${c.anulat ? '<span class="stare-pastila anulata">Anulată</span>' : `<span class="stare-pastila ${eOferta ? 'oferta' : ePlata ? 'plata' : c.finalizat_la ? 'gata' : 'lucru'}">${eOferta ? 'Ofertă'
-          : ePlata ? 'Aşteaptă plata' : c.finalizat_la ? 'Comandă finalizată' : 'Comandă în lucru'}</span>`}</div>
+          : ePlata ? 'Aşteaptă plata' : c.finalizat_la ? 'Comandă finalizată' : 'Comandă în lucru'}</span>`}${c.demo ? DEMO : ''}</div>
         ${fisaPrintata(printari)}
       </div>
       <div class="spatiu"></div>

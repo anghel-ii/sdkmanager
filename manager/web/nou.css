@@ -142,6 +142,10 @@ body.ui-nou table.lista td[data-c="client"] { font-weight: 500; }
 body.ui-nou table.lista tbody tr.selectat td { background: rgba(77, 163, 255, .16); }
 body.ui-nou table.lista tbody tr.selectat td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
 body.ui-nou table.lista tbody tr.selectat:hover td { background: rgba(77, 163, 255, .2); }
+/* modul test: comenzile făcute / schimbate în test („demo" din API) — portocalii */
+body.ui-nou table.lista tbody tr.demo td { background: rgba(255, 157, 46, .12); }
+body.ui-nou table.lista tbody tr.demo td:first-child { box-shadow: inset 3px 0 0 #ff9d2e; }
+body.ui-nou table.lista tbody tr.demo:hover td { background: rgba(255, 157, 46, .18); }
 body.ui-nou td[data-c="status"] > strong,
 body.ui-nou .facturat, body.ui-nou .nefacturat,
 body.ui-nou .sticla-da, body.ui-nou .sticla-nu, body.ui-nou .sticla-partial {
@@ -316,4 +320,5 @@ body.ui-nou [data-z="info"] .factura-form input { flex: 1 1 110px; }
 .anulare-info a { color: var(--accent); }
 .anulare-info.deschisa { border-color: rgba(212, 162, 76, .45); background: rgba(212, 162, 76, .08); }
 .anulare-info.anulata { border-color: rgba(201, 96, 76, .55); background: rgba(201, 96, 76, .1); }
+.stare-pastila.demo { color: #ffb366; border-color: rgba(255, 157, 46, .55); background: rgba(255, 157, 46, .14); letter-spacing: .04em; }
 .stare-pastila.anulata { color: #e8907f; border-color: rgba(201, 96, 76, .55); background: rgba(201, 96, 76, .1); }

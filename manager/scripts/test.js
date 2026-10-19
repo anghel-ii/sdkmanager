@@ -1152,6 +1152,13 @@ async function main() {
     verifica('poziţiile ei stau în copie, legate de ea', inCopie(`SELECT comanda_id FROM pozitie WHERE comanda_id = ${t.date.comanda.id}`).length === 1);
     verifica('în test: oferta reală trece la „Aşteaptă plata"', (await cer('POST', `/api/comenzi/${reala.date.comanda.id}/asteapta-plata`)).stare === 200);
     verifica('… dar pe bune rămâne ofertă', pePeBune(`SELECT tip FROM comanda WHERE id = ${reala.date.comanda.id}`)[0].tip === 'oferta');
+    // „demo" (2026-10-19, în locul chenarului): doar comenzile făcute / schimbate în test
+    const oferteT = (await cer('GET', '/api/comenzi')).date.comenzi;
+    verifica('demo: oferta făcută în test e marcată', oferteT.find(c => c.id === t.date.comanda.id)?.demo === true);
+    verifica('demo: ofertele neatinse în test nu sunt marcate', oferteT.some(c => c.id < 1e9 && !c.demo), JSON.stringify(oferteT.map(c => [c.id, c.demo])));
+    verifica('demo: oferta reală trecută în test la „Aşteaptă plata" e marcată (listă + pagina ei)',
+      (await cer('GET', '/api/comenzi?tip=plata')).date.comenzi.find(c => c.id === reala.date.comanda.id)?.demo === true
+      && (await cer('GET', `/api/comenzi/${reala.date.comanda.id}`)).date.comanda.demo === true);
     verifica('tichetul din test ajunge pe bune la admin', (await cer('POST', '/api/tichete', { tip: 'idee', text: 'din modul test' })).stare === 201
       && pePeBune("SELECT 1 FROM tichet WHERE text = 'din modul test'").length === 1);
     verifica('tichet pe oferta din test: ajunge pe bune, cu legătura ei', (await cer('POST', '/api/tichete',
@@ -1165,6 +1172,8 @@ async function main() {
       inCopie(`SELECT tip FROM comanda WHERE id = ${reala.date.comanda.id}`)[0]?.tip === 'comanda'
       && inCopie(`SELECT 1 FROM comanda WHERE id = ${r2.date.comanda.id} AND client_nume = 'Client Real MT 2'`).length === 1);
     verifica('oferta de test rămâne în copie după sincronizare', inCopie("SELECT 1 FROM comanda WHERE client_nume = 'Client Doar Test'").length === 1);
+    verifica('demo: pe bune nicio comandă nu e marcată', !(await cer('GET', '/api/comenzi')).date.comenzi.some(c => c.demo)
+      && !(await cer('GET', '/api/comenzi?tip=toate')).date.comenzi.some(c => c.demo));
     verifica('„Reface copia de test" o ia de la zero', (await cer('POST', '/api/test/reface')).stare === 200
       && !inCopie("SELECT 1 FROM comanda WHERE client_nume = 'Client Doar Test'").length
       && inCopie(`SELECT 1 FROM comanda WHERE id = ${r2.date.comanda.id}`).length === 1);

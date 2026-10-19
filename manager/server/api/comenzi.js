@@ -1,5 +1,5 @@
 const { json, eroare, corpJson } = require('../http.js');
-const { db, tranzactie, ACUM, esteTest } = require('../db.js');
+const { db, tranzactie, ACUM, esteTest, comenziDemo } = require('../db.js');
 const { acumMs } = require('../ora.js');
 const { config } = require('../config.js');
 const { anunta, anuntaUtilizator } = require('../evenimente.js');
@@ -318,10 +318,11 @@ function listeaza(ctx) {
      ORDER BY COALESCE(c.finalizat_la, c.creat_la) DESC
   `).all(uid);
 
+  const demo = comenziDemo();   // în modul test: cele care nu mai sunt ca pe bune
   json(ctx.res, 200, {
     comenzi: randuri.map(({ ultima, sticla_brut, ...r }) => {
       const [operatie, moment, cine] = ultima ? ultima.split('|') : [];
-      return { ...r, fixat: !!r.fixat,
+      return { ...r, fixat: !!r.fixat, ...(demo.has(r.id) && { demo: true }),
                ...(config.scanare && { status: ultima ? { operatie, moment, cine } : null }),
                sticla: stareSticla(sticla_brut) };
     }),
@@ -344,6 +345,7 @@ function detaliu(ctx) {
      WHERE c.id = ?
   `).get(id);
   if (!comanda) return eroare(ctx.res, 404, 'Comandă inexistentă.');
+  if (comenziDemo().has(id)) comanda.demo = true;
 
   const pozitii = db().prepare('SELECT * FROM pozitie WHERE comanda_id = ? ORDER BY idx').all(id);
   const linii   = db().prepare(`

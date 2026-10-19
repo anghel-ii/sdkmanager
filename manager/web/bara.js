@@ -359,17 +359,10 @@
       const eu = d?.utilizator;
       if (!eu) return;
       radacina.querySelector('#cine').textContent = eu.nume;
-      // modul test (pus de admin): chenar portocaliu pe toată pagina + eticheta sus; ce face
-      // omul merge pe copia bazei (server/db.js). Fără clicuri pe ele (pointer-events: none).
-      if (eu.mod_test) {
-        window.modTest = true;
-        const chenar = document.createElement('div');
-        chenar.style.cssText = 'position:fixed;inset:0;border:3px solid #ff9d2e;pointer-events:none;z-index:1900';
-        chenar.innerHTML = '<span style="position:absolute;left:50%;top:0;transform:translateX(-50%);padding:2px 14px 4px;'
-          + 'border-radius:0 0 9px 9px;background:#ff9d2e;color:#2a1600;font:700 12px Inter,system-ui,sans-serif;letter-spacing:.04em;white-space:nowrap">'
-          + 'MOD TEST · ce faci aici nu ajunge în baza reală</span>';
-        document.body.appendChild(chenar);
-      }
+      // modul test (pus de admin; adminul mereu): ce face omul pe comenzi merge pe copia bazei
+      // (server/db.js). Fără chenar pe pagină (userul, 2026-10-19) — doar comenzile din test care
+      // nu mai sunt ca pe bune apar portocalii, cu „DEMO" (pagina comenzilor, „demo" din API).
+      if (eu.mod_test) window.modTest = true;
       // ciornele (localStorage) nu trec dintr-un mod în altul — o ciornă din test s-ar salva pe bune
       try {
         const mod = eu.mod_test ? '1' : '0';

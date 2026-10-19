@@ -105,9 +105,31 @@ function pornesteTest(d) {
 }
 
 function inchideTest() {
+  _comparare?.close();
+  _comparare = null;
   _sesiune?.close();
   _testBrut?.close();
   _sesiune = _testBrut = _test = null;
+}
+
+// Comenzile din copia de test care nu mai sunt ca pe bune (userul, 2026-10-19: în locul chenarului,
+// doar ele marcate „demo"): făcute în test, schimbate în test (trecute mai departe, modificate,
+// produse altele) sau cu o cerere de anulare din test. → Set de id-uri; gol în afara testului.
+// Copia se compară cu baza reală printr-o legătură separată, doar pt. citire (ATTACH).
+let _comparare = null;
+function comenziDemo() {
+  if (!esteTest() || !_test) return new Set();
+  if (!_comparare) {
+    _comparare = new DatabaseSync(caleTest(), { readOnly: true });
+    _comparare.exec(`ATTACH DATABASE '${config.db.replace(/'/g, "''")}' AS reala`);
+  }
+  const coloane = t => _comparare.prepare(`PRAGMA main.table_info(${t})`).all().map(c => c.name).filter(c => c !== 'id');
+  const difera = t => coloane(t).map(c => `t.${c} IS NOT r.${c}`).join(' OR ');
+  return new Set(_comparare.prepare(`
+    SELECT t.id FROM main.comanda t LEFT JOIN reala.comanda r ON r.id = t.id WHERE r.id IS NULL OR ${difera('comanda')}
+    UNION SELECT t.comanda_id FROM main.pozitie t LEFT JOIN reala.pozitie r ON r.id = t.id WHERE r.id IS NULL OR ${difera('pozitie')}
+    UNION SELECT r.comanda_id FROM reala.pozitie r LEFT JOIN main.pozitie t ON t.id = r.id WHERE t.id IS NULL
+    UNION SELECT comanda_id FROM main.cerere WHERE id >= ${ID_TEST}`).all().map(r => Object.values(r)[0]));
 }
 
 function sincronizeaza() {
@@ -488,4 +510,4 @@ function inchide() {
 }
 
 module.exports = { db, deschide, inchide, backup, ultimulBackup, tranzactie, hashSesiuniInClar, roluriNoi, ACUM,
-  inTest, esteTest, sincronizeaza, copieTest, refaTest, modTestPosibil };
+  inTest, esteTest, sincronizeaza, copieTest, refaTest, modTestPosibil, comenziDemo };
