@@ -79,8 +79,9 @@ export function initNou() {
     const l = document.createElement('label');
     l.className = 'nou-camp';
     l.innerHTML = `<span>${text}</span>`;
-    // meniul căutabil (campuri.js) stă imediat după <select>-ul ascuns — merge cu el
-    const cautabil = el.nextElementSibling?.classList.contains('cautabil') ? el.nextElementSibling : null;
+    // meniul căutabil (campuri.js) stă imediat după <select>-ul ascuns — merge cu el; la fel câmpurile adresei (/adresa.js)
+    const urm = el.nextElementSibling;
+    const cautabil = urm?.classList.contains('cautabil') || urm?.classList.contains('adresa-campuri') ? urm : null;
     el.before(l);
     l.append(el, ...(cautabil ? [cautabil] : []));
     if (id === 'ofertaNr') banda.insertBefore(l, clear ?? null);   // nr. de ofertă pe cardul de jos, lângă salvare

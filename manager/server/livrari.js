@@ -24,11 +24,18 @@ const JUDETE = ['Alba', 'Arad', 'Argeș', 'Bacău', 'Bihor', 'Bistrița-Năsăud
 const normal = t => String(t ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[-_]/g, ' ');
 const NORMAL_JUDETE = JUDETE.map(j => [j, normal(j)]);
 
-// Judeţul din adresă: dintre numele de judeţ găsite ca CUVINTE întregi, cel care
-// apare ultimul — adresa e de obicei „strada, localitate, judeţ" (aşa o completează
-// şi sugestiile de clienţi), iar străzile au des nume de judeţe („Str. Iaşi, Bacău").
+// Adresa pe bucăţi (web/adresa.js + lista SIRUTA): judeţul, localitatea, strada.
+const Adresa = require('../web/adresa.js');
+const LOCALITATI = Adresa.index(require('../web/localitati.json'));
+const adresaDin = text => Adresa.desface(text, LOCALITATI);
+
+// Judeţul din adresă: întâi din adresa pe bucăţi („…, Cluj-Napoca" → Cluj, şi fără judeţ
+// scris); altfel, dintre numele de judeţ găsite ca CUVINTE întregi, cel care apare
+// ultimul — străzile au des nume de judeţe („Str. Iaşi, Bacău").
 // Null dacă nu e niciunul (atunci îl alege omul pe pagină).
 function judetDin(adresa) {
+  const dinBucati = adresaDin(adresa).judet;
+  if (dinBucati) return dinBucati;
   const a = ` ${normal(adresa).replace(/[^a-z0-9]+/g, ' ')} `;
   let gasit = null, poz = -1;
   for (const [j, n] of NORMAL_JUDETE) {
@@ -153,7 +160,7 @@ function anuleaza(ctx) {
 }
 
 module.exports = {
-  judetDin, JUDETE,
+  judetDin, adresaDin, JUDETE,
   rute: [
     ['GET',    '/api/livrari/candidati',    { handler: candidati }],
     ['PUT',    '/api/livrari/comanda/:id',  { handler: modificaComanda }],

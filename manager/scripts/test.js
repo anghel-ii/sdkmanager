@@ -846,6 +846,29 @@ async function main() {
       ['Strada Florilor 1', null], ['Satu Mare, str. Libertatii', 'Satu Mare'], ['Str. Voltaire 2, Cluj-Napoca, Cluj', 'Cluj'],
     ]) verifica(`judeţul din „${adresa}" → ${j}`, judetDin(adresa) === j, judetDin(adresa));
 
+    // adresa pe bucăţi (web/adresa.js + lista SIRUTA, 2026-10-19)
+    const { adresaDin } = require('../server/livrari.js');
+    const Adresa = require('../web/adresa.js');
+    for (const [adresa, j, l, str] of [
+      ['Strada Fabricii nr. 10, Zalau, SALAJ', 'Sălaj', 'Zalău', 'Strada Fabricii nr. 10'],
+      ['Str. Lunga 3, Cluj-Napoca', 'Cluj', 'Cluj-Napoca', 'Str. Lunga 3'],              // judeţul din localitate
+      ['Sos. Voinești 124, Iași', 'Iași', 'Iași', 'Sos. Voinești 124'],                  // oraşul = judeţul, scris o dată
+      ['Bd. Unirii 5, sector 2', 'București', 'București', 'Bd. Unirii 5, sector 2'],
+      ['Str. Mihai Viteazu 3, mun. Alba Iulia, jud. Alba', 'Alba', 'Alba Iulia', 'Str. Mihai Viteazu 3'],
+      ['Nr. 12, Jucu, Cluj', 'Cluj', 'Jucu', 'Nr. 12'],                                    // comuna, nu doar satele ei
+      ['Str. Iaşi 4, Bacău', 'Bacău', 'Bacău', 'Str. Iaşi 4'],
+      ['Strada Florilor 1', null, null, 'Strada Florilor 1'],
+    ]) {
+      const a = adresaDin(adresa);
+      verifica(`adresa „${adresa}" → ${j} / ${l} / ${str}`, a.judet === j && a.localitate === l && a.strada === str, JSON.stringify(a));
+    }
+    const pusa = Adresa.compune({ judet: 'Cluj', localitate: 'Cluj-Napoca', strada: 'Str. Lunga 3' });
+    verifica('adresa compusă din câmpuri se desface la loc la fel', pusa === 'Str. Lunga 3, Cluj-Napoca, Cluj'
+      && JSON.stringify(adresaDin(pusa)) === JSON.stringify({ judet: 'Cluj', localitate: 'Cluj-Napoca', strada: 'Str. Lunga 3', recunoscuta: true }), pusa);
+    const loc = require('../web/localitati.json').judete;
+    verifica('lista de localităţi: 42 de judeţe (cu Bucureşti), peste 13.000 de localităţi',
+      Object.keys(loc).length === 42 && Object.values(loc).flat().length > 13000 && loc['Cluj'].includes('Cluj-Napoca'));
+
     const noua = async (nume, livrare, adresa) => (await cer('POST', '/api/comenzi', {
       client: { nume, telefon: '0722', adresa }, detalii: { livrare }, ofertaNr: 'LV-' + nume,
       pozitii: [pozitie('confortGamma', 'Confort Gamma', 2, 2000)] })).date.comanda.id;

@@ -12,6 +12,7 @@
 <script src="/live.js"></script>
 <script src="/copiaza.js"></script>
 <script src="/mail-sticla.js"></script>
+<script src="/adresa.js"></script>
 <style>
   .sticla-nu { color: var(--danger); font-size: .84rem; }
   .sticla-furnizori { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
@@ -139,7 +140,7 @@
       <input id="accTelefon" type="tel" autocomplete="off">
     </label>
     <label class="camp" id="accAdresaCamp">Adresa clientului
-      <input id="accAdresa" type="text" autocomplete="off">
+      <input id="accAdresa" type="text" autocomplete="off" data-adresa>
     </label>
     <label class="camp">Avans încasat (lei) — gol dacă nu se încasează avans
       <input id="accAvans" type="number" min="0" step="0.01" placeholder="0" inputmode="decimal">
@@ -702,6 +703,9 @@ const rezumatProdus = p => (p.sistem === 'amanunt' ? `${p.linii.facturare.length
   : /^rama/.test(p.sistem ?? '') ? `${p.finisaj} · ${p.nr_usi} rame · max. ${p.inaltime} × ${p.latime} mm`
   : `${p.finisaj} · gol ${p.inaltime} × ${p.latime} mm · ${p.nr_usi} ${p.nr_usi === 1 ? 'uşă' : 'uşi'}`);
 
+// adresa se verifică (judeţ + localitate din listă, /adresa.js) doar când chiar se livrează
+const deVerificat = c => c.livrare && c.livrare !== 'Ridicare personala' ? ' data-verifica-adresa' : '';
+
 function cardDetalii({ comanda: c, cerere, pozitii, sticlaLinii = [] }, fise) {
   const eOferta = c.tip === 'oferta', ePlata = c.tip === 'plata', eComanda = c.tip === 'comanda';
   const [cls, stare] = eOferta ? ['oferta', 'Ofertă'] : ePlata ? ['plata', 'Aşteaptă plata']
@@ -725,7 +729,7 @@ function cardDetalii({ comanda: c, cerere, pozitii, sticlaLinii = [] }, fise) {
     <div class="cc-butoane cc-treceri">${c.tip === 'comanda' && !c.finalizat_la && !c.anulat ? '<button class="primar" data-adauga-la>+ Adaugă la comandă</button>' : ''}${butoaneTreceri(c, minuteInapoi(c))}${butonAnulare(c, cerere)}</div>
     <dl class="cc-perechi">
       ${c.client_telefon ? `<dt>Telefon</dt><dd>${esc(c.client_telefon)}</dd>` : ''}
-      ${c.client_adresa ? `<dt>Adresă</dt><dd>${esc(c.client_adresa)}</dd>` : ''}
+      ${c.client_adresa ? `<dt>Adresă</dt><dd${deVerificat(c)}>${esc(c.client_adresa)}</dd>` : ''}
       ${c.client_email ? `<dt>E-mail</dt><dd>${esc(c.client_email)}</dd>` : ''}
       <dt>Livrare</dt><dd>${esc(c.livrare ?? '—')}</dd>
       <dt>Plată</dt><dd>${esc(PLATI[c.plata] ?? '—')}${c.avans > 0 ? ` · avans <strong>${virgulaLei(c.avans)} lei</strong>` : ''}</dd>
@@ -759,6 +763,7 @@ async function incarcaCard() {
   const fise = d.pozitii.length > 1 ? numeFise(d.pozitii, await incarcaGame()) : [];
   if (id !== selectat || !$('tabelLista')) return;
   el.innerHTML = cardDetalii(d, fise);
+  Adresa.marcheaza(el);
   opresteActiuni(el, d.cerere);
   leagaTreceri(el, d.comanda, () => mergiLa(id));
   $('ccInchide').addEventListener('click', () => selecteaza(null));
@@ -1033,7 +1038,7 @@ async function renderDetaliu(id) {
         <div class="info-nume">${esc(c.client_nume)}</div>
         <dl class="perechi">
           ${c.client_telefon ? `<dt>${c.client_adresa ? 'Telefon' : 'Telefon / adresă'}</dt><dd>${esc(c.client_telefon)}</dd>` : ''}
-          ${c.client_adresa ? `<dt>Adresă</dt><dd>${esc(c.client_adresa)}</dd>` : ''}
+          ${c.client_adresa ? `<dt>Adresă</dt><dd${deVerificat(c)}>${esc(c.client_adresa)}</dd>` : ''}
           ${c.client_email ? `<dt>E-mail</dt><dd>${esc(c.client_email)}</dd>` : ''}
         </dl>
         ${c.livrare || c.agent || c.tip_facturare || c.plata ? `<dl class="perechi info-detalii">
@@ -1088,6 +1093,7 @@ async function renderDetaliu(id) {
   $('modifica')?.addEventListener('click', () => { location.href = '/configurator/?oferta=' + id; });
   // Aşteaptă plata / Acceptă / Plată primită / Finalizată / Redeschide / Înapoi în ofertă
   leagaTreceri($('continut').querySelector('.antet'), c, () => renderDetaliu(id));
+  Adresa.marcheaza($('continut'));
   // modul de livrare la comenzile în lucru / care aşteaptă plata (userul, 2026-10-08)
   $('schimbaLivrare')?.addEventListener('click', () => {
     $('livrareDd').innerHTML = `<select id="livrareNoua">${LIVRARI.map(v =>

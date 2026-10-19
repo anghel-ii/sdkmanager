@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="css/nou.css">
   <!-- bara comună a managerului; lipseşte pe Cloudflare / de pe disc → rămâne bara proprie -->
   <script src="/bara.js"></script>
+  <script src="/adresa.js"></script>
 </head>
 <body>
 <div id="app">
@@ -156,7 +157,7 @@
         <input type="text" id="clientNume"    placeholder="Nume client" autocomplete="off" list="clientiLista">
         <datalist id="clientiLista"></datalist>
         <input type="tel"  id="clientTelefon" placeholder="Telefon" autocomplete="off">
-        <input type="text" id="clientAdresa"  placeholder="Adresă" autocomplete="off">
+        <input type="text" id="clientAdresa"  placeholder="Adresă" autocomplete="off" data-adresa>
       </div>
       <!-- detaliile comenzii, la toate gamele (js/lib/comun/comanda.js) -->
       <div class="oferta-client comanda-detalii">
