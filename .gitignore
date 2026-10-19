@@ -11,6 +11,8 @@ manager/certs/
 *.key
 *.p12
 *.pfx
+# rapoarte cu date de clienţi (clienti-agenti/curata-adrese.mjs)
+/adrese-de-completat.csv
 # variabile de mediu (MANAGER_*, chei API)
 .env
 .env.*
