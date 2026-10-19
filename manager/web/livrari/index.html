@@ -68,9 +68,6 @@
   .marcaj.gri { background: #6b7280; width: 18px; height: 18px; font-size: 0; }
   .marcaj.plecare { background: #237a46; }
   .marcaj.demo { background: #ff9d2e; color: #2a1600; }   /* comandă din demo */
-  /* harta de pe foaia de livrare: lăţimea unei foi A4, culorile reale */
-  .harta-tipar { width: 680px; height: 560px; margin-top: 12px; break-inside: avoid; }
-  .harta-tipar .leaflet-tile { filter: none; }
   .plecare { margin-bottom: 10px; }
   .stare-geo { color: var(--text-dim); font-size: .8rem; margin-top: 6px; min-height: 1.2em; }
 
@@ -81,10 +78,9 @@
   details.trecute > summary { cursor: pointer; color: var(--text-dim); margin: 6px 0 10px; }
   .gol { text-align: center; padding: 30px; color: var(--text-dim); }
 
-  /* Borderoul de livrare (userul, 2026-10-19 — după modelul „Livrare jud ALBA SIBIU"): A4 orizontal, ca în Excel.
-     Pagina 1 = tabelul, pagina 2 = harta cu traseul. Pe ecran nu se vede; la tipar — doar el. */
+  /* Borderoul de livrare (userul, 2026-10-19 — după modelul „Livrare jud ALBA SIBIU"): A4 orizontal, ca în Excel,
+     fără hartă (harta e doar pt. cei care organizează; şoferul are Google Maps). Pe ecran nu se vede; la tipar — doar el. */
   #borderou { display: none; }
-  #borderou .harta-tipar { width: 100%; height: 165mm; margin: 0; }   /* cât pe foaie — bucăţile hărţii se încarcă pt. mărimea asta */
   @media print {
     @page { size: A4 landscape; margin: 10mm; }
     body.tipar-borderou > :not(#borderou) { display: none !important; }
@@ -103,10 +99,6 @@
     #borderou .total-numerar { margin: 14pt auto 0; border-collapse: collapse; width: auto; }
     #borderou .total-numerar td { border: 2px solid #000; padding: 4pt 10pt; font-size: 11pt; height: auto; }
     #borderou .total-numerar td:first-child { font-weight: 700; width: 110pt; }
-    #borderou .pagina-harta { break-before: page; }
-    #borderou .pagina-harta h2 { font-size: 14pt; margin: 0 0 6pt; color: #000; }
-    #borderou .harta-tipar { width: 100%; height: 165mm; margin: 0; }
-    #borderou .marcaj { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   }
 </style>
 </head>
@@ -156,7 +148,7 @@
 //  Organizează livrări (server/livrari.js). Alegi judeţele → comenzile lor, toate
 //  bifate; pe hartă (Leaflet + OpenStreetMap) apar punctele, iar lista stă mereu în
 //  ordinea celui mai scurt traseu (de la locul de plecare şi înapoi); „Confirmă
-//  livrarea" + data → livrare programată, cu borderoul de tipar (A4 orizontal + harta numerotată).
+//  livrarea" + data → livrare programată, cu borderoul de tipar (A4 orizontal).
 //  Adresele se caută pe hartă în browser (Photon / Nominatim, o cerere pe secundă) şi se
 //  ţin minte pe comandă — data viitoare nu se mai caută.
 // ═══════════════════════════════════════════════════════════════════════════
@@ -520,8 +512,7 @@ function cardLivrare(l) {
 
 // Borderoul de livrare (userul, 2026-10-19 — modelul „Livrare jud ALBA SIBIU 16.10.2026.pdf"): A4 orizontal,
 // FIRMA · DELEGAT / TELEFON / OBSERVAŢII · LOCALITATE / STRADA · Preţ · Bon · Factură + chitanţă · OP · colete
-// (colete — de mână), totalurile şi „Total numerar de încasat" (Bon + Factură + chitanţă). Pe pagina a doua
-// harta cu opririle numerotate 1, 2, 3… (ordinea din listă), făcută doar pt. tipar — se tipăreşte după ce s-a încărcat.
+// (colete — de mână), totalurile şi „Total numerar de încasat" (Bon + Factură + chitanţă). Fără hartă.
 const faraDiacritice = t => String(t).normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 function borderouHtml(l) {
   const judete = [...new Set(l.comenzi.map(c => c.judet).filter(Boolean))].map(j => faraDiacritice(j).toUpperCase());
@@ -556,30 +547,9 @@ function tipareste(l) {
   b.id = 'borderou';
   b.innerHTML = borderouHtml(l);
   document.body.append(b);
-  let h = null;
-  const tipar = () => {
-    document.body.classList.add('tipar-borderou');
-    window.addEventListener('afterprint', () => { document.body.classList.remove('tipar-borderou'); h?.remove(); b.remove(); }, { once: true });
-    window.print();
-  };
-  const cu = l.comenzi.map((c, k) => [c, k + 1]).filter(([c]) => c.lat != null);
-  if (!areHarta() || !cu.length) return tipar();
-  const pag = document.createElement('div');
-  pag.className = 'pagina-harta';
-  pag.innerHTML = '<h2>Traseul — opririle în ordinea din borderou</h2><div class="harta-tipar"></div>';
-  b.append(pag);
-  // Leaflet are nevoie de un element vizibil cât desenează harta: borderoul se arată (în afara ecranului) până se tipăreşte
-  b.style.cssText = 'display:block; position:fixed; left:-10000px; top:0; width:1050px';
-  h = L.map(pag.querySelector('.harta-tipar'), { zoomControl: false });
-  const plec = [plecare.lat, plecare.lon], pct = [plec, ...cu.map(([c]) => [c.lat, c.lon]), plec];
-  L.polyline(pct, { color: '#1f6fd1', weight: 3 }).addTo(h);
-  L.marker(plec, { icon: marcaj('⌂', 'plecare') }).addTo(h);
-  cu.forEach(([c, nr]) => L.marker([c.lat, c.lon], { icon: marcaj(nr, c.demo ? 'demo' : '') }).addTo(h));
-  h.fitBounds(L.latLngBounds(pct).pad(0.1));
-  let gata = false;
-  const odata = () => { if (!gata) { gata = true; b.style.cssText = ''; tipar(); } };
-  L.tileLayer(OSM, { attribution: '&copy; OpenStreetMap' }).once('load', odata).addTo(h);
-  setTimeout(odata, 6000);   // hartă care nu se încarcă (fără internet) — tipăresc oricum
+  document.body.classList.add('tipar-borderou');
+  window.addEventListener('afterprint', () => { document.body.classList.remove('tipar-borderou'); b.remove(); }, { once: true });
+  window.print();
 }
 
 function randeazaProgramate() {
