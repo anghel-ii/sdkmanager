@@ -270,7 +270,7 @@ async function incarcaTichete() {
   $('nrTicheteDeschise').textContent = deschise.length || '';
   $('tichete').className = deschise.length ? '' : 'gol';
   $('tichete').innerHTML = deschise.length ? deschise.slice(0, 6).map(t => `
-    <a class="tichet" href="/tichete"><span class="pastila ${t.tip}">${TIP[t.tip] ?? esc(t.tip)}</span>
+    <a class="tichet" href="/tichete"><span class="pastila ${esc(t.tip)}">${TIP[t.tip] ?? esc(t.tip)}</span>
       <span class="t-text">${t.stare === 'in_lucru' ? '<span class="dim">[în lucru]</span> ' : ''}${esc(t.text.split('\n')[0])}</span>
       <small>${esc(t.creat_de_nume)} · ${cand(t.creat_la)}</small></a>`).join('')
     + (deschise.length > 6 ? `<a class="tichet" href="/tichete"><span></span><span class="dim">încă ${deschise.length - 6} →</span></a>` : '')

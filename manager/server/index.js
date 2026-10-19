@@ -4,6 +4,7 @@ const fs    = require('node:fs');
 
 const { config } = require('./config.js');
 const { deschide, inchide, backup, inTest, copiaLui, sincronizeaza } = require('./db.js');
+const repetare = require('./repetare.js');
 const { eroare, redirect, serveste, router } = require('./http.js');
 const auth = require('./auth.js');
 
@@ -83,14 +84,17 @@ async function trateaza(req, res) {
     // adminul e mereu în test (auth.js), dar administrarea (rutele doar pt. admin) şi clienţii merg pe bune — nu ating comenzile
     const peBune = PE_BUNE.some(p => cale === p || cale.startsWith(p + '/'))
       || (utilizator?.rol === 'admin' && ([].concat(spec.rol ?? []).join() === 'admin' || cale.startsWith('/api/clienti')));
-    if (utilizator?.mod_test && !peBune) {
-      if (cale.startsWith('/api/clienti/propuneri/')) return eroare(res, 403, 'În modul test nu se aprobă clienţi — aprobarea ar ajunge pe bune.');
-      // întâi lanţul la zi (ce a scris biroul în demo ajunge acum, nu la timer, în demo admin)
-      sincronizeaza();
-      return inTest(() => opreste() || spec.handler(ctx), copiaLui(utilizator));   // adminul pe copia lui
-    }
-    if (opreste()) return;
-    try { return await spec.handler(ctx); } finally { sincronizeaza(); }   // ce s-a scris pe bune intră şi în copia de test
+    // o cerere retrimisă de pagină (aceeaşi X-Cheie-Cerere) nu se execută de două ori — server/repetare.js
+    return repetare.oSinguraData(req, res, utilizator?.id, async () => {
+      if (utilizator?.mod_test && !peBune) {
+        if (cale.startsWith('/api/clienti/propuneri/')) return eroare(res, 403, 'În modul test nu se aprobă clienţi — aprobarea ar ajunge pe bune.');
+        // întâi lanţul la zi (ce a scris biroul în demo ajunge acum, nu la timer, în demo admin)
+        sincronizeaza();
+        return inTest(() => opreste() || spec.handler(ctx), copiaLui(utilizator));   // adminul pe copia lui
+      }
+      if (opreste()) return;
+      try { return await spec.handler(ctx); } finally { sincronizeaza(); }   // ce s-a scris pe bune intră şi în copia de test
+    });
   }
 
   // Scanarea din atelier — navigare/fereastră de la pagina de pe Cloudflare

@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap");
+@import url("/fonte.css");   /* fonturile, servite de manager (fără Google Fonts) */
 
 /* Paleta e aceeaşi cu a configuratorului (configurator_usi/css/main.css), ca
    trecerea dintr-o aplicaţie în alta să nu pară o schimbare de program. */

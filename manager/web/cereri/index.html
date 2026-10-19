@@ -67,7 +67,7 @@ function randCerere(r) {
   return `<div class="cerere" data-id="${r.id}">
     <div>
       <div class="cap">Anulare · <a href="/#comanda/${r.comanda_id}">${esc(r.comanda_nr)} · ${esc(r.client_nume)}</a>
-        <span class="pastila ${r.stare}">${STARI[r.stare]}</span></div>
+        <span class="pastila ${esc(r.stare)}">${STARI[r.stare] ?? esc(r.stare)}</span></div>
       <div class="motiv">${esc(r.motiv)}</div>
       <div class="info">cerută de <b>${esc(r.creat_de_nume)}</b> · ${dataOra(r.creat_la)} · comanda e ${TIP_COMANDA(r)}${r.factura_nr
         ? ` · <b>facturată (${esc(r.factura_nr)})</b> — la aprobare, anulează şi factura în NeoManager` : ''}</div>

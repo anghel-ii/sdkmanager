@@ -503,6 +503,39 @@ async function main() {
   verifica('scoatere fixare', (await cer('POST', `/api/comenzi/${id}/fixare`, { fixat: false })).stare === 200 &&
     (await cer('GET', '/api/comenzi?tip=finalizata')).date.comenzi.find(c => c.id === id).fixat === false);
 
+  console.log('\nCereri repetate (server/repetare.js) — reţeaua cade după ce serverul a salvat');
+  {
+    const n = () => db2().prepare('SELECT COUNT(*) AS n FROM comanda').get().n;
+    const corp = { client: { nume: 'Client Repetat' }, ofertaNr: 'REP-1', pozitii: [pozitie('confortGamma', 'Confort Gamma', 2, 1600)] };
+    const trimite = (cheie, c = cookie) => fetch(baza + '/api/comenzi', { method: 'POST', body: JSON.stringify(corp),
+      headers: { 'Content-Type': 'application/json', Cookie: c, ...(cheie && { 'X-Cheie-Cerere': cheie }) } });
+    let inainte = n();
+    const r1 = await trimite('cheie-proba-0001'), j1 = await r1.json();
+    const r2 = await trimite('cheie-proba-0001'), j2 = await r2.json();
+    verifica('aceeaşi cheie de două ori → o singură ofertă, acelaşi răspuns', r1.status === 201 && r2.status === 201
+      && j1.comanda.id === j2.comanda.id && r2.headers.get('x-cerere-repetata') === '1' && n() === inainte + 1, `${n() - inainte} oferte`);
+    inainte = n();
+    const [a, b] = await Promise.all([trimite('cheie-proba-0002'), trimite('cheie-proba-0002')]);
+    const [ja, jb] = [await a.json(), await b.json()];
+    verifica('aceeaşi cheie, simultan → tot una', ja.comanda.id === jb.comanda.id && n() === inainte + 1, `${n() - inainte} oferte`);
+    inainte = n();
+    await trimite('cheie-proba-0003'); await trimite('cheie-proba-0004');
+    verifica('chei diferite → oferte diferite', n() === inainte + 2);
+    inainte = n();
+    await trimite(null); await trimite(null);
+    verifica('fără cheie → ca înainte (fiecare cerere se execută)', n() === inainte + 2);
+    inainte = n();
+    const k = cookie; cookie = null;
+    await cer('POST', '/api/login', { user: 'ion', parola: 'parola-noua-1' });
+    const altul = cookie; cookie = k;
+    const ri = await trimite('cheie-proba-0001', altul);
+    verifica('aceeaşi cheie, alt utilizator → a lui (cheile sunt pe utilizator)', ri.status === 201 && (await ri.json()).comanda.id !== j1.comanda.id && n() === inainte + 1);
+    const g = await fetch(baza + '/api/comenzi', { headers: { Cookie: cookie, 'X-Cheie-Cerere': 'cheie-proba-0001' } });
+    verifica('GET cu cheie → răspuns normal, nerepetat', g.status === 200 && !g.headers.get('x-cerere-repetata') && Array.isArray((await g.json()).comenzi));
+    const scurt = await trimite('x');
+    verifica('cheie ciudată (prea scurtă) → ignorată, cererea merge normal', scurt.status === 201);
+  }
+
   console.log('\nComandă sticlă');
   const cuSticla = (nume) => ({ client: { nume }, pozitii: [{ ...pozitie('rama842', 'Ramă 842', 3, 450),
     linii: { facturare: [{ cod: 'X', denumire: 'X', cantitate: 1 }], sticla: [

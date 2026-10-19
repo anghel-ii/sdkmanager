@@ -21,7 +21,9 @@
 // rămâne în browser şi merge mai departe; o cerere spre /api care NU ajunge la server
 // (refuzată — serverul porneşte) nu mai dă eroare: aşteaptă şi se retrimite singură până
 // revine serverul (max. 2 minute), cu o bandă „Serverul se actualizează…". O cerere
-// ajunsă la server nu se repetă — la oprire serverul termină întâi cererile în curs.
+// care scrie (POST / PUT / PATCH / DELETE) poartă o cheie (X-Cheie-Cerere), aceeaşi la
+// toate retrimiterile: dacă prima ajunsese totuşi la server (reţeaua a căzut după), serverul
+// dă acelaşi răspuns fără s-o mai execute — nicio ofertă dublă (server/repetare.js, 2026-10-19).
 (() => {
   const trimite = window.fetch.bind(window);
   let inAsteptare = 0, banda = null;
@@ -37,9 +39,17 @@
     if (inAsteptare > 0 && !banda.isConnected) document.body.appendChild(banda);
     if (inAsteptare <= 0) banda.remove();
   };
+  // crypto.randomUUID cere HTTPS; getRandomValues merge şi pe http://<IP>
+  const cheieNoua = () => Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('');
   window.fetch = async (cerere, optiuni) => {
     const adresa = new URL(typeof cerere === 'string' ? cerere : cerere.url, location.href);
     if (adresa.origin !== location.origin || !adresa.pathname.startsWith('/api/')) return trimite(cerere, optiuni);
+    const metoda = String(optiuni?.method ?? (cerere instanceof Request ? cerere.method : 'GET')).toUpperCase();
+    if (!['GET', 'HEAD'].includes(metoda)) {
+      const antete = new Headers(optiuni?.headers ?? (cerere instanceof Request ? cerere.headers : undefined));
+      if (!antete.has('X-Cheie-Cerere')) antete.set('X-Cheie-Cerere', cheieNoua());
+      optiuni = { ...optiuni, headers: antete };
+    }
     const pana = Date.now() + 120e3;
     for (let asteapta = false; ;) {
       try {

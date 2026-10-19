@@ -128,7 +128,7 @@ let admin = false;
 function randTichet(t) {
   return `<div class="tichet" data-id="${t.id}">
     <div>
-      <div><span class="pastila ${t.tip}">${TIP[t.tip] ?? esc(t.tip)}</span><span class="pastila ${t.stare}">${STARE[t.stare] ?? esc(t.stare)}</span></div>
+      <div><span class="pastila ${esc(t.tip)}">${TIP[t.tip] ?? esc(t.tip)}</span><span class="pastila ${esc(t.stare)}">${STARE[t.stare] ?? esc(t.stare)}</span></div>
       <div class="text">${esc(t.text)}</div>
       <div class="info">${admin ? `de la <b>${esc(t.creat_de_nume)}</b> · ` : ''}${dataOra(t.creat_la)}${laComanda(t)}${
         t.pagina ? ` · din <a href="${esc(t.pagina)}">${esc(t.pagina)}</a>` : ''}</div>
