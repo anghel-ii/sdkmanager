@@ -57,6 +57,13 @@
   td.gama:not(:empty)::after { content: '%'; color: var(--dim); margin-left: 1px; }
   td.gama:focus::after { content: none; }
   td.stare { text-align: center; font-size: 13px; }
+  /* judeţ / localitate: sugestiile din lista SIRUTA sub celulă */
+  #sugestii { position: fixed; z-index: 10; min-width: 220px; max-height: 300px; overflow-y: auto; background: var(--panel-2);
+              border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 8px 24px rgba(0, 0, 0, .4); padding: 4px; font-size: 14px; }
+  #sugestii div { padding: 6px 10px; border-radius: 6px; cursor: pointer; white-space: nowrap; }
+  #sugestii div.activ, #sugestii div:hover { background: var(--accent-dim); color: #fff; }
+  #sugestii .jud { color: var(--dim); font-size: 12px; margin-left: 6px; }
+  #sugestii div.activ .jud, #sugestii div:hover .jud { color: #dce9ff; }
   tr.astept td { background: #2a2414; }
   tr.astept td.nume { background: #2a2414; }
   tr.nou td { background: var(--panel); }
@@ -95,8 +102,9 @@
   <div id="mesaj" role="status"></div>
   <p class="dim ajutor">Scrii direct în celule (Enter = rândul de jos). Când ieşi de pe un rând, modificarea se
     trimite spre aprobare — până e aprobată, rândul e galben. Client nou: primul rând, cu nume şi un telefon sau e-mail.
-    Reducerile: doar numărul (15 = 15%).</p>
+    Judeţul şi localitatea se aleg din listă (pt. curier şi livrări). Reducerile: doar numărul (15 = 15%).</p>
   <div class="foaie"><table id="tabel"></table></div>
+  <div id="sugestii" hidden></div>
 </section>
 
 <script>
@@ -218,6 +226,8 @@ async function salveazaRand(tr) {
   const reduceri = Object.fromEntries(GAME.map(g => [g, v[`g:${g}`].replace(/%/g, '').trim()]));
   const gresita = GAME.find(g => reduceri[g] && !/^\d+([.,]\d+)?$/.test(reduceri[g]));
   if (gresita) return arataEroare(tr, `Reducerea la ${gresita} trebuie să fie un număr (ex. 15).`);
+  const adresa = adresaGresita(v, salvat.has(k) ? JSON.parse(salvat.get(k)) : null);
+  if (adresa) return arataEroare(tr, adresa);
   const date = { ...Object.fromEntries(COLOANE.map(([cheie]) => [cheie, v[cheie]])), discounturi: compuneReduceri(reduceri, v.alte) };
   if (!c?.id && ![date.telefon_administrator, date.telefon_delegat, date.email].some(Boolean)) {
     return arataEroare(tr, 'Client nou: completează cel puţin un telefon sau e-mailul.');
@@ -247,6 +257,146 @@ function arataEroare(tr, t) {
   tr.classList.add('greseala');
   tr.querySelector('.stare').innerHTML = `<span class="pastila eroare" title="${esc(t)}">⚠ nesalvat</span>`;
   textMesaj(t, 'eroare');
+}
+
+// ── Judeţ + localitate din lista SIRUTA (/localitati.json, 2026-10-19) ──────
+// Ca FAN Courier şi harta livrărilor să găsească adresa: cât scrii, sugestii din
+// listă; la ieşirea din celulă numele se pune ca în listă („iasi" → „Iași"),
+// localitatea fără judeţ îşi completează judeţul. Aceeaşi regulă ca managerul
+// (manager/web/adresa.js): localitatea „Valea Mare (Bogați)" se poate scrie şi
+// „Valea Mare" dacă e una singură în judeţ.
+const fara = t => normal(t).replace(/[^a-z0-9()]+/g, ' ').trim();
+let LOC = null;   // { judete: { judeţ: [localităţi] }, jud: Map(normal → judeţ), loc: Map(judeţ → Map(normal → nume)), unde: Map(normal fără paranteză → [[judeţ, nume]]) }
+fetch('/localitati.json').then(r => r.json()).then(j => {
+  const L = { judete: j.judete, jud: new Map(), loc: new Map(), unde: new Map() };
+  for (const [jd, lista] of Object.entries(j.judete)) {
+    L.jud.set(fara(jd), jd);
+    const m = new Map();
+    for (const l of lista) {
+      m.set(fara(l), l);
+      const b = fara(l.replace(/\s*\(.*\)$/, ''));
+      L.unde.set(b, [...(L.unde.get(b) ?? []), [jd, l]]);
+    }
+    L.loc.set(jd, m);
+  }
+  LOC = L;
+}).catch(() => {});   // fără listă: celulele rămân text liber, ca înainte
+
+const judetDin = t => LOC?.jud.get(fara(t).replace(/^jud(etul)? /, '')) ?? null;
+function localitateDin(judet, t) {
+  const n = fara(t).replace(/^(mun(icipiul)?|or(as(ul)?)?|com(una)?|sat(ul)?) /, '');
+  const exact = LOC?.loc.get(judet)?.get(n);
+  if (exact) return exact;
+  const b = (LOC?.unde.get(n) ?? []).filter(([j]) => j === judet);
+  return b.length === 1 ? b[0][1] : null;
+}
+const celula = (tr, c) => tr.querySelector(`td[data-c="${c}"]`);
+
+// lista de sugestii sub celula activă
+let sug = { td: null, valori: [], activ: 0 };
+function arataSugestii(td) {
+  if (!LOC) return;
+  const q = fara(td.textContent);
+  const tr = td.closest('tr');
+  let valori;
+  if (td.dataset.c === 'judet') {
+    valori = Object.keys(LOC.judete).filter(j => !q || fara(j).includes(q)).map(j => ({ judet: j }));
+  } else {
+    if (!q) return ascundeSugestii();
+    const jd = judetDin(celula(tr, 'judet').textContent);
+    const din = jd ? LOC.judete[jd].map(l => [jd, l]) : Object.entries(LOC.judete).flatMap(([j, ls]) => ls.map(l => [j, l]));
+    const inceput = [], inMijloc = [];
+    for (const [j, l] of din) {
+      const n = fara(l);
+      if (n.startsWith(q)) inceput.push({ judet: j, localitate: l }); else if (n.includes(q)) inMijloc.push({ judet: j, localitate: l });
+      if (inceput.length >= 40) break;
+    }
+    valori = [...inceput, ...inMijloc].slice(0, 40);
+  }
+  if (!valori.length) return ascundeSugestii();
+  sug = { td, valori, activ: 0 };
+  const el = $('sugestii');
+  el.innerHTML = valori.map((v, i) => `<div data-i="${i}"${i ? '' : ' class="activ"'}>${esc(v.localitate ?? v.judet)}${
+    v.localitate && td.dataset.c === 'localitate' && !judetDin(celula(tr, 'judet').textContent) ? `<span class="jud">${esc(v.judet)}</span>` : ''}</div>`).join('');
+  el.hidden = false;
+  aseazaSugestii();
+}
+// sub celulă — şi după ce tabelul derulează spre ea
+function aseazaSugestii() {
+  if (!sug.td || $('sugestii').hidden) return;
+  const r = sug.td.getBoundingClientRect();
+  $('sugestii').style.left = `${r.left}px`;
+  $('sugestii').style.top = `${Math.min(r.bottom + 2, innerHeight - 310)}px`;
+}
+function ascundeSugestii() { $('sugestii').hidden = true; sug.td = null; }
+function alegeSugestia(i) {
+  const v = sug.valori[i], td = sug.td;
+  if (!v || !td) return;
+  const tr = td.closest('tr');
+  if (td.dataset.c === 'judet') {
+    td.textContent = v.judet;
+    const l = celula(tr, 'localitate');
+    if (l.textContent.trim() && !localitateDin(v.judet, l.textContent)) l.textContent = '';   // localitatea din alt judeţ
+  } else {
+    td.textContent = v.localitate;
+    celula(tr, 'judet').textContent = v.judet;
+  }
+  ascundeSugestii();
+}
+document.querySelector('.foaie').addEventListener('scroll', aseazaSugestii);   // lista e fixă pe ecran
+$('sugestii').addEventListener('mousedown', e => {
+  e.preventDefault();   // celula rămâne în focus
+  const d = e.target.closest('[data-i]');
+  if (d) alegeSugestia(+d.dataset.i);
+});
+$('tabel').addEventListener('input', e => {
+  if (e.target.matches('td[data-c="judet"], td[data-c="localitate"]')) arataSugestii(e.target);
+});
+const laIntrare = new WeakMap();   // textul celulei când ai intrat în ea — corectăm doar ce s-a scris
+$('tabel').addEventListener('focusin', e => {
+  if (!e.target.matches('td[data-c="judet"], td[data-c="localitate"]')) return;
+  laIntrare.set(e.target, e.target.textContent);
+  if (e.target.dataset.c === 'judet') arataSugestii(e.target);
+});
+// săgeţi / Enter / Tab / Esc în listă — înaintea tastelor de tabel (Enter = rândul de jos)
+$('tabel').addEventListener('keydown', e => {
+  if ($('sugestii').hidden || e.target !== sug.td) return;
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    sug.activ = (sug.activ + (e.key === 'ArrowDown' ? 1 : -1) + sug.valori.length) % sug.valori.length;
+    $('sugestii').querySelectorAll('div').forEach((d, i) => d.classList.toggle('activ', i === sug.activ));
+    $('sugestii').querySelector('.activ')?.scrollIntoView({ block: 'nearest' });
+  } else if (e.key === 'Enter' || e.key === 'Tab') {
+    alegeSugestia(sug.activ);
+    if (e.key === 'Enter') { e.preventDefault(); e.stopImmediatePropagation(); }
+  } else if (e.key === 'Escape') { ascundeSugestii(); e.stopImmediatePropagation(); }
+}, true);
+// la ieşirea din celulă: numele ca în listă; localitatea fără judeţ îşi ia judeţul (înaintea salvării rândului)
+$('tabel').addEventListener('focusout', e => {
+  const td = e.target;
+  if (!LOC || !td.matches?.('td[data-c="judet"], td[data-c="localitate"]')) return;
+  if (sug.td === td) ascundeSugestii();
+  if (td.textContent === laIntrare.get(td)) return;   // doar trecut prin celulă: nimic de corectat (altfel ar pleca spre aprobare)
+  const tr = td.closest('tr'), tj = celula(tr, 'judet'), tl = celula(tr, 'localitate');
+  const jd = judetDin(tj.textContent);
+  if (jd) tj.textContent = jd;
+  if (td === tl && tl.textContent.trim()) {
+    if (!jd) {
+      const unde = LOC.unde.get(fara(tl.textContent).replace(/^(mun(icipiul)?|or(as(ul)?)?|com(una)?|sat(ul)?) /, '')) ?? [];
+      if (new Set(unde.map(([j]) => j)).size === 1) tj.textContent = unde[0][0];
+    }
+    const l = localitateDin(judetDin(tj.textContent), tl.textContent);
+    if (l) tl.textContent = l;
+  }
+}, true);
+// la salvare: dacă judeţul / localitatea s-au schimbat, trebuie să fie din listă
+function adresaGresita(v, inainte) {
+  if (!LOC || (v.judet === inainte?.judet && v.localitate === inainte?.localitate)) return null;
+  const jd = judetDin(v.judet);
+  if (v.judet && !jd) return `Judeţul „${v.judet}" nu există — alege-l din listă.`;
+  if (v.localitate && !jd) return 'Alege întâi judeţul.';
+  if (v.localitate && !localitateDin(jd, v.localitate)) return `„${v.localitate}" nu e în lista localităţilor din ${jd} — alege din listă.`;
+  return null;
 }
 
 // ieşirea de pe un rând (focusul trece în alt rând sau în afara tabelului) → se trimite
