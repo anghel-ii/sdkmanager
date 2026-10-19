@@ -53,7 +53,7 @@ function cereText(text, { trimite = 'Trimite', loc = '', min = 3 } = {}) {
     bara.className = 'butoane';
     const renunta = document.createElement('button'), ok = document.createElement('button');
     renunta.type = ok.type = 'button';
-    renunta.textContent = 'Renunţă'; ok.textContent = trimite; ok.className = 'primar'; ok.disabled = true;
+    renunta.textContent = 'Renunţă'; ok.textContent = trimite; ok.className = 'primar'; ok.disabled = min > 0;
     camp.addEventListener('input', () => { ok.disabled = camp.value.trim().length < min; });
     let gata = null;
     renunta.onclick = () => d.close();

@@ -467,7 +467,7 @@ async function main() {
     const idVechi = Number(db2().prepare("INSERT INTO utilizator (nume, user, parola_hash, parola_salt, rol) VALUES ('Vechi', 'vechi', 'x', 'x', 'operator')").run().lastInsertRowid);
     require('../server/db.js').roluriNoi(db2());
     verifica('migraţie: operator → birou', db2().prepare('SELECT rol FROM utilizator WHERE id = ?').get(idVechi).rol === 'birou');
-    verifica('schema la versiunea 21', db2().prepare('PRAGMA user_version').get().user_version === 21);
+    verifica('schema la versiunea 22', db2().prepare('PRAGMA user_version').get().user_version === 22);
   }
 
   console.log('\nFixare şi sortare — per utilizator');
@@ -1050,10 +1050,30 @@ async function main() {
     verifica('Maria nu-l atinge pe cel personal al adminului', (await cer('PATCH', `/api/taskuri/${t2.date.id}`, { facut: true })).stare === 404);
     verifica('amânare → 200', (await cer('PATCH', `/api/taskuri/${t1.date.id}`, { scadenta: '2099-02-01T10:30' })).stare === 200);
     verifica('amânat → nu mai e scadent', (await cer('GET', '/api/taskuri/scadente')).date.taskuri.length === 0);
+    // conversaţia + aşteptarea (2026-10-15)
+    const sus = async corp => (await cer('PATCH', `/api/taskuri/${t1.date.id}`, corp)).stare;
+    verifica('în aşteptare cu motiv → 200', await sus({ asteptare: true, motiv: 'Aştept avansul' }) === 200);
+    verifica('în aşteptare de două ori → un singur eveniment', await sus({ asteptare: true }) === 200);
+    await sus({ scadenta: '2020-01-01T09:00' });
+    verifica('în aşteptare → fără reminder, chiar trecut de scadenţă', (await cer('GET', '/api/taskuri/scadente')).date.taskuri.length === 0);
+    verifica('răspuns gol → 400', (await cer('POST', `/api/taskuri/${t1.date.id}/raspuns`, { text: '  ' })).stare === 400);
+    verifica('răspuns → 201', (await cer('POST', `/api/taskuri/${t1.date.id}/raspuns`, { text: 'Am sunat, revine mâine' })).stare === 201);
+    verifica('Maria nu răspunde la taskul personal al adminului', (await cer('POST', `/api/taskuri/${t2.date.id}/raspuns`, { text: 'x' })).stare === 404);
+    await sus({ asteptare: false });
+    verifica('reluat → reminderul revine', (await cer('GET', '/api/taskuri/scadente')).date.taskuri.length === 1);
+    verifica('ce scrii tu nu e necitit la tine', (await cer('GET', '/api/taskuri/scadente')).date.necitite === 0);
+    await sus({ scadenta: '2099-02-01T10:30' });
     verifica('bifat făcut → 200', (await cer('PATCH', `/api/taskuri/${t1.date.id}`, { facut: true })).stare === 200);
     cookie = k;
     const dupa = (await cer('GET', '/api/taskuri')).date.taskuri.find(t => t.id === t1.date.id);
     verifica('adminul vede că e făcut', !!dupa?.facut_la && dupa.scadenta === '2099-02-01 08:30:00', JSON.stringify(dupa));
+    verifica('conversaţia: aşteptare cu motiv, răspuns, reluat, făcut — în ordine',
+      JSON.stringify(dupa.mesaje.map(m => [m.eveniment, m.text])) === JSON.stringify([['asteptare', 'Aştept avansul'],
+        [null, 'Am sunat, revine mâine'], ['reluat', ''], ['facut', '']]) && dupa.mesaje.every(m => m.autor_nume === 'Maria Birou'),
+      JSON.stringify(dupa.mesaje));
+    verifica('adminul are 4 necitite (listă + insignă)', dupa.necitite === 4 && (await cer('GET', '/api/taskuri/scadente')).date.necitite === 4);
+    verifica('deschis = citit', (await cer('POST', `/api/taskuri/${t1.date.id}/citit`)).stare === 200
+      && (await cer('GET', '/api/taskuri/scadente')).date.necitite === 0);
     verifica('cel care l-a dat îl şterge', (await cer('DELETE', `/api/taskuri/${t1.date.id}`)).stare === 200);
     const pag = String((await cer('GET', '/taskuri')).date);
     verifica('pagina /taskuri se serveşte', pag.includes('<title>Taskuri</title>') && pag.includes("api('/api/taskuri'"));

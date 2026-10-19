@@ -338,6 +338,20 @@ const MIGRATII = [
   // v20 → v21 (2026-10-15): tichetul legat de o comandă / ofertă („+ Tichet" de pe comandă). Fără REFERENCES:
   // tichetele stau mereu în baza reală, iar o ofertă făcută în modul test există doar în copie.
   d => d.exec('ALTER TABLE tichet ADD COLUMN comanda_id INTEGER'),
+  // v21 → v22 (2026-10-15): taskurile au o mini-conversaţie (răspunsuri + evenimentele lor) şi se pot pune
+  // în aşteptare — fără reminder până se reiau (server/taskuri.js)
+  d => d.exec(`
+    ALTER TABLE task ADD COLUMN in_asteptare_la TEXT;
+    CREATE TABLE task_mesaj (
+      id        INTEGER PRIMARY KEY,
+      task_id   INTEGER NOT NULL REFERENCES task(id) ON DELETE CASCADE,
+      autor     INTEGER NOT NULL REFERENCES utilizator(id),
+      text      TEXT NOT NULL DEFAULT '',
+      eveniment TEXT,                            -- NULL = răspuns; 'asteptare' | 'reluat' | 'facut' | 'redeschis'
+      creat_la  TEXT NOT NULL,
+      citit     INTEGER NOT NULL DEFAULT 0       -- 1 = l-a văzut celălalt (un task are doar doi oameni)
+    );
+    CREATE INDEX task_mesaj_task ON task_mesaj (task_id, creat_la);`),
 ];
 
 // Exportată pt. test.

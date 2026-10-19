@@ -37,6 +37,24 @@
   button.mic { padding: 4px 9px; font-size: .78rem; }
   .gol { text-align: center; padding: 20px; color: var(--text-dim); }
   details > summary { cursor: pointer; color: var(--text-dim); }
+
+  /* aşteptare + conversaţia taskului (server/taskuri.js) */
+  .task { flex-wrap: wrap; }
+  .task.asteapta .text { color: var(--text-dim); }
+  .task .pauza { color: #d4a24c; }
+  .conv .nou { display: inline-grid; place-items: center; min-width: 17px; height: 16px; padding: 0 5px; margin-left: 3px;
+    border-radius: 999px; background: #a3412f; color: #fff; font-size: .7rem; font-weight: 600; }
+  .fir { flex-basis: 100%; margin: 4px 0 2px 30px; padding: 10px 12px; background: var(--panel-2); border-radius: 8px; }
+  .fir .msg { margin-bottom: 8px; max-width: 80%; }
+  .fir .msg.eu { margin-left: auto; text-align: right; }
+  .fir .msg .cap { font-size: .74rem; color: var(--text-dim); }
+  .fir .msg .txt { display: inline-block; text-align: left; white-space: pre-wrap; word-break: break-word; padding: 6px 10px;
+    border-radius: 8px; background: var(--panel); border: 1px solid var(--line); }
+  .fir .msg.eu .txt { border-color: var(--accent-dim); }
+  .fir .ev { font-size: .78rem; color: var(--text-dim); text-align: center; margin: 6px 0 10px; white-space: pre-wrap; }
+  .fir .gol { padding: 4px 0 10px; }
+  .fir form { display: flex; gap: 8px; align-items: flex-end; }
+  .fir textarea { flex: 1; resize: vertical; min-height: 38px; }
 </style>
 </head>
 <body class="ui-nou">
@@ -94,21 +112,45 @@ function pentruInput(s) {
 let eu = null, taskuri = [], utilizatori = [];
 let comanda = Number(new URLSearchParams(location.search).get('comanda')) || null;
 
+// Conversaţia unui task: doar când sunt doi oameni (dat cuiva). Ce e deschis şi ce ai început
+// să scrii rămân la re-randare (actualizarea live). ?task=<id> o deschide direct (cardul de pe Acasă).
+const deschise = new Set([Number(new URLSearchParams(location.search).get('task'))].filter(Boolean));
+const ciorne = new Map();
+const EVENIMENT = { asteptare: 'a pus taskul în aşteptare', reluat: 'a reluat taskul', facut: 'a bifat taskul făcut', redeschis: 'a redeschis taskul' };
+const cuConversatie = t => t.pentru !== t.creat_de;
+
+function fir(t) {
+  const mesaje = t.mesaje.map(m => m.eveniment
+    ? `<div class="ev">${esc(m.autor_nume)} ${EVENIMENT[m.eveniment] ?? m.eveniment}${m.text ? `: „${esc(m.text)}”` : ''} · ${dataOra(m.creat_la)}</div>`
+    : `<div class="msg${m.autor === eu.id ? ' eu' : ''}"><div class="cap">${esc(m.autor_nume)} · ${dataOra(m.creat_la)}</div>
+        <div class="txt">${esc(m.text)}</div></div>`).join('');
+  return `<div class="fir">${mesaje || '<div class="gol">Niciun răspuns încă.</div>'}
+    <form class="raspunde"><textarea rows="1" maxlength="2000" placeholder="Scrie un răspuns… (Ctrl+Enter trimite)">${esc(ciorne.get(t.id) ?? '')}</textarea>
+      <button class="verde" type="submit">Trimite</button></form></div>`;
+}
+
 function randTask(t) {
   const facut = !!t.facut_la;
-  const intarziat = !facut && t.scadenta && utc(t.scadenta) <= Date.now();
+  const asteapta = !facut && !!t.in_asteptare_la;
+  const intarziat = !facut && !asteapta && t.scadenta && utc(t.scadenta) <= Date.now();
+  const deschis = cuConversatie(t) && deschise.has(t.id);
   const cine = t.pentru !== eu.id ? `pentru <b>${esc(t.pentru_nume)}</b>` : t.creat_de !== eu.id ? `de la <b>${esc(t.creat_de_nume)}</b>` : '';
   const info = [
+    asteapta && `<span class="pauza">⏸ în aşteptare din ${dataOra(t.in_asteptare_la)}</span>`,
     t.scadenta && `<span class="ora">⏰ ${dataOra(t.scadenta)}</span>`,
     cine,
     t.comanda_id && `<a href="/#comanda/${t.comanda_id}">${esc(t.comanda_nr)} · ${esc(t.client_nume)}</a>`,
     facut && `făcut ${dataOra(t.facut_la)}`,
   ].filter(Boolean).join(' · ');
-  return `<div class="task${facut ? ' facut' : ''}${intarziat ? ' intarziat' : ''}" data-id="${t.id}">
+  return `<div class="task${facut ? ' facut' : ''}${asteapta ? ' asteapta' : ''}${intarziat ? ' intarziat' : ''}" data-id="${t.id}">
     <input type="checkbox" class="bifa" title="${facut ? 'Nu e făcut' : 'Făcut'}"${facut ? ' checked' : ''}>
     <div class="corp"><div class="text">${esc(t.text)}</div>${info ? `<div class="info">${info}</div>` : ''}</div>
+    ${cuConversatie(t) ? `<button type="button" class="mic conv" title="Răspunsuri între voi doi">💬 ${deschis ? 'Ascunde' : t.mesaje.length || 'Răspunde'}${
+      t.necitite ? `<span class="nou">${t.necitite}</span>` : ''}</button>` : ''}
+    ${facut ? '' : `<button type="button" class="mic asteptare" title="${asteapta ? 'Reminderul revine' : 'Fără reminder până îl reiei'}">${asteapta ? '▶ Reia' : '⏸ Aşteaptă'}</button>`}
     ${facut ? '' : `<input type="datetime-local" class="amana" title="Mută reminderul" value="${pentruInput(t.scadenta)}">`}
     ${t.creat_de === eu.id ? '<button type="button" class="mic rosu-contur sterge">Şterge</button>' : ''}
+    ${deschis ? fir(t) : ''}
   </div>`;
 }
 
@@ -132,8 +174,47 @@ function randeaza() {
     el.querySelector('.bifa').addEventListener('change', e => schimba({ facut: e.target.checked }));
     el.querySelector('.amana')?.addEventListener('change', e => schimba({ scadenta: e.target.value || null }));
     el.querySelector('.sterge')?.addEventListener('click', () => schimba(null, 'Ştergi taskul?'));
+    el.querySelector('.asteptare')?.addEventListener('click', async () => {
+      const t = taskuri.find(x => x.id === id);
+      if (t.in_asteptare_la) return schimba({ asteptare: false });
+      const motiv = await cereText('Pui taskul în aşteptare — nu mai vine reminderul până îl reiei.\n\nDe ce aştepţi? (opţional; apare în conversaţie)',
+        { trimite: 'Pune în aşteptare', loc: 'ex. aştept avansul de la client', min: 0 });
+      if (motiv !== null) schimba({ asteptare: true, motiv });
+    });
+    el.querySelector('.conv')?.addEventListener('click', () => {
+      deschise.has(id) ? deschise.delete(id) : deschise.add(id);
+      randeaza();
+      marcheazaCitite();
+      if (deschise.has(id)) document.querySelector(`.task[data-id="${id}"] .fir textarea`)?.focus();
+    });
+    const form = el.querySelector('.raspunde');
+    if (!form) return;
+    const camp = form.querySelector('textarea');
+    camp.addEventListener('input', () => ciorne.set(id, camp.value));
+    camp.addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) form.requestSubmit(); });
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      if (!camp.value.trim()) return;
+      const r = await api(`/api/taskuri/${id}/raspuns`, { method: 'POST', body: JSON.stringify({ text: camp.value }) });
+      if (r && !r.ok) return alerta(await eroareDin(r));
+      ciorne.delete(id);
+      camp.blur();   // altfel actualizarea live aşteaptă să ieşi din câmp
+      await incarca();
+      document.querySelector(`.task[data-id="${id}"] .fir textarea`)?.focus();
+    });
   });
 }
+
+// ce a scris celălalt într-o conversaţie deschisă = citit (insigna din meniu scade)
+async function marcheazaCitite() {
+  if (document.visibilityState !== 'visible') return;
+  const de = taskuri.filter(t => t.necitite && deschise.has(t.id));
+  if (!de.length) return;
+  await Promise.all(de.map(t => api(`/api/taskuri/${t.id}/citit`, { method: 'POST' })));
+  de.forEach(t => { t.necitite = 0; document.querySelector(`.task[data-id="${t.id}"] .conv .nou`)?.remove(); });   // fără re-randare: nu ia focusul
+  window.verificaTaskuri?.();
+}
+document.addEventListener('visibilitychange', marcheazaCitite);
 
 async function incarca() {
   const r = await api('/api/taskuri');
@@ -143,6 +224,7 @@ async function incarca() {
   $('pentru').innerHTML = utilizatori.map(u => `<option value="${u.id}">${esc(u.nume)}${u.id === eu.id ? ' (eu)' : ''}</option>`).join('');
   $('pentru').value = ales;
   randeaza();
+  marcheazaCitite();
 }
 
 // comanda de care se leagă taskul nou (din „+ Task" de pe comandă)
@@ -203,6 +285,7 @@ document.addEventListener('focusout', () => { if (deReimprospatat) setTimeout(re
   arataNotificari();
   arataComanda();
   await incarca();
+  document.querySelector('.fir')?.scrollIntoView({ block: 'center' });   // venit cu ?task=
   urmareste(reimprospateaza);
 })();
 </script>

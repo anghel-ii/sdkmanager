@@ -40,6 +40,7 @@
 .ct-info { display: block; font-size: 12px; color: var(--text-dim); margin-top: 2px; }
 .ct-info a { color: var(--accent); }
 .ct-lista li.tarziu .ct-info { color: #e8907f; }
+.ct-info a.ct-nou { color: #e8907f; font-weight: 600; }
 .ct-gol { margin: 6px 0 0; font-size: 13px; color: var(--text-dim); }
 body.ui-nou #taburiSus, body.ui-nou #continut { max-width: 1680px; }
 body.ui-nou #taburiSus { padding: 18px 24px 0; container: tablou / inline-size; }

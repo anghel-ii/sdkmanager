@@ -421,8 +421,13 @@
   async function verificaTaskuri() {
     const r = await fetch('/api/taskuri/scadente').catch(() => null);
     if (!r?.ok) return;
-    const { taskuri } = await r.json();
-    document.querySelectorAll('#nrTaskuri').forEach(x => { x.textContent = taskuri.length || ''; });
+    const { taskuri, necitite = 0 } = await r.json();
+    // insigna = ajunse la reminder + răspunsuri necitite în conversaţiile taskurilor
+    document.querySelectorAll('#nrTaskuri').forEach(x => {
+      x.textContent = taskuri.length + necitite || '';
+      x.title = [taskuri.length && `${taskuri.length} ajunse la ora reminderului`, necitite && `${necitite} răspunsuri necitite`]
+        .filter(Boolean).join(', ');
+    });
     const vechi = anuntate();
     const chei = taskuri.map(t => `${t.id}@${t.scadenta}`);
     try { localStorage.setItem('taskuriAnuntate', JSON.stringify(chei)); } catch { /* rămâne anuntateAici */ }
@@ -433,6 +438,9 @@
     });
   }
   window.verificaTaskuri = verificaTaskuri;   // pagina Taskuri şi cardul de pe Acasă o cheamă după o schimbare
+  // un răspuns nou într-un task se vede în insignă imediat, nu abia la următorul minut
+  let amanaTaskuri = null;
+  window.addEventListener('live:schimbare', () => { clearTimeout(amanaTaskuri); amanaTaskuri = setTimeout(verificaTaskuri, 250); });
 
   const el = document.getElementById('bara');
   if (el) window.puneBara(el);

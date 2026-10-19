@@ -1,12 +1,16 @@
 const { db, ACUM } = require('./db.js');
 const { json, eroare, corpJson } = require('./http.js');
-const { anunta } = require('./evenimente.js');
+const { anunta, anuntaUtilizator } = require('./evenimente.js');
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  TASKURI + REMINDERE (userul, 2026-10-08). Un task e dat cuiva dintre
 //  utilizatori (îl vede el şi cel care l-a creat), opţional legat de o comandă,
 //  cu o scadenţă la care apare notificarea. Notificarea o face browserul:
 //  bara.js întreabă din minut în minut /api/taskuri/scadente (web/taskuri).
+//  Fiecare task are o mini-conversaţie (userul, 2026-10-15) între cei doi: răspunsuri
+//  + ce s-a întâmplat (pus în aşteptare, reluat, făcut). Ce scrie unul e „necitit” la
+//  celălalt până deschide conversaţia — numărul intră în insigna „Taskuri” din meniu.
+//  Un task în aşteptare nu mai dă reminder până se reia.
 // ═══════════════════════════════════════════════════════════════════════════
 
 // „2026-10-09T09:00" din <input type=datetime-local> = ora ROMÂNIEI (oricare ar fi
@@ -23,25 +27,38 @@ function dinOraRomaniei(t) {
   return new Date(utc).toISOString().slice(0, 19).replace('T', ' ');
 }
 
-const CAMPURI = `t.id, t.text, t.scadenta, t.pentru, t.creat_de, t.comanda_id, t.creat_la, t.facut_la,
+const CAMPURI = `t.id, t.text, t.scadenta, t.pentru, t.creat_de, t.comanda_id, t.creat_la, t.facut_la, t.in_asteptare_la,
   up.nume AS pentru_nume, uc.nume AS creat_de_nume, COALESCE(c.oferta_nr, c.numar) AS comanda_nr, c.client_nume`;
 const DIN = `FROM task t JOIN utilizator up ON up.id = t.pentru JOIN utilizator uc ON uc.id = t.creat_de
   LEFT JOIN comanda c ON c.id = t.comanda_id`;
 
-// Ale mele (date mie sau de mine altora): cele nefăcute + cele făcute în ultimele 14 zile.
+// Ale mele (date mie sau de mine altora): cele nefăcute + cele făcute în ultimele 14 zile, cu conversaţia lor.
+const ALE_MELE = `(t.pentru = ? OR t.creat_de = ?) AND (t.facut_la IS NULL OR t.facut_la > datetime(${ACUM()}, '-14 days'))`;
 function lista(ctx) {
   const eu = ctx.utilizator.id;
-  json(ctx.res, 200, {
-    taskuri: db().prepare(`SELECT ${CAMPURI} ${DIN} WHERE (t.pentru = ? OR t.creat_de = ?)
-      AND (t.facut_la IS NULL OR t.facut_la > datetime(${ACUM()}, '-14 days'))
-      ORDER BY t.facut_la IS NOT NULL, t.scadenta IS NULL, t.scadenta, t.id`).all(eu, eu),
-    utilizatori: db().prepare('SELECT id, nume FROM utilizator WHERE activ = 1 ORDER BY nume').all(),
-  });
+  const taskuri = db().prepare(`SELECT ${CAMPURI} ${DIN} WHERE ${ALE_MELE}
+    ORDER BY t.facut_la IS NOT NULL, t.scadenta IS NULL, t.scadenta, t.id`).all(eu, eu);
+  const mesaje = Map.groupBy(db().prepare(`SELECT m.id, m.task_id, m.autor, u.nume AS autor_nume, m.text, m.eveniment,
+      m.creat_la, m.citit FROM task_mesaj m JOIN utilizator u ON u.id = m.autor JOIN task t ON t.id = m.task_id
+    WHERE ${ALE_MELE} ORDER BY m.creat_la, m.id`).all(eu, eu), m => m.task_id);
+  for (const t of taskuri) {
+    t.mesaje = mesaje.get(t.id) ?? [];
+    t.necitite = t.mesaje.filter(m => m.autor !== eu && !m.citit).length;
+  }
+  json(ctx.res, 200, { taskuri, utilizatori: db().prepare('SELECT id, nume FROM utilizator WHERE activ = 1 ORDER BY nume').all() });
 }
 
-// Pt. bara de sus: ale mele, nefăcute, ajunse la scadenţă.
-const scadente = ctx => json(ctx.res, 200, { taskuri: db().prepare(`SELECT ${CAMPURI} ${DIN}
-  WHERE t.pentru = ? AND t.facut_la IS NULL AND t.scadenta <= ${ACUM()} ORDER BY t.scadenta`).all(ctx.utilizator.id) });
+// Pt. bara de sus: ale mele, nefăcute, ajunse la scadenţă (nu şi cele în aşteptare) + câte răspunsuri n-am citit.
+const scadente = ctx => json(ctx.res, 200, {
+  taskuri: db().prepare(`SELECT ${CAMPURI} ${DIN} WHERE t.pentru = ? AND t.facut_la IS NULL AND t.in_asteptare_la IS NULL
+    AND t.scadenta <= ${ACUM()} ORDER BY t.scadenta`).all(ctx.utilizator.id),
+  necitite: db().prepare(`SELECT COUNT(*) AS n FROM task_mesaj m JOIN task t ON t.id = m.task_id
+    WHERE (t.pentru = ? OR t.creat_de = ?) AND m.autor != ? AND m.citit = 0`).get(...Array(3).fill(ctx.utilizator.id)).n,
+});
+
+// un rând în conversaţia taskului: răspuns (eveniment null) sau ce s-a întâmplat cu el
+const inConversatie = (taskId, autor, eveniment, text = '') => db().prepare(`INSERT INTO task_mesaj
+  (task_id, autor, text, eveniment, creat_la) VALUES (?, ?, ?, ?, ${ACUM()})`).run(taskId, autor, text, eveniment);
 
 // text, pentru, scadenta, comanda_id — validate; întoarce { campuri } sau { eroare }
 function citeste(corp, nou) {
@@ -85,10 +102,38 @@ async function modifica(ctx) {
   const { campuri: c, eroare: e } = citeste(corp, false);
   if (e) return eroare(ctx.res, 400, e);
   const set = Object.keys(c).map(k => `${k} = ?`);
-  if ('facut' in corp) set.push(`facut_la = ${corp.facut ? ACUM() : 'NULL'}`);
-  if (!set.length) return eroare(ctx.res, 400, 'Nimic de modificat.');
+  // făcut / în aşteptare: doar când chiar se schimbă — fiecare schimbare apare şi în conversaţie
+  const facut = 'facut' in corp && !!corp.facut !== !!t.facut_la ? !!corp.facut : null;
+  const asteapta = 'asteptare' in corp && !!corp.asteptare !== !!t.in_asteptare_la ? !!corp.asteptare : null;
+  if (facut !== null) set.push(`facut_la = ${facut ? ACUM() : 'NULL'}`);
+  // făcut = nu mai aşteaptă (fără „reluat” în conversaţie — „făcut” spune tot)
+  if (asteapta !== null || (facut && t.in_asteptare_la)) set.push(`in_asteptare_la = ${asteapta ? ACUM() : 'NULL'}`);
+  if (!set.length) return 'facut' in corp || 'asteptare' in corp ? json(ctx.res, 200, { ok: true }) : eroare(ctx.res, 400, 'Nimic de modificat.');
   db().prepare(`UPDATE task SET ${set.join(', ')} WHERE id = ?`).run(...Object.values(c), t.id);
+  if (facut !== null) inConversatie(t.id, ctx.utilizator.id, facut ? 'facut' : 'redeschis');
+  if (asteapta !== null) inConversatie(t.id, ctx.utilizator.id, asteapta ? 'asteptare' : 'reluat',
+    String(corp.motiv ?? '').trim().slice(0, 500));
   anunta();
+  json(ctx.res, 200, { ok: true });
+}
+
+// răspuns în conversaţia taskului — oricare dintre cei doi
+async function raspunde(ctx) {
+  const t = alMeu(ctx);
+  if (!t) return eroare(ctx.res, 404, 'Task inexistent.');
+  const text = String((await corpJson(ctx.req)).text ?? '').trim().slice(0, 2000);
+  if (!text) return eroare(ctx.res, 400, 'Scrie răspunsul.');
+  inConversatie(t.id, ctx.utilizator.id, null, text);
+  anunta();
+  json(ctx.res, 201, { ok: true });
+}
+
+// am deschis conversaţia: ce a scris celălalt e citit (insigna din meniu scade, şi în celelalte taburi)
+function citit(ctx) {
+  const t = alMeu(ctx);
+  if (!t) return eroare(ctx.res, 404, 'Task inexistent.');
+  const r = db().prepare('UPDATE task_mesaj SET citit = 1 WHERE task_id = ? AND autor != ? AND citit = 0').run(t.id, ctx.utilizator.id);
+  if (r.changes) anuntaUtilizator(ctx.utilizator.id);
   json(ctx.res, 200, { ok: true });
 }
 
@@ -109,5 +154,7 @@ module.exports = {
     ['POST',   '/api/taskuri',          { handler: creeaza }],
     ['PATCH',  '/api/taskuri/:id',      { handler: modifica }],
     ['DELETE', '/api/taskuri/:id',      { handler: sterge }],
+    ['POST',   '/api/taskuri/:id/raspuns', { handler: raspunde }],
+    ['POST',   '/api/taskuri/:id/citit',   { handler: citit }],
   ],
 };

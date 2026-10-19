@@ -490,7 +490,7 @@ async function incarcaTaskuri() {
   if (!r?.ok) { el.hidden = true; return; }
   const ale = (await r.json()).taskuri.filter(t => t.pentru === eu.id && !t.facut_la);
   const acum = Date.now();
-  const tarziu = t => t.scadenta && new Date(t.scadenta.replace(' ', 'T') + 'Z') <= acum;
+  const tarziu = t => !t.in_asteptare_la && t.scadenta && new Date(t.scadenta.replace(' ', 'T') + 'Z') <= acum;
   el.hidden = false;
   el.innerHTML = `
     <div class="ct-cap"><b>Taskurile mele</b>${ale.length ? `<span class="insigna-num">${ale.length}</span>` : ''}
@@ -499,7 +499,9 @@ async function incarcaTaskuri() {
       <li class="${tarziu(t) ? 'tarziu' : ''}" data-id="${t.id}">
         <input type="checkbox" title="Făcut">
         <div><span class="ct-text">${esc(t.text)}</span>
-          <span class="ct-info">${[t.scadenta && `⏰ ${dataOra(t.scadenta)}`, t.creat_de !== t.pentru && `de la ${esc(t.creat_de_nume)}`,
+          <span class="ct-info">${[t.in_asteptare_la && '⏸ în aşteptare', t.scadenta && `⏰ ${dataOra(t.scadenta)}`,
+            t.creat_de !== t.pentru && `de la ${esc(t.creat_de_nume)}`,
+            t.necitite && `<a class="ct-nou" href="/taskuri?task=${t.id}">💬 ${t.necitite} ${t.necitite === 1 ? 'răspuns nou' : 'răspunsuri noi'}</a>`,
             t.comanda_id && `<a href="#comanda/${t.comanda_id}">${esc(t.comanda_nr)} · ${esc(t.client_nume)}</a>`].filter(Boolean).join(' · ')}</span></div>
       </li>`).join('')}</ul>${ale.length > ARATA_TASKURI ? `<a class="ct-mai" href="/taskuri">încă ${ale.length - ARATA_TASKURI} →</a>` : ''}`
     : '<p class="ct-gol">Nimic de făcut.</p>'}`;
