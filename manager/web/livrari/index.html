@@ -66,6 +66,7 @@
             background: #1f6fd1; color: #fff; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.5); }
   .marcaj.gri { background: #6b7280; width: 18px; height: 18px; font-size: 0; }
   .marcaj.plecare { background: #237a46; }
+  .marcaj.demo { background: #ff9d2e; color: #2a1600; }   /* comandă din demo */
   /* harta de pe foaia de livrare: lăţimea unei foi A4, culorile reale */
   .harta-tipar { width: 680px; height: 560px; margin-top: 12px; break-inside: avoid; }
   .harta-tipar .leaflet-tile { filter: none; }
@@ -141,6 +142,8 @@
 //  Adresele se caută pe hartă în browser (Photon / Nominatim, o cerere pe secundă) şi se
 //  ţin minte pe comandă — data viitoare nu se mai caută.
 // ═══════════════════════════════════════════════════════════════════════════
+// comanda din demo (modul demo, „demo" din API) — vezi comun.css
+const DEMO = '<span class="eticheta-demo" title="Făcută sau schimbată în modul demo — pe bune nu e aşa">DEMO</span>';
 const $ = id => document.getElementById(id);
 const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const lei = n => `${Number(n).toLocaleString('ro-RO', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} lei`;
@@ -223,10 +226,10 @@ function randeazaPlan() {
     <tbody>${v.map(c => {
       const bif = !debifate.has(c.id);
       const nr = bif ? ++k : null;
-      return `<tr data-id="${c.id}" class="${bif ? '' : 'debifat'}">
+      return `<tr data-id="${c.id}" class="${bif ? '' : 'debifat'}${c.demo ? ' demo' : ''}">
         <td class="bifa"><input type="checkbox" class="rand" ${bif ? 'checked' : ''}></td>
         <td class="ordine">${nr ? `<span class="bulina">${nr}</span>` : ''}</td>
-        <td><div class="client">${esc(c.client_nume)}</div>
+        <td><div class="client">${esc(c.client_nume)}${c.demo ? DEMO : ''}</div>
             <div class="mic-dim">${esc(c.client_telefon ?? '')}${c.client_telefon ? ' · ' : ''}<span class="mono">${esc(c.numar)}</span></div></td>
         <td class="produse">${c.produse.map(p => `<div>${esc(p)}</div>`).join('') || '<span class="dim">—</span>'}</td>
         <td>${esc(c.client_adresa ?? '—')}
@@ -302,7 +305,7 @@ function randeazaHarta() {
   L.marker([plecare.lat, plecare.lon], { icon: marcaj('⌂', 'plecare'), title: 'Plecare: ' + plecare.adresa }).addTo(strat);
   pct.push([plecare.lat, plecare.lon]);
   b.forEach((c, k) => {
-    const m = L.marker([c.lat, c.lon], { icon: marcaj(k + 1), draggable: true, title: c.client_nume }).addTo(strat)
+    const m = L.marker([c.lat, c.lon], { icon: marcaj(k + 1, c.demo ? 'demo' : ''), draggable: true, title: c.client_nume + (c.demo ? ' (DEMO)' : '') }).addTo(strat)
       .bindPopup(`<b>${esc(c.client_nume)}</b><br>${esc(c.client_adresa ?? '')}`);
     m.on('dragend', () => salveazaPunct(c, m.getLatLng().lat, m.getLatLng().lng));   // punct greşit → îl muţi
     pct.push([c.lat, c.lon]);
@@ -478,9 +481,9 @@ function cardLivrare(l) {
     </div>
     <table class="lst">
       <thead><tr><th></th><th>Client</th><th>Telefon</th><th>Adresă</th><th>Produse</th><th>De încasat</th></tr></thead>
-      <tbody>${l.comenzi.map((c, k) => `<tr>
+      <tbody>${l.comenzi.map((c, k) => `<tr${c.demo ? ' class="demo"' : ''}>
         <td class="ordine"><span class="bulina">${k + 1}</span></td>
-        <td><div class="client">${esc(c.client_nume)}</div><div class="mic-dim mono">${esc(c.numar)}</div></td>
+        <td><div class="client">${esc(c.client_nume)}${c.demo ? DEMO : ''}</div><div class="mic-dim mono">${esc(c.numar)}</div></td>
         <td>${esc(c.client_telefon ?? '—')}</td>
         <td>${esc(c.client_adresa ?? '—')}${c.judet ? `<div class="mic-dim">${esc(c.judet)}</div>` : ''}</td>
         <td class="produse">${c.produse.map(p => `<div>${esc(p)}</div>`).join('')}</td>
@@ -508,7 +511,7 @@ function tipareste(card, l) {
   const plec = [plecare.lat, plecare.lon], pct = [plec, ...cu.map(([c]) => [c.lat, c.lon]), plec];
   L.polyline(pct, { color: '#1f6fd1', weight: 3 }).addTo(h);
   L.marker(plec, { icon: marcaj('⌂', 'plecare') }).addTo(h);
-  cu.forEach(([c, nr]) => L.marker([c.lat, c.lon], { icon: marcaj(nr) }).addTo(h));
+  cu.forEach(([c, nr]) => L.marker([c.lat, c.lon], { icon: marcaj(nr, c.demo ? 'demo' : '') }).addTo(h));
   h.fitBounds(L.latLngBounds(pct).pad(0.1));
   let gata = false;
   const odata = () => { if (!gata) { gata = true; tipar(); } };

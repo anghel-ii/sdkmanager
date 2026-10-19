@@ -1,4 +1,4 @@
-const { db, tranzactie, ACUM } = require('./db.js');
+const { db, tranzactie, ACUM, comenziDemo } = require('./db.js');
 const { json, eroare, corpJson } = require('./http.js');
 const { anunta } = require('./evenimente.js');
 const { FARA_CERERE } = require('./cereri.js');
@@ -67,7 +67,8 @@ const CAMPURI = `c.id, COALESCE(c.oferta_nr, c.numar) AS numar, c.client_nume, c
 
 function cuDetalii(randuri) {
   const p = produse(randuri.map(r => r.id));
-  return randuri.map(r => ({ ...r, produse: p.get(r.id) ?? [],
+  const demo = comenziDemo();   // în demo: comenzile care nu mai sunt ca pe bune
+  return randuri.map(r => ({ ...r, produse: p.get(r.id) ?? [], ...(demo.has(r.id) && { demo: true }),
     judet: r.judet_ales ?? judetDin(r.client_adresa), judet_recunoscut: !r.judet_ales }));
 }
 

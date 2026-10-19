@@ -144,3 +144,14 @@ html.cu-meniu .panou { overflow-x: auto; }
 
 /* titlul unei secţiuni din pagină (ex. „Ofertă nouă", lista „Oferte 2") */
 .titlu-sectiune { font-size: 18px; font-weight: 650; letter-spacing: -.01em; margin: 26px 2px 12px; }
+
+/* Comenzile DEMO (modul demo — „demo" din API): rând portocaliu + eticheta; şi pe foaia printată */
+.eticheta-demo { display: inline-block; margin-left: 6px; padding: 0 8px; border-radius: 999px; vertical-align: 1px;
+  border: 1px solid rgba(255, 157, 46, .55); background: rgba(255, 157, 46, .14); color: #ffb366;
+  font-size: .72rem; font-weight: 700; letter-spacing: .04em; white-space: nowrap; }
+tr.demo > td { background: rgba(255, 157, 46, .12); }
+tr.demo > td:first-child { box-shadow: inset 3px 0 0 #ff9d2e; }
+@media print {
+  tr.demo > td { background: #ffe3c4 !important; }
+  .eticheta-demo { color: #8a4b00; border-color: #d98a2b; background: #ffe3c4; }
+}

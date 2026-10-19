@@ -1,4 +1,4 @@
-const { db, tranzactie, ACUM } = require('./db.js');
+const { db, tranzactie, ACUM, comenziDemo } = require('./db.js');
 const { json, eroare, corpJson } = require('./http.js');
 const { anunta } = require('./evenimente.js');
 const { FARA_CERERE } = require('./cereri.js');
@@ -69,8 +69,9 @@ function lista(ctx) {
      ${comandate ? 'LIMIT 500' : ''}`).all();
 
   // (comenzile salvate înainte de 2026-09-22 n-au lista sticla, deci nu apar aici)
+  const demo = comenziDemo();   // în demo: comenzile care nu mai sunt ca pe bune
   json(ctx.res, 200, {
-    linii: randuri.map(imbogateste),
+    linii: randuri.map(r => ({ ...imbogateste(r), ...(demo.has(r.comanda_id) && { demo: true }) })),
   });
 }
 

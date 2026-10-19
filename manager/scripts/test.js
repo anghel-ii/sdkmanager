@@ -1238,8 +1238,25 @@ async function main() {
     verifica('după reset, ce se face pe bune ajunge iar până în demo admin',
       inCopiaAdmin(`SELECT observatii FROM comanda WHERE id = ${r2.date.comanda.id}`)[0]?.observatii === 'pe bune, după reset');
     verifica('reface o copie necunoscută → 400', (await cer('POST', '/api/test/reface', { copie: 'x' })).stare === 400);
+    // DEMO şi la livrări / sticlă: o comandă reală programată la livrare sau cu sticla bifată în demo
+    const cand = (await cer('GET', '/api/livrari/candidati')).date.comenzi;
+    const deLivrat = cand.find(c => !c.demo);
+    if (deLivrat) {
+      await cer('POST', '/api/livrari', { data: '2026-12-01', comenzi: [deLivrat.id] });
+      verifica('demo: comanda programată la livrare în demo → DEMO la livrări şi în listă',
+        (await cer('GET', '/api/livrari')).date.livrari.flatMap(l => l.comenzi).find(c => c.id === deLivrat.id)?.demo === true
+        && (await cer('GET', '/api/comenzi?tip=toate')).date.comenzi.find(c => c.id === deLivrat.id)?.demo === true);
+    } else verifica('demo: există o comandă de programat la livrare (pt. testul de mai sus)', false, JSON.stringify(cand));
+    const deSticla = (await cer('GET', '/api/sticla')).date.linii.find(l => !l.demo);
+    if (deSticla) {
+      await cer('POST', '/api/sticla/comanda', { ids: [deSticla.id] });
+      verifica('demo: sticla bifată „comandată" în demo → DEMO la sticlă',
+        (await cer('GET', '/api/sticla?comandate=1')).date.linii.find(l => l.id === deSticla.id)?.demo === true);
+    }
     verifica('există două fişiere de copie', fs.existsSync(process.env.MANAGER_DB.replace(/\.sqlite$/, '-test-admin.sqlite')));
     config.adminInTest = false;
+    verifica('demo: pe bune nimic marcat la livrări / sticlă', !(await cer('GET', '/api/livrari')).date.livrari.flatMap(l => l.comenzi).some(c => c.demo)
+      && !(await cer('GET', '/api/sticla?comandate=1')).date.linii.some(l => l.demo) && !(await cer('GET', '/api/sticla')).date.linii.some(l => l.demo));
   }
 
   console.log('\nReleul spre tabloul de admin de pe Cloudflare (server/releu.js)');

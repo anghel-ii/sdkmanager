@@ -135,9 +135,10 @@ function inchideTest(copie) {
   }
 }
 
-// Comenzile din copia de test care nu mai sunt ca pe bune (userul, 2026-10-19: în locul chenarului,
-// doar ele marcate „demo"): făcute în test, schimbate în test (trecute mai departe, modificate,
-// produse altele) sau cu o cerere de anulare din test. → Set de id-uri; gol în afara testului.
+// Comenzile din copia de test care nu mai sunt ca pe bune (userul, 2026-10-19: marcate „DEMO"
+// peste tot — comenzi, sticlă, livrări): făcute în demo, schimbate în demo (trecute mai departe,
+// modificate, produse altele), cu sticla bifată „comandată", programate la livrare sau cu o
+// cerere de anulare din demo. → Set de id-uri; gol în afara demo-ului.
 // Copia se compară cu baza reală printr-o legătură separată, doar pt. citire (ATTACH).
 function comenziDemo() {
   const copie = _inTest.getStore();
@@ -154,6 +155,12 @@ function comenziDemo() {
     SELECT t.id FROM main.comanda t LEFT JOIN reala.comanda r ON r.id = t.id WHERE r.id IS NULL OR ${difera('comanda')}
     UNION SELECT t.comanda_id FROM main.pozitie t LEFT JOIN reala.pozitie r ON r.id = t.id WHERE r.id IS NULL OR ${difera('pozitie')}
     UNION SELECT r.comanda_id FROM reala.pozitie r LEFT JOIN main.pozitie t ON t.id = r.id WHERE t.id IS NULL
+    UNION SELECT p.comanda_id FROM main.pozitie_linie t JOIN main.pozitie p ON p.id = t.pozitie_id
+            JOIN reala.pozitie_linie r ON r.id = t.id WHERE t.comandat_la IS NOT r.comandat_la
+    UNION SELECT t.comanda_id FROM main.livrare_comanda t LEFT JOIN reala.livrare_comanda r
+            ON r.comanda_id = t.comanda_id AND r.livrare_id = t.livrare_id WHERE r.comanda_id IS NULL
+    UNION SELECT r.comanda_id FROM reala.livrare_comanda r LEFT JOIN main.livrare_comanda t
+            ON t.comanda_id = r.comanda_id AND t.livrare_id = r.livrare_id WHERE t.comanda_id IS NULL
     UNION SELECT comanda_id FROM main.cerere WHERE id >= ${ID_TEST}`).all().map(r => Object.values(r)[0]));
 }
 
