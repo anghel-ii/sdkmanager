@@ -1,5 +1,5 @@
 // Produsele pentru „Ofertă cu amănuntul" (amanunt.html), din exportul NeoManager.
-//   node scripts/amanunt.mjs ["../baza de date completa.xlsx"]
+//   node scripts/amanunt.mjs ["../materiale/baza de date completa.xlsx"]
 // Scrie js/catalog/amanunt.json — se rulează din nou la fiecare export nou.
 //
 // De vânzare = mărfurile (cont 371 — cumpărate ca să fie revândute) + din ce
@@ -32,7 +32,7 @@ function lungimeBara(denumire) {
   return null;
 }
 
-const fisier = process.argv[2] ?? fileURLToPath(new URL('../../baza de date completa.xlsx', import.meta.url));
+const fisier = process.argv[2] ?? fileURLToPath(new URL('../../materiale/baza de date completa.xlsx', import.meta.url));
 const [cap, ...randuri] = citesteXlsx(fisier);
 const col = nume => { const i = cap.indexOf(nume); if (i < 0) throw new Error(`Lipseşte coloana „${nume}"`); return i; };
 const [CAT, GRUPA, DEN, COD, UM, PRET] = ['Categorie', 'Grupa', 'Denumire', 'Cod', 'UM', 'Pret vanzare'].map(col);

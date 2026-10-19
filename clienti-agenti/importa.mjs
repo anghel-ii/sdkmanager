@@ -1,5 +1,5 @@
 // Import INIŢIAL al bazei de clienţi din Excel pe Cloudflare:
-//   node importa.mjs "Livrare_MASINA_completat.xlsx"
+//   node importa.mjs "../date-clienti/Livrare_MASINA_completat (2).xlsx"
 // O singură dată: refuză dacă baza are deja clienţi — după import, originalul e
 // aici (agenţii modifică), nu în Excel. Managerul îi preia singur.
 import fs from 'node:fs';

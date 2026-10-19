@@ -9,7 +9,7 @@
 //  1. Adresele stricate de Excel la import: „nr. 3-5" ajuns „nr. 03-mai",
 //     „1 Decembrie 1918" ajuns „01-dec-18" → la loc. Fiecare reparaţie creşte
 //     versiunea clientului, ca managerul s-o preia.
-//  2. ../adrese-de-completat.csv (Excel, „;") — clienţii a căror adresă nu e bună
+//  2. ../date-clienti/adrese-de-completat.csv (Excel, „;") — clienţii a căror adresă nu e bună
 //     pentru curier / hartă, pe agenţi, cu ce lipseşte. Judeţul + localitatea se
 //     verifică pe lista SIRUTA, la fel ca în manager (manager/web/adresa.js).
 // ═══════════════════════════════════════════════════════════════════════════
@@ -90,7 +90,8 @@ for (const t of ['fără judeţ', 'judeţ greşit', 'fără localitate', 'locali
 
 const csv = v => /[;"\n]/.test(String(v ?? '')) ? `"${String(v).replace(/"/g, '""')}"` : String(v ?? '');
 probleme.sort((a, b) => String(a.agent ?? '').localeCompare(String(b.agent ?? ''), 'ro') || a.nume.localeCompare(b.nume, 'ro'));
-const raport = `${aici}../adrese-de-completat.csv`;
+const raport = `${aici}../date-clienti/adrese-de-completat.csv`;
+fs.mkdirSync(`${aici}../date-clienti`, { recursive: true });
 fs.writeFileSync(raport, '﻿' + [['Agent', 'Client', 'CUI', 'Telefon', 'Judeţ', 'Localitate', 'Adresa (stradă, nr.)', 'Ce lipseşte / e greşit'],
   ...probleme.map(p => [p.agent || '—', p.nume, p.cui, p.telefon_delegat || p.telefon_administrator, p.judet, p.localitate, p.strada, p.ce])]
   .map(r => r.map(csv).join(';')).join('\r\n'));
