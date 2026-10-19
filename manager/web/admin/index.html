@@ -123,8 +123,8 @@
       <!-- Conturi: utilizatorul, rolul şi o parolă INIŢIALĂ pe care i-o spui colegului -->
       <section class="card">
         <div class="card-cap"><h2>Conturi</h2><span class="spatiu"></span>
-          <button class="mic" data-reface="colegi" type="button" title="Copia comună pe care lucrează colegii puşi în modul test, luată din nou din baza reală">Reface demo colegi</button>
-          <button class="mic" data-reface="admin" type="button" title="Copia ta (adminul e mereu în demo pe comenzi), luată din nou din baza reală">Reface demo-ul meu</button>
+          <button class="mic" data-reface="colegi" type="button" title="Demo-ul colegilor puşi în modul demo devine exact ca baza reală">Resetează demo birou</button>
+          <button class="mic" data-reface="admin" type="button" title="Demo-ul tău devine exact ca demo-ul biroului">Resetează demo admin</button>
           <button class="mic primar" id="arataContNou" type="button">+ Cont nou</button></div>
         <form id="formNou" autocomplete="off" hidden>
           <div class="cont-nou">
@@ -358,12 +358,12 @@ async function incarca() {
   });
 }
 
-// două copii de test (2026-10-19): a colegilor puşi în modul test şi a adminului — fiecare se reface separat
+// lanţul de demo (2026-10-19): baza reală → demo birou → demo admin; fiecare se resetează din cel dinainte
 document.querySelectorAll('[data-reface]').forEach(b => b.addEventListener('click', async () => {
-  const ale = b.dataset.reface === 'admin' ? 'tău (ce ai încercat tu pe comenzi)' : 'colegilor puşi în modul test';
-  if (!(await confirma(`Refaci din baza reală demo-ul ${ale}?\n\nTot ce s-a lucrat în el se pierde.`, 'Reface'))) return;
+  const [ce, din] = b.dataset.reface === 'admin' ? ['demo admin', 'demo birou'] : ['demo birou', 'baza reală'];
+  if (!(await confirma(`Resetezi ${ce}? Devine exact ca ${din}.\n\nTot ce s-a lucrat în ${ce} se pierde.`, 'Resetează'))) return;
   const r = await api('/api/test/reface', { method: 'POST', body: JSON.stringify({ copie: b.dataset.reface }) });
-  if (r) await alerta(r.ok ? `Demo-ul ${ale} e refăcut din baza reală.` : await eroareDin(r));
+  if (r) await alerta(r.ok ? `Gata — ${ce} e acum exact ca ${din}.` : await eroareDin(r));
 }));
 $('arataContNou').addEventListener('click', () => { $('formNou').hidden = !$('formNou').hidden; if (!$('formNou').hidden) $('nouUser').focus(); });
 $('formNou').addEventListener('submit', async e => {

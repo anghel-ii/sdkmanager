@@ -68,10 +68,12 @@ function upgrade(req, socket) {
   socket.on('error', inchide);
 }
 
-// o schimbare făcută într-o copie de test o află doar cei de pe copia aia (cele reale, toţi)
+// o schimbare din demo o află doar cei de pe copia aia şi de mai jos în lanţ (demo birou → şi
+// adminul); cele reale, toţi
 function anunta() {
   const test = copiaCurenta();
-  for (const s of conexiuni.keys()) if (!test || deTest.get(s) === test) trimite(s, { tip: 'schimbare' });
+  const afla = s => !test || deTest.get(s) === test || (test === 'colegi' && deTest.get(s) === 'admin');
+  for (const s of conexiuni.keys()) if (afla(s)) trimite(s, { tip: 'schimbare' });
   if (!test) for (const f of ascultatori) f({ tip: 'schimbare' });
 }
 

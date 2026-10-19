@@ -359,10 +359,21 @@
       const eu = d?.utilizator;
       if (!eu) return;
       radacina.querySelector('#cine').textContent = eu.nume;
-      // modul test (pus de admin; adminul mereu): ce face omul pe comenzi merge pe copia bazei
-      // (server/db.js). Fără chenar pe pagină (userul, 2026-10-19) — doar comenzile din test care
-      // nu mai sunt ca pe bune apar portocalii, cu „DEMO" (pagina comenzilor, „demo" din API).
-      if (eu.mod_test) window.modTest = true;
+      // modul demo: ce face omul pe comenzi merge pe o copie a bazei (server/db.js). Colegii puşi
+      // în demo de admin: chenar portocaliu pe toată pagina + eticheta sus, să fie clar unde sunt.
+      // Adminul (mereu în demo pe comenzi): fără chenar (userul, 2026-10-19). La toţi, comenzile
+      // care nu mai sunt ca pe bune apar portocalii, cu „DEMO" („demo" din API). Fără clicuri pe chenar.
+      if (eu.mod_test) {
+        window.modTest = true;
+        if (eu.rol !== 'admin') {
+          const chenar = document.createElement('div');
+          chenar.style.cssText = 'position:fixed;inset:0;border:3px solid #ff9d2e;pointer-events:none;z-index:1900';
+          chenar.innerHTML = '<span style="position:absolute;left:50%;top:0;transform:translateX(-50%);padding:2px 14px 4px;'
+            + 'border-radius:0 0 9px 9px;background:#ff9d2e;color:#2a1600;font:700 12px Inter,system-ui,sans-serif;letter-spacing:.04em;white-space:nowrap">'
+            + 'MOD DEMO · ce faci aici nu ajunge în baza reală</span>';
+          document.body.appendChild(chenar);
+        }
+      }
       // ciornele (localStorage) nu trec dintr-un mod în altul — o ciornă din test s-ar salva pe bune
       try {
         const mod = eu.mod_test ? '1' : '0';

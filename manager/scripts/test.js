@@ -1213,10 +1213,30 @@ async function main() {
     verifica('admin: comanda reală trecută de el la plată — aşa doar în copia lui',
       inCopiaAdmin(`SELECT tip FROM comanda WHERE id = ${r2.date.comanda.id}`)[0]?.tip === 'plata'
       && inCopie(`SELECT tip FROM comanda WHERE id = ${r2.date.comanda.id}`)[0]?.tip === 'oferta');
-    verifica('admin: vede DEMO doar ce a făcut el', (await cer('GET', '/api/comenzi')).date.comenzi.find(c => c.client_nume === 'Client Admin Test')?.demo === true);
-    verifica('„Reface demo-ul meu" goleşte doar copia adminului', (await cer('POST', '/api/test/reface', { copie: 'admin' })).stare === 200
-      && !inCopiaAdmin("SELECT 1 FROM comanda WHERE client_nume = 'Client Admin Test'").length
-      && inCopie(`SELECT 1 FROM comanda WHERE id = ${r2.date.comanda.id}`).length === 1);
+    verifica('admin: oferta lui apare DEMO', (await cer('GET', '/api/comenzi')).date.comenzi.find(c => c.client_nume === 'Client Admin Test')?.demo === true);
+    // lanţul: ce se face în demo birou ajunge şi în demo admin (invers, nu)
+    const { sincronizeaza } = require('../server/db.js');
+    inTest(() => db2().prepare(`UPDATE comanda SET observatii = 'scris în demo birou' WHERE id = ${r2.date.comanda.id}`).run());
+    sincronizeaza();
+    verifica('lanţ: ce face biroul în demo vede şi adminul',
+      inCopiaAdmin(`SELECT observatii FROM comanda WHERE id = ${r2.date.comanda.id}`)[0]?.observatii === 'scris în demo birou'
+      && pePeBune(`SELECT observatii FROM comanda WHERE id = ${r2.date.comanda.id}`)[0]?.observatii !== 'scris în demo birou');
+    const ofertaAdmin2 = await cer('POST', '/api/comenzi', { client: { nume: 'Client Admin 2' }, ofertaNr: 'MT-A2', pozitii: [pozitie('confortGamma', 'Confort Gamma', 2, 1600)] });
+    verifica('demo admin: id-uri peste 2e9, numere de la 9501', ofertaAdmin2.date.comanda.id >= 2e9 && +ofertaAdmin2.date.comanda.numar.slice(-4) > 9500,
+      JSON.stringify(ofertaAdmin2.date.comanda));
+    verifica('„Resetează demo admin" = demo birou: fără ofertele adminului, cu ce a făcut biroul',
+      (await cer('POST', '/api/test/reface', { copie: 'admin' })).stare === 200
+      && !inCopiaAdmin("SELECT 1 FROM comanda WHERE client_nume LIKE 'Client Admin%'").length
+      && inCopiaAdmin(`SELECT observatii FROM comanda WHERE id = ${r2.date.comanda.id}`)[0]?.observatii === 'scris în demo birou');
+    verifica('„Resetează demo birou" = baza reală (demo admin rămâne până îl resetezi)',
+      (await cer('POST', '/api/test/reface', { copie: 'colegi' })).stare === 200
+      && inCopie(`SELECT observatii FROM comanda WHERE id = ${r2.date.comanda.id}`)[0]?.observatii !== 'scris în demo birou'
+      && inCopiaAdmin(`SELECT observatii FROM comanda WHERE id = ${r2.date.comanda.id}`)[0]?.observatii === 'scris în demo birou');
+    // după resetarea biroului, lanţul merge mai departe (sesiunea adminului e pe copia nouă)
+    db2().prepare(`UPDATE comanda SET observatii = 'pe bune, după reset' WHERE id = ${r2.date.comanda.id}`).run();
+    sincronizeaza();
+    verifica('după reset, ce se face pe bune ajunge iar până în demo admin',
+      inCopiaAdmin(`SELECT observatii FROM comanda WHERE id = ${r2.date.comanda.id}`)[0]?.observatii === 'pe bune, după reset');
     verifica('reface o copie necunoscută → 400', (await cer('POST', '/api/test/reface', { copie: 'x' })).stare === 400);
     verifica('există două fişiere de copie', fs.existsSync(process.env.MANAGER_DB.replace(/\.sqlite$/, '-test-admin.sqlite')));
     config.adminInTest = false;

@@ -62,28 +62,34 @@ function configureaza(d) {
 }
 
 // ── Modul test (userul, 2026-10-14) ──────────────────────────────────────────
-// Utilizatorii bifaţi de admin lucrează pe o COPIE comună a bazei (<baza>-test.sqlite);
-// adminul (mereu în test) are copia LUI, separată (<baza>-test-admin.sqlite — userul,
-// 2026-10-19: ce încearcă el nu vede biroul, şi invers). Ce se face pe bune apare în
-// ambele copii, ce se face în test nu ajunge în baza reală. Cererile din test rulează în
-// inTest(fn, copie), unde db() dă copia. Baza reală ţine câte o sesiune SQLite (lista
-// modificărilor ei) pe copie; sincronizeaza() le aplică după fiecare cerere. La conflict
-// câştigă baza reală, dar doar pe coloanele schimbate pe bune. Rândurile create în test
-// primesc id-uri ≥ ID_TEST, ca să nu se bată cu cele care vin din baza reală.
+// Un lanţ de copii ale bazei (userul, 2026-10-19): baza reală → DEMO BIROU (copia comună a
+// colegilor puşi în test, <baza>-test.sqlite) → DEMO ADMIN (<baza>-test-admin.sqlite).
+// Fiecare copie primeşte tot ce se face în cea dinaintea ei, nimic nu urcă înapoi: ce fac
+// colegii în demo vede şi adminul, ce face adminul nu vede nimeni. Cererile din test rulează
+// în inTest(fn, copie), unde db() dă copia. Sursa fiecărei copii ţine o sesiune SQLite (lista
+// modificărilor ei, inclusiv a celor primite); sincronizeaza() le aplică în ordine, după
+// fiecare cerere. La conflict câştigă sursa, dar doar pe coloanele schimbate acolo. Rândurile
+// create într-o copie primesc id-uri peste pragul ei (birou ≥ 1e9, admin ≥ 2e9), ca să nu se
+// bată cu cele care vin din sursă.
 const _inTest = new AsyncLocalStorage();
 const ID_TEST = 1e9;
 const modTestPosibil = typeof DatabaseSync.prototype.createSession === 'function';   // Node ≥ 22.12
-const COPII = ['colegi', 'admin'];
+const COPII = ['colegi', 'admin'];   // în ordinea lanţului
+const SURSA = { colegi: null, admin: 'colegi' };   // null = baza reală
+const PRAG = { colegi: ID_TEST, admin: 2 * ID_TEST };
 const _copii = new Map();   // copie → { test, brut, sesiune, comparare }
 const caleTest = (copie = 'colegi') => config.db.replace(/(\.sqlite)?$/, copie === 'admin' ? '-test-admin.sqlite' : '-test.sqlite');
 const copiaLui = utilizator => (utilizator?.rol === 'admin' ? 'admin' : 'colegi');
 const inTest = (fn, copie = 'colegi') => _inTest.run(copie, fn);
 const copiaCurenta = () => _inTest.getStore() ?? null;   // null = pe bune
 const esteTest = () => !!copiaCurenta();
+// conexiunea din care îşi ia copia modificările (baza reală sau copia dinainte, deschisă)
+const sursa = copie => (SURSA[copie] ? (copieTest(SURSA[copie]), _copii.get(SURSA[copie]).brut) : _db);
 
 function copieTest(copie = 'colegi') {
   const c = _copii.get(copie);
   if (c) return c.test;
+  if (SURSA[copie]) copieTest(SURSA[copie]);   // întâi copia din care se hrăneşte
   if (fs.existsSync(caleTest(copie))) {
     const d = new DatabaseSync(caleTest(copie));
     const versiune = x => x.prepare('PRAGMA user_version').get().user_version;
@@ -93,29 +99,37 @@ function copieTest(copie = 'colegi') {
   return refaTest(copie);
 }
 
-// Copie nouă din baza reală — tot ce s-a lucrat în ea se pierde.
+// Copia luată din nou din sursa ei — demo birou = baza reală, demo admin = demo birou;
+// tot ce s-a lucrat în ea se pierde.
 function refaTest(copie = 'colegi') {
   if (!modTestPosibil) throw Object.assign(new Error('Modul test cere Node 22.12 sau mai nou pe server.'), { cod: 409 });
+  sincronizeaza();   // sursa la zi înainte de copiere
+  const din = sursa(copie);
   inchideTest(copie);
   // pe Windows fişierul poate fi încă ţinut câteva clipe (serverul vechi care se opreşte, antivirusul) — mai încearcă
   for (const f of ['', '-wal', '-shm']) fs.rmSync(caleTest(copie) + f, { force: true, maxRetries: 10, retryDelay: 300 });
-  _db.exec(`VACUUM INTO '${caleTest(copie).replace(/'/g, "''")}'`);
+  din.exec(`VACUUM INTO '${caleTest(copie).replace(/'/g, "''")}'`);
   return pornesteTest(copie, new DatabaseSync(caleTest(copie)));
 }
 
-// Sincron, fără nimic între copie şi sesiune: nicio modificare reală nu scapă.
+// Sincron, fără nimic între copie şi sesiune: nicio modificare din sursă nu scapă.
 function pornesteTest(copie, d) {
-  const c = { brut: configureaza(d), test: cuIdTest(d), sesiune: _db.createSession(), comparare: null };
+  const c = { brut: configureaza(d), test: cuIdTest(d, PRAG[copie]), sesiune: sursa(copie).createSession(), comparare: null };
   _copii.set(copie, c);
+  // copiile care se hrănesc din asta (demo admin din demo birou) îşi iau sesiunea pe conexiunea nouă
+  for (const [nume, urm] of _copii) if (SURSA[nume] === copie && !urm.sesiune) urm.sesiune = c.brut.createSession();
   return c.test;
 }
 
-// fără argument: toate copiile (la oprirea serverului)
+// fără argument: toate copiile (la oprirea serverului). Sesiunile copiilor care se hrănesc
+// din cea închisă se închid şi ele (stau pe conexiunea ei) — se refac la redeschidere.
 function inchideTest(copie) {
-  for (const [nume, c] of _copii) {
-    if (copie && nume !== copie) continue;
+  for (const nume of [...COPII].reverse()) {
+    const c = _copii.get(nume);
+    if (!c || (copie && nume !== copie)) continue;
+    for (const [alta, urm] of _copii) if (SURSA[alta] === nume) { urm.sesiune?.close(); urm.sesiune = null; }
     c.comparare?.close();
-    c.sesiune.close();
+    c.sesiune?.close();
     c.brut.close();
     _copii.delete(nume);
   }
@@ -143,28 +157,31 @@ function comenziDemo() {
     UNION SELECT comanda_id FROM main.cerere WHERE id >= ${ID_TEST}`).all().map(r => Object.values(r)[0]));
 }
 
+// în ordinea lanţului: real → demo birou, apoi demo birou (cu ce tocmai a primit) → demo admin
 function sincronizeaza() {
-  for (const c of _copii.values()) {
+  for (const nume of COPII) {
+    const c = _copii.get(nume);
+    if (!c?.sesiune) continue;
     try {
       const schimbari = c.sesiune.changeset();
       c.sesiune.close();
-      c.sesiune = _db.createSession();
+      c.sesiune = sursa(nume).createSession();
       if (schimbari.length) c.brut.applyChangeset(schimbari, {
         filter: tabel => tabel !== 'sesiune',
         onConflict: tip => tip === SQL.SQLITE_CHANGESET_DATA || tip === SQL.SQLITE_CHANGESET_CONFLICT
           ? SQL.SQLITE_CHANGESET_REPLACE : SQL.SQLITE_CHANGESET_OMIT,
       });
     } catch (e) {
-      console.error('Modul test: sincronizarea copiei a eşuat:', e.message);
+      console.error(`Modul test: sincronizarea copiei „${nume}" a eşuat:`, e.message);
     }
   }
 }
 
-// Copia, cu INSERT-urile mutate peste ID_TEST: SQLite dă max(id)+1, deci după primul
-// rând mutat într-un tabel restul vin singure peste ID_TEST. (Rândul tocmai inserat n-are
+// Copia, cu INSERT-urile mutate peste pragul ei (PRAG): SQLite dă max(id)+1, deci după primul
+// rând mutat într-un tabel restul vin singure peste prag. (Rândul tocmai inserat n-are
 // încă copii care să-l refere; INSERT ... ON CONFLICT se lasă în pace — acolo
 // lastInsertRowid poate fi al altui rând.)
-function cuIdTest(d) {
+function cuIdTest(d, prag) {
   const cuId = new Map();
   const areId = t => {
     if (!cuId.has(t)) {
@@ -181,9 +198,9 @@ function cuIdTest(d) {
     return new Proxy(st, { get: (_, k) => k !== 'run' ? leaga(st, k) : (...a) => {
       const r = st.run(...a);
       const id = Number(r.lastInsertRowid);
-      if (r.changes !== 1 || id >= ID_TEST) return r;
-      d.prepare(`UPDATE ${t} SET id = ? WHERE id = ?`).run(ID_TEST + id, id);
-      return { ...r, lastInsertRowid: ID_TEST + id };
+      if (r.changes !== 1 || id >= prag) return r;
+      d.prepare(`UPDATE ${t} SET id = ? WHERE id = ?`).run(prag + id, id);
+      return { ...r, lastInsertRowid: prag + id };
     } });
   } });
 }
