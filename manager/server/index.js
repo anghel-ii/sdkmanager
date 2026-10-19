@@ -81,9 +81,10 @@ async function trateaza(req, res) {
     };
     // Modul test: cererea merge pe copia bazei (server/db.js, „Modul test"). Contul
     // (parola, sesiunea) şi tichetele către admin rămân pe bune.
-    // adminul e mereu în test (auth.js), dar administrarea (rutele doar pt. admin) şi clienţii merg pe bune — nu ating comenzile
+    // adminul e mereu în test (auth.js), dar administrarea (rutele doar pt. admin), clienţii şi cererile de anulare
+    // (lista, aprobarea, respingerea — userul, 2026-10-19: aprobate doar în demo, reapăreau la fiecare update) merg pe bune
     const peBune = PE_BUNE.some(p => cale === p || cale.startsWith(p + '/'))
-      || (utilizator?.rol === 'admin' && ([].concat(spec.rol ?? []).join() === 'admin' || cale.startsWith('/api/clienti')));
+      || (utilizator?.rol === 'admin' && ([].concat(spec.rol ?? []).join() === 'admin' || cale.startsWith('/api/clienti') || cale.startsWith('/api/cereri')));
     // o cerere retrimisă de pagină (aceeaşi X-Cheie-Cerere) nu se execută de două ori — server/repetare.js
     return repetare.oSinguraData(req, res, utilizator?.id, async () => {
       if (utilizator?.mod_test && !peBune) {

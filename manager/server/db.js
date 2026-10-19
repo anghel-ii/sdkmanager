@@ -83,6 +83,7 @@ const copiaLui = utilizator => (utilizator?.rol === 'admin' ? 'admin' : 'colegi'
 const inTest = (fn, copie = 'colegi') => _inTest.run(copie, fn);
 const copiaCurenta = () => _inTest.getStore() ?? null;   // null = pe bune
 const esteTest = () => !!copiaCurenta();
+const peBune = fn => _inTest.exit(fn);   // ceva citit din baza reală, chiar dintr-o cerere din demo
 // conexiunea din care îşi ia copia modificările (baza reală sau copia dinainte, deschisă)
 const sursa = copie => (SURSA[copie] ? (copieTest(SURSA[copie]), _copii.get(SURSA[copie]).brut) : _db);
 
@@ -550,4 +551,4 @@ function inchide() {
 }
 
 module.exports = { db, deschide, inchide, backup, ultimulBackup, tranzactie, hashSesiuniInClar, roluriNoi, ACUM,
-  inTest, esteTest, copiaLui, copiaCurenta, sincronizeaza, copieTest, refaTest, modTestPosibil, comenziDemo, COPII };
+  inTest, esteTest, peBune, copiaLui, copiaCurenta, sincronizeaza, copieTest, refaTest, modTestPosibil, comenziDemo, COPII };

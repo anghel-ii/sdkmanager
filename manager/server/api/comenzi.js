@@ -1,5 +1,5 @@
 const { json, eroare, corpJson } = require('../http.js');
-const { db, tranzactie, ACUM, copiaCurenta, comenziDemo } = require('../db.js');
+const { db, tranzactie, ACUM, copiaCurenta, comenziDemo, peBune } = require('../db.js');
 const { acumMs } = require('../ora.js');
 const { config } = require('../config.js');
 const { anunta, anuntaUtilizator } = require('../evenimente.js');
@@ -606,7 +606,9 @@ const sumar = ctx => json(ctx.res, 200, {
 `).get(),
   sticla: require('../sticla.js').sumarSticla(),   // bucăţi de sticlă de comandat
   deAprobat: require('../clienti.js').nrDeAprobat(), // clienţi noi / modificări de la agenţi, de aprobat
-  cereri: ['admin', 'conducere'].includes(ctx.utilizator.rol) ? require('../cereri.js').nrDeschise() : 0,   // anulări de decis
+  // anulări de decis — la admin cele reale (le decide pe bune, server/index.js), deşi în rest e în demo
+  cereri: ctx.utilizator.rol === 'admin' ? peBune(() => require('../cereri.js').nrDeschise())
+    : ctx.utilizator.rol === 'conducere' ? require('../cereri.js').nrDeschise() : 0,
   tichete: require('../tichete.js').deVazut(ctx.utilizator),   // admin: tichete noi; ceilalţi: răspunsuri nevăzute
 });
 

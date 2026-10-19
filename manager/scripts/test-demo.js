@@ -222,10 +222,32 @@ async function main() {
     const l = (await cer('admin', 'GET', '/api/livrari')).date.livrari[0];
     return cer('admin', 'DELETE', `/api/livrari/${l.id}`);
   }, { birou: NIMIC, admin: C });
-  await actiune('admin: aprobă cererea de anulare a anei (în demo-ul lui)', async () => {
-    const c = (await cer('admin', 'GET', '/api/cereri')).date.cereri.find(x => x.comanda_id === idR1 && x.stare === 'deschisa');
+  // cererile de anulare: adminul le vede şi le decide PE BUNE (2026-10-19 — aprobate doar în demo, reapăreau)
+  verifica('admin: nu vede cererea de anulare făcută de ana în demo', !(await cer('admin', 'GET', '/api/cereri')).date.cereri.some(x => x.comanda_id === idR1));
+  const idR7 = await comanda('bogdan', 'Real Şapte', 'R-7');
+  await actiune('bogdan: cere anularea (pe bune)', () => cer('bogdan', 'POST', `/api/comenzi/${idR7}/anulare`, { motiv: 'clientul a renunţat' }),
+    { real: ['cerere'], birou: ['cerere'], admin: ['cerere'] });
+  verifica('admin: vede cererea reală, şi în numărul din meniu', (await cer('admin', 'GET', '/api/cereri')).date.cereri.some(x => x.comanda_id === idR7 && x.stare === 'deschisa')
+    && (await cer('admin', 'GET', '/api/sumar')).date.cereri === rand(DB, "SELECT COUNT(*) AS n FROM cerere WHERE stare = 'deschisa'")[0].n);
+  await actiune('admin: aprobă cererea reală → PE BUNE', async () => {
+    const c = (await cer('admin', 'GET', '/api/cereri')).date.cereri.find(x => x.comanda_id === idR7 && x.stare === 'deschisa');
     return cer('admin', 'POST', `/api/cereri/${c.id}/aproba`);
-  }, { birou: NIMIC, admin: C });
+  }, { real: ['cerere', 'comanda'], birou: ['cerere', 'comanda'], admin: ['cerere', 'comanda'] });
+  verifica('aprobarea adminului e pe bune: cererea aprobată, comanda anulată (şi în ambele demo-uri)',
+    rand(DB, `SELECT stare FROM cerere WHERE comanda_id = ${idR7}`)[0]?.stare === 'aprobata' && rand(DB, `SELECT anulat FROM comanda WHERE id = ${idR7}`)[0]?.anulat === 1
+    && rand(BIROU, `SELECT anulat FROM comanda WHERE id = ${idR7}`)[0]?.anulat === 1 && rand(ADMIN, `SELECT anulat FROM comanda WHERE id = ${idR7}`)[0]?.anulat === 1);
+  verifica('cora (conducere) vede cererea ca aprobată de admin', (await cer('cora', 'GET', '/api/cereri')).date.cereri.find(x => x.comanda_id === idR7)?.stare === 'aprobata');
+  const idR8 = await comanda('bogdan', 'Real Opt', 'R-8');
+  await cer('bogdan', 'POST', `/api/comenzi/${idR8}/anulare`, { motiv: 'probă respingere' });
+  await actiune('admin: respinge o cerere reală → PE BUNE', async () => {
+    const c = (await cer('admin', 'GET', '/api/cereri')).date.cereri.find(x => x.comanda_id === idR8 && x.stare === 'deschisa');
+    return cer('admin', 'POST', `/api/cereri/${c.id}/respinge`, { motiv: 'nu' });
+  }, { real: ['cerere'], birou: ['cerere'], admin: ['cerere'] });
+  verifica('respingerea e pe bune, comanda rămâne activă', rand(DB, `SELECT stare FROM cerere WHERE comanda_id = ${idR8}`)[0]?.stare === 'respinsa'
+    && !rand(DB, `SELECT anulat FROM comanda WHERE id = ${idR8}`)[0]?.anulat);
+  verifica('decizia adminului e în baza reală — nu mai reapare la refacerea copiilor (update, resetare)',
+    rand(DB, `SELECT stare FROM cerere WHERE comanda_id = ${idR7}`)[0]?.stare === 'aprobata'
+    && !(await cer('admin', 'GET', '/api/cereri')).date.cereri.some(x => x.stare === 'deschisa' && [idR7, idR8].includes(x.comanda_id)));
   await actiune('admin: task', () => cer('admin', 'POST', '/api/taskuri', { text: 'task admin', pentru: anaId }), { birou: NIMIC, admin: C });
   await actiune('admin: cont nou (administrarea merge PE BUNE)', () => cer('admin', 'POST', '/api/utilizatori', { user: 'nou', nume: 'Nou', rol: 'birou', parola: PAROLA }),
     { real: ['utilizator'], birou: ['utilizator'], admin: ['utilizator'] });
@@ -308,6 +330,8 @@ async function main() {
   const ad2 = (await cer('admin', 'POST', '/api/comenzi', oferta('Admin după reset', 'AD-10'))).date.comanda;
   verifica('… şi adminul face din nou oferte în demo-ul lui (9501+), fără să ajungă la ana',
     +ad2.numar.slice(-4) > 9500 && !(await gaseste('ana', ad2.id)));
+  verifica('după resetări: cererea aprobată de admin rămâne aprobată, nu reapare', !(await cer('admin', 'GET', '/api/cereri')).date.cereri.some(x => x.comanda_id === idR7 && x.stare === 'deschisa')
+    && rand(ADMIN, `SELECT anulat FROM comanda WHERE id = ${idR7}`)[0]?.anulat === 1);
   verifica('resetarea nu se poate cere decât de admin', (await cer('bogdan', 'POST', '/api/test/reface', { copie: 'colegi' })).stare === 403
     && (await cer('ana', 'POST', '/api/test/reface', { copie: 'colegi' })).stare === 403);
 
