@@ -123,7 +123,7 @@
       <!-- Conturi: utilizatorul, rolul şi o parolă INIŢIALĂ pe care i-o spui colegului -->
       <section class="card">
         <div class="card-cap"><h2>Conturi</h2><span class="spatiu"></span>
-          <button class="mic" data-reface="colegi" type="button" title="Demo-ul colegilor puşi în modul demo devine exact ca baza reală">Resetează demo birou</button>
+          <button class="mic" data-reface="colegi" type="button" title="Demo-ul colegilor puşi în modul demo devine exact ca baza reală (şi demo admin, făcut din el)">Resetează demo birou</button>
           <button class="mic" data-reface="admin" type="button" title="Demo-ul tău devine exact ca demo-ul biroului">Resetează demo admin</button>
           <button class="mic primar" id="arataContNou" type="button">+ Cont nou</button></div>
         <form id="formNou" autocomplete="off" hidden>
@@ -361,7 +361,9 @@ async function incarca() {
 // lanţul de demo (2026-10-19): baza reală → demo birou → demo admin; fiecare se resetează din cel dinainte
 document.querySelectorAll('[data-reface]').forEach(b => b.addEventListener('click', async () => {
   const [ce, din] = b.dataset.reface === 'admin' ? ['demo admin', 'demo birou'] : ['demo birou', 'baza reală'];
-  if (!(await confirma(`Resetezi ${ce}? Devine exact ca ${din}.\n\nTot ce s-a lucrat în ${ce} se pierde.`, 'Resetează'))) return;
+  // demo admin e făcut din demo birou — resetarea biroului îl resetează şi pe el (server/db.js refaTest)
+  const siAdmin = b.dataset.reface === 'colegi' ? '\n\nSe resetează şi demo admin (e făcut din demo birou).' : '';
+  if (!(await confirma(`Resetezi ${ce}? Devine exact ca ${din}.\n\nTot ce s-a lucrat în ${ce} se pierde.${siAdmin}`, 'Resetează'))) return;
   const r = await api('/api/test/reface', { method: 'POST', body: JSON.stringify({ copie: b.dataset.reface }) });
   if (r) await alerta(r.ok ? `Gata — ${ce} e acum exact ca ${din}.` : await eroareDin(r));
 }));

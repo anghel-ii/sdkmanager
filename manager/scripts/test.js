@@ -1228,10 +1228,10 @@ async function main() {
       (await cer('POST', '/api/test/reface', { copie: 'admin' })).stare === 200
       && !inCopiaAdmin("SELECT 1 FROM comanda WHERE client_nume LIKE 'Client Admin%'").length
       && inCopiaAdmin(`SELECT observatii FROM comanda WHERE id = ${r2.date.comanda.id}`)[0]?.observatii === 'scris în demo birou');
-    verifica('„Resetează demo birou" = baza reală (demo admin rămâne până îl resetezi)',
+    verifica('„Resetează demo birou" = baza reală, şi demo admin odată cu el (e făcut din demo birou)',
       (await cer('POST', '/api/test/reface', { copie: 'colegi' })).stare === 200
       && inCopie(`SELECT observatii FROM comanda WHERE id = ${r2.date.comanda.id}`)[0]?.observatii !== 'scris în demo birou'
-      && inCopiaAdmin(`SELECT observatii FROM comanda WHERE id = ${r2.date.comanda.id}`)[0]?.observatii === 'scris în demo birou');
+      && inCopiaAdmin(`SELECT observatii FROM comanda WHERE id = ${r2.date.comanda.id}`)[0]?.observatii !== 'scris în demo birou');
     // după resetarea biroului, lanţul merge mai departe (sesiunea adminului e pe copia nouă)
     db2().prepare(`UPDATE comanda SET observatii = 'pe bune, după reset' WHERE id = ${r2.date.comanda.id}`).run();
     sincronizeaza();

@@ -85,6 +85,8 @@ async function trateaza(req, res) {
       || (utilizator?.rol === 'admin' && ([].concat(spec.rol ?? []).join() === 'admin' || cale.startsWith('/api/clienti')));
     if (utilizator?.mod_test && !peBune) {
       if (cale.startsWith('/api/clienti/propuneri/')) return eroare(res, 403, 'În modul test nu se aprobă clienţi — aprobarea ar ajunge pe bune.');
+      // întâi lanţul la zi (ce a scris biroul în demo ajunge acum, nu la timer, în demo admin)
+      sincronizeaza();
       return inTest(() => opreste() || spec.handler(ctx), copiaLui(utilizator));   // adminul pe copia lui
     }
     if (opreste()) return;

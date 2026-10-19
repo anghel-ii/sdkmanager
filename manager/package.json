@@ -5,6 +5,6 @@
   "scripts": {
     "start": "node server/index.js",
     "init": "node scripts/init.js",
-    "test": "node scripts/test.js && node scripts/test-fara-scanare.js && node scripts/test-oprire.js"
+    "test": "node scripts/test.js && node scripts/test-fara-scanare.js && node scripts/test-oprire.js && node scripts/test-demo.js"
   }
 }

@@ -100,7 +100,9 @@ function copieTest(copie = 'colegi') {
 }
 
 // Copia luată din nou din sursa ei — demo birou = baza reală, demo admin = demo birou;
-// tot ce s-a lucrat în ea se pierde.
+// tot ce s-a lucrat în ea se pierde. Copiile făcute din ea se refac şi ele (demo birou
+// resetat → şi demo admin): altfel ce vine nou din ea s-ar bate (id-uri, numere de ofertă)
+// cu ce rămăsese de dinainte şi s-ar pierde pe tăcute.
 function refaTest(copie = 'colegi') {
   if (!modTestPosibil) throw Object.assign(new Error('Modul test cere Node 22.12 sau mai nou pe server.'), { cod: 409 });
   sincronizeaza();   // sursa la zi înainte de copiere
@@ -109,7 +111,9 @@ function refaTest(copie = 'colegi') {
   // pe Windows fişierul poate fi încă ţinut câteva clipe (serverul vechi care se opreşte, antivirusul) — mai încearcă
   for (const f of ['', '-wal', '-shm']) fs.rmSync(caleTest(copie) + f, { force: true, maxRetries: 10, retryDelay: 300 });
   din.exec(`VACUUM INTO '${caleTest(copie).replace(/'/g, "''")}'`);
-  return pornesteTest(copie, new DatabaseSync(caleTest(copie)));
+  const t = pornesteTest(copie, new DatabaseSync(caleTest(copie)));
+  for (const fiica of COPII) if (SURSA[fiica] === copie && (_copii.has(fiica) || fs.existsSync(caleTest(fiica)))) refaTest(fiica);
+  return t;
 }
 
 // Sincron, fără nimic între copie şi sesiune: nicio modificare din sursă nu scapă.
