@@ -23,25 +23,30 @@
 @media (max-width: 999px)  { #acasa { grid-template-columns: minmax(0, 1fr); } .acasa-dreapta { position: static; max-height: none; padding: 0 20px 24px; } }
 
 /* ── cardul „Taskurile mele" ── */
-.card-taskuri { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+.card-taskuri { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px 8px; }
 .card-taskuri[hidden] { display: none; }
-.ct-cap { display: flex; align-items: center; gap: 8px; }
-.ct-cap b { font-size: 14px; font-weight: 600; }
+.ct-cap { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.ct-titlu { font-size: 14px; font-weight: 600; color: var(--text); text-decoration: none; }
+.ct-titlu:hover { color: var(--accent); }
 .ct-cap .spatiu { flex: 1; }
 .ct-cap .insigna-num { font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 999px; background: var(--panel-2); color: var(--text-dim); }
-.ct-cap .buton.mic { padding: 3px 9px; font-size: 12px; border: 1px solid var(--line); border-radius: 7px; color: var(--text); text-decoration: none; }
-.ct-cap .buton.mic:hover { border-color: var(--accent); }
-.ct-toate, .ct-mai { font-size: 12px; color: var(--accent); text-decoration: none; }
-.ct-mai { display: block; margin-top: 6px; }
-.ct-lista { list-style: none; margin: 8px 0 0; padding: 0; }
-.ct-lista li { display: flex; gap: 9px; align-items: flex-start; padding: 7px 0; border-top: 1px solid var(--line); }
-.ct-lista input { width: 16px; height: 16px; margin-top: 2px; flex: none; }
-.ct-text { display: block; font-size: 13.5px; white-space: pre-wrap; word-break: break-word; }
-.ct-info { display: block; font-size: 12px; color: var(--text-dim); margin-top: 2px; }
-.ct-info a { color: var(--accent); }
-.ct-lista li.tarziu .ct-info { color: #e8907f; }
-.ct-info a.ct-nou { color: #e8907f; font-weight: 600; }
-.ct-gol { margin: 6px 0 0; font-size: 13px; color: var(--text-dim); }
+.ct-plus { width: 24px; height: 24px; display: grid; place-items: center; border-radius: 7px; color: var(--text-dim);
+           text-decoration: none; font-size: 18px; line-height: 1; }
+.ct-plus:hover { background: var(--panel-2); color: var(--accent); }
+.ct-mai { display: block; margin: 2px 0 4px; font-size: 12px; color: var(--accent); text-decoration: none; }
+.ct-lista { list-style: none; margin: 0; padding: 0; }
+.ct-lista li { display: flex; gap: 9px; align-items: center; padding: 5px 0; }
+.ct-lista input, .ct-loc { width: 15px; height: 15px; margin: 0; flex: none; }
+.ct-text { flex: 1; min-width: 0; font-size: 13px; color: var(--text); text-decoration: none;
+           overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ct-text:hover { color: var(--accent); }
+.ct-lista li.asteapta .ct-text { color: var(--text-dim); }
+.ct-lista li.facut .ct-text { color: var(--text-dim); text-decoration: line-through; }
+.ct-cand { flex: none; font-size: 11.5px; color: var(--text-dim); }
+.ct-lista li.tarziu .ct-cand { color: #e8907f; }
+.ct-nou { flex: none; min-width: 17px; height: 16px; padding: 0 5px; border-radius: 999px; background: #a3412f; color: #fff;
+          font-size: 10.5px; font-weight: 600; display: inline-grid; place-items: center; }
+.ct-gol { margin: 4px 0 6px; font-size: 13px; color: var(--text-dim); }
 body.ui-nou #taburiSus, body.ui-nou #continut { max-width: 1680px; }
 body.ui-nou #taburiSus { padding: 18px 24px 0; container: tablou / inline-size; }
 /* lista / detaliul se aşază după lăţimea LOR (meniul din stânga poate fi lat sau restrâns) */

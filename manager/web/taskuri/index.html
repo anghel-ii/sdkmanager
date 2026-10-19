@@ -11,50 +11,97 @@
 <script src="/live.js"></script>
 <script src="/copiaza.js"></script>
 <style>
-  #continut { padding: 20px 24px 40px; max-width: 1100px; margin: 0 auto; }
-  h1 { margin-bottom: 16px; }
-  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
-  .card > h2 { font-size: .74rem; text-transform: uppercase; letter-spacing: .05em; color: var(--text-dim); margin-bottom: 10px; }
-  .nou { display: grid; grid-template-columns: minmax(0, 1fr) 200px 210px auto; gap: 10px; align-items: end; }
-  @media (max-width: 900px) { .nou { grid-template-columns: 1fr; } }
-  .nou label { display: flex; flex-direction: column; gap: 4px; font-size: .78rem; color: var(--text-dim); }
-  .nou textarea { resize: vertical; min-height: 38px; }
-  .legat { margin-top: 10px; font-size: .88rem; }
-  .legat[hidden] { display: none; }
-  .notif { font-size: .84rem; color: var(--text-dim); margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); line-height: 1.5; }
+  #continut { padding: 20px 24px 32px; max-width: 1280px; margin: 0 auto; }
+  .cap-pagina { display: flex; align-items: center; gap: 16px; margin-bottom: 14px; flex-wrap: wrap; }
+  .cap-pagina h1 { margin: 0; }
+  /* o culoare pe categorie: pentru mine / date altora / făcute */
+  .cat-mie { --cat: #4c8dff; --cat-fond: rgba(76, 141, 255, .10); }
+  .cat-altora { --cat: #a77bf3; --cat-fond: rgba(167, 123, 243, .10); }
+  .cat-facut { --cat: #3fa66a; --cat-fond: rgba(63, 166, 106, .10); }
+  .grup-taskuri { display: flex; align-items: center; gap: 8px; padding: 12px 12px 7px; font-size: .72rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .05em; color: var(--cat); background: var(--cat-fond); border-bottom: 1px solid var(--line); }
+  .grup-taskuri::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--cat); }
+  .grup-taskuri .n { font-weight: 500; color: var(--text-dim); }
+  .grup-taskuri .punct { text-transform: none; letter-spacing: 0; }
+  .grup-taskuri + .gol { padding: 12px; text-align: left; font-size: .82rem; border-bottom: 1px solid var(--line); }
+
+  /* lista în stânga, taskul ales + conversaţia în dreapta */
+  .doua { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 16px; align-items: start; }
+  @media (max-width: 1000px) { .doua { grid-template-columns: 1fr; } }
+  .panou { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; }
+
+  /* task nou: un câmp; restul apare când scrii în el */
+  .adauga { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 6px; padding: 10px; border-bottom: 1px solid var(--line); }
+  .adauga #text { grid-column: 1 / -1; }
+  .adauga:not(:focus-within):not(.plin) > :not(#text) { display: none; }
+  .legat { padding: 6px 12px; font-size: .82rem; color: var(--text-dim); border-bottom: 1px solid var(--line); }
+  .legat a { color: var(--accent); }
+
+  .rand { display: flex; gap: 10px; align-items: flex-start; padding: 9px 12px; border-bottom: 1px solid var(--line); cursor: pointer; }
+  .rand:last-child { border-bottom: 0; }
+  .doua > .panou:first-child { overflow: hidden; }
+  .rand:hover { background: rgba(255, 255, 255, .025); }
+  .rand { box-shadow: inset 3px 0 transparent; }
+  .rand.ales { background: var(--cat-fond); box-shadow: inset 3px 0 var(--cat); }
+  .rand input { width: 16px; height: 16px; margin-top: 2px; flex: none; accent-color: var(--cat); }
+  .rand .corp { flex: 1; min-width: 0; }
+  .rand .text { font-size: .9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rand.facut .text { text-decoration: line-through; color: var(--text-dim); }
+  .rand.asteapta .text { color: var(--text-dim); }
+  .meta { font-size: .76rem; color: var(--text-dim); margin-top: 2px; display: flex; gap: 10px; flex-wrap: wrap; }
+  .meta .tarziu { color: #e8907f; }
+  .meta .pauza { color: #d4a24c; }
+  .rand .dreapta { display: flex; gap: 6px; align-items: center; color: var(--text-dim); font-size: .78rem; flex: none; margin-top: 1px; }
+  .punct { min-width: 18px; height: 17px; padding: 0 5px; border-radius: 999px; background: #a3412f; color: #fff;
+    font-size: .7rem; font-weight: 600; display: inline-grid; place-items: center; }
+  .gol { text-align: center; padding: 28px 16px; color: var(--text-dim); font-size: .88rem; }
+
+  /* taskul ales */
+  .detaliu { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); display: flex; flex-direction: column;
+    max-height: calc(100vh - 110px); overflow: hidden; border-top: 3px solid var(--cat, var(--line)); }
+  .fisa { padding: 16px 18px 14px; }
+  .eticheta { display: inline-flex; align-items: center; gap: 6px; font-size: .7rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .05em; color: var(--cat); background: var(--cat-fond); padding: 3px 9px; border-radius: 999px; }
+  .eticheta.pauza { color: #d4a24c; background: rgba(212, 162, 76, .12); }
+  .fisa .titlu { font-size: 1.15rem; font-weight: 600; line-height: 1.35; margin: 10px 0 14px; white-space: pre-wrap; word-break: break-word; }
+  .props { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 9px 12px; font-size: .84rem; align-items: center; }
+  .props dt { color: var(--text-dim); font-size: .78rem; }
+  .props dd { margin: 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0; }
+  .props a { color: var(--accent); text-decoration: none; }
+  .props .tarziu { color: #e8907f; }
+  .props .dim { color: var(--text-dim); }
+  .props input[type=datetime-local] { width: auto; padding: 3px 6px; font-size: .8rem; }
+  .link-mic { border: 0; background: none; padding: 0; color: var(--accent); font-size: .78rem; cursor: pointer; }
+  .link-mic.link-rosu { color: #e8907f; }
+  .om { display: inline-flex; align-items: center; gap: 7px; }
+  .avatar { width: 22px; height: 22px; border-radius: 50%; display: inline-grid; place-items: center; flex: none;
+    font-size: .64rem; font-weight: 700; color: #fff; background: hsl(var(--h) 45% 42%); }
+  .actiuni { display: flex; gap: 8px; margin-top: 16px; }
+  .actiuni button { flex: 1; padding: 8px 12px; font-size: .84rem; font-weight: 500; }
+
+  .conv-cap { padding: 10px 18px; font-size: .8rem; color: var(--text-dim); border-top: 1px solid var(--line); background: var(--panel-2);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .conv-cap b { color: var(--text); font-weight: 600; }
+  .fir { flex: 1; overflow-y: auto; padding: 14px 18px 6px; min-height: 110px; }
+  .msg { display: flex; gap: 8px; align-items: flex-end; margin-bottom: 10px; max-width: 85%; }
+  .msg.eu { margin-left: auto; flex-direction: row-reverse; }
+  .msg .bula { min-width: 0; }
+  .msg .cine { font-size: .7rem; color: var(--text-dim); margin: 0 4px 2px; }
+  .msg.eu .cine { text-align: right; }
+  .msg .txt { white-space: pre-wrap; word-break: break-word; padding: 7px 12px; border-radius: 14px 14px 14px 4px;
+    background: var(--panel-2); font-size: .88rem; line-height: 1.4; }
+  .msg.eu .txt { border-radius: 14px 14px 4px 14px; background: #2563c9; color: #fff; }
+  .ev { display: flex; justify-content: center; margin: 2px 0 12px; }
+  .ev span { font-size: .72rem; color: var(--text-dim); background: var(--panel-2); padding: 3px 10px; border-radius: 999px;
+    white-space: pre-wrap; text-align: center; max-width: 90%; }
+  .fir .gol { padding: 18px 0; }
+  .scrie { display: flex; gap: 8px; align-items: flex-end; padding: 10px 12px; border-top: 1px solid var(--line); }
+  .scrie textarea { flex: 1; resize: none; min-height: 38px; max-height: 140px; border-radius: 19px; padding-inline: 14px; }
+  .scrie button { border-radius: 19px; }
+
+  .notif { font-size: .8rem; color: var(--text-dim); margin-top: 14px; line-height: 1.5; }
   .notif code { background: var(--panel-2); padding: 1px 6px; border-radius: 4px; color: var(--text); }
-
-  .task { display: flex; align-items: flex-start; gap: 12px; padding: 10px 4px; border-bottom: 1px solid var(--line); }
-  .task:last-child { border-bottom: none; }
-  .task input[type=checkbox] { width: 18px; height: 18px; margin-top: 2px; flex: none; }
-  .task .corp { flex: 1; min-width: 0; }
-  .task .text { white-space: pre-wrap; word-break: break-word; }
-  .task.facut .text { text-decoration: line-through; color: var(--text-dim); }
-  .task .info { color: var(--text-dim); font-size: .8rem; margin-top: 3px; }
-  .task .info a { color: var(--accent); }
-  .task.intarziat .ora { color: #e8907f; font-weight: 600; }
-  .task input[type=datetime-local] { width: auto; padding: 4px 6px; font-size: .8rem; }
   button.mic { padding: 4px 9px; font-size: .78rem; }
-  .gol { text-align: center; padding: 20px; color: var(--text-dim); }
-  details > summary { cursor: pointer; color: var(--text-dim); }
-
-  /* aşteptare + conversaţia taskului (server/taskuri.js) */
-  .task { flex-wrap: wrap; }
-  .task.asteapta .text { color: var(--text-dim); }
-  .task .pauza { color: #d4a24c; }
-  .conv .nou { display: inline-grid; place-items: center; min-width: 17px; height: 16px; padding: 0 5px; margin-left: 3px;
-    border-radius: 999px; background: #a3412f; color: #fff; font-size: .7rem; font-weight: 600; }
-  .fir { flex-basis: 100%; margin: 4px 0 2px 30px; padding: 10px 12px; background: var(--panel-2); border-radius: 8px; }
-  .fir .msg { margin-bottom: 8px; max-width: 80%; }
-  .fir .msg.eu { margin-left: auto; text-align: right; }
-  .fir .msg .cap { font-size: .74rem; color: var(--text-dim); }
-  .fir .msg .txt { display: inline-block; text-align: left; white-space: pre-wrap; word-break: break-word; padding: 6px 10px;
-    border-radius: 8px; background: var(--panel); border: 1px solid var(--line); }
-  .fir .msg.eu .txt { border-color: var(--accent-dim); }
-  .fir .ev { font-size: .78rem; color: var(--text-dim); text-align: center; margin: 6px 0 10px; white-space: pre-wrap; }
-  .fir .gol { padding: 4px 0 10px; }
-  .fir form { display: flex; gap: 8px; align-items: flex-end; }
-  .fir textarea { flex: 1; resize: vertical; min-height: 38px; }
 </style>
 </head>
 <body class="ui-nou">
@@ -63,30 +110,34 @@
 <script src="/bara.js"></script>
 
 <div id="continut">
-  <h1>Taskuri</h1>
-
-  <div class="card">
-    <h2>Task nou</h2>
-    <form class="nou" id="formular">
-      <label>Ce e de făcut<textarea id="text" rows="1" maxlength="1000" required></textarea></label>
-      <label>Pentru<select id="pentru"></select></label>
-      <label>Reminder (opţional)<input type="datetime-local" id="scadenta"></label>
-      <button class="verde" type="submit">Adaugă</button>
-    </form>
-    <div class="legat" id="legat" hidden></div>
-    <div class="notif" id="notif"></div>
+  <div class="cap-pagina">
+    <h1>Taskuri</h1>
   </div>
 
-  <div class="card"><h2>Pentru mine</h2><div id="mie">Se încarcă…</div></div>
-  <div class="card"><h2>Date de mine altora</h2><div id="altora"></div></div>
-  <div class="card"><details><summary id="facuteTitlu">Făcute</summary><div id="facute"></div></details></div>
+  <div class="doua">
+    <section class="panou">
+      <form class="adauga" id="formular">
+        <input id="text" maxlength="1000" placeholder="+ Task nou: ce e de făcut…" required autocomplete="off">
+        <select id="pentru" title="Pentru cine"></select>
+        <input type="datetime-local" id="scadenta" title="Reminder (opţional)">
+        <button class="verde" type="submit">Adaugă</button>
+      </form>
+      <div class="legat" id="legat" hidden></div>
+      <div id="lista">Se încarcă…</div>
+    </section>
+    <section class="panou detaliu" id="detaliu"></section>
+  </div>
+
+  <div class="notif" id="notif"></div>
 </div>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════════════
 //  Taskuri + remindere (server/taskuri.js). Notificarea la ora reminderului o face
 //  bara de sus (bara.js), pe orice pagină a managerului / configuratorului deschisă.
-//  „+ Task" din detaliul unei comenzi deschide pagina cu ?comanda=<id>.
+//  În stânga lista (filtrată), în dreapta taskul ales: acţiunile lui şi conversaţia
+//  dintre cei doi (doar la taskurile date cuiva). „+ Task" din detaliul unei comenzi
+//  deschide pagina cu ?comanda=<id>; ?task=<id> alege direct un task (cardul de pe Acasă).
 // ═══════════════════════════════════════════════════════════════════════════
 window.name = 'taskuri';   // notificarea / caseta deschid tot tabul ăsta, nu altul nou
 const $ = id => document.getElementById(id);
@@ -109,109 +160,168 @@ function pentruInput(s) {
   return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}`;
 }
 
+const params = new URLSearchParams(location.search);
 let eu = null, taskuri = [], utilizatori = [];
-let comanda = Number(new URLSearchParams(location.search).get('comanda')) || null;
+let comanda = Number(params.get('comanda')) || null;
+let ales = Number(params.get('task')) || null;
+const ciorne = new Map();   // răspunsul început, pe task — rămâne la actualizarea live
 
-// Conversaţia unui task: doar când sunt doi oameni (dat cuiva). Ce e deschis şi ce ai început
-// să scrii rămân la re-randare (actualizarea live). ?task=<id> o deschide direct (cardul de pe Acasă).
-const deschise = new Set([Number(new URLSearchParams(location.search).get('task'))].filter(Boolean));
-const ciorne = new Map();
 const EVENIMENT = { asteptare: 'a pus taskul în aşteptare', reluat: 'a reluat taskul', facut: 'a bifat taskul făcut', redeschis: 'a redeschis taskul' };
 const cuConversatie = t => t.pentru !== t.creat_de;
+// lista: trei secţiuni una sub alta
+const SECTIUNI = [
+  ['mie', 'Pentru mine', 'Nimic de făcut. 🎉'],
+  ['altora', 'Date altora', 'N-ai dat niciun task altcuiva.'],
+  ['facut', 'Făcute în ultimele 14 zile', 'Nimic încă.'],
+];
+const categorie = t => t.facut_la ? 'facut' : t.pentru === eu.id ? 'mie' : 'altora';
+// iniţialele + o nuanţă fixă pe om, pt. avatar
+const avatar = (id, nume) => `<span class="avatar" style="--h:${(id * 67) % 360}">${esc(String(nume).split(/\s+/).map(x => x[0]).join('').slice(0, 2).toUpperCase())}</span>`;
+const tarziu = t => !t.facut_la && !t.in_asteptare_la && t.scadenta && utc(t.scadenta) <= Date.now();
 
-function fir(t) {
-  const mesaje = t.mesaje.map(m => m.eveniment
-    ? `<div class="ev">${esc(m.autor_nume)} ${EVENIMENT[m.eveniment] ?? m.eveniment}${m.text ? `: „${esc(m.text)}”` : ''} · ${dataOra(m.creat_la)}</div>`
-    : `<div class="msg${m.autor === eu.id ? ' eu' : ''}"><div class="cap">${esc(m.autor_nume)} · ${dataOra(m.creat_la)}</div>
-        <div class="txt">${esc(m.text)}</div></div>`).join('');
-  return `<div class="fir">${mesaje || '<div class="gol">Niciun răspuns încă.</div>'}
-    <form class="raspunde"><textarea rows="1" maxlength="2000" placeholder="Scrie un răspuns… (Ctrl+Enter trimite)">${esc(ciorne.get(t.id) ?? '')}</textarea>
-      <button class="verde" type="submit">Trimite</button></form></div>`;
+function meta(t, lung) {
+  const cine = t.pentru !== eu.id ? `pentru ${esc(t.pentru_nume)}` : t.creat_de !== eu.id ? `de la ${esc(t.creat_de_nume)}` : '';
+  return [
+    t.in_asteptare_la && !t.facut_la && `<span class="pauza">⏸ în aşteptare</span>`,
+    t.scadenta && !t.facut_la && `<span class="${tarziu(t) ? 'tarziu' : ''}">⏰ ${cand(t.scadenta)}</span>`,
+    t.facut_la && `✓ ${cand(t.facut_la)}`,
+    cine,
+    t.comanda_id && (lung ? `<a href="/#comanda/${t.comanda_id}">${esc(t.comanda_nr)} · ${esc(t.client_nume)}</a>` : esc(t.comanda_nr)),
+  ].filter(Boolean).map(x => x.startsWith('<') ? x : `<span>${x}</span>`).join('');
 }
 
-function randTask(t) {
-  const facut = !!t.facut_la;
-  const asteapta = !facut && !!t.in_asteptare_la;
-  const intarziat = !facut && !asteapta && t.scadenta && utc(t.scadenta) <= Date.now();
-  const deschis = cuConversatie(t) && deschise.has(t.id);
-  const cine = t.pentru !== eu.id ? `pentru <b>${esc(t.pentru_nume)}</b>` : t.creat_de !== eu.id ? `de la <b>${esc(t.creat_de_nume)}</b>` : '';
-  const info = [
-    asteapta && `<span class="pauza">⏸ în aşteptare din ${dataOra(t.in_asteptare_la)}</span>`,
-    t.scadenta && `<span class="ora">⏰ ${dataOra(t.scadenta)}</span>`,
-    cine,
-    t.comanda_id && `<a href="/#comanda/${t.comanda_id}">${esc(t.comanda_nr)} · ${esc(t.client_nume)}</a>`,
-    facut && `făcut ${dataOra(t.facut_la)}`,
-  ].filter(Boolean).join(' · ');
-  return `<div class="task${facut ? ' facut' : ''}${asteapta ? ' asteapta' : ''}${intarziat ? ' intarziat' : ''}" data-id="${t.id}">
-    <input type="checkbox" class="bifa" title="${facut ? 'Nu e făcut' : 'Făcut'}"${facut ? ' checked' : ''}>
-    <div class="corp"><div class="text">${esc(t.text)}</div>${info ? `<div class="info">${info}</div>` : ''}</div>
-    ${cuConversatie(t) ? `<button type="button" class="mic conv" title="Răspunsuri între voi doi">💬 ${deschis ? 'Ascunde' : t.mesaje.length || 'Răspunde'}${
-      t.necitite ? `<span class="nou">${t.necitite}</span>` : ''}</button>` : ''}
-    ${facut ? '' : `<button type="button" class="mic asteptare" title="${asteapta ? 'Reminderul revine' : 'Fără reminder până îl reiei'}">${asteapta ? '▶ Reia' : '⏸ Aşteaptă'}</button>`}
-    ${facut ? '' : `<input type="datetime-local" class="amana" title="Mută reminderul" value="${pentruInput(t.scadenta)}">`}
-    ${t.creat_de === eu.id ? '<button type="button" class="mic rosu-contur sterge">Şterge</button>' : ''}
-    ${deschis ? fir(t) : ''}
+function randLista(t) {
+  return `<div class="rand cat-${categorie(t)}${t.id === ales ? ' ales' : ''}${t.facut_la ? ' facut' : ''}${t.in_asteptare_la ? ' asteapta' : ''}" data-id="${t.id}">
+    <input type="checkbox" class="bifa" title="${t.facut_la ? 'Nu e făcut' : 'Făcut'}"${t.facut_la ? ' checked' : ''}>
+    <div class="corp"><div class="text" title="${esc(t.text)}">${esc(t.text)}</div><div class="meta">${meta(t, false)}</div></div>
+    <div class="dreapta">${t.necitite ? `<span class="punct" title="Răspunsuri noi">${t.necitite}</span>`
+      : cuConversatie(t) && t.mesaje.some(m => !m.eveniment) ? `💬 ${t.mesaje.filter(m => !m.eveniment).length}` : ''}</div>
   </div>`;
 }
 
-function randeaza() {
-  const deFacut = taskuri.filter(t => !t.facut_la), facute = taskuri.filter(t => t.facut_la);
-  const mie = deFacut.filter(t => t.pentru === eu.id), altora = deFacut.filter(t => t.pentru !== eu.id);
-  $('mie').innerHTML = mie.length ? mie.map(randTask).join('') : '<div class="gol">Nimic de făcut.</div>';
-  $('altora').innerHTML = altora.length ? altora.map(randTask).join('') : '<div class="gol">Niciun task dat altcuiva.</div>';
-  $('facuteTitlu').textContent = `Făcute în ultimele 14 zile (${facute.length})`;
-  $('facute').innerHTML = facute.map(randTask).join('');
-
-  document.querySelectorAll('.task').forEach(el => {
+function randeazaLista() {
+  $('lista').innerHTML = SECTIUNI.map(([cat, nume, gol]) => {
+    const ale = taskuri.filter(t => categorie(t) === cat);
+    const necitite = ale.reduce((n, t) => n + t.necitite, 0);
+    return `<div class="grup-taskuri cat-${cat}">${nume}${ale.length ? `<span class="n">${ale.length}</span>` : ''}${
+      necitite ? `<span class="punct" title="Răspunsuri noi">${necitite}</span>` : ''}</div>
+      ${ale.length ? ale.map(randLista).join('') : `<div class="gol">${gol}</div>`}`;
+  }).join('');
+  $('lista').querySelectorAll('.rand').forEach(el => {
     const id = +el.dataset.id;
-    const schimba = async (corp, mesaj) => {
-      if (mesaj && !(await confirma(mesaj))) return;
-      const r = await api(`/api/taskuri/${id}`, corp ? { method: 'PATCH', body: JSON.stringify(corp) } : { method: 'DELETE' });
-      if (r && !r.ok) alerta(await eroareDin(r));
-      await incarca();
-      window.verificaTaskuri?.();   // numărul din bară, imediat
-    };
-    el.querySelector('.bifa').addEventListener('change', e => schimba({ facut: e.target.checked }));
-    el.querySelector('.amana')?.addEventListener('change', e => schimba({ scadenta: e.target.value || null }));
-    el.querySelector('.sterge')?.addEventListener('click', () => schimba(null, 'Ştergi taskul?'));
-    el.querySelector('.asteptare')?.addEventListener('click', async () => {
-      const t = taskuri.find(x => x.id === id);
-      if (t.in_asteptare_la) return schimba({ asteptare: false });
-      const motiv = await cereText('Pui taskul în aşteptare — nu mai vine reminderul până îl reiei.\n\nDe ce aştepţi? (opţional; apare în conversaţie)',
-        { trimite: 'Pune în aşteptare', loc: 'ex. aştept avansul de la client', min: 0 });
-      if (motiv !== null) schimba({ asteptare: true, motiv });
-    });
-    el.querySelector('.conv')?.addEventListener('click', () => {
-      deschise.has(id) ? deschise.delete(id) : deschise.add(id);
-      randeaza();
-      marcheazaCitite();
-      if (deschise.has(id)) document.querySelector(`.task[data-id="${id}"] .fir textarea`)?.focus();
-    });
-    const form = el.querySelector('.raspunde');
-    if (!form) return;
-    const camp = form.querySelector('textarea');
-    camp.addEventListener('input', () => ciorne.set(id, camp.value));
-    camp.addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) form.requestSubmit(); });
-    form.addEventListener('submit', async e => {
-      e.preventDefault();
-      if (!camp.value.trim()) return;
-      const r = await api(`/api/taskuri/${id}/raspuns`, { method: 'POST', body: JSON.stringify({ text: camp.value }) });
-      if (r && !r.ok) return alerta(await eroareDin(r));
-      ciorne.delete(id);
-      camp.blur();   // altfel actualizarea live aşteaptă să ieşi din câmp
-      await incarca();
-      document.querySelector(`.task[data-id="${id}"] .fir textarea`)?.focus();
-    });
+    el.addEventListener('click', e => { if (!e.target.matches('input')) alege(id); });
+    el.querySelector('.bifa').addEventListener('change', e => schimba(id, { facut: e.target.checked }));
   });
 }
 
-// ce a scris celălalt într-o conversaţie deschisă = citit (insigna din meniu scade)
+function randeazaDetaliu() {
+  const t = taskuri.find(x => x.id === ales);
+  if (!t) { $('detaliu').className = 'panou detaliu'; $('detaliu').innerHTML = '<div class="gol">Alege un task din listă ca să vezi detaliile şi conversaţia.</div>'; return; }
+  const facut = !!t.facut_la, cat = categorie(t);
+  const celalalt = t.pentru === eu.id ? [t.creat_de, t.creat_de_nume] : [t.pentru, t.pentru_nume];
+  const om = (id, nume) => `<span class="om">${avatar(id, nume)}${id === eu.id ? 'Tu' : esc(nume)}</span>`;
+  const mesaje = t.mesaje.map(m => m.eveniment
+    ? `<div class="ev"><span>${m.autor === eu.id ? 'Ai' : esc(m.autor_nume)} ${(EVENIMENT[m.eveniment] ?? m.eveniment).replace(/^a /, m.autor === eu.id ? '' : 'a ')}${
+        m.text ? `: „${esc(m.text)}”` : ''} · ${cand(m.creat_la)}</span></div>`
+    : `<div class="msg${m.autor === eu.id ? ' eu' : ''}">${avatar(m.autor, m.autor_nume)}<div class="bula">
+        <div class="cine">${m.autor === eu.id ? 'Tu' : esc(m.autor_nume)} · ${cand(m.creat_la)}</div><div class="txt">${esc(m.text)}</div></div></div>`).join('');
+  const reminder = facut ? '' : `<dt>Reminder</dt><dd id="reminder">${t.scadenta
+      ? `<span class="${tarziu(t) ? 'tarziu' : ''}">⏰ ${cand(t.scadenta)}${tarziu(t) ? ' · a trecut' : ''}</span>` : '<span class="dim">fără</span>'}
+      <button type="button" class="link-mic" data-a="schimbaOra">${t.scadenta ? 'schimbă' : 'pune'}</button>
+      ${t.scadenta ? '<button type="button" class="link-mic link-rosu" data-a="faraOra">scoate</button>' : ''}</dd>`;
+  $('detaliu').className = `panou detaliu cat-${cat}`;
+  $('detaliu').innerHTML = `
+    <div class="fisa">
+      <span class="eticheta${t.in_asteptare_la && !facut ? ' pauza' : ''}">${facut ? '✓ Făcut' : t.in_asteptare_la ? '⏸ În aşteptare'
+        : cat === 'mie' ? 'Pentru mine' : 'Dat altcuiva'}</span>
+      <div class="titlu">${esc(t.text)}</div>
+      <dl class="props">
+        <dt>De la</dt><dd>${om(t.creat_de, t.creat_de_nume)}</dd>
+        <dt>Pentru</dt><dd>${om(t.pentru, t.pentru_nume)}</dd>
+        ${reminder}
+        ${t.comanda_id ? `<dt>Comanda</dt><dd><a href="/#comanda/${t.comanda_id}">${esc(t.comanda_nr)} · ${esc(t.client_nume)}</a></dd>` : ''}
+        <dt>Creat</dt><dd class="dim">${cand(t.creat_la)}${facut ? ` · făcut ${cand(t.facut_la)}` : ''}${
+          t.in_asteptare_la && !facut ? ` · în aşteptare din ${cand(t.in_asteptare_la)}` : ''}${
+          t.creat_de === eu.id ? ' · <button type="button" class="link-mic link-rosu" data-a="sterge">şterge taskul</button>' : ''}</dd>
+      </dl>
+      <div class="actiuni">
+        <button type="button" class="${facut ? '' : 'verde'}" data-a="facut">${facut ? '↺ Redeschide' : '✓ Marchează făcut'}</button>
+        ${facut ? '' : `<button type="button" data-a="asteptare" title="${t.in_asteptare_la ? 'Reminderul revine' : 'Fără reminder până îl reiei'}">${
+          t.in_asteptare_la ? '▶ Reia' : '⏸ Pune în aşteptare'}</button>`}
+      </div>
+    </div>
+    ${cuConversatie(t) ? `
+      <div class="conv-cap" title="${esc(t.text)}">Conversaţie cu <b>${esc(celalalt[1])}</b> referitor la taskul: „${esc(t.text)}”</div>
+      <div class="fir" id="fir">${mesaje || `<div class="gol">Niciun mesaj încă. Scrie-i ${esc(celalalt[1])} dacă ai ceva de spus despre task.</div>`}</div>
+      <form class="scrie" id="scrie"><textarea rows="1" maxlength="2000" placeholder="Scrie un mesaj… (Enter trimite, Shift+Enter rând nou)">${esc(ciorne.get(t.id) ?? '')}</textarea>
+        <button class="verde" type="submit">Trimite</button></form>`
+    : ''}`;
+
+  const d = $('detaliu');
+  d.querySelector('[data-a=facut]').addEventListener('click', () => schimba(t.id, { facut: !facut }));
+  d.querySelector('[data-a=faraOra]')?.addEventListener('click', () => schimba(t.id, { scadenta: null }));
+  // „schimbă": câmpul de dată apare pe loc (cu calendarul deschis), se salvează la alegere
+  d.querySelector('[data-a=schimbaOra]')?.addEventListener('click', () => {
+    $('reminder').innerHTML = `<input type="datetime-local" value="${pentruInput(t.scadenta)}"><button type="button" class="link-mic">renunţă</button>`;
+    const camp = $('reminder').querySelector('input');
+    camp.addEventListener('change', () => camp.value && schimba(t.id, { scadenta: camp.value }));
+    $('reminder').querySelector('button').addEventListener('click', randeazaDetaliu);
+    camp.focus();
+    try { camp.showPicker(); } catch { /* unele browsere nu-l deschid fără click direct */ }
+  });
+  d.querySelector('[data-a=sterge]')?.addEventListener('click', () => schimba(t.id, null, 'Ştergi taskul?'));
+  d.querySelector('[data-a=asteptare]')?.addEventListener('click', async () => {
+    if (t.in_asteptare_la) return schimba(t.id, { asteptare: false });
+    const motiv = await cereText('Pui taskul în aşteptare — nu mai vine reminderul până îl reiei.\n\nDe ce aştepţi? (opţional; apare în conversaţie)',
+      { trimite: 'Pune în aşteptare', loc: 'ex. aştept avansul de la client', min: 0 });
+    if (motiv !== null) schimba(t.id, { asteptare: true, motiv });
+  });
+
+  const fir = $('fir');
+  if (fir) fir.scrollTop = fir.scrollHeight;
+  const form = $('scrie');
+  if (!form) return;
+  const camp = form.querySelector('textarea');
+  const creste = () => { camp.style.height = 'auto'; camp.style.height = camp.scrollHeight + 2 + 'px'; };
+  creste();
+  camp.addEventListener('input', () => { ciorne.set(t.id, camp.value); creste(); });
+  camp.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); form.requestSubmit(); } });
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    if (!camp.value.trim()) return;
+    const r = await api(`/api/taskuri/${t.id}/raspuns`, { method: 'POST', body: JSON.stringify({ text: camp.value }) });
+    if (r && !r.ok) return alerta(await eroareDin(r));
+    ciorne.delete(t.id);
+    camp.blur();   // altfel actualizarea live aşteaptă să ieşi din câmp
+    await incarca();
+    $('scrie')?.querySelector('textarea').focus();
+  });
+}
+
+function alege(id) {
+  ales = id;
+  history.replaceState(null, '', id ? `/taskuri?task=${id}` : '/taskuri');
+  randeazaLista();
+  randeazaDetaliu();
+  marcheazaCitite();
+}
+
+async function schimba(id, corp, mesaj) {
+  if (mesaj && !(await confirma(mesaj))) return;
+  const r = await api(`/api/taskuri/${id}`, corp ? { method: 'PATCH', body: JSON.stringify(corp) } : { method: 'DELETE' });
+  if (r && !r.ok) alerta(await eroareDin(r));
+  if (!corp) ales = null;
+  await incarca();
+  window.verificaTaskuri?.();   // numărul din bară, imediat
+}
+
+// ce a scris celălalt în taskul ales = citit (insigna din meniu scade)
 async function marcheazaCitite() {
-  if (document.visibilityState !== 'visible') return;
-  const de = taskuri.filter(t => t.necitite && deschise.has(t.id));
-  if (!de.length) return;
-  await Promise.all(de.map(t => api(`/api/taskuri/${t.id}/citit`, { method: 'POST' })));
-  de.forEach(t => { t.necitite = 0; document.querySelector(`.task[data-id="${t.id}"] .conv .nou`)?.remove(); });   // fără re-randare: nu ia focusul
+  const t = taskuri.find(x => x.id === ales);
+  if (!t?.necitite || document.visibilityState !== 'visible') return;
+  await api(`/api/taskuri/${t.id}/citit`, { method: 'POST' });
+  t.necitite = 0;
+  randeazaLista();   // doar lista: detaliul (cu răspunsul început) rămâne neatins
   window.verificaTaskuri?.();
 }
 document.addEventListener('visibilitychange', marcheazaCitite);
@@ -220,10 +330,11 @@ async function incarca() {
   const r = await api('/api/taskuri');
   if (!r) return;
   ({ taskuri, utilizatori } = await r.json());
-  const ales = $('pentru').value || eu.id;
-  $('pentru').innerHTML = utilizatori.map(u => `<option value="${u.id}">${esc(u.nume)}${u.id === eu.id ? ' (eu)' : ''}</option>`).join('');
-  $('pentru').value = ales;
-  randeaza();
+  const pentru = $('pentru').value || eu.id;
+  $('pentru').innerHTML = utilizatori.map(u => `<option value="${u.id}">${u.id === eu.id ? 'Pentru mine' : `Pentru ${esc(u.nume)}`}</option>`).join('');
+  $('pentru').value = pentru;
+  randeazaLista();
+  randeazaDetaliu();
   marcheazaCitite();
 }
 
@@ -234,17 +345,23 @@ async function arataComanda() {
   const r = await api(`/api/comenzi/${comanda}`);
   if (!r?.ok) { comanda = null; $('legat').hidden = true; return; }
   const c = (await r.json()).comanda;
-  $('legat').innerHTML = `Legat de comanda <a href="/#comanda/${c.id}">${esc(c.oferta_nr || c.numar)} · ${esc(c.client_nume)}</a>
+  $('legat').innerHTML = `Taskul nou va fi legat de comanda <a href="/#comanda/${c.id}">${esc(c.oferta_nr || c.numar)} · ${esc(c.client_nume)}</a>
     <button type="button" class="mic" id="scoateComanda" title="Task fără comandă">×</button>`;
   $('scoateComanda').addEventListener('click', () => { comanda = null; history.replaceState(null, '', '/taskuri'); arataComanda(); });
+  $('formular').classList.add('plin');
+  $('text').focus();
 }
 
+$('text').addEventListener('input', () => $('formular').classList.toggle('plin', !!$('text').value));
 $('formular').addEventListener('submit', async e => {
   e.preventDefault();
+  const pentru = +$('pentru').value;
   const r = await api('/api/taskuri', { method: 'POST', body: JSON.stringify({
-    text: $('text').value, pentru: +$('pentru').value, scadenta: $('scadenta').value || null, comanda_id: comanda }) });
+    text: $('text').value, pentru, scadenta: $('scadenta').value || null, comanda_id: comanda }) });
   if (r && !r.ok) return alerta(await eroareDin(r));
   $('text').value = $('scadenta').value = '';
+  $('formular').classList.remove('plin');
+  ales = (await r.json()).id;
   await incarca();
   window.verificaTaskuri?.();
 });
@@ -285,7 +402,12 @@ document.addEventListener('focusout', () => { if (deReimprospatat) setTimeout(re
   arataNotificari();
   arataComanda();
   await incarca();
-  document.querySelector('.fir')?.scrollIntoView({ block: 'center' });   // venit cu ?task=
+  if (ales) document.querySelector('.rand.ales')?.scrollIntoView({ block: 'center' });   // venit cu ?task=
+  else {
+    // altfel: primul cu răspunsuri noi, apoi primul din „Pentru mine"
+    const primul = taskuri.find(x => x.necitite) ?? taskuri.find(x => categorie(x) === 'mie');
+    if (primul) alege(primul.id);
+  }
   urmareste(reimprospateaza);
 })();
 </script>

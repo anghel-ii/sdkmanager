@@ -481,33 +481,40 @@ function asiguraBaraLista() {
 }
 
 // ── Taskurile mele, deasupra cardului comenzii (server/taskuri.js; pagina /taskuri) ──
-// Nefăcute, cele cu reminderul trecut primele (roşii); bifa = făcut; click pe comandă o deschide.
-const ARATA_TASKURI = 6;
+// Nefăcute, un rând fiecare: bifa = făcut, click pe text = taskul pe pagina Taskuri (cu conversaţia);
+// reminderul trecut cu roşu, punct roşu = răspunsuri noi.
+const ARATA_TASKURI = 5;
 async function incarcaTaskuri() {
   const el = $('cardTaskuri');
   if (!el || !$('tabelLista') || !eu) return;
   const r = await api('/api/taskuri');
   if (!r?.ok) { el.hidden = true; return; }
-  const ale = (await r.json()).taskuri.filter(t => t.pentru === eu.id && !t.facut_la);
+  const toate = (await r.json()).taskuri;
+  // ale mele de făcut + cele date altora la care mi-au răspuns; cele făcute mai stau 24 h (tăiate, la sfârşit)
+  const ieri = Date.now() - 864e5;
+  const aleMele = t => t.pentru === eu.id || t.necitite;
+  const ale = [...toate.filter(t => !t.facut_la && aleMele(t)),
+    ...toate.filter(t => t.facut_la && aleMele(t) && new Date(t.facut_la.replace(' ', 'T') + 'Z') > ieri)];
+  const deFacut = ale.filter(t => !t.facut_la).length;
   const acum = Date.now();
-  const tarziu = t => !t.in_asteptare_la && t.scadenta && new Date(t.scadenta.replace(' ', 'T') + 'Z') <= acum;
+  const tarziu = t => !t.facut_la && !t.in_asteptare_la && t.scadenta && new Date(t.scadenta.replace(' ', 'T') + 'Z') <= acum;
   el.hidden = false;
   el.innerHTML = `
-    <div class="ct-cap"><b>Taskurile mele</b>${ale.length ? `<span class="insigna-num">${ale.length}</span>` : ''}
-      <span class="spatiu"></span><a class="buton mic" href="/taskuri">+ Task</a><a class="ct-toate" href="/taskuri">Toate →</a></div>
+    <div class="ct-cap"><a class="ct-titlu" href="/taskuri">Taskuri</a>${deFacut ? `<span class="insigna-num">${deFacut}</span>` : ''}
+      <span class="spatiu"></span><a class="ct-plus" href="/taskuri" title="Task nou">+</a></div>
     ${ale.length ? `<ul class="ct-lista">${ale.slice(0, ARATA_TASKURI).map(t => `
-      <li class="${tarziu(t) ? 'tarziu' : ''}" data-id="${t.id}">
-        <input type="checkbox" title="Făcut">
-        <div><span class="ct-text">${esc(t.text)}</span>
-          <span class="ct-info">${[t.in_asteptare_la && '⏸ în aşteptare', t.scadenta && `⏰ ${dataOra(t.scadenta)}`,
-            t.creat_de !== t.pentru && `de la ${esc(t.creat_de_nume)}`,
-            t.necitite && `<a class="ct-nou" href="/taskuri?task=${t.id}">💬 ${t.necitite} ${t.necitite === 1 ? 'răspuns nou' : 'răspunsuri noi'}</a>`,
-            t.comanda_id && `<a href="#comanda/${t.comanda_id}">${esc(t.comanda_nr)} · ${esc(t.client_nume)}</a>`].filter(Boolean).join(' · ')}</span></div>
+      <li class="${tarziu(t) ? 'tarziu' : ''}${t.in_asteptare_la ? ' asteapta' : ''}${t.facut_la ? ' facut' : ''}" data-id="${t.id}">
+        ${t.pentru === eu.id ? `<input type="checkbox" title="${t.facut_la ? 'Nu e făcut' : 'Făcut'}"${t.facut_la ? ' checked' : ''}>` : '<span class="ct-loc"></span>'}
+        <a class="ct-text" href="/taskuri?task=${t.id}" title="${esc(t.text)}">${esc(t.text)}</a>
+        ${t.necitite ? `<span class="ct-nou" title="Răspunsuri noi">${t.necitite}</span>`
+          : t.facut_la ? '<span class="ct-cand">✓</span>'
+          : t.in_asteptare_la ? '<span class="ct-cand">⏸</span>'
+          : t.scadenta ? `<span class="ct-cand">${cand(t.scadenta)}</span>` : ''}
       </li>`).join('')}</ul>${ale.length > ARATA_TASKURI ? `<a class="ct-mai" href="/taskuri">încă ${ale.length - ARATA_TASKURI} →</a>` : ''}`
     : '<p class="ct-gol">Nimic de făcut.</p>'}`;
   el.querySelectorAll('li input[type=checkbox]').forEach(cb => cb.addEventListener('change', async () => {
     const id = cb.closest('li').dataset.id;
-    await api(`/api/taskuri/${id}`, { method: 'PATCH', body: JSON.stringify({ facut: true }) });
+    await api(`/api/taskuri/${id}`, { method: 'PATCH', body: JSON.stringify({ facut: cb.checked }) });
     incarcaTaskuri();
     window.verificaTaskuri?.();
   }));
