@@ -357,6 +357,19 @@ const MIGRATII = [
       citit     INTEGER NOT NULL DEFAULT 0       -- 1 = l-a văzut celălalt (un task are doar doi oameni)
     );
     CREATE INDEX task_mesaj_task ON task_mesaj (task_id, creat_la);`),
+  // v22 → v23 (2026-10-19): fiecare printare a fişei (nu doar ultima) — prima rămâne, se văd şi retipăririle,
+  // iar la retipărire managerul întreabă întâi. poz = produsul ofertei (fiecare are fişa lui).
+  d => d.exec(`
+    CREATE TABLE fisa_printare (
+      id         INTEGER PRIMARY KEY,
+      comanda_id INTEGER NOT NULL REFERENCES comanda(id) ON DELETE CASCADE,
+      poz        INTEGER NOT NULL DEFAULT 0,
+      la         TEXT NOT NULL,
+      de         INTEGER REFERENCES utilizator(id)
+    );
+    CREATE INDEX fisa_printare_comanda ON fisa_printare (comanda_id, la);
+    INSERT INTO fisa_printare (comanda_id, poz, la, de)
+      SELECT id, 0, fisa_printata_la, fisa_printata_de FROM comanda WHERE fisa_printata_la IS NOT NULL;`),
 ];
 
 // Exportată pt. test.

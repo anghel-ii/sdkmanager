@@ -309,10 +309,21 @@ const virgulaLei = n => Number(n).toLocaleString('ro-RO', { minimumFractionDigit
 // încarcă într-un cadru ascuns, iar dialogul de print al fişei apare peste
 // pagina curentă. Cadrul rămâne până la următoarea fişă (scoaterea lui ar
 // închide dialogul de print). Configuratorul răspunde prin postMessage.
-let butonFisa = null, fisaComenzii = null;
-// `poz` = produsul ofertei (0, 1, …): fiecare are fişa lui, ca o comandă separată
-function deschideFisa(id, buton, poz = 0) {
+let butonFisa = null, fisaComenzii = null, fisaPoz = 0;
+// `poz` = produsul ofertei (0, 1, …): fiecare are fişa lui, ca o comandă separată.
+// Fişa printată deja (userul, 2026-10-19) → întâi întrebarea, cu cine şi când a printat-o.
+async function deschideFisa(id, buton, poz = 0) {
+  const r = await api(`/api/comenzi/${id}/fise`);
+  const deja = r?.ok ? (await r.json()).fise.filter(f => f.poz === poz) : [];
+  if (deja.length) {
+    const prima = deja[0], ultima = deja.at(-1);
+    const cand = f => `${dataOra(f.la)}${f.de_nume ? ` de ${f.de_nume}` : ''}`;
+    if (!(await confirma(`Fişa a fost printată deja: ${cand(prima)}${deja.length > 1
+      ? `, apoi încă ${deja.length - 1 === 1 ? 'o dată' : `de ${deja.length - 1} ori`} (ultima ${cand(ultima)})` : ''}.\n\nO printezi din nou?`,
+      'Printează din nou'))) return;
+  }
   fisaComenzii = id;
+  fisaPoz = poz;
   document.getElementById('cadruFisa')?.remove();
   if (butonFisa) { butonFisa.disabled = false; butonFisa.textContent = butonFisa.dataset.text; }
   butonFisa = buton ?? null;
@@ -330,13 +341,18 @@ window.addEventListener('message', e => {
   if (butonFisa) { butonFisa.disabled = false; butonFisa.textContent = butonFisa.dataset.text; butonFisa = null; }
   if (e.data.eroare) return alerta(e.data.eroare);
   // dialogul de print a pornit — comanda ţine minte când (rândul „Fişa printată" se reîmprospătează live)
-  if (fisaComenzii) api(`/api/comenzi/${fisaComenzii}/fisa`, { method: 'POST' });
+  if (fisaComenzii) api(`/api/comenzi/${fisaComenzii}/fisa`, { method: 'POST', body: JSON.stringify({ poz: fisaPoz }) });
   fisaComenzii = null;
 });
-// „Fişa printată 13/10/2026 14:20 · Ana" — în cardul comenzii şi în pagina ei
-const fisaPrintata = c => `<div class="fisa-printata">🖶 ${c.fisa_printata_la
-  ? `Fişa printată ${dataOra(c.fisa_printata_la)}${c.fisa_printata_de_nume ? ` · ${esc(c.fisa_printata_de_nume)}` : ''}`
-  : 'Fişa nu s-a printat încă'}</div>`;
+// „Fişa printată 13/10/2026 14:20 · Ana · încă 2 ori, ultima 15/10/2026 09:10 · Ion" — în cardul
+// comenzii şi în pagina ei; prima printare rămâne, retipăririle se numără (fise = /api/comenzi/:id)
+function fisaPrintata(fise = []) {
+  if (!fise.length) return '<div class="fisa-printata">🖶 Fişa nu s-a printat încă</div>';
+  const cine = f => `${dataOra(f.la)}${f.de_nume ? ` · ${esc(f.de_nume)}` : ''}`;
+  const alte = fise.length - 1;
+  return `<div class="fisa-printata" title="${esc(fise.map(f => `${dataOra(f.la)} ${f.de_nume ?? ''}`).join('\n'))}">🖶 Fişa printată ${cine(fise[0])}${
+    alte ? ` · <b>retipărită ${alte === 1 ? 'o dată' : `de ${alte} ori`}</b>, ultima ${cine(fise.at(-1))}` : ''}</div>`;
+}
 
 const statusHtml = st => st
   ? `<strong>${esc(st.operatie)}</strong> <span class="dim mic">· ${dataOra(st.moment)} · ${esc(st.cine)}</span>`
@@ -706,7 +722,7 @@ const rezumatProdus = p => (p.sistem === 'amanunt' ? `${p.linii.facturare.length
 // adresa se verifică (judeţ + localitate din listă, /adresa.js) doar când chiar se livrează
 const deVerificat = c => c.livrare && c.livrare !== 'Ridicare personala' ? ' data-verifica-adresa' : '';
 
-function cardDetalii({ comanda: c, cerere, pozitii, sticlaLinii = [] }, fise) {
+function cardDetalii({ comanda: c, cerere, pozitii, sticlaLinii = [], fise: printari = [] }, fise) {
   const eOferta = c.tip === 'oferta', ePlata = c.tip === 'plata', eComanda = c.tip === 'comanda';
   const [cls, stare] = eOferta ? ['oferta', 'Ofertă'] : ePlata ? ['plata', 'Aşteaptă plata']
     : c.finalizat_la ? ['gata', 'Comandă finalizată'] : ['lucru', 'Comandă în lucru'];
@@ -725,7 +741,7 @@ function cardDetalii({ comanda: c, cerere, pozitii, sticlaLinii = [] }, fise) {
       <a class="buton" href="/taskuri?comanda=${c.id}" title="Un task / reminder legat de comanda asta">+ Task</a>
       <a class="buton" href="/tichete?comanda=${c.id}" title="Un tichet pentru administrator despre comanda asta">+ Tichet</a>
     </div>
-    ${fisaPrintata(c)}
+    ${fisaPrintata(printari)}
     <div class="cc-butoane cc-treceri">${c.tip === 'comanda' && !c.finalizat_la && !c.anulat ? '<button class="primar" data-adauga-la>+ Adaugă la comandă</button>' : ''}${butoaneTreceri(c, minuteInapoi(c))}${butonAnulare(c, cerere)}</div>
     <dl class="cc-perechi">
       ${c.client_telefon ? `<dt>Telefon</dt><dd>${esc(c.client_telefon)}</dd>` : ''}
@@ -998,7 +1014,7 @@ async function renderDetaliu(id) {
   if (!r) return;
   if (!r.ok) { $('continut').innerHTML = '<div class="mesaj eroare">Comanda nu există.</div>'; return; }
 
-  const { comanda: c, cerere, pozitii, coduri, scanari, sticlaLinii = [] } = await r.json();
+  const { comanda: c, cerere, pozitii, coduri, scanari, sticlaLinii = [], fise: printari = [] } = await r.json();
   const fise = pozitii.length > 1 ? numeFise(pozitii, await incarcaGame()) : [];
   const total = facturareTotala(pozitii);
   const eOferta = c.tip === 'oferta';
@@ -1016,7 +1032,7 @@ async function renderDetaliu(id) {
         <div class="mono nr-comanda">${esc(c.oferta_nr || c.numar)}</div>
         <div class="dim mic">${c.anulat ? '<span class="stare-pastila anulata">Anulată</span>' : `<span class="stare-pastila ${eOferta ? 'oferta' : ePlata ? 'plata' : c.finalizat_la ? 'gata' : 'lucru'}">${eOferta ? 'Ofertă'
           : ePlata ? 'Aşteaptă plata' : c.finalizat_la ? 'Comandă finalizată' : 'Comandă în lucru'}</span>`}</div>
-        ${fisaPrintata(c)}
+        ${fisaPrintata(printari)}
       </div>
       <div class="spatiu"></div>
       ${pozitii.length > 1

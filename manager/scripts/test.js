@@ -467,7 +467,7 @@ async function main() {
     const idVechi = Number(db2().prepare("INSERT INTO utilizator (nume, user, parola_hash, parola_salt, rol) VALUES ('Vechi', 'vechi', 'x', 'x', 'operator')").run().lastInsertRowid);
     require('../server/db.js').roluriNoi(db2());
     verifica('migraţie: operator → birou', db2().prepare('SELECT rol FROM utilizator WHERE id = ?').get(idVechi).rol === 'birou');
-    verifica('schema la versiunea 22', db2().prepare('PRAGMA user_version').get().user_version === 22);
+    verifica('schema la versiunea 23', db2().prepare('PRAGMA user_version').get().user_version === 23);
   }
 
   console.log('\nFixare şi sortare — per utilizator');
@@ -966,6 +966,14 @@ async function main() {
       && !!(await cer('GET', `/api/comenzi/${b}`)).date.comanda.fisa_printata_la
       && (await cer('GET', `/api/comenzi/${b}`)).date.comanda.fisa_printata_de_nume != null);
     verifica('fişa printată pe o comandă inexistentă → 404', (await cer('POST', '/api/comenzi/999999/fisa')).stare === 404);
+    // retipărirea (2026-10-19): prima printare rămâne, fiecare retipărire se ţine, pe produs (poz)
+    await cer('POST', `/api/comenzi/${b}/fisa`, { poz: 0 });
+    await cer('POST', `/api/comenzi/${b}/fisa`, { poz: 1 });
+    const fiseB = (await cer('GET', `/api/comenzi/${b}/fise`)).date.fise;
+    verifica('fişa retipărită: toate printările, în ordine, cu produsul şi cine', fiseB.length === 3
+      && fiseB.map(f => f.poz).join() === '0,0,1' && fiseB.every(f => f.de_nume && f.la), JSON.stringify(fiseB));
+    verifica('pagina comenzii primeşte printările', (await cer('GET', `/api/comenzi/${b}`)).date.fise?.length === 3);
+    verifica('printările unei comenzi inexistente → 404', (await cer('GET', '/api/comenzi/999999/fise')).stare === 404);
     verifica('pagina /cereri se serveşte', String((await cer('GET', '/cereri')).date).includes('<title>Cereri</title>'));
     verifica('/admin află ultimul backup', 'backup' in (await cer('GET', '/api/actualizare')).date);
   }

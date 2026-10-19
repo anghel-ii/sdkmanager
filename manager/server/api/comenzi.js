@@ -362,6 +362,7 @@ function detaliu(ctx) {
     cerere: require('../cereri.js').cerereComenzii(id),   // anularea cerută / decisă (tichetele conducerii)
     sticla,                          // null = comanda n-are sticlă de comandat
     sticlaLinii: require('../sticla.js').sticlaComenzii(id),   // pe furnizor: mail + bifă
+    fise: fiseComenzii(id),          // printările fişei (prima + retipăririle)
     // codul de bare + istoricul din atelier — doar cu scanarea pornită
     ...(config.scanare && { coduri, scanari: require('../scanare.js').scanariComanda(id) }),
     pozitii: pozitii.map(p => ({
@@ -520,13 +521,25 @@ async function factura(ctx) {
 }
 
 // Fişa de atelier a pornit la print (butonul „Fişă" din manager — userul, 2026-10-13:
-// să se vadă la comandă când a fost printată). Ţinem ultima dată + cine.
-function fisaPrintata(ctx) {
+// să se vadă la comandă când a fost printată). Fiecare printare rămâne (2026-10-19: prima
+// + retipăririle); pe comandă stă şi ultima (tabloul de admin numără fişele după ea).
+async function fisaPrintata(ctx) {
   const id = Number(ctx.params.id);
+  const poz = Math.max(0, Math.trunc(Number((await corpJson(ctx.req)).poz) || 0));
   const r = db().prepare(`UPDATE comanda SET fisa_printata_la = ${ACUM()}, fisa_printata_de = ? WHERE id = ?`).run(ctx.utilizator.id, id);
   if (!r.changes) return eroare(ctx.res, 404, 'Comandă inexistentă.');
+  db().prepare(`INSERT INTO fisa_printare (comanda_id, poz, la, de) VALUES (?, ?, ${ACUM()}, ?)`).run(id, poz, ctx.utilizator.id);
   anunta({ comanda: id });
   json(ctx.res, 200, { ok: true });
+}
+
+// printările fişelor unei comenzi, în ordine — pt. pagina comenzii şi întrebarea de la retipărire
+const fiseComenzii = id => db().prepare(`SELECT f.poz, f.la, u.nume AS de_nume FROM fisa_printare f
+  LEFT JOIN utilizator u ON u.id = f.de WHERE f.comanda_id = ? ORDER BY f.la, f.id`).all(id);
+function fise(ctx) {
+  const id = Number(ctx.params.id);
+  if (!db().prepare('SELECT 1 FROM comanda WHERE id = ?').get(id)) return eroare(ctx.res, 404, 'Comandă inexistentă.');
+  json(ctx.res, 200, { fise: fiseComenzii(id) });
 }
 
 // Fixare (pin) — per utilizator: fiecare îşi vede sus doar comenzile LUI
@@ -612,6 +625,7 @@ module.exports = {
     ['POST', '/api/comenzi/:id/factura',     { handler: factura }],
     ['POST', '/api/comenzi/:id/fixare',      { handler: fixeaza }],
     ['POST', '/api/comenzi/:id/fisa',        { handler: fisaPrintata }],
+    ['GET',  '/api/comenzi/:id/fise',        { handler: fise }],
     ['GET',  '/api/preferinte',              { handler: preferinte }],
     ['PUT',  '/api/preferinte',              { handler: salveazaPreferinte }],
   ],
