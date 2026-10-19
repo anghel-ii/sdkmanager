@@ -340,9 +340,16 @@ window.addEventListener('message', e => {
   if (e.origin !== location.origin || e.data?.tip !== 'fisa') return;
   if (butonFisa) { butonFisa.disabled = false; butonFisa.textContent = butonFisa.dataset.text; butonFisa = null; }
   if (e.data.eroare) return alerta(e.data.eroare);
-  // dialogul de print a pornit — comanda ţine minte când (rândul „Fişa printată" se reîmprospătează live)
-  if (fisaComenzii) api(`/api/comenzi/${fisaComenzii}/fisa`, { method: 'POST', body: JSON.stringify({ poz: fisaPoz }) });
+  // dialogul de print a pornit: după el, întrebarea (userul, 2026-10-19 — ca la mailul de sticlă);
+  // doar „Da" notează printarea la comandă (rândul „Fişa printată" se reîmprospătează live)
+  const id = fisaComenzii, poz = fisaPoz;
   fisaComenzii = null;
+  if (id) setTimeout(async () => {
+    if (await intreabaObligatoriu('Ai printat fişa?\n\nDacă da, rămâne notat la comandă că a fost printată acum, de tine.',
+      'Da, am printat-o', 'Nu, n-am printat')) {
+      await api(`/api/comenzi/${id}/fisa`, { method: 'POST', body: JSON.stringify({ poz }) });
+    }
+  }, 400);
 });
 // „Fişa printată 13/10/2026 14:20 · Ana · încă 2 ori, ultima 15/10/2026 09:10 · Ion" — în cardul
 // comenzii şi în pagina ei; prima printare rămâne, retipăririle se numără (fise = /api/comenzi/:id)
