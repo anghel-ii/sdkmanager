@@ -225,16 +225,15 @@ function leagaCopiere(el, randuri) {
 const HASH_TAB = { oferta: '#oferte', plata: '#plata', comanda: '#comenzi', finalizata: '#finalizate' };
 
 // Coloana „Status" = ultima operaţie scanată în atelier
-// Facturare: nr. facturii sau „nefacturat". Câmpul pt. număr + „Marchează
-// facturat" (activ doar cu numărul completat) apar DOAR în pagina comenzii
-// (`cuCamp`), nu în listă.
-const facturareHtml = (c, cuCamp = false) => c.factura_nr
+// Facturare: nr. facturii sau „nefacturat" (în listă). Câmpul pt. număr + „Marchează
+// facturat" (activ doar cu numărul completat) stau în cardul din dreapta şi în pagina comenzii.
+const facturareHtml = c => c.factura_nr
   ? `<span class="facturat">✓ <strong class="mono">${esc(c.factura_nr)}</strong></span>`
-  : `<span class="nefacturat">nefacturat</span>${!cuCamp ? '' : `
-     <span class="factura-form" data-id="${c.id}">
+  : '<span class="nefacturat">nefacturat</span>';
+const formFactura = c => `<span class="factura-form" data-id="${c.id}">
        <input class="factura-nr" placeholder="nr. factură" autocomplete="off">
        <button class="mic primar factura-ok" disabled>Marchează facturat</button>
-     </span>`}`;
+     </span>`;
 
 // Leagă câmpurile de facturare din `radacina`; după salvare, `dupa()` re-randează.
 function leagaFacturare(radacina, dupa) {
@@ -748,13 +747,26 @@ const DEMO = '<span class="stare-pastila demo" title="Făcută sau schimbată î
 // adresa se verifică (judeţ + localitate din listă, /adresa.js) doar când chiar se livrează
 const deVerificat = c => c.livrare && c.livrare !== 'Ridicare personala' ? ' data-verifica-adresa' : '';
 
+// Cardul comenzii alese (dreapta), ca pagina comenzii în mic. Sus două rânduri de butoane:
+// întâi ce faci CU comanda (deschizi, printezi, modifici / adaugi), apoi unde o MUŢI (trecerile
+// colorate; „Anulează…" la capăt). Task / Tichet stau mici lângă ×. În „Drumul comenzii", pasul
+// la care eşti are butonul lui chiar pe rând (factura, sticla, fişa), fără să cauţi în altă parte.
 function cardDetalii({ comanda: c, cerere, pozitii, sticlaLinii = [], fise: printari = [] }, fise) {
   const eOferta = c.tip === 'oferta', ePlata = c.tip === 'plata', eComanda = c.tip === 'comanda';
   const [cls, stare] = eOferta ? ['oferta', 'Ofertă'] : ePlata ? ['plata', 'Aşteaptă plata']
     : c.finalizat_la ? ['gata', 'Comandă finalizată'] : ['lucru', 'Comandă în lucru'];
-  const sticla = sticlaLinii.length ? { total: sticlaLinii.length, comandate: sticlaLinii.filter(l => l.comandat_la).length } : null;
+  const comandate = sticlaLinii.filter(l => l.comandat_la);
+  const sticla = sticlaLinii.length ? { total: sticlaLinii.length, comandate: comandate.length } : null;
+  const activa = !c.anulat && cerere?.stare !== 'deschisa';
+  const treceri = butoaneTreceri(c, minuteInapoi(c)).trim() + butonAnulare(c, cerere);
+  const fisa = printari.length
+    ? pas('gata', 'Fişă', `printată ${deCine(printari[0].de_nume, printari[0].la)}${printari.length > 1
+      ? ` · <span class="dim">retipărită ${printari.length === 2 ? 'o dată' : `de ${printari.length - 1} ori`}</span>` : ''}`)
+    : pas(activa ? 'acum' : 'viitor', 'Fişă', '<span class="urmeaza">neprintată</span>');
   return `
     <div class="cc-titlu"><h2>${esc(c.client_nume)}</h2>
+      <a class="cc-mic" href="/taskuri?comanda=${c.id}" title="Un task / reminder legat de comanda asta">+ Task</a>
+      <a class="cc-mic" href="/tichete?comanda=${c.id}" title="Un tichet pentru administrator despre comanda asta">+ Tichet</a>
       <button class="cc-inchide" id="ccInchide" title="Închide (Esc)" aria-label="Închide">${icoana('inchide')}</button></div>
     <div class="cc-nr"><span class="mono">${esc(c.oferta_nr || c.numar)}</span><span class="stare-pastila ${c.anulat ? 'anulata' : cls}">${c.anulat ? 'Anulată' : stare}</span>${c.demo ? DEMO : ''}</div>
     ${blocAnulare(c, cerere)}
@@ -764,11 +776,9 @@ function cardDetalii({ comanda: c, cerere, pozitii, sticlaLinii = [], fise: prin
         ? pozitii.map((p, k) => `<button class="cc-fisa" data-poz="${k}" title="Fişa produsului ${k + 1}: ${esc(p.eticheta)}">🖶 Fişa ${esc(fise[k])}</button>`).join('')
         : '<button class="cc-fisa" data-poz="0" title="Deschide fişa comenzii pentru printare">🖶 Printează fişa</button>'}
       ${eOferta && !c.anulat ? '<button id="ccModifica">Modifică oferta</button>' : ''}
-      <a class="buton" href="/taskuri?comanda=${c.id}" title="Un task / reminder legat de comanda asta">+ Task</a>
-      <a class="buton" href="/tichete?comanda=${c.id}" title="Un tichet pentru administrator despre comanda asta">+ Tichet</a>
+      ${eComanda && !c.finalizat_la && !c.anulat ? '<button data-adauga-la>+ Adaugă la comandă</button>' : ''}
     </div>
-    ${fisaPrintata(printari)}
-    <div class="cc-butoane cc-treceri">${c.tip === 'comanda' && !c.finalizat_la && !c.anulat ? '<button class="primar" data-adauga-la>+ Adaugă la comandă</button>' : ''}${butoaneTreceri(c, minuteInapoi(c))}${butonAnulare(c, cerere)}</div>
+    ${treceri ? `<div class="cc-butoane cc-treceri">${treceri}</div>` : ''}
     <dl class="cc-perechi">
       ${c.client_telefon ? `<dt>Telefon</dt><dd>${esc(c.client_telefon)}</dd>` : ''}
       ${c.client_adresa ? `<dt>Adresă</dt><dd${deVerificat(c)}>${esc(c.client_adresa)}</dd>` : ''}
@@ -782,11 +792,15 @@ function cardDetalii({ comanda: c, cerere, pozitii, sticlaLinii = [], fise: prin
       ${pas('gata', 'Ofertat', deCine(c.creat_de_nume, c.creat_la))}
       ${c.confirmat_la ? pas('gata', 'Acceptat', deCine(c.confirmat_de_nume, c.confirmat_la))
         : pas(c.anulat ? 'viitor' : 'acum', 'Acceptat', c.anulat ? '' : `<span class="urmeaza">urmează „${ePlata ? 'Plată primită' : 'Acceptă oferta'}"</span>`)}
-      ${eComanda ? pas(c.factura_nr ? 'gata' : 'acum', 'Facturat', c.factura_nr
-        ? `<strong class="mono">${esc(c.factura_nr)}</strong> · ${dataOra(c.facturat_la)}` : '<span class="nefacturat">nefacturat</span>')
-        : pas('viitor', 'Facturat', '')}
-      ${eComanda ? pas('info', 'Sticlă', sticla ? sticlaHtml(sticla) : '<span class="dim">fără sticlă</span>') : ''}
-      ${c.finalizat_la ? pas('gata', 'Finalizat', deCine(c.finalizat_de_nume, c.finalizat_la)) : pas('viitor', 'Finalizat', '')}
+      ${!eComanda ? pas('viitor', 'Facturat', '')
+        : c.factura_nr ? pas('gata', 'Facturat', `<strong class="mono">${esc(c.factura_nr)}</strong> · ${deCine(c.facturat_de_nume, c.facturat_la)}`)
+        : pas(activa ? 'acum' : 'viitor', 'Facturat', activa ? formFactura(c) : '<span class="nefacturat">nefacturat</span>', 'facturare')}
+      ${!eComanda ? '' : !sticla ? pas('info', 'Sticlă', '<span class="dim">fără sticlă</span>')
+        : sticla.comandate === sticla.total ? pas('gata', 'Sticlă', `comandată ${deCine(comandate.at(-1)?.comandat_de_nume, comandate.map(l => l.comandat_la).sort().at(-1))}`)
+        : pas(activa ? 'acum' : 'viitor', 'Sticlă', `${sticlaHtml(sticla)}${activa ? ` <a class="cc-link" href="#comanda/${c.id}" title="Sticla se comandă din pagina comenzii, pe furnizori">Comandă sticla</a>` : ''}`)}
+      ${eComanda ? fisa : ''}
+      ${c.finalizat_la ? pas('gata', 'Finalizat', deCine(c.finalizat_de_nume, c.finalizat_la))
+        : pas('viitor', 'Finalizat', eComanda && activa ? '<span class="dim">cu „Marchează finalizată" de sus</span>' : '')}
     </dl>
     <div class="cc-eticheta">${pozitii.length === 1 ? 'Produs' : `Produse <span class="cate">${pozitii.length}</span>`}</div>
     <ul class="cc-produse">${pozitii.map(p => `<li><b>${esc(p.eticheta)}</b><span>${esc(rezumatProdus(p))}</span></li>`).join('')}</ul>
@@ -808,6 +822,7 @@ async function incarcaCard() {
   Adresa.marcheaza(el);
   opresteActiuni(el, d.cerere);
   leagaTreceri(el, d.comanda, () => mergiLa(id));
+  leagaFacturare(el, () => mergiLa(id));
   $('ccInchide').addEventListener('click', () => selecteaza(null));
   $('ccDeschide').addEventListener('click', () => { location.hash = '#comanda/' + id; });
   $('ccModifica')?.addEventListener('click', () => { location.href = '/configurator/?oferta=' + id; });
@@ -1106,10 +1121,7 @@ async function renderDetaliu(id) {
           : pas(c.anulat ? 'viitor' : 'acum', 'Acceptat', c.anulat ? '' : `<span class="urmeaza">Urmează: „${ePlata ? 'Plată primită' : 'Acceptă oferta'}"</span>`)}
         ${eComanda ? pas(c.factura_nr ? 'gata' : 'acum', 'Facturat', c.factura_nr
           ? `<strong class="mono">${esc(c.factura_nr)}</strong> · ${deCine(c.facturat_de_nume, c.facturat_la)}${poateAnulaFactura() ? ' <button class="mic rosu-contur" id="anuleazaFactura">Anulează</button>' : ''}`
-          : `<span class="factura-form" data-id="${c.id}">
-               <input class="factura-nr" placeholder="nr. factură" autocomplete="off">
-               <button class="mic primar factura-ok" disabled>Marchează facturat</button>
-             </span>`, 'facturare') : pas('viitor', 'Facturat', '')}
+          : formFactura(c), 'facturare') : pas('viitor', 'Facturat', '')}
         ${eComanda ? pas('info', 'Sticlă', sticlaLinii.length ? blocSticla(sticlaLinii) : '<span class="dim">— fără sticlă de comandat</span>') : ''}
         ${c.finalizat_la ? pas('gata', 'Finalizat', deCine(c.finalizat_de_nume, c.finalizat_la))
           : pas('viitor', 'Finalizat', eComanda ? '<span class="dim">după „Marchează finalizată"</span>' : '')}
