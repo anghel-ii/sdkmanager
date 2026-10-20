@@ -226,8 +226,8 @@ const HASH_TAB = { oferta: '#oferte', plata: '#plata', comanda: '#comenzi', fina
 
 // Coloana „Status" = ultima operaţie scanată în atelier
 // Facturare: nr. facturii sau „nefacturat". Câmpul pt. număr + „Marchează
-// facturat" (activ doar cu numărul completat) apar DOAR în pagina comenzii
-// (`cuCamp`), nu în listă.
+// facturat" (activ doar cu numărul completat) apar în cardul din dreapta
+// (`cuCamp`), nu în listă; pagina comenzii are câmpul ei.
 const facturareHtml = (c, cuCamp = false) => c.factura_nr
   ? `<span class="facturat">✓ <strong class="mono">${esc(c.factura_nr)}</strong></span>`
   : `<span class="nefacturat">nefacturat</span>${!cuCamp ? '' : `
@@ -783,7 +783,7 @@ function cardDetalii({ comanda: c, cerere, pozitii, sticlaLinii = [], fise: prin
       ${c.confirmat_la ? pas('gata', 'Acceptat', deCine(c.confirmat_de_nume, c.confirmat_la))
         : pas(c.anulat ? 'viitor' : 'acum', 'Acceptat', c.anulat ? '' : `<span class="urmeaza">urmează „${ePlata ? 'Plată primită' : 'Acceptă oferta'}"</span>`)}
       ${eComanda ? pas(c.factura_nr ? 'gata' : 'acum', 'Facturat', c.factura_nr
-        ? `<strong class="mono">${esc(c.factura_nr)}</strong> · ${dataOra(c.facturat_la)}` : '<span class="nefacturat">nefacturat</span>')
+        ? `<strong class="mono">${esc(c.factura_nr)}</strong> · ${dataOra(c.facturat_la)}` : facturareHtml(c, true), 'facturare')
         : pas('viitor', 'Facturat', '')}
       ${eComanda ? pas('info', 'Sticlă', sticla ? sticlaHtml(sticla) : '<span class="dim">fără sticlă</span>') : ''}
       ${c.finalizat_la ? pas('gata', 'Finalizat', deCine(c.finalizat_de_nume, c.finalizat_la)) : pas('viitor', 'Finalizat', '')}
@@ -808,6 +808,7 @@ async function incarcaCard() {
   Adresa.marcheaza(el);
   opresteActiuni(el, d.cerere);
   leagaTreceri(el, d.comanda, () => mergiLa(id));
+  leagaFacturare(el, () => mergiLa(id));
   $('ccInchide').addEventListener('click', () => selecteaza(null));
   $('ccDeschide').addEventListener('click', () => { location.hash = '#comanda/' + id; });
   $('ccModifica')?.addEventListener('click', () => { location.href = '/configurator/?oferta=' + id; });
