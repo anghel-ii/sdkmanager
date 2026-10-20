@@ -26,7 +26,7 @@ import { state } from '../js/state.js';
 import { systems } from '../js/systems/registry.js';
 import { initBuilder, buildConfig, currentSpec, currentBom, currentBilling,
          currentClientPanels, currentSticla, finishesOf } from '../js/builder.js';
-import { cotaGauri, randGol } from '../js/lib/rame/rame.js';
+import { cotaGauri, randGol, geamPermisRame } from '../js/lib/rame/rame.js';
 import catalog from '../js/catalog/catalog.generated.json';
 
 const FISIER = new URL('./referinta.json', import.meta.url);
@@ -36,6 +36,8 @@ initBuilder(new THREE.Group(), { target: { set() {} } });
 
 // ── Starea unei configuraţii (ce face ui.js → syncDoors, fără DOM) ─────────
 const GEAM_4_FLOAT   = 'GG004';    // geam float 4mm
+// rame 831/841/842: doar 4 mm şlefuit / securizat (userul, 2026-10-20)
+const GEAM_4_SLEFUIT = 'HD008', OGLINDA_SLEFUITA = 'HD002';
 const GEAM_SATINAT_4 = 'GG009';    // geam satinat alb 4mm (LUX)
 const OGLINDA  = (catalog.geam ?? []).find(g => g.oglinda)?.cod;
 const PERUSA   = (n, f) => Array.from({ length: n }, (_, i) => f(i));
@@ -106,7 +108,7 @@ function stareRame(sys, { finish, varianta, randuri }) {
                                : { randuri: [{ model: 'L32', lungime: 1200, buc: 2 }, { model: 'Neo', lungime: 800, buc: 3 }] }
       : { randuri: [{ model: null, lungime: null, buc: 1 }] },
     asamblare: varianta === 'client' ? 'client' : 'noi',
-    geam: varianta === 'oglinda' ? OGLINDA : GEAM_4_FLOAT,
+    geam: grup820 ? (varianta === 'oglinda' ? OGLINDA : GEAM_4_FLOAT) : varianta === 'oglinda' ? OGLINDA_SLEFUITA : GEAM_4_SLEFUIT,
     gaurire: varianta === 'fara-gaurire' ? 'Fara gaurire' : grup820 ? '100 mm sus/jos si la mijloc' : 'Gaurire Standard',
     balama: varianta === 'fara-gaurire' ? null : grup820 ? (varianta === 'client' ? 'Fara balamale de la noi' : sys.meta.id === 'rama820' ? '71B3550 NICHEL' : '9072524') : null,
     placuta: varianta === 'fara-gaurire' ? null : grup820 ? (varianta === 'client' ? 'Fara placute de la noi' : sys.meta.id === 'rama820' ? '173H7100 NICHEL' : '9071576') : null,
@@ -419,6 +421,24 @@ for (const sys of Object.values(systems).filter(s => s.meta.family === 'suspenda
   buildConfig(); s = currentSpec();
   verifica(s.nrGauri === 0, `„Fara gaurire" ignoră cotele: am ${s.nrGauri}`);
   console.log('✓ rame: cote pe fiecare ramă (de sus / de jos = nr. de găuri, peste regula din listă), câmpurile pornesc goale');
+}
+
+// Nr. de găuri obligatoriu (0 = fără găuri) şi sticla permisă pe model (userul, 2026-10-20)
+{
+  const sys = systems.rama820;
+  state.system = sys.meta.id;
+  stareRame(sys, { finish: 'ALUMINIU', varianta: 'noi', randuri: [[1000, 400, 2, null], [800, 400, 1, 0]] });
+  buildConfig();
+  const s = currentSpec();
+  const verifica = (ok, mesaj) => { if (!ok) { console.error('✗ rame, găuri / sticlă: ' + mesaj); process.exit(1); } };
+  verifica(s.erori.some(e => /rândul 1: completează nr\. de găuri/.test(e)), `găuri goale = eroare: ${s.erori.join('; ')}`);
+  verifica(!s.erori.some(e => /rândul 2: completează nr\. de găuri/.test(e)), `0 găuri e o valoare: ${s.erori.join('; ')}`);
+  const geam = cod => catalog.geam.find(g => g.cod === cod);
+  const p820 = geamPermisRame('820'), p841 = geamPermisRame('841');
+  verifica(p820(geam('GG004')) && p820(geam('GG001')) && !catalog.geam.filter(g => g.grosime !== 4).some(p820), '820: orice 4 mm, nimic altceva');
+  verifica(p841(geam('HD008')) && p841(geam('CS001')) && p841(geam('HD002')) && !p841(geam('GG004')) && !p841(geam('GG001')),
+    '841: doar 4 mm şlefuit / securizat');
+  console.log('✓ rame: nr. de găuri obligatoriu (0 = fără), sticla permisă pe model (820: 4 mm; 831/841/842: 4 mm şlefuit / securizat)');
 }
 
 // UTIL Roma (userul, 2026-10-12): oglindă aplicată pe PAL — în necesarul clientului,

@@ -77,6 +77,10 @@ export const GAURIRE_820 = [FARA_GAURIRE, DOUA_GAURI, '100 mm sus/jos si la mijl
                             '100 mm sus/jos si impartite egal', COTE_PE_RAMA, 'vezi schita pe spate'];   // SCHITA_CLIENT
 export const GAURIRE_831 = ['Fara gaurire', 'Gaurire Standard'];
 export const SCHITA_CLIENT = 'vezi schita pe spate';
+// Geamul pe care îl montăm noi (userul, 2026-10-20): la 820/822/824 orice sticlă / oglindă de 4 mm;
+// la 831/841/842 doar cea de 4 mm şlefuită sau securizată.
+export const geamPermisRame = model => g => !!g && g.grosime === 4
+  && (MODELE_RAME[model]?.grup === '820' || /slefuit|securizat/i.test(g.denumire));
 
 // Cotele găurilor de balama pe o ramă, de SUS în jos, în mm (la centrul găurii) —
 // pt. schiţa de găurire de pe verso (CNC). Prima şi ultima la 100 mm de margini,
@@ -286,6 +290,9 @@ export function specRame(model, state) {
       return { i, gol: true, h, l, buc, gauri, cote };
     }
     if (peRama && !cote.length) erori.push(`rândul ${i + 1}: completează cotele de găurire`);
+    // nr. de găuri se scrie mereu de mână — 0 dacă rama n-are găuri (userul, 2026-10-20), nu se ghiceşte
+    if (cuCote && !cote.length && !douaGauri && !peRama && (x.gauri == null || x.gauri === ''))
+      erori.push(`rândul ${i + 1}: completează nr. de găuri (0 dacă n-are)`);
     for (const c of cote) if (c.v >= h) erori.push(`rândul ${i + 1}: cota ${c.v} (de ${c.de}) e mai mare decât înălţimea ramei, ${h}`);
     const hR = rotunjeste(h, m.H), lR = rotunjeste(l, m.L);
     let cod = null, eroare = null;
@@ -335,6 +342,9 @@ export function specRame(model, state) {
   if (!nrRame) erori.push('completează cel puţin un rând de rame (H, L, nr. buc)');
   if (!r.asamblare) erori.push('alege cine asamblează');
   if (r.asamblare === 'noi' && !r.geam) erori.push('alege geamul/oglinda (asamblăm noi)');
+  if (r.asamblare === 'noi' && r.geam && !geamPermisRame(model)(findGeam(r.geam))) {
+    erori.push(`geamul ales nu merge la rama ${model} — ${m.grup === '820' ? 'doar de 4 mm' : 'doar de 4 mm, şlefuit sau securizat'}`);
+  }
   // regula din listă trebuie aleasă doar dacă vreun rând n-are cotele lui
   if (!r.gaurire && (m.grup !== '820' || pline.some(x => !x.cote.length))) erori.push('alege cotele de găurire');
   if (m.grup === '820' && !faraGaurire && !r.balama) erori.push('alege balamaua');

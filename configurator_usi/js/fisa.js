@@ -5,7 +5,21 @@ import { currentSpec, currentBom, currentBilling, currentClientPanels } from './
 import { finishesOf, familia } from './familii.js';
 import { findGeam } from './lib/comun/geam.js';
 import { suprapuneriEfective, PROFIL_H_3D } from './lib/confort/index.js';
-import { ASAMBLARE, FARA_GAURIRE, cotaGauri } from './lib/rame/rame.js';
+import { ASAMBLARE, FARA_GAURIRE, MODELE_MANER, cotaGauri } from './lib/rame/rame.js';
+
+// Rame pe care le asamblăm NOI şi au mâner: mânerul îl montăm tot noi — pe faţa fişei, în tabelul
+// de sus, lângă „Asamblare" (userul, 2026-10-20). „L 40: 2 × 1200 mm · Neo: 1 × 800 mm"; null = nu e cazul.
+function manerMontat(rame) {
+  if (rame.asamblare !== 'noi') return null;
+  const peModel = new Map();
+  for (const rd of rame.maner?.randuri ?? []) {
+    const model = rd.model ?? rame.maner.model, L = +rd.lungime || 0, buc = Math.round(+rd.buc || 0);
+    if (!model || !L || !buc) continue;
+    peModel.set(model, [...(peModel.get(model) ?? []), `${buc} × ${L} mm`]);
+  }
+  return peModel.size ? [...peModel].map(([model, buc]) =>
+    `${MODELE_MANER.find(([v]) => v === model)?.[1] ?? model}: ${buc.join(', ')}`).join(' · ') : null;
+}
 import { detaliiComanda, plataText } from './lib/comun/comanda.js';
 import JsBarcode from 'jsbarcode';
 
@@ -547,6 +561,7 @@ export function deschideFisa(client, oferta = null, salvate = null) {
     ['Nr. rame',          spec.nrRame],
     ['Asamblare',         ASAMBLARE.find(a => a[0] === rame.asamblare)?.[1] ?? '—'],
     ['Geam / oglindă',    rame.asamblare === 'noi' ? (findGeam(rame.geam)?.denumire ?? '—') : 'al clientului'],
+    ['Montăm noi mânerul', manerMontat(rame)],
     ['Cote găurire',      rame.gaurire ?? '—'],
     ['Vopsire cod RAL',   rame.ral || null],
     // detaliile comenzii — la rame în acelaşi tabel (userul, 2026-10-02), ca fişa să fie mai compactă

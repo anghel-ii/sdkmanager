@@ -4,8 +4,9 @@ import { currentSpec } from './builder.js';
 import {
   MODELE_RAME, ASAMBLARE, GAURIRE_820, GAURIRE_831,
   BALAMALE, PLACUTE, FARA_BALAMALE, FARA_PLACUTE, FARA_GAURIRE, DOUA_GAURI, COTE_PE_RAMA, BARA_MANER_MM, MODELE_MANER, codManer,
-  stareRameGoala, randGol, randManerGol, cotaGoala,
+  stareRameGoala, randGol, randManerGol, cotaGoala, geamPermisRame,
 } from './lib/rame/rame.js';
+import { findGeam } from './lib/rame/geam.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  UI RAME — panoul din bara laterală pt. gama „rame" (în locul cotelor de gol,
@@ -31,6 +32,7 @@ export function syncRame() {
   const x = r();
   const model = systems[state.system].meta.rame;
   if (x.gaurire && !(m.grup === '820' ? GAURIRE_820 : GAURIRE_831).includes(x.gaurire)) x.gaurire = null;
+  if (x.geam && !geamPermisRame(model)(findGeam(x.geam))) x.geam = null;   // ex. sticlă de 8 mm, sau nesecurizată la 831
   const valid = (val, lista, fara) => val === fara || lista.some(e => e[0] === val);
   if (m.grup === '820') {
     if (x.balama && !valid(x.balama, BALAMALE[model], FARA_BALAMALE)) x.balama = null;
@@ -64,13 +66,14 @@ const camp = (eticheta, html) => `
 // tabelului, ca să nu se piardă cursorul.
 const golDeTot = (rd, coloane) => coloane.every(([c]) => rd[c] == null || rd[c] === '');
 
-// coloană `[câmp, max, mic]` = câmp numeric; `[câmp, { variante }]` = butoane
+// coloană `[câmp, max, mic, cuZero]` = câmp numeric (cuZero: 0 se vede şi contează — nr. de găuri);
+// `[câmp, { variante }]` = butoane
 // (variante = [[valoare, text, activ]], ex. modelul mânerului)
-function celula(rd, [c, max, mic]) {
+function celula(rd, [c, max, mic, cuZero]) {
   if (max?.variante) return `<td><div class="segmented mini rame-seg-rand" data-c="${c}">${max.variante.map(([v, t, activ]) =>
     `<button type="button" data-v="${v}"${rd[c] === v ? ' class="active"' : ''}${activ ? '' : ' disabled title="Nu există în culoarea aleasă"'}>${t}</button>`).join('')}</div></td>`;
   return `<td><input type="number" class="rame-in${mic ? ' mic' : ''}" data-c="${c}" min="0"${
-    max && Number.isFinite(max) ? ` max="${max}"` : ''} step="1" value="${rd[c] || ''}"></td>`;   // 0 = gol (userul, 2026-10-12)
+    max && Number.isFinite(max) ? ` max="${max}"` : ''} step="1" value="${cuZero ? rd[c] ?? '' : rd[c] || ''}"${cuZero ? ' placeholder="?" title="Câte găuri — 0 dacă n-are"' : ''}></td>`;   // 0 = gol (userul, 2026-10-12)
 }
 
 // `sub` = un rând dedesubtul fiecărui rând (cotele de găurire): { html(rd, i), leaga(tr, rd) }
@@ -187,7 +190,7 @@ export function renderRame(box, { rebuild, geamOptionsHtml }) {
   // coloana „Găuri" = câte găuri după regula din listă, pt. rândurile FĂRĂ cote (la sus/jos: mereu 2;
   // la „Cote pe fiecare rama": doar cotele)
   const cuGauri  = cuBalama && x.gaurire !== DOUA_GAURI && x.gaurire !== COTE_PE_RAMA;
-  const COL_RAME = [['h', m.H.at(-1)], ['l', m.L.at(-1)], ['buc', Infinity, true], ...(cuGauri ? [['gauri', Infinity, true]] : [])];
+  const COL_RAME = [['h', m.H.at(-1)], ['l', m.L.at(-1)], ['buc', Infinity, true], ...(cuGauri ? [['gauri', Infinity, true, true]] : [])];
   // cotele sub fiecare rând (laSchimbare e mai jos — se cheamă abia la editare)
   const coteSub = cuBalama ? coteRand(COL_RAME.length + 2, () => laSchimbare()) : null;
   // toate modelele de mâner la vedere; cele fără cod în culoarea aleasă — gri
@@ -208,7 +211,7 @@ export function renderRame(box, { rebuild, geamOptionsHtml }) {
   box.innerHTML = `
     ${camp('Asamblare', `<div class="segmented mini rame-seg" data-c="asamblare">${
       ASAMBLARE.map(([v, t]) => `<button data-v="${v}"${x.asamblare === v ? ' class="active"' : ''}>${t}</button>`).join('')}</div>`)}
-    ${x.asamblare === 'noi' ? camp('Geam / oglindă', `<select class="rame-sel" data-c="geam">${geamOptionsHtml(x.geam)}</select>`)
+    ${x.asamblare === 'noi' ? camp('Geam / oglindă', `<select class="rame-sel" data-c="geam">${geamOptionsHtml(x.geam, geamPermisRame(model))}</select>`)
       : x.asamblare === 'client' ? camp('Geam / oglindă', `<input type="text" class="rame-text" value="Asamblează clientul · sticlă 4 mm" readonly>`) : ''}
     ${camp(cu820 ? 'Cote găurire balamale' : 'Găurire', `<select class="rame-sel" data-c="gaurire">${
       optiuni(gaurire.map(g => [g, g]), x.gaurire, 'Alege')}</select>`)}
