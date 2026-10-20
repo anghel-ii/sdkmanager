@@ -519,7 +519,8 @@ function tipareste() {
       ${rand('Număr ofertă', $('ofertaNr').value.trim())}${rand('Observaţii', $('observatii').value.trim())}
     </table>
     <table>
-      <thead><tr><th>#</th><th>Cod</th><th>Produs</th><th>Debitare</th><th>Cant.</th><th>✓</th></tr></thead>
+      <thead><tr class="margine"><td colspan="6"></td></tr><tr><th>#</th><th>Cod</th><th>Produs</th><th>Debitare</th><th>Cant.</th><th>✓</th></tr></thead>
+      <tfoot><tr class="margine"><td colspan="6"></td></tr></tfoot>
       <tbody>${lines.map((l, k) => { const d = bucatiDebitare(peCod.get(l.cod)); return `<tr><td>${k + 1}</td><td>${esc(l.cod)}</td>
         <td class="produs">${esc(l.denumire)}</td>
         <td class="deb-col">${d ? d.bucati.map(b => `<div>${esc(b)}</div>`).join('') + (d.bara ? `<div class="bara-de">din bare de ${d.bara} mm</div>` : '') : ''}</td>

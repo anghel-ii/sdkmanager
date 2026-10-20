@@ -84,11 +84,16 @@
      fără hartă (harta e doar pt. cei care organizează; şoferul are Google Maps). Pe ecran nu se vede; la tipar — doar el. */
   #borderou { display: none; }
   @media print {
-    @page { size: A4 landscape; margin: 10mm; }
+    /* fără margini de pagină → Chrome nu mai pune antetul / subsolul lui (data, URL-ul, nr. paginii); marginile
+       le fac: stânga-dreapta paddingul, sus rândul de titlu din thead, jos tfoot-ul gol — amândouă se repetă pe
+       fiecare pagină. Rândurile au înălţimea lor şi nu se rup: ce nu încape trece pe pagina următoare. */
+    @page { size: A4 landscape; margin: 0; }
     body.tipar-borderou > :not(#borderou) { display: none !important; }
     body.tipar-borderou { background: #fff; padding: 0 !important; }
-    body.tipar-borderou #borderou { display: block; color: #000; font-family: 'Times New Roman', Times, serif; }
-    #borderou h1 { font-size: 20pt; font-weight: 700; margin: 0 0 4pt 4pt; color: #000; }
+    body.tipar-borderou #borderou { display: block; padding: 0 10mm; color: #000; font-family: 'Times New Roman', Times, serif; }
+    #borderou h1 { font-size: 20pt; font-weight: 700; margin: 0 0 0 4pt; color: #000; text-align: left; }
+    #borderou th.titlu { border: none; padding: 10mm 0 4pt; }
+    #borderou tfoot td { border: none; height: 10mm; padding: 0; }
     #borderou table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 10.5pt; }
     #borderou th, #borderou td { border: 1px solid #000; padding: 3pt 4pt; text-align: center; vertical-align: middle; color: #000; word-wrap: break-word; }
     #borderou th { font-weight: 700; font-size: 10pt; line-height: 1.1; }
@@ -96,9 +101,9 @@
     #borderou tbody tr { break-inside: avoid; }
     #borderou td.firma { font-size: 11pt; }
     #borderou .numerar { font-weight: 700; }
-    #borderou tfoot td { border: none; height: auto; }
-    #borderou tfoot td.suma { border: 1px solid #000; }
-    #borderou .total-numerar { margin: 14pt auto 0; border-collapse: collapse; width: auto; }
+    #borderou tr.totaluri td { border: none; height: auto; }
+    #borderou tr.totaluri td.suma { border: 1px solid #000; }
+    #borderou .total-numerar { margin: 14pt auto 0; break-inside: avoid; border-collapse: collapse; width: auto; }
     #borderou .total-numerar td { border: 2px solid #000; padding: 4pt 10pt; font-size: 11pt; height: auto; }
     #borderou .total-numerar td:first-child { font-weight: 700; width: 110pt; }
   }
@@ -539,15 +544,16 @@ function borderouHtml(l) {
       <td>${esc(c.client_adresa ?? '')}</td>
       <td>${c.de_incasat != null ? lei2(p) : ''}</td>${celula('bon')}${celula('factura')}${celula('op')}<td></td></tr>`;
   }).join('');
-  return `<h1>Transport${judete.length ? ` Jud ${esc(judete.join('-'))}` : ''} ${z}.${ll}.${a}</h1>
-    <table>
+  return `<table>
       <colgroup><col style="width:19%"><col style="width:15.5%"><col style="width:13%"><col style="width:8.5%"><col style="width:8%">
         <col style="width:9%"><col style="width:9%"><col style="width:6%"></colgroup>
-      <thead><tr><th>FIRMA</th><th>NUME DELEGAT-NR TELEFON-OBSERVATII</th><th>LOCALITATE/ STRADA</th><th>Preţ</th><th>Bon</th>
+      <thead><tr><th class="titlu" colspan="8"><h1>Transport${judete.length ? ` Jud ${esc(judete.join('-'))}` : ''} ${z}.${ll}.${a}</h1></th></tr>
+        <tr><th>FIRMA</th><th>NUME DELEGAT-NR TELEFON-OBSERVATII</th><th>LOCALITATE/ STRADA</th><th>Preţ</th><th>Bon</th>
         <th>Factura + chitanta</th><th>OP</th><th>colete</th></tr></thead>
-      <tbody>${randuri}</tbody>
-      <tfoot><tr><td colspan="3"></td><td class="suma">${lei2(sume.pret)}</td><td class="suma numerar">${lei2(sume.bon)}</td>
-        <td class="suma numerar">${lei2(sume.factura)}</td><td class="suma">${lei2(sume.op)}</td><td></td></tr></tfoot>
+      <tbody>${randuri}
+        <tr class="totaluri"><td colspan="3"></td><td class="suma">${lei2(sume.pret)}</td><td class="suma numerar">${lei2(sume.bon)}</td>
+        <td class="suma numerar">${lei2(sume.factura)}</td><td class="suma">${lei2(sume.op)}</td><td></td></tr></tbody>
+      <tfoot><tr><td colspan="8"></td></tr></tfoot>
     </table>
     <table class="total-numerar"><tr><td>Total numerar de încasat:</td><td>${lei2(sume.bon + sume.factura)}</td></tr></table>`;
 }

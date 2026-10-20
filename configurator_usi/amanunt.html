@@ -86,9 +86,15 @@
     /* foaia de tipar — doar la print */
     #tipar { display: none; }
     @media print {
-      body { background: #fff; color: #000; }
+      /* fără margini de pagină → Chrome nu mai pune antetul / subsolul lui (data, URL-ul, nr. paginii);
+         marginile le fac paddingul (stânga-dreapta, sus pe prima pagină) şi rândurile goale din thead /
+         tfoot, care se repetă pe fiecare pagină a tabelului */
+      @page { margin: 0; }
+      body { background: #fff; color: #000; margin: 0; }
       .bara, main, #sugestii, dialog { display: none !important; }
-      #tipar { display: block; font-size: 12px; padding: 0; }
+      #tipar { display: block; font-size: 12px; padding: 10mm 10mm 0; }
+      #tipar tr.margine td { border: none; padding: 0; height: 10mm; }
+      #tipar table:last-child { margin-top: 0; }   /* pe prima pagină distanţa o dă rândul de margine */
       #tipar h1 { font-size: 18px; margin-bottom: 2px; }
       #tipar .cap { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
       #tipar table { width: 100%; border-collapse: collapse; margin-top: 10px; }
