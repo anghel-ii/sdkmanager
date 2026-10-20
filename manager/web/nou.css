@@ -212,52 +212,28 @@ body.ui-nou .gol.card { border-radius: 12px; }
 .cc-inchide:hover:not(:disabled) { background: var(--panel-2); color: var(--text); border: none; }
 .cc-nr { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; margin-top: 4px; font-size: 13px; color: var(--text-dim); }
 .cc-butoane { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 2px; }
-.cc-butoane button { padding: 7px 12px; font-size: 13px; }
+.cc-butoane button { padding: 7px 10px; font-size: 12.5px; }
+.cc-treceri { margin-top: 6px; }
+.cc-treceri [data-anuleaza] { margin-left: auto; }   /* anularea la capăt, departe de trecerile obişnuite */
+.cc-mic { flex: none; padding: 3px 8px; margin-top: 2px; border: 1px solid var(--line); border-radius: 7px; font-size: 12px;
+          color: var(--text-dim); text-decoration: none; white-space: nowrap; }
+.cc-mic:hover { color: var(--text); border-color: var(--accent); }
+.cc-link { margin-left: 6px; font-size: 12.5px; color: var(--accent); white-space: nowrap; }
+.card-comanda .cc-pasi .factura-form { flex-wrap: nowrap; }
+.card-comanda .cc-pasi .factura-form input { flex: 1; min-width: 0; max-width: none; }
 .fisa-printata { margin-top: 6px; font-size: 12px; color: var(--text-dim); }
-.cc-deschide { width: 100%; margin-top: 12px; padding: 8px 12px; font-size: 13.5px; }
-
-/* „De făcut": singurul loc colorat din card — paşii rămaşi, fiecare cu butonul lui */
-.cc-defacut { margin-top: 14px; padding: 12px 14px 14px; border: 1px solid rgba(77, 163, 255, .35); border-radius: 12px;
-              background: rgba(77, 163, 255, .06); }
-.cc-defacut h3 { font-size: 14px; font-weight: 600; color: var(--text); }
-.cc-defacut h3 .cate { display: inline-grid; place-items: center; min-width: 20px; height: 20px; margin-left: 6px; padding: 0 6px;
-                       border-radius: 10px; background: var(--accent-dim); color: #fff; font-size: 12px; vertical-align: 1px; }
-.cc-defacut ul { list-style: none; margin: 4px 0 0; }
-.cc-defacut li { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px 12px;
-                 padding: 10px 0 0 24px; }
-.cc-defacut li.lat { grid-template-columns: minmax(0, 1fr); }
-.cc-defacut li + li { margin-top: 10px; border-top: 1px solid rgba(77, 163, 255, .16); }
-.cc-defacut li b { position: relative; display: block; font-size: 13.5px; font-weight: 600; }
-.cc-defacut li b::before { content: ''; position: absolute; left: -23px; top: 3px; width: 12px; height: 12px;
-                           border: 2px solid var(--accent); border-radius: 50%; }
-.cc-defacut li span { display: block; margin-top: 1px; font-size: 12.5px; color: var(--text-dim); }
-.df-butoane { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
-.lat > .df-butoane { justify-content: flex-start; }
-.df-butoane button, .df-butoane a.buton { padding: 6px 11px; font-size: 13px; }
-.df-butoane .factura-form { display: flex; gap: 6px; width: 100%; }
-.df-butoane .factura-form input { flex: 1; min-width: 0; padding: 6px 9px; font-size: 13px; }
-.cc-defacut.gata { border-color: rgba(107, 155, 122, .45); background: rgba(107, 155, 122, .08); }
-.cc-defacut.gata h3 { color: #7cc493; }
-.cc-defacut.gata > span { display: block; margin-top: 2px; font-size: 12.5px; color: var(--text-dim); }
-
-.cc-sect { margin: 18px 0 6px; font-size: 13px; font-weight: 600; color: var(--text-dim); }
-.cc-sect .cate { margin-left: 4px; font-weight: 500; }
-/* „Făcut": bifa verde + cine şi când, fără greutate */
-.cc-facut { display: grid; grid-template-columns: 118px minmax(0, 1fr); gap: 5px 10px; font-size: 13px; }
-.cc-facut dt { position: relative; padding-left: 20px; color: var(--text); }
-.cc-facut dt::before { content: '✓'; position: absolute; left: 0; top: 0; color: #7cc493; font-weight: 700; }
-.cc-facut dd { margin: 0; color: var(--text-dim); overflow-wrap: anywhere; }
-.cc-facut dd b { color: var(--text); font-weight: 600; }
-.cc-perechi { display: grid; grid-template-columns: 80px minmax(0, 1fr); gap: 4px 10px; font-size: 13.5px; }
+.cc-eticheta { margin: 14px 0 6px; font-size: 10.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #6f7684; }
+.cc-eticheta .cate { margin-left: 4px; color: var(--text-dim); }
+.cc-perechi { display: grid; grid-template-columns: 80px minmax(0, 1fr); gap: 4px 10px; margin-top: 12px; font-size: 13.5px; }
 .cc-perechi dt { color: var(--text-dim); }
 .cc-perechi dd { margin: 0; overflow-wrap: anywhere; }
+.card-comanda .info-pasi.cc-pasi { grid-template-columns: 96px minmax(0, 1fr); gap: 7px 10px; border: none; padding: 0; }
+.card-comanda .cc-pasi dt { font-size: 10.5px; }
+.card-comanda .cc-pasi dd { font-size: 13px; }
 .cc-produse { list-style: none; display: flex; flex-direction: column; gap: 6px; }
 .cc-produse li { display: flex; flex-direction: column; gap: 1px; padding: 8px 10px; background: var(--panel-2); border-radius: 8px; font-size: 13.5px; }
 .cc-produse li span { font-size: 12.5px; color: var(--text-dim); }
 .cc-obs { font-size: 13.5px; white-space: pre-line; }
-/* celelalte acţiuni: liniştite, la coada cardului */
-.cc-alte { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
-.cc-alte button, .cc-alte a.buton { padding: 6px 11px; font-size: 12.5px; }
 
 /* ── detaliul comenzii: cardurile una sub alta ── */
 body.ui-nou #continut:has(> .antet) { display: flex; flex-direction: column; gap: 16px; }
@@ -334,9 +310,9 @@ body.ui-nou [data-z="info"] .factura-form input { flex: 1 1 110px; }
 .stare-pastila.plata  { color: #d4a24c; border-color: rgba(212, 162, 76, .45); background: rgba(212, 162, 76, .1); }
 .stare-pastila.lucru  { color: #b49cff; border-color: rgba(180, 156, 255, .45); background: rgba(180, 156, 255, .1); }
 .stare-pastila.gata   { color: var(--ok); border-color: rgba(107, 155, 122, .45); background: rgba(107, 155, 122, .1); }
-.cc-butoane a.buton, .cc-alte a.buton, .df-butoane a.buton { display: inline-flex; align-items: center; padding: 7px 12px; font-size: 13px; border: 1px solid var(--line);
+.cc-butoane a.buton { display: inline-flex; align-items: center; padding: 7px 12px; font-size: 13px; border: 1px solid var(--line);
                       border-radius: 8px; background: var(--panel-2); color: var(--text); text-decoration: none; }
-.cc-butoane a.buton:hover, .cc-alte a.buton:hover, .df-butoane a.buton:hover { border-color: var(--accent); }
+.cc-butoane a.buton:hover { border-color: var(--accent); }
 
 /* funcţii anunţate, încă nelansate (ex. AWB FAN Courier pe comandă) */
 .card.in-curand { display: flex; align-items: center; gap: 12px; padding: 14px 18px; }
