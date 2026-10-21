@@ -798,3 +798,9 @@ tbody.rame-rand + tbody.rame-rand tr:first-child td { border-top: 1px solid var(
 /* comutatorul Uşi identice / diferite (în locul lui „Cine asamblează toate uşile") */
 .toate-usi .segmented[data-usi-identice] { width: 260px; }
 .toate-usi-nota { font-size: 12px; color: var(--text-dim); }
+
+/* Uşi identice: amortizările / rolele rămân pe fiecare uşă — card separat, câte un rând pe uşă (2026-10-21) */
+.card-amortizari .door-fields-col { gap: 8px; }
+.card-amortizari-titlu { font-size: 13px; font-weight: 600; }
+.card-amortizari-titlu span { font-weight: 400; color: var(--text-dim); }
+.card-amortizari .door-row + .door-row { padding-top: 8px; border-top: 1px solid var(--line); }

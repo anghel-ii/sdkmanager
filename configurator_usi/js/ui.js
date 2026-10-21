@@ -454,7 +454,8 @@ function refreshAvansat() {
 // Diferite: câte un card pe uşă, pornind de la ce era ales pe cardul comun.
 // Ofertele de dinainte (fără alegerea salvată în config): identice doar dacă
 // uşile chiar sunt la fel — altfel nu le stricăm.
-const PER_USA = ['divisions', 'wheels', 'assembly', 'geam', 'geamClient', 'hPanouri', 'divProfil', 'panels', 'amortizare', 'divAplicate', 'manerAplicat', 'oglindaUtil'];
+// rolele (`wheels`) şi amortizările NU sunt aici: se aleg pe fiecare uşă şi la uşi identice (cardul „Amortizări")
+const PER_USA = ['divisions', 'assembly', 'geam', 'geamClient', 'hPanouri', 'divProfil', 'panels', 'divAplicate', 'manerAplicat', 'oglindaUtil'];
 const toateLaFel = () => PER_USA.every(k => (state[k] ?? []).every(x => JSON.stringify(x) === JSON.stringify(state[k][0])));
 const usiIdentice = () => (state.usiIdentice ??= toateLaFel());
 function aliniazaUsile() {
@@ -527,6 +528,50 @@ function renderWheels() {
       ${identice ? `<span class="toate-usi-nota">un singur card pentru toate cele ${state.wheels.length} uşi</span>` : ''}
     </div>` : '';
 
+
+  // Amortizările (Confort / UTIL / LUX) sau rolele (suspendate) — pe FIECARE uşă, şi la uşi identice
+  // (userul, 2026-10-21): acolo stau într-un card al lor, câte un rând pe uşă; nu se copiază de la uşa 1.
+  const randAmortizare = (i, etAmortizare, etRole) => `
+        ${!isConfort && !isUtil && !isLux ? `
+        <div class="door-row door-row-role">
+          <span class="door-row-label">${etRole}</span>
+          <!-- ca amortizările de la Confort: Stânga/Dreapta deasupra, butoane
+               Simplă/Amortizare (userul, 2026-09-21) -->
+          <div class="amortizare-grup">
+            ${[['left', 'Stânga'], ['right', 'Dreapta']].map(([parte, eticheta]) => `
+            <div class="amortizare-parte">
+              <span class="amortizare-parte-label">${eticheta}</span>
+              <div class="segmented mini" data-door="${i}" data-side="${parte}">
+                <button data-v="simpla"${state.wheels[i][parte] === 'simpla' ? ' class="active"' : ''}>Simplă</button>
+                <button data-v="amortizor"${state.wheels[i][parte] === 'amortizor' ? ' class="active"' : ''}>Amortizare</button>
+              </div>
+            </div>`).join('')}
+          </div>
+        </div>` : ''}
+
+        ${isConfort || isUtil || isLux ? `
+        <div class="door-row door-row-amortizare">
+          <span class="door-row-label">${etAmortizare}</span>
+          <div class="amortizare-grup">
+            <div class="amortizare-parte">
+              <span class="amortizare-parte-label">Stânga</span>
+              <div class="segmented mini" data-door="${i}" data-amortizare="left">
+                ${claseAmortizare.map(v => `<button data-v="${v}"${
+                  (state.amortizare[i]?.left ?? 'fara') === v ? ' class="active"' : ''
+                }>${v === 'fara' ? 'Fără' : v}</button>`).join('')}
+              </div>
+            </div>
+            <div class="amortizare-parte">
+              <span class="amortizare-parte-label">Dreapta</span>
+              <div class="segmented mini" data-door="${i}" data-amortizare="right">
+                ${claseAmortizare.map(v => `<button data-v="${v}"${
+                  (state.amortizare[i]?.right ?? 'fara') === v ? ' class="active"' : ''
+                }>${v === 'fara' ? 'Fără' : v}</button>`).join('')}
+              </div>
+            </div>
+          </div>
+        </div>` : ''}`;
+
   box.innerHTML = comutator + state.wheels.map((w, i) => {
     if (identice && i > 0) return '';   // uşi identice: doar cardul comun (al uşii 1)
     const panels   = state.panels[i];
@@ -566,45 +611,7 @@ function renderWheels() {
           }</select>
         </div>`}
 
-        ${!isConfort && !isUtil && !isLux ? `
-        <div class="door-row door-row-role">
-          <span class="door-row-label">Role</span>
-          <!-- ca amortizările de la Confort: Stânga/Dreapta deasupra, butoane
-               Simplă/Amortizare (userul, 2026-09-21) -->
-          <div class="amortizare-grup">
-            ${[['left', 'Stânga'], ['right', 'Dreapta']].map(([parte, eticheta]) => `
-            <div class="amortizare-parte">
-              <span class="amortizare-parte-label">${eticheta}</span>
-              <div class="segmented mini" data-door="${i}" data-side="${parte}">
-                <button data-v="simpla"${w[parte] === 'simpla' ? ' class="active"' : ''}>Simplă</button>
-                <button data-v="amortizor"${w[parte] === 'amortizor' ? ' class="active"' : ''}>Amortizare</button>
-              </div>
-            </div>`).join('')}
-          </div>
-        </div>` : ''}
-
-        ${isConfort || isUtil || isLux ? `
-        <div class="door-row door-row-amortizare">
-          <span class="door-row-label">Amortizări</span>
-          <div class="amortizare-grup">
-            <div class="amortizare-parte">
-              <span class="amortizare-parte-label">Stânga</span>
-              <div class="segmented mini" data-door="${i}" data-amortizare="left">
-                ${claseAmortizare.map(v => `<button data-v="${v}"${
-                  (state.amortizare[i]?.left ?? 'fara') === v ? ' class="active"' : ''
-                }>${v === 'fara' ? 'Fără' : v}</button>`).join('')}
-              </div>
-            </div>
-            <div class="amortizare-parte">
-              <span class="amortizare-parte-label">Dreapta</span>
-              <div class="segmented mini" data-door="${i}" data-amortizare="right">
-                ${claseAmortizare.map(v => `<button data-v="${v}"${
-                  (state.amortizare[i]?.right ?? 'fara') === v ? ' class="active"' : ''
-                }>${v === 'fara' ? 'Fără' : v}</button>`).join('')}
-              </div>
-            </div>
-          </div>
-        </div>` : ''}
+        ${identice ? '' : randAmortizare(i, 'Amortizări', 'Role')}
 
         ${isUtil && meta.oglindaAplicata ? `
         <div class="door-row">
@@ -641,7 +648,13 @@ function renderWheels() {
 
       ${deschis ? avansatHtml(i) : ''}
     </div>`;
-  }).join('');
+  }).join('') + (identice ? `
+    <div class="door-card card-amortizari">
+      <div class="door-fields-col">
+        <div class="card-amortizari-titlu">${isConfort || isUtil || isLux ? 'Amortizări' : 'Role (amortizare)'} <span>— pe fiecare uşă</span></div>
+        ${state.wheels.map((_, i) => randAmortizare(i, `Uşa ${i + 1}`, `Uşa ${i + 1}`)).join('')}
+      </div>
+    </div>` : '');
 
   box.querySelectorAll('.btn-avansat').forEach(btn => {
     btn.addEventListener('click', () => {
