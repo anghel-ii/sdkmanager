@@ -7,18 +7,14 @@ import { findGeam } from './lib/comun/geam.js';
 import { suprapuneriEfective, PROFIL_H_3D } from './lib/confort/index.js';
 import { ASAMBLARE, FARA_GAURIRE, MODELE_MANER, cotaGauri } from './lib/rame/rame.js';
 
-// Rame pe care le asamblăm NOI şi au mâner: mânerul îl montăm tot noi — pe faţa fişei, în tabelul
-// de sus, lângă „Asamblare" (userul, 2026-10-20). „L 40: 2 × 1200 mm · Neo: 1 × 800 mm"; null = nu e cazul.
-function manerMontat(rame) {
-  if (rame.asamblare !== 'noi') return null;
-  const peModel = new Map();
-  for (const rd of rame.maner?.randuri ?? []) {
-    const model = rd.model ?? rame.maner.model, L = +rd.lungime || 0, buc = Math.round(+rd.buc || 0);
-    if (!model || !L || !buc) continue;
-    peModel.set(model, [...(peModel.get(model) ?? []), `${buc} × ${L} mm`]);
-  }
-  return peModel.size ? [...peModel].map(([model, buc]) =>
-    `${MODELE_MANER.find(([v]) => v === model)?.[1] ?? model}: ${buc.join(', ')}`).join(' · ') : null;
+// Rame pe care le asamblăm NOI şi au mâner: mânerul îl montăm tot noi — scris chiar în rândul
+// „Asamblare" de pe faţa fişei: „NOI ASAMBLAM CU MANER L 40" (userul, 2026-10-21).
+function asamblareRame(rame) {
+  const text = ASAMBLARE.find(a => a[0] === rame.asamblare)?.[1] ?? '—';
+  if (rame.asamblare !== 'noi') return text;
+  const modele = new Set((rame.maner?.randuri ?? [])
+    .filter(rd => +rd.lungime > 0 && +rd.buc > 0).map(rd => rd.model ?? rame.maner.model).filter(Boolean));
+  return modele.size ? `${text} CU MANER ${[...modele].map(m => MODELE_MANER.find(([v]) => v === m)?.[1] ?? m).join(' + ')}` : text;
 }
 import { detaliiComanda, plataText } from './lib/comun/comanda.js';
 import JsBarcode from 'jsbarcode';
@@ -559,9 +555,8 @@ export function deschideFisa(client, oferta = null, salvate = null) {
     ['PAL 18 (fără div.)',   `${Math.round(spec.panouH)} × ${Math.round(spec.panouL)} mm`],
   ], 'cote') : rame ? tabelMic([
     ['Nr. rame',          spec.nrRame],
-    ['Asamblare',         ASAMBLARE.find(a => a[0] === rame.asamblare)?.[1] ?? '—'],
+    ['Asamblare',         asamblareRame(rame)],
     ['Geam / oglindă',    rame.asamblare === 'noi' ? (findGeam(rame.geam)?.denumire ?? '—') : 'al clientului'],
-    ['Montăm noi mânerul', manerMontat(rame)],
     ['Cote găurire',      rame.gaurire ?? '—'],
     ['Vopsire cod RAL',   rame.ral || null],
     // detaliile comenzii — la rame în acelaşi tabel (userul, 2026-10-02), ca fişa să fie mai compactă
