@@ -3,7 +3,7 @@ import * as manager from './manager.js';
 import * as cosul from './cos.js';
 import { cautator, debitare, sePoatePeJumatate } from './amanunt-calcul.js';
 import { initSugestiiClienti } from './sugestii-clienti.js';
-import { LIVRARE, AGENTI, PLATI, plataText, liniaTransport, campuriLipsa, focusCamp } from './lib/comun/comanda.js';
+import { LIVRARE, AGENTI, PLATI, plataText, liniaTransport, campuriLipsa, focusCamp, marcheazaDeCompletat } from './lib/comun/comanda.js';
 import { copyRows } from './lib/comun/clipboard.js';
 import { qtyText } from './lib/comun/num.js';
 import { dataRo } from './ora.js';
@@ -137,6 +137,7 @@ function actualizeaza() {
 function pasi() {
   const { errors } = facturare();
   const lipsa = $('ofertaNr').style.display !== 'none' ? campuriLipsa() : [];
+  marcheazaDeCompletat(campuriLipsa().map(x => $(x.id)));   // câmpurile obligatorii goale, colorate
   const gata = { produse: !errors.length,
                  client: !lipsa.some(x => ['clientNume', 'comandaLivrare', 'comandaAgent'].includes(x.id)) };
   let curent = null;

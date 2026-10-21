@@ -40,8 +40,15 @@ export function campuriLipsa({ laAcceptare = false } = {}) {
           ['comandaLivrare', 'modul de livrare'], ['comandaAgent', 'agentul'], ['ofertaNr', 'numărul ofertei']]
     .filter(([id]) => !v(id)).map(([id, text]) => ({ id, text }));
 }
-// cursorul în câmpul care lipseşte (la meniul căutabil — în caseta lui)
-export function focusCamp(id) {
-  const el = document.getElementById(id);
-  (el?.hidden ? el.nextElementSibling?.querySelector('input') : el)?.focus();
+// câmpul pe care-l vede omul (la meniul căutabil — caseta lui, <select>-ul e ascuns)
+const vizibil = el => el?.hidden ? el.nextElementSibling?.querySelector('input') : el;
+// cursorul în câmpul care lipseşte
+export function focusCamp(id) { vizibil(document.getElementById(id))?.focus(); }
+// Câmpurile obligatorii încă goale se colorează (galben, .de-completat în nou.css), ca să
+// se vadă dintr-o privire ce mai e de completat (userul, 2026-10-21). Cheamă-l cu TOATE
+// câmpurile goale de acum — marcajele vechi se scot.
+export function marcheazaDeCompletat(elemente) {
+  const noi = new Set(elemente.map(vizibil).filter(Boolean));
+  document.querySelectorAll('.de-completat').forEach(el => { if (!noi.has(el)) el.classList.remove('de-completat'); });
+  noi.forEach(el => el.classList.add('de-completat'));
 }

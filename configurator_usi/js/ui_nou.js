@@ -3,7 +3,7 @@ import { systems } from './systems/registry.js';
 import { currentSpec, currentBilling } from './builder.js';
 import gameJson from './systems/game.json';
 import { configuratieCompleta } from './ui.js';
-import { campuriLipsa } from './lib/comun/comanda.js';
+import { campuriLipsa, marcheazaDeCompletat } from './lib/comun/comanda.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  INTERFAŢA NOUĂ (userul, 2026-09-24; designul din Superdesign)
@@ -265,6 +265,13 @@ function actualizeaza() {
   const suprap = document.querySelector('#tracksToggle button.active')?.textContent;
   const noi = (state.assembly ?? []).filter(a => a === 'noi').length;
   const swatch = document.querySelector('#colorSwatches .swatch.active');
+
+  // câmpurile obligatorii goale, colorate: cotele golului, nr. de uşi, datele clientului, nr. ofertei
+  marcheazaDeCompletat([
+    ...(!rame ? [!hGol && $('heightInput'), !lGol && $('widthInput'),
+                         !usiAlese && document.querySelector('#groupDoors .stepper + .nou-nr')] : []),
+    ...campuriLipsa().map(x => $(x.id)),
+  ].filter(Boolean));
 
   const gata = {
     model:   !!meta,
