@@ -10,6 +10,8 @@
   <link rel="stylesheet" href="css/nou.css">
   <!-- bara comună a managerului; lipseşte pe Cloudflare / de pe disc → rămâne bara proprie -->
   <script src="/bara.js"></script>
+  <script src="/dialog.js"></script>
+  <script src="/fise.js"></script>
   <script src="/adresa.js"></script>
 </head>
 <body>
@@ -172,7 +174,7 @@
         <button id="btnConfirma" class="oferta-confirma" type="button" style="display:none">Salvează oferta</button>
         <button id="btnComanda" class="oferta-confirma" type="button" style="display:none">Salvează comanda</button>
         <button id="btnPlata" class="oferta-confirma" type="button" style="display:none">Aşteaptă plata</button>
-        <button id="btnFisa" class="fisa-print" type="button">🖶 Printează fişa</button>
+        <button id="btnFisa" class="fisa-print" type="button" title="Previzualizare — fişa se printează când oferta devine comandă">👁 Vezi fişa</button>
       </div>
       <div id="ofertaMesaj"></div>
     </div>
@@ -196,7 +198,7 @@
         </label>
         <div class="dialog-butoane">
           <button type="button" id="plataRenunta" class="fisa-print">Renunţă</button>
-          <button type="submit" class="oferta-confirma">Salvează comanda</button>
+          <button type="submit" class="oferta-confirma">Salvează comanda şi printează</button>
         </div>
       </form>
     </dialog>

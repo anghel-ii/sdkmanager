@@ -1091,7 +1091,8 @@ function cerePlata() {
   });
 }
 
-const TEXT_BUTON = { oferta: 'Salvează oferta', comanda: 'Salvează comanda', plata: 'Aşteaptă plata' };
+// „Salvează comanda şi printează": o comandă nu intră în lucru fără fişa printată (userul, 2026-10-21)
+const TEXT_BUTON = { oferta: 'Salvează oferta', comanda: 'Salvează comanda şi printează', plata: 'Aşteaptă plata' };
 const textButoane = () => {
   $('btnConfirma').textContent = cos.adaugaLa ? `Adaugă la comanda ${cos.adaugaLa.numar}` : cos.ofertaEditata ? 'Salvează modificările' : TEXT_BUTON.oferta;
   $('btnComanda').textContent = TEXT_BUTON.comanda;
@@ -1146,12 +1147,20 @@ async function trimiteOferta(unde = 'oferta') {
   const laComanda = () => { ciorna.gata(); cosul.goleste(); location.href = '/#comanda/' + r.comanda.id; };
   if (unde === 'oferta') return laComanda();
 
+  // comanda: întâi fişele (una pe produs), apoi „Ai printat?"; fără „Da" rămâne ofertă (salvată)
+  const nrFise = tot.pozitii.length;
+  if (unde === 'comanda' && !(await window.Fise.printeazaToate(r.comanda.id, nrFise, $('btnComanda')))) {
+    gata();
+    return mesajOferta(`Oferta <strong>${esc(ofertaNr || r.comanda.numar)}</strong> s-a salvat, dar NU a devenit comandă:
+      fişa nu s-a printat. O poţi accepta din manager, cu „Acceptă comanda şi printează".`, 'eroare');
+  }
   const t = await oferta.treceIn(r.comanda.id, unde, plata ?? {});
   if (t.eroare) {
     gata();
     return mesajOferta(`Oferta <strong>${esc(ofertaNr || r.comanda.numar)}</strong> s-a salvat, dar ${unde === 'comanda'
       ? 'nu a devenit comandă' : 'nu a trecut la „Aşteaptă plata"'}: ${esc(t.eroare)}`, 'eroare');
   }
+  if (unde === 'comanda') await window.Fise.noteaza(r.comanda.id, nrFise);
   laComanda();
 }
 
@@ -1444,9 +1453,10 @@ export async function initUI() {
 
   $('btnFisa')?.addEventListener('click', () => {
     // fişa cere o configuraţie (model, culoare, cote) — altfel mesaj aici, nu fereastra browserului
-    if (!modFisa && !currentSpec()) return mesajOferta('Fişa se poate printa după ce alegi modelul, culoarea şi dimensiunile.', 'eroare');
-    if (modFisa) deschideFisa(modFisa.client, modFisa, modFisa);
-    else deschideFisa($('clientNume')?.value, ofertaPtFisa());
+    if (!modFisa && !currentSpec()) return mesajOferta('Fişa se poate vedea după ce alegi modelul, culoarea şi dimensiunile.', 'eroare');
+    // doar previzualizare: fişa se printează când oferta devine comandă (userul, 2026-10-21)
+    if (modFisa) deschideFisa(modFisa.client, modFisa, modFisa, { vezi: true });
+    else deschideFisa($('clientNume')?.value, ofertaPtFisa(), null, { vezi: true });
   });
   $('btnConfirma')?.addEventListener('click', () => trimiteOferta('oferta'));
   $('btnComanda')?.addEventListener('click', () => trimiteOferta('comanda'));
@@ -1506,8 +1516,8 @@ export async function initUI() {
   } else if ($('groupCos')) $('groupCos').hidden = true;
   if (eroareIncarcare) mesajOferta(esc(eroareIncarcare), 'eroare');
   if (modFisa) {
-    mesajOferta(`Fişa comenzii <strong>${esc(modFisa.numar)}</strong> — deschisă doar pentru printare; de aici nu se salvează nimic.`, 'ok');
-    deschideFisa(modFisa.client, modFisa, modFisa);
+    mesajOferta(`Fişa comenzii <strong>${esc(modFisa.numar)}</strong> — deschisă doar pentru fişă; de aici nu se salvează nimic.`, 'ok');
+    deschideFisa(modFisa.client, modFisa, modFisa, { vezi: params.get('vezi') === '1' });
   }
   // Managerul încarcă pagina asta într-un cadru ascuns (butonul „Fişă") şi
   // aşteaptă răspunsul: fişa e gata (dialogul de print porneşte singur) sau eroare.

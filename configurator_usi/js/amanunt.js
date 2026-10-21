@@ -9,6 +9,7 @@ import { qtyText } from './lib/comun/num.js';
 import { dataRo } from './ora.js';
 import { activeazaCampuri } from './campuri.js';
 import * as ciorna from './ciorna.js';
+import { arataPrevizualizare } from './previzualizare.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  OFERTĂ CU AMĂNUNTUL (amanunt.html) — sertare, mânere, accesorii: produsele
@@ -406,7 +407,7 @@ let card = null;
 const mesaj = (html, fel) => { $('ofertaMesaj').innerHTML = `<div class="oferta-msg ${fel}">${html}</div>`; };
 const BUTOANE = ['btnConfirma', 'btnComanda', 'btnPlata'];
 const TEXT = { btnConfirma: () => (cos.adaugaLa ? `Adaugă la comanda ${cos.adaugaLa.numar}` : cos.ofertaEditata ? 'Salvează modificările' : 'Salvează oferta'),
-               btnComanda: () => 'Salvează comanda', btnPlata: () => 'Aşteaptă plata' };
+               btnComanda: () => 'Salvează comanda şi printează', btnPlata: () => 'Aşteaptă plata' };
 
 function renderOferta() {
   const { stare, utilizator } = manager.stareOferta();
@@ -470,12 +471,20 @@ async function trimite(unde) {
   cosul.scrie(cos);
   const laComanda = () => { ciorna.gata(); cosul.goleste(); location.href = '/#comanda/' + r.comanda.id; };
   if (unde === 'oferta') return laComanda();
+  // comanda: întâi fişele (una pe produs), apoi „Ai printat?"; fără „Da" rămâne ofertă (userul, 2026-10-21)
+  const nrFise = tot.pozitii.length;
+  if (unde === 'comanda' && !(await window.Fise.printeazaToate(r.comanda.id, nrFise, $('btnComanda')))) {
+    gata();
+    return mesaj(`Oferta <strong>${esc(ofertaNr || r.comanda.numar)}</strong> s-a salvat, dar NU a devenit comandă:
+      fişa nu s-a printat. O poţi accepta din manager, cu „Acceptă comanda şi printează".`, 'eroare');
+  }
   const t = await manager.treceIn(r.comanda.id, unde, plata ?? {});
   if (t.eroare) {
     gata();
     return mesaj(`Oferta <strong>${esc(ofertaNr || r.comanda.numar)}</strong> s-a salvat, dar ${unde === 'comanda'
       ? 'nu a devenit comandă' : 'nu a trecut la „Aşteaptă plata"'}: ${esc(t.eroare)}`, 'eroare');
   }
+  if (unde === 'comanda') await window.Fise.noteaza(r.comanda.id, nrFise);
   laComanda();
 }
 // „Adaugă la comandă": produsele se adaugă la comanda în lucru — fără transport şi fără datele clientului
@@ -505,7 +514,14 @@ function bucatiDebitare(text) {
   return { bucati: bucati.split(', ').filter(Boolean), bara: bare?.match(/de (\d+) mm/)?.[1] ?? null };
 }
 
-function tipareste() {
+// Stilul foii (din @media print al paginii) — şi pt. previzualizare, ca să arate la fel
+const stilTipar = () => [...document.styleSheets].flatMap(sh => { try { return [...sh.cssRules]; } catch { return []; } })
+  .filter(r => r.media?.mediaText === 'print').flatMap(r => [...r.cssRules])
+  .filter(r => r.selectorText?.startsWith('#tipar')).map(r => r.cssText).join('\n');
+
+// `vezi` (userul, 2026-10-21): doar previzualizare în aplicaţie, fără print — „Vezi lista"; printul (la
+// acceptare, din cadrul managerului) anunţă după dialog {tip:'fisa-tiparita'} (vezi /fise.js)
+function tipareste({ vezi = false } = {}) {
   const { lines } = facturare();
   // debitarea fiecărei linii: la fişă din necesarul îngheţat, altfel din rândurile de pe ecran
   const peCod = modFisa?.debitare ?? new Map(linii.filter(deb).map(l => [l.cod, textDebitare(l)]));
@@ -526,9 +542,15 @@ function tipareste() {
         <td class="deb-col">${d ? d.bucati.map(b => `<div>${esc(b)}</div>`).join('') + (d.bara ? `<div class="bara-de">din bare de ${d.bara} mm</div>` : '') : ''}</td>
         <td class="num">${virgula(l.cantitate)} ${d ? (+l.cantitate === 1 ? 'bară' : 'bare') : esc(l.um)}</td><td class="bifa"></td></tr>`; }).join('')}</tbody>
     </table>`;
+  if (vezi) {
+    return arataPrevizualizare(`<!DOCTYPE html><html lang="ro"><head><meta charset="UTF-8"><link rel="stylesheet" href="/fonte.css">
+      <style>body { font-family: 'Inter', sans-serif; color: #000; margin: 0; } ${stilTipar()} #tipar { padding-bottom: 10mm; }</style>
+      </head><body><div id="tipar">${$('tipar').innerHTML}</div></body></html>`, { titlu: 'Lista — ofertă cu amănuntul', pagini: '#tipar' });
+  }
+  addEventListener('afterprint', () => { try { window.top.postMessage({ tip: 'fisa-tiparita' }, location.origin); } catch {} }, { once: true });
   window.print();
 }
-$('btnFisa').addEventListener('click', tipareste);
+$('btnFisa').addEventListener('click', () => tipareste({ vezi: true }));
 
 // ── Pornire: produs nou, din coş (?cos=1&poz=k) sau „Fişă" din manager (?fisa=id&poz=k) ──
 
@@ -594,7 +616,7 @@ const puneClientul = (client, ofertaNr, detalii) => {
       return `Ofertă cu amănuntul${n ? ` + ${n} ${n === 1 ? 'produs' : 'produse'}` : ''} · ${$('clientNume').value.trim() || 'fără client'}`;
     } });
   if (params.get('fisa')) {
-    if (modFisa) tipareste();
+    if (modFisa) tipareste({ vezi: params.get('vezi') === '1' });
     // managerul încarcă pagina într-un cadru ascuns şi aşteaptă răspunsul
     if (window.parent !== window) window.parent.postMessage({ tip: 'fisa', eroare: modFisa ? null : eroare }, location.origin);
   } else focus(linii.length, 'produs');

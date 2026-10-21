@@ -18,6 +18,7 @@ function asamblareRame(rame) {
 }
 import { detaliiComanda, plataText } from './lib/comun/comanda.js';
 import JsBarcode from 'jsbarcode';
+import { arataPrevizualizare } from './previzualizare.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  FIŞĂ ATELIER — imprimabilă, pt. echipa care debitează/asamblează
@@ -510,7 +511,9 @@ function necesarSticlaPal(sys, spec) {
 // din manager, ?fisa=<id>): necesarul şi facturarea se tipăresc exact cum au
 // fost îngheţate la salvare, nu recalculate cu catalogul de azi. Desenele şi
 // cotele vin tot din configuraţia salvată.
-export function deschideFisa(client, oferta = null, salvate = null) {
+// `vezi` (userul, 2026-10-21): doar previzualizare în aplicaţie, fără print — „Vezi fişa"; altfel dialogul
+// de print, iar după el (afterprint) managerul primeşte {tip:'fisa-tiparita'} (vezi /fise.js).
+export function deschideFisa(client, oferta = null, salvate = null, { vezi = false } = {}) {
   const sys  = systems[state.system];
   const spec = currentSpec();
   if (!sys || !spec) { alert('Configuraţia nu e gata.'); return; }
@@ -976,12 +979,18 @@ export function deschideFisa(client, oferta = null, salvate = null) {
     }
   });
 </script>
-<script>
+${vezi ? '' : `<script>
   // Dialogul de print porneşte singur, după ce fişa s-a aşezat (scriptul de
   // încadrare de mai sus rulează tot la 'load', înregistrat înaintea ăstuia).
   window.addEventListener('load', function () { setTimeout(function () { window.print(); }, 150); });
-</script>
+  // s-a închis dialogul (printat sau nu) — managerul întreabă apoi „Ai printat?"
+  window.addEventListener('afterprint', function () {
+    try { window.top.postMessage({ tip: 'fisa-tiparita' }, location.origin); } catch (e) {}
+  });
+</script>`}
 </body></html>`;
+
+  if (vezi) return arataPrevizualizare(html, { titlu: `Fişa — ${sys.meta.label}`, pagini: '.fata, .spate, .pagina3' });
 
   // Fără filă nouă (cerut): fişa se scrie într-un cadru ascuns din pagina
   // curentă, de lăţimea unei foi A4 (ca măsurătorile de încadrare din fişă să
