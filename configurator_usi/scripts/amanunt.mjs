@@ -24,13 +24,22 @@ const BARA_MIN_MM = 1500;
 function lungimeBara(denumire) {
   for (const m of denumire.matchAll(/(\d+(?:[.,]\d+)?)\s*(mm|ml|m)\b/gi)) {
     const inainte = denumire.slice(Math.max(0, m.index - 12), m.index);
-    if (/[x×*-]\s*$/i.test(inainte) || /cablu/i.test(inainte)) continue;
+    // „x" doar lipit de o cifră („32x"), altfel „inox 4 m" ar trece drept secţiune
+    if (/\d\s*[x×*-]\s*$/i.test(inainte) || /cablu/i.test(inainte)) continue;
     if (/^\s*[-x×]/.test(denumire.slice(m.index + m[0].length))) continue;
     const mm = parseFloat(m[1].replace(',', '.')) * (m[2].toLowerCase() === 'mm' ? 1 : 1000);
     if (mm > BARA_MIN_MM) return Math.round(mm);
   }
   return null;
 }
+
+// Bare cu lungimea lipsă sau ascunsă în denumirea din NeoManager (userul, 2026-10-21):
+// Initio auriu / inox au „4 m" doar la celelalte culori; la Neo „42x18x3 m" lungimea e
+// lipită de secţiune. Codul → lungimea barei în mm.
+const BARA_PE_COD = {
+  13352261007: 4000, 13352261021: 4000, 13440191007: 4000, 13352271007: 4000,   // Plinta Initio auriu / inox
+  775: 3000, 776: 3000, 777: 3000, 778: 3000,                                      // Profil maner Neo
+};
 
 const fisier = process.argv[2] ?? fileURLToPath(new URL('../../materiale/baza de date completa.xlsx', import.meta.url));
 const [cap, ...randuri] = citesteXlsx(fisier);
@@ -45,7 +54,7 @@ const produse = randuri
   })
   .map(r => {
     const p = { cod: String(r[COD]).trim(), denumire: String(r[DEN]), um: String(r[UM] ?? ''), grupa: String(r[GRUPA]) };
-    const bara = p.um.toLowerCase() === 'buc' ? lungimeBara(p.denumire) : null;   // nu seturile („Sistem de ramforsare 2248 mm")
+    const bara = p.um.toLowerCase() === 'buc' ? BARA_PE_COD[p.cod] ?? lungimeBara(p.denumire) : null;   // nu seturile („Sistem de ramforsare 2248 mm")
     return bara ? { ...p, bara } : p;
   })
   .sort((a, b) => a.denumire.localeCompare(b.denumire, 'ro'));

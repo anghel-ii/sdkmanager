@@ -31,6 +31,8 @@ const bara = cod => produse.find(p => p.cod === cod)?.bara;
 assert.ok(produse.some(p => p.bara === 4200 && /4,2 ?m/.test(p.denumire)), '„4,2 m" → bară de 4200 mm');
 assert.ok(produse.every(p => !p.bara || (p.bara > 1500 && p.um.toLowerCase() === 'buc')), 'doar bare peste 1,5 m, la bucată');
 assert.ok(!produse.some(p => p.bara && /cablu/i.test(p.denumire) && /1,[58] ?m/.test(p.denumire)), 'cablul prizelor nu e bară');
+assert.equal(bara('13440191021'), 4000, '„inox 4 m" — „x"-ul din inox nu e o secţiune');
+assert.ok(['13352261007', '13352261021', '13352271007', '778'].every(c => bara(c)), 'Initio auriu / inox şi Neo — bara pe cod');
 assert.ok(produse.some(p => p.grupa === 'Produse finite Gama Lux'), 'gama Lux inclusă');
 
 // debitarea: 4 × 1200 + 2 × 800 pe bare de 4200 → 2 bare (3 × 1200 | 1200 + 2 × 800)
