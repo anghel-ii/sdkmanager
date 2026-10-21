@@ -69,7 +69,7 @@ const login = async cine => (await cer(cine, 'POST', '/api/login', { user: cine,
 function instantaneu(fisier) {
   const d = new DatabaseSync(fisier, { readOnly: true });
   const t = {};
-  for (const { name } of d.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' AND name != 'sesiune'").all()) {
+  for (const { name } of d.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' AND name NOT IN ('sesiune', 'activitate')").all()) {   // jurnalul de activitate se scrie mereu pe bune (marcat „test")
     t[name] = crypto.createHash('sha1').update(JSON.stringify(d.prepare(`SELECT * FROM "${name}" ORDER BY rowid`).all())).digest('hex');
   }
   d.close();

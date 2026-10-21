@@ -565,6 +565,7 @@ function tipareste(l) {
   b.innerHTML = borderouHtml(l);
   document.body.append(b);
   document.body.classList.add('tipar-borderou');
+  noteazaVazut('A printat borderoul de livrare', null, `${l.data} · ${l.comenzi.length} comenzi`);
   window.addEventListener('afterprint', () => { document.body.classList.remove('tipar-borderou'); b.remove(); }, { once: true });
   window.print();
 }

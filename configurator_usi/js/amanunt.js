@@ -550,7 +550,10 @@ function tipareste({ vezi = false } = {}) {
   addEventListener('afterprint', () => { try { window.top.postMessage({ tip: 'fisa-tiparita' }, location.origin); } catch {} }, { once: true });
   window.print();
 }
-$('btnFisa').addEventListener('click', () => tipareste({ vezi: true }));
+$('btnFisa').addEventListener('click', () => {
+  tipareste({ vezi: true });
+  window.noteazaVazut?.('A văzut lista (ofertă cu amănuntul)', cos.ofertaEditata ?? null);
+});
 
 // ── Pornire: produs nou, din coş (?cos=1&poz=k) sau „Fişă" din manager (?fisa=id&poz=k) ──
 

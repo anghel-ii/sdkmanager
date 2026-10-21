@@ -659,7 +659,7 @@ function randeazaTabel() {
   $('cautaToate')?.addEventListener('click', () => cautaUnde(true));
   // un click ALEGE comanda (detaliile în cardul din dreapta); dublu-click o deschide
   document.querySelectorAll('table.lista tbody tr[data-id]').forEach(tr => {
-    tr.addEventListener('click', () => selecteaza(+tr.dataset.id));
+    tr.addEventListener('click', () => { if (+tr.dataset.id !== selectat) noteazaVazut('A ales comanda în listă (cardul din dreapta)', +tr.dataset.id); selecteaza(+tr.dataset.id); });
     tr.addEventListener('dblclick', () => { location.hash = '#comanda/' + tr.dataset.id; });
   });
   // comanda aleasă nu mai e în listă (alt tab, căutare) → cardul revine la „Azi"
@@ -812,6 +812,7 @@ document.addEventListener('keydown', e => {
     e.preventDefault();
     const i = randuri.findIndex(tr => +tr.dataset.id === selectat);
     const j = i < 0 ? 0 : Math.max(0, Math.min(randuri.length - 1, i + (e.key === 'ArrowDown' ? 1 : -1)));
+    if (+randuri[j].dataset.id !== selectat) noteazaVazut('A ales comanda în listă (cardul din dreapta)', +randuri[j].dataset.id);
     selecteaza(+randuri[j].dataset.id);
     randuri[j].scrollIntoView({ block: 'nearest' });
   } else if (e.key === 'Enter' && selectat) location.hash = '#comanda/' + selectat;
@@ -1122,6 +1123,7 @@ async function renderDetaliu(id) {
       ${tabelAtelier(coduri ?? [], scanari)}
     </div>` : ''}
 
+    <div class="card activitate-comanda" data-z="activitate" id="activitateComanda"></div>
 `;
 
   opresteActiuni($('continut'), cerere);
@@ -1178,6 +1180,9 @@ async function renderDetaliu(id) {
   });
   leagaCopiere($('copCod'),  total.map(l => l.cod));
   leagaCopiere($('copCant'), total.map(l => qtyText(l.cantitate)));
+  $('copCod')?.addEventListener('click', () => noteazaVazut('A copiat codurile (NeoManager)', id));
+  $('copCant')?.addEventListener('click', () => noteazaVazut('A copiat cantităţile (NeoManager)', id));
+  incarcaActivitate(id);
 
   $('fisaDetaliu')?.addEventListener('click', e => veziFisa(id, e.currentTarget));
   $('printDetaliu')?.addEventListener('click', e => printeazaDinNou(id, pozitii.length, e.currentTarget));
@@ -1187,13 +1192,41 @@ async function renderDetaliu(id) {
 
 }
 
+// ── Activitate — tot ce s-a făcut la comanda asta (server/activitate.js, userul 2026-10-21) ──
+// „Doar schimbări" (implicit) sau „Tot" (şi cine a deschis-o / a văzut fişa / a copiat codurile).
+let activitateTot = false;
+const FEL_ACT = { schimbare: '', cont: '', vizualizare: 'vazut' };
+async function incarcaActivitate(id) {
+  const el = $('activitateComanda');
+  if (!el) return;
+  const r = await api(`/api/comenzi/${id}/activitate${activitateTot ? '?tot=1' : ''}`);
+  if (!r?.ok || $('activitateComanda') !== el) return;
+  const { randuri } = await r.json();
+  el.innerHTML = `
+    <div class="act-cap"><h2>Activitate</h2><span class="dim mic">${randuri.length} ${randuri.length === 1 ? 'operaţie' : 'operaţii'}</span>
+      <span class="spatiu"></span>
+      <div class="segmented mini act-fel">
+        <button data-tot="0"${activitateTot ? '' : ' class="active"'}>Doar schimbări</button>
+        <button data-tot="1"${activitateTot ? ' class="active"' : ''}>Tot</button></div></div>
+    ${randuri.length ? `<ol class="act-lista">${randuri.map(a => `<li class="${FEL_ACT[a.fel] ?? ''}">
+      <span class="act-cand">${dataOra(a.la)}</span>
+      <span class="act-cine">${esc(a.utilizator_nume ?? '—')}</span>
+      <span class="act-ce"><b>${esc(a.operatie)}</b>${a.detalii ? ` <span class="dim">· ${esc(a.detalii)}</span>` : ''}${a.test ? ' <span class="stare-pastila demo">TEST</span>' : ''}</span>
+    </li>`).join('')}</ol>`
+    : `<p class="dim">${activitateTot ? 'Nimic notat încă.' : 'Nicio schimbare notată încă — jurnalul porneşte de la 21.10.2026.'}</p>`}`;
+  el.querySelectorAll('.act-fel button').forEach(b => b.addEventListener('click', () => {
+    activitateTot = b.dataset.tot === '1';
+    incarcaActivitate(id);
+  }));
+}
+
 // ── Rutare pe hash ───────────────────────────────────────────────────────────
 
 // #comanda/<id> → detaliu;  #comenzi → „Comenzi în lucru";  #finalizate → „Comenzi finalizate";  restul → Oferte.
 // Aşa cele două plăci din pagina principală deschid fiecare tabul ei.
 function ruteaza() {
   const m = location.hash.match(/^#comanda\/(\d+)$/);
-  if (m) return renderDetaliu(m[1]);
+  if (m) { noteazaVazut('A deschis comanda', +m[1]); return renderDetaliu(m[1]); }
   if (location.hash === '#comenzi') tabCurent = 'comanda';
   else if (location.hash === '#finalizate') tabCurent = 'finalizata';
   else if (location.hash === '#plata') tabCurent = 'plata';

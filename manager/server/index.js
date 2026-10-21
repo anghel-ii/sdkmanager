@@ -24,6 +24,7 @@ const actualizare = require('./actualizare.js');
 const clienti     = require('./clienti.js');
 const ora         = require('./ora.js');
 const releu       = require('./releu.js');
+const activitate  = require('./activitate.js');
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  Serverul managerului de comenzi
@@ -44,7 +45,7 @@ const releu       = require('./releu.js');
 //   { }                — orice utilizator logat
 //   { rol: 'admin' }   — doar administratorii
 
-const MODULE = [utilizatori, comenzi, scanare, evenimente, sticla, livrari, taskuri, cereri, tichete, notificari, tablou, actualizare, clienti].filter(Boolean);
+const MODULE = [utilizatori, comenzi, scanare, evenimente, sticla, livrari, taskuri, cereri, tichete, notificari, tablou, actualizare, clienti, activitate].filter(Boolean);
 
 const rute = MODULE.flatMap(m => m.rute).map(([metoda, cale, spec]) => [metoda, cale, spec]);
 const potriveste = router(rute);
@@ -61,7 +62,7 @@ async function trateaza(req, res) {
     if (!gasit)                return eroare(res, 404, 'Rută inexistentă.');
     if (gasit.metodaGresita)   return eroare(res, 405, `Metoda ${req.method} nu e permisă aici.`);
 
-    const { handler: spec, params } = gasit;
+    const { handler: spec, params, sablon } = gasit;
     const utilizator = auth.dinToken(auth.tokenDinCerere(req));
 
     if (!spec.public && !utilizator)  return eroare(res, 401, 'Trebuie să fii autentificat.');
@@ -93,10 +94,17 @@ async function trateaza(req, res) {
         if (cale.startsWith('/api/clienti/propuneri/')) return eroare(res, 403, 'În modul test nu se aprobă clienţi — aprobarea ar ajunge pe bune.');
         // întâi lanţul la zi (ce a scris biroul în demo ajunge acum, nu la timer, în demo admin)
         sincronizeaza();
-        return inTest(() => opreste() || spec.handler(ctx), copiaLui(utilizator));   // adminul pe copia lui
+        return inTest(async () => {   // adminul pe copia lui
+          if (opreste()) return;
+          await spec.handler(ctx);
+          activitate.dupaCerere(ctx, req.method, sablon);   // jurnalul de activitate (în baza reală, marcat „test")
+        }, copiaLui(utilizator));
       }
       if (opreste()) return;
-      try { return await spec.handler(ctx); } finally { sincronizeaza(); }   // ce s-a scris pe bune intră şi în copia de test
+      try {
+        await spec.handler(ctx);
+        activitate.dupaCerere(ctx, req.method, sablon);   // jurnalul de activitate — server/activitate.js
+      } finally { sincronizeaza(); }   // ce s-a scris pe bune intră şi în copia de test
     });
   }
 
@@ -130,6 +138,7 @@ async function trateaza(req, res) {
     '/clienti':     'clienti',   // clienţii adăugaţi de agenţii de vânzări
     '/login':       'login',
     '/admin':       'admin',     // conturile (API-ul e doar pt. admin; pagina se autoverifică)
+    '/activitate':  'activitate', // jurnalul de activitate al tuturor (API-ul: admin + conducere)
     ...(config.scanare ? { '/scan': 'scan', '/test-camera': 'test-camera' } : {}),
   };
   const pagina = PAGINI[cale.replace(/\/$/, '') || '/'];

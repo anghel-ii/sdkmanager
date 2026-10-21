@@ -8,6 +8,7 @@ const path = require('node:path');
 const LIMITA_CORP = 8 * 1024 * 1024;   // 8 MB — o ofertă cu multe poziţii + pozele schiţelor de găurire (rame 820, ~0,5 MB fiecare)
 
 function json(res, cod, date, antete = {}) {
+  res.corpTrimis = date;   // pt. jurnalul de activitate (server/activitate.js): ex. id-ul ofertei nou create
   const corp = JSON.stringify(date);
   res.writeHead(cod, {
     'Content-Type':  'application/json; charset=utf-8',
@@ -41,7 +42,7 @@ function corpJson(req) {
     });
     req.on('end', () => {
       if (!brut) return resolve({});
-      try { resolve(JSON.parse(brut)); }
+      try { resolve(req.corpCitit = JSON.parse(brut)); }   // corpCitit — pt. detaliile din jurnalul de activitate
       catch { reject(Object.assign(new Error('JSON invalid'), { cod: 400 })); }
     });
     req.on('error', reject);
@@ -128,7 +129,7 @@ function compileaza(sablon) {
 
 function router(rute) {
   const compilate = rute.map(([metoda, sablon, handler]) =>
-    ({ metoda, handler, ...compileaza(sablon) }));
+    ({ metoda, handler, sablon, ...compileaza(sablon) }));
 
   return function potriveste(metoda, cale) {
     const parti = cale.split('?')[0].split('/').filter(Boolean);
@@ -138,7 +139,7 @@ function router(rute) {
       const params = r.potrivire(parti);
       if (!params) continue;
       caleExista = true;
-      if (r.metoda === metoda) return { handler: r.handler, params };
+      if (r.metoda === metoda) return { handler: r.handler, params, sablon: r.sablon };
     }
     // Calea există dar cu altă metodă → 405, nu 404. Ajută la depanare.
     return caleExista ? { metodaGresita: true } : null;

@@ -1456,7 +1456,10 @@ export async function initUI() {
     if (!modFisa && !currentSpec()) return mesajOferta('Fişa se poate vedea după ce alegi modelul, culoarea şi dimensiunile.', 'eroare');
     // doar previzualizare: fişa se printează când oferta devine comandă (userul, 2026-10-21)
     if (modFisa) deschideFisa(modFisa.client, modFisa, modFisa, { vezi: true });
-    else deschideFisa($('clientNume')?.value, ofertaPtFisa(), null, { vezi: true });
+    else {
+      deschideFisa($('clientNume')?.value, ofertaPtFisa(), null, { vezi: true });
+      window.noteazaVazut?.('A văzut fişa în configurator', cos.ofertaEditata ?? null, systems[state.system]?.meta.label ?? null);
+    }
   });
   $('btnConfirma')?.addEventListener('click', () => trimiteOferta('oferta'));
   $('btnComanda')?.addEventListener('click', () => trimiteOferta('comanda'));

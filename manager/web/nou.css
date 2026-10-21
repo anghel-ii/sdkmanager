@@ -330,3 +330,16 @@ body.ui-nou [data-z="info"] .factura-form input { flex: 1 1 110px; }
 .anulare-info.anulata { border-color: rgba(201, 96, 76, .55); background: rgba(201, 96, 76, .1); }
 .stare-pastila.demo { color: #ffb366; border-color: rgba(255, 157, 46, .55); background: rgba(255, 157, 46, .14); letter-spacing: .04em; }
 .stare-pastila.anulata { color: var(--rosu-text); border-color: rgba(201, 96, 76, .55); background: rgba(201, 96, 76, .1); }
+
+/* ── Activitate (pagina comenzii şi /activitate) — jurnalul: când · cine · ce (server/activitate.js) ── */
+.activitate-comanda .act-cap { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.activitate-comanda .act-cap h2 { margin: 0; }
+.activitate-comanda .act-cap .spatiu { flex: 1; }
+.act-lista { list-style: none; margin: 0; padding: 0; max-height: 440px; overflow: auto; }
+.act-lista li { display: grid; grid-template-columns: 140px 150px minmax(0, 1fr); gap: 12px; padding: 7px 2px;
+                border-top: 1px solid var(--line); font-size: 13.5px; align-items: baseline; }
+.act-lista .act-cand { color: var(--text-dim); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.act-lista .act-cine { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.act-lista .act-ce { overflow-wrap: anywhere; }
+.act-lista li.vazut { color: var(--text-dim); }
+.act-lista li.vazut b { font-weight: 500; }
