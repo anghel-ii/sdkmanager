@@ -905,7 +905,11 @@ const faraSinaSimpla = () => {
 
 function setDoors(n) {
   const [lo, hi] = doorsRangeOf(systems[state.system]?.meta) ?? [1, 7];
+  const inainte = state.doors;
   state.doors = clamp(n, faraSinaSimpla() ? Math.max(lo, 2) : lo, hi);
+  // la 2 uşi implicit 1 suprapunere (şină dublă), nu 0 — venind de la 1 uşă rămânea
+  // şina simplă (userul, 2026-10-21); alegerea făcută la 2 uşi nu se atinge
+  if (state.doors === 2 && inainte !== 2) state.tracks = 2;
   syncDoors();
   applyLimits();   // lăţimea max poate depinde de nr. de uşi (limitsFinisaj.widthUsi)
   renderDoorsUI();
