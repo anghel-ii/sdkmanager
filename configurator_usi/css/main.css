@@ -804,3 +804,5 @@ tbody.rame-rand + tbody.rame-rand tr:first-child td { border-top: 1px solid var(
 .card-amortizari-titlu { font-size: 13px; font-weight: 600; }
 .card-amortizari-titlu span { font-weight: 400; color: var(--text-dim); }
 .card-amortizari .door-row + .door-row { padding-top: 8px; border-top: 1px solid var(--line); }
+/* amortizări: „Fără" ales nu e albastru — albastrul rămâne doar pt. o amortizare chiar aleasă (userul, 2026-10-21) */
+.segmented[data-amortizare] button[data-v="fara"].active { background: var(--panel-2, #2a2f38); color: var(--text); box-shadow: inset 0 0 0 1px var(--line); }
