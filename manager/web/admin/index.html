@@ -20,11 +20,11 @@
   .placi-admin .placa .tab-nume small { display: block; font-size: 11.5px; font-weight: 500; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; }
   .placi-admin .tab-cate.mic { font-size: 13px; font-weight: 600; white-space: nowrap; }
   .tabel-lat { overflow-x: auto; }
-  .ton-rosu .placa-ic  { background: rgba(201, 96, 76, .14); color: #e8907f; }
-  .ton-verde .placa-ic { background: rgba(107, 155, 122, .16); color: #7cc493; }
-  .ton-cald .placa-ic  { background: rgba(212, 162, 76, .13); color: #e5b45a; }
-  .ton-mov .placa-ic   { background: rgba(180, 156, 255, .13); color: #b49cff; }
-  .rosu-text { color: #e8907f; } .verde-text { color: #7cc493; } .cald-text { color: #e5b45a; }
+  .ton-rosu .placa-ic  { background: rgba(201, 96, 76, .14); color: var(--rosu-text); }
+  .ton-verde .placa-ic { background: rgba(107, 155, 122, .16); color: var(--verde-text); }
+  .ton-cald .placa-ic  { background: rgba(212, 162, 76, .13); color: var(--cald); }
+  .ton-mov .placa-ic   { background: rgba(180, 156, 255, .13); color: var(--mov); }
+  .rosu-text { color: var(--rosu-text); } .verde-text { color: var(--verde-text); } .cald-text { color: var(--cald); }
 
   .tablou { display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 16px; align-items: start; }
   .tablou > div { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
@@ -64,7 +64,7 @@
   td.actiuni { white-space: nowrap; text-align: right; }
   td.actiuni button { margin-left: 4px; }
   .punct { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: var(--line); vertical-align: 1px; }
-  .punct.acum { background: #7cc493; box-shadow: 0 0 0 3px rgba(124, 196, 147, .18); }
+  .punct.acum { background: var(--verde-text); box-shadow: 0 0 0 3px rgba(124, 196, 147, .18); }
   .stare-asteapta { color: #d4a24c; } .stare-dezactivat { color: var(--danger); }
 
   /* tichetele deschise */
@@ -75,8 +75,8 @@
   .tichet .t-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .tichet small { color: var(--text-dim); font-size: 12px; white-space: nowrap; }
   .pastila { display: inline-block; padding: 1px 8px; border-radius: 999px; border: 1px solid; font-size: .72rem; font-weight: 600; white-space: nowrap; }
-  .pastila.problema { color: #e8907f; border-color: rgba(201, 96, 76, .5); }
-  .pastila.idee { color: #e5b45a; border-color: rgba(212, 162, 76, .45); }
+  .pastila.problema { color: var(--rosu-text); border-color: rgba(201, 96, 76, .5); }
+  .pastila.idee { color: var(--cald); border-color: rgba(212, 162, 76, .45); }
   .pastila.altceva { color: var(--text-dim); border-color: var(--line); }
 
   /* formulare */

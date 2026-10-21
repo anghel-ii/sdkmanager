@@ -74,7 +74,7 @@ body.ui-nou #nouActiuni .btn-clear {
 #nouCote {
   position: absolute; top: 12px; left: 16px; z-index: 2;
   font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text);
-  background: rgba(27, 30, 36, .9); border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px;
+  background: color-mix(in srgb, var(--panel) 90%, transparent); border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px;
 }
 #nouAscunde {
   position: absolute; top: 12px; right: 16px; z-index: 2; cursor: pointer;
@@ -211,8 +211,8 @@ body.ui-nou #nouActiuni .btn-clear {
 body.ui-nou #btnConfirma { background: var(--accent-dim); border-color: var(--accent); color: #fff; font-weight: 600; }
 /* aceleaşi culori ca în manager: verde = intră în lucru (Salvează comanda ≈ Acceptă oferta),
    galben = Aşteaptă plata */
-body.ui-nou #btnComanda { background: rgba(63, 166, 106, .10); border-color: rgba(63, 166, 106, .6); color: #7cc493; font-weight: 500; }
-body.ui-nou #btnPlata   { background: rgba(212, 162, 76, .10); border-color: rgba(212, 162, 76, .6); color: #e5b45a; font-weight: 500; }
+body.ui-nou #btnComanda { background: rgba(63, 166, 106, .10); border-color: rgba(63, 166, 106, .6); color: var(--verde-text); font-weight: 500; }
+body.ui-nou #btnPlata   { background: rgba(212, 162, 76, .10); border-color: rgba(212, 162, 76, .6); color: var(--cald); font-weight: 500; }
 body.ui-nou #btnComanda:hover:not(:disabled) { background: rgba(63, 166, 106, .2); border-color: #3fa66a; }
 body.ui-nou #btnPlata:hover:not(:disabled)   { background: rgba(212, 162, 76, .2); border-color: #d4a24c; }
 .nou-mesaje { display: flex; flex-direction: column; gap: 6px; }

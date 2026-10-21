@@ -3,7 +3,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 export function initScene(holderEl) {
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x14161a);
+  scene.background = new THREE.Color(0x14161a);   // + tema luminoasă: aplicaTema() mai jos
 
   const camera = new THREE.PerspectiveCamera(42, holderEl.clientWidth / holderEl.clientHeight, 0.1, 100);
   camera.position.set(3.6, 2.1, 4.6);
@@ -50,6 +50,15 @@ export function initScene(holderEl) {
   floor.rotation.x = -Math.PI / 2;
   floor.receiveShadow = true;
   scene.add(floor);
+
+  // tema (bara.js pune data-tema pe <html> şi trimite evenimentul `tema` la comutare)
+  const aplicaTema = () => {
+    const luminos = document.documentElement.dataset.tema === 'luminos';
+    scene.background.set(luminos ? 0xdfe3e9 : 0x14161a);
+    floor.material.color.set(luminos ? 0x6f7884 : 0x1a1d22);
+  };
+  aplicaTema();
+  window.addEventListener('tema', aplicaTema);
 
   // grupul care contine usa curenta (inlocuit la fiecare buildConfig)
   const doorGroup = new THREE.Group();

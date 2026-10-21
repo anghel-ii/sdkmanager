@@ -17,7 +17,49 @@
   --accent-dim: #1f6fd1;
   --danger:     #b96a5b;
   --ok:         #6b9b7a;
+  /* culori care erau scrise direct în cod — variabile ca să aibă şi varianta luminoasă (2026-10-21) */
+  --text-2:     #b6bcc7;
+  --text-mute:  #6f7684;
+  --line-2:     #3a4049;
+  --line-3:     #4a5160;
+  --hover:      #272c34;
+  --bg-2:       #191c21;
+  --bg-adanc:   #111317;
+  --cald:       #e5b45a;   /* galben-portocaliu: atenţie, aşteaptă */
+  --rosu-text:  #e8907f;
+  --verde-text: #7cc493;
+  --mov:        #b49cff;
+  --fara-activ: #474e5a;   /* amortizare „Fără" aleasă */
+  color-scheme: dark;
 }
+/* Tema luminoasă (comutatorul din bara de sus / meniu, bara.js — ţinută minte în browser). Aceleaşi
+   nume de culori, alte valori; accentul albastru mai închis, ca textul albastru să se citească pe alb. */
+:root[data-tema="luminos"] {
+  --bg:         #eef0f3;
+  --panel:      #ffffff;
+  --panel-2:    #f3f5f8;
+  --line:       #d6dae1;
+  --text:       #1b1f26;
+  --text-dim:   #5b6371;
+  --accent:     #1f6fd1;
+  --accent-dim: #1f6fd1;
+  --danger:     #b5503e;
+  --ok:         #3f7d52;
+  --text-2:     #3a414d;
+  --text-mute:  #737b88;
+  --line-2:     #c3c8d0;
+  --line-3:     #a9b0bb;
+  --hover:      #e6e9ee;
+  --bg-2:       #f6f7f9;
+  --bg-adanc:   #e3e6eb;
+  --cald:       #9a6410;
+  --rosu-text:  #b0412c;
+  --verde-text: #2c7a45;
+  --mov:        #6a4fc9;
+  --fara-activ: #cfd4db;
+  color-scheme: light;
+}
+
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; }
@@ -48,7 +90,7 @@ button, .btn {
   cursor: pointer;
   transition: background .15s, border-color .15s;
 }
-button:hover:not(:disabled) { background: #272c34; border-color: #3a4049; }
+button:hover:not(:disabled) { background: var(--hover); border-color: var(--line-2); }
 button:disabled { opacity: .5; cursor: not-allowed; }
 
 button.primar { background: var(--accent-dim); border-color: var(--accent); }
@@ -120,9 +162,9 @@ button.verde { background: #237a46; border-color: #3fa66a; color: #fff; font-wei
 button.verde:hover:not(:disabled) { background: #2a8c52; border-color: #4cbb7a; }
 button.rosu { background: #a3412f; border-color: #c9604c; color: #fff; font-weight: 600; }
 button.rosu:hover:not(:disabled) { background: #b44a37; border-color: #dc705b; }
-button.verde-contur  { background: rgba(63, 166, 106, .10); border-color: rgba(63, 166, 106, .6); color: #7cc493; }
-button.galben-contur { background: rgba(212, 162, 76, .10); border-color: rgba(212, 162, 76, .6); color: #e5b45a; }
-button.rosu-contur   { background: rgba(201, 96, 76, .10);  border-color: rgba(201, 96, 76, .6);  color: #e8907f; }
+button.verde-contur  { background: rgba(63, 166, 106, .10); border-color: rgba(63, 166, 106, .6); color: var(--verde-text); }
+button.galben-contur { background: rgba(212, 162, 76, .10); border-color: rgba(212, 162, 76, .6); color: var(--cald); }
+button.rosu-contur   { background: rgba(201, 96, 76, .10);  border-color: rgba(201, 96, 76, .6);  color: var(--rosu-text); }
 button.verde-contur:hover:not(:disabled)  { background: rgba(63, 166, 106, .2);  border-color: #3fa66a; }
 button.galben-contur:hover:not(:disabled) { background: rgba(212, 162, 76, .2);  border-color: #d4a24c; }
 button.rosu-contur:hover:not(:disabled)   { background: rgba(201, 96, 76, .2);   border-color: #c9604c; }

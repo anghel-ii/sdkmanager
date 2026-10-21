@@ -65,6 +65,21 @@
   };
 })();
 
+// ── Tema (luminoasă / întunecată) — aleasă din bară, ţinută minte în browser (userul, 2026-10-21).
+// Se pune pe <html> cât mai devreme, ca pagina să nu clipească în cealaltă temă; culorile sunt în
+// comun.css / configurator css/main.css (:root[data-tema="luminos"]). Evenimentul `tema` — pt. scena 3D.
+(() => {
+  let t = null;
+  try { t = localStorage.getItem('tema'); } catch {}
+  if (t === 'luminos') document.documentElement.dataset.tema = 'luminos';
+  window.comutaTema = () => {
+    const luminos = document.documentElement.dataset.tema !== 'luminos';
+    if (luminos) document.documentElement.dataset.tema = 'luminos'; else delete document.documentElement.dataset.tema;
+    try { localStorage.setItem('tema', luminos ? 'luminos' : 'intunecat'); } catch {}
+    window.dispatchEvent(new Event('tema'));
+  };
+})();
+
 (() => {
   // ── iconiţe: linii subţiri, culoarea textului (fără fonturi de iconiţe de pe CDN) ──
   const ICOANE = {
@@ -88,6 +103,8 @@
     inapoi:  '<path d="M19 12H5.5M11 18l-6-6 6-6"/>',
     inchide: '<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>',
     panou:   '<rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M9.5 4.5v15"/>',
+    soare:   '<circle cx="12" cy="12" r="3.8"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/>',
+    luna:    '<path d="M19.5 14.5A7.5 7.5 0 0 1 9.5 4.5a7.5 7.5 0 1 0 10 10z"/>',
     // gamele configuratorului (game.json) — butoanele „Ofertă nouă" din pagina principală
     suspendata: '<path d="M3 4.5h18"/><rect x="5" y="7" width="6.5" height="13" rx=".6"/><rect x="12.5" y="7" width="6.5" height="13" rx=".6"/><path d="M7 4.5V7M17 4.5V7"/>',
     confort: '<rect x="4" y="4" width="9" height="16" rx=".6"/><path d="M13 4h6.4a.6.6 0 0 1 .6.6v14.8a.6.6 0 0 1-.6.6H13"/><path d="M10.5 11.5v1.5M15.5 11.5v1.5"/>',
@@ -129,37 +146,37 @@
     #colt:empty { display: none; }
     #caseteTaskuri { display: flex; flex-direction: column; gap: 8px; font-family: 'Inter', system-ui, sans-serif; font-size: 14px; }
     #caseteTaskuri:empty { display: none; }
-    #caseteTaskuri > div { background: var(--panel-2, #21252c); color: var(--text, #e9ebee); border: 1px solid #c9604c;
+    #caseteTaskuri > div { background: var(--panel-2, var(--panel-2)); color: var(--text, var(--text)); border: 1px solid #c9604c;
       border-radius: 10px; padding: 12px 14px; box-shadow: 0 6px 24px rgba(0,0,0,.45); }
-    #caseteTaskuri .dim { color: var(--text-dim, #8b92a0); font-size: 13px; margin: 4px 0 8px; }
-    #caseteTaskuri a { color: var(--accent, #4da3ff); margin-right: 12px; }
+    #caseteTaskuri .dim { color: var(--text-dim, var(--text-dim)); font-size: 13px; margin: 4px 0 8px; }
+    #caseteTaskuri a { color: var(--accent, var(--accent)); margin-right: 12px; }
     #caseteTaskuri button { font: inherit; font-size: 13px; padding: 4px 10px; border-radius: 6px; cursor: pointer;
-      border: 1px solid var(--line, #2c313a); background: var(--panel, #1b1e24); color: inherit; }
+      border: 1px solid var(--line, var(--line)); background: var(--panel, var(--panel)); color: inherit; }
     /* notificările omului (server/notificari.js): dreapta jos (în #colt), se adună; pleacă doar cu X */
     #notificari { display: flex; flex-direction: column; gap: 8px; font-family: 'Inter', system-ui, sans-serif; font-size: 13.5px; }
     #notificari:empty { display: none; }
-    #notificari .nt { position: relative; background: var(--panel-2, #21252c); color: var(--text, #e9ebee); border: 1px solid #3d6fae;
-      border-left: 4px solid #4da3ff; border-radius: 10px; padding: 10px 34px 10px 12px; box-shadow: 0 6px 24px rgba(0,0,0,.45); cursor: pointer; }
-    #notificari .nt:hover { border-color: #4da3ff; }
+    #notificari .nt { position: relative; background: var(--panel-2, var(--panel-2)); color: var(--text, var(--text)); border: 1px solid #3d6fae;
+      border-left: 4px solid var(--accent); border-radius: 10px; padding: 10px 34px 10px 12px; box-shadow: 0 6px 24px rgba(0,0,0,.45); cursor: pointer; }
+    #notificari .nt:hover { border-color: var(--accent); }
     #notificari .nt b { display: block; font-weight: 600; margin-bottom: 3px; }
-    #notificari .nt .txt { white-space: pre-wrap; word-break: break-word; color: var(--text, #e9ebee); line-height: 1.4; }
-    #notificari .nt .cand { margin-top: 5px; font-size: 11.5px; color: var(--text-dim, #8b92a0); }
+    #notificari .nt .txt { white-space: pre-wrap; word-break: break-word; color: var(--text, var(--text)); line-height: 1.4; }
+    #notificari .nt .cand { margin-top: 5px; font-size: 11.5px; color: var(--text-dim, var(--text-dim)); }
     #notificari .nt .x { position: absolute; top: 6px; right: 6px; width: 24px; height: 24px; display: grid; place-items: center; padding: 0;
-      border: 0; border-radius: 6px; background: none; color: var(--text-dim, #8b92a0); font-size: 18px; line-height: 1; cursor: pointer; }
-    #notificari .nt .x:hover { background: rgba(255,255,255,.08); color: var(--text, #e9ebee); }
+      border: 0; border-radius: 6px; background: none; color: var(--text-dim, var(--text-dim)); font-size: 18px; line-height: 1; cursor: pointer; }
+    #notificari .nt .x:hover { background: rgba(255,255,255,.08); color: var(--text, var(--text)); }
     /* legătura live (web/live.js pune data-live pe <html>): ascunsă pe paginile fără ea */
     .live { display: none; align-items: center; gap: 7px; height: 24px; padding: 0 10px; border-radius: 999px; font-size: 12px; font-weight: 500; white-space: nowrap;
-      color: #7cc493; background: rgba(63,166,106,.10); border: 1px solid rgba(63,166,106,.35); }
+      color: var(--verde-text); background: rgba(63,166,106,.10); border: 1px solid rgba(63,166,106,.35); }
     .live::before { content: ''; flex: none; width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 3px rgba(63,166,106,.18); }
     html[data-live] .live { display: inline-flex; }
-    html[data-live="nu"] .live { color: #e5b45a; background: rgba(212,162,76,.10); border-color: rgba(212,162,76,.4); }
+    html[data-live="nu"] .live { color: var(--cald); background: rgba(212,162,76,.10); border-color: rgba(212,162,76,.4); }
     html[data-live="nu"] .live::before { box-shadow: 0 0 0 3px rgba(212,162,76,.18); }
     html[data-live="da"] .live .nu, html[data-live="nu"] .live .da { display: none; }
 
     /* ── meniul din stânga (compact — userul, 2026-10-12) ── */
     #meniu { position: fixed; top: 0; bottom: 0; left: 0; width: var(--meniu-l); z-index: 20; box-sizing: border-box;
       display: flex; flex-direction: column; gap: 1px; padding: 10px 10px 10px; overflow: hidden auto;
-      background: #111317; border-right: 1px solid var(--line); }
+      background: var(--bg-adanc); border-right: 1px solid var(--line); }
     #meniu .meniu-cap { display: flex; align-items: center; gap: 6px; padding: 0 0 10px 2px; }
     #meniu .marca { display: flex; align-items: center; gap: 9px; min-width: 0; color: var(--text); text-decoration: none; }
     #meniu .logo, #bara .logo { flex: none; width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; color: #fff;
@@ -172,20 +189,20 @@
     #meniu #ofertaNoua { display: flex; align-items: center; justify-content: center; gap: 7px; height: 34px; padding: 0 10px; margin: 0 0 6px;
       font: inherit; font-weight: 600; color: #fff; background: var(--accent-dim); border: 1px solid var(--accent); border-radius: 8px; cursor: pointer; }
     #meniu #ofertaNoua:hover { background: #2f82e6; }
-    #meniu .grup { margin: 10px 8px 3px; font-size: 10.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #6f7684; white-space: nowrap; }
+    #meniu .grup { margin: 10px 8px 3px; font-size: 10.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--text-mute); white-space: nowrap; }
     #meniu .link { display: flex; align-items: center; gap: 10px; min-height: 32px; padding: 0 8px; border-radius: 7px; position: relative;
-      color: #b6bcc7; text-decoration: none; white-space: nowrap; }
-    #meniu .link .ic { color: #8b92a0; }
+      color: var(--text-2); text-decoration: none; white-space: nowrap; }
+    #meniu .link .ic { color: var(--text-dim); }
     #meniu .link:hover { background: rgba(255,255,255,.045); color: var(--text); }
-    #meniu .link.activ { background: rgba(77,163,255,.13); color: #fff; font-weight: 500; }
+    #meniu .link.activ { background: rgba(77,163,255,.13); color: var(--text); font-weight: 500; }
     #meniu .link.activ .ic { color: var(--accent); }
     #meniu .link .insigna { margin-left: auto; }
     /* starea comenzii arătate acum (pagina principală) — mai discret decât pagina activă */
-    #meniu .link.curent { color: #fff; }
+    #meniu .link.curent { color: var(--text); }
     #meniu .link.curent::before { content: ''; position: absolute; left: -10px; top: 8px; bottom: 8px; width: 3px; border-radius: 0 3px 3px 0; background: var(--accent); }
     #meniu .link.curent .ic { color: var(--accent); }
     #meniu .spatiu { flex: 1; min-height: 12px; }
-    #meniu .meniu-live { padding: 0 2px 8px; }
+    #meniu .meniu-live { display: flex; align-items: center; padding: 0 2px 8px; }
     #meniu .eu { display: flex; align-items: center; gap: 8px; padding: 9px 2px 0; border-top: 1px solid var(--line); min-width: 0; }
     #meniu .avatar { flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
       background: var(--panel-2); border: 1px solid var(--line); color: var(--text); font-size: 11px; font-weight: 600; }
@@ -197,8 +214,16 @@
     #meniu #schimbaParola:hover { text-decoration: underline; }
     #meniu #iesire { flex: none; display: flex; align-items: center; gap: 5px; height: 28px; padding: 0 8px; font: inherit; font-size: 12.5px;
       color: var(--text-dim); background: none; border: 1px solid var(--line); border-radius: 7px; cursor: pointer; }
-    #meniu #iesire:hover { color: #e8907f; border-color: rgba(201,96,76,.6); background: rgba(201,96,76,.08); }
-    #meniu #iesire .ic { width: 15px; height: 15px; }
+    #meniu #iesire:hover { color: var(--rosu-text); border-color: rgba(201,96,76,.6); background: rgba(201,96,76,.08); }
+    #meniu #iesire .ic, #meniu #comutaTema .ic { width: 15px; height: 15px; }
+    #meniu #comutaTema { flex: none; display: grid; place-items: center; width: 28px; height: 28px; padding: 0; margin-left: auto; color: var(--text-dim);
+      background: none; border: none; border-radius: 7px; cursor: pointer; }
+    #meniu #comutaTema:hover { color: var(--text); background: var(--hover); }
+    html.meniu-strans #meniu #comutaTema { margin: 0; }
+    html.meniu-strans #meniu .meniu-live { flex-direction: column; gap: 6px; }
+    /* soarele în tema întunecată (treci pe luminoasă), luna în cea luminoasă */
+    #comutaTema .ic-luna, :root[data-tema="luminos"] #comutaTema .ic-soare { display: none; }
+    :root[data-tema="luminos"] #comutaTema .ic-luna { display: block; }
     /* restrâns: doar iconiţele (numele apar ca title la hover) */
     html.meniu-strans #meniu { padding-left: 8px; padding-right: 8px; }
     html.meniu-strans #meniu .txt { display: none; }
@@ -226,7 +251,7 @@
     #bara.compacta .bara-context i { font-style: normal; margin: 0 5px; }
     #bara.compacta .buton, #bara.compacta button { display: inline-flex; align-items: center; gap: 7px; font: inherit; font-size: 13px; height: 34px; padding: 0 11px;
       border: 1px solid var(--line); border-radius: 8px; background: var(--panel-2); color: var(--text); text-decoration: none; cursor: pointer; white-space: nowrap; }
-    #bara.compacta .buton:hover, #bara.compacta button:hover { border-color: #3a4049; background: #272c34; }
+    #bara.compacta .buton:hover, #bara.compacta button:hover { border-color: var(--line-2); background: var(--hover); }
     #bara.compacta .buton .ic { color: var(--text-dim); width: 16px; height: 16px; }
     #bara.compacta .primar { background: var(--accent-dim); border-color: var(--accent); color: #fff; font-weight: 600; }
     #bara.compacta .primar:hover { background: #2f82e6; border-color: var(--accent); }
@@ -247,6 +272,9 @@
 
   const link = (href, ic, text, extra = '', dupa = '') =>
     `<a href="${href}" class="link${activ(href)}" title="${text}" ${extra}>${icoana(ic)}<span class="txt">${text}</span>${dupa}</a>`;
+
+  const butonTema = `<button type="button" id="comutaTema" title="Temă luminoasă / întunecată" aria-label="Schimbă tema">${
+    icoana('soare').replace('class="ic"', 'class="ic ic-soare"')}${icoana('luna').replace('class="ic"', 'class="ic ic-luna"')}</button>`;
 
   function meniu() {
     const nav = document.createElement('nav');
@@ -271,7 +299,7 @@
       ${link('/clienti', 'clienti', 'Clienţi', 'id="linkClienti" hidden', '<span class="insigna cald" id="nrClienti" title="trimise de agenţi, de aprobat"></span>')}
       ${link('/admin', 'admin', 'Tablou admin', 'id="linkAdmin" hidden')}
       <div class="spatiu"></div>
-      <div class="meniu-live"><span class="live" title="Actualizare live: pagina se schimbă singură când lucrează altcineva"><span class="da">Conectat</span><span class="nu">Reconectare…</span></span></div>
+      <div class="meniu-live"><span class="live" title="Actualizare live: pagina se schimbă singură când lucrează altcineva"><span class="da">Conectat</span><span class="nu">Reconectare…</span></span>${butonTema}</div>
       <div class="eu">
         <span class="avatar" id="initiale"></span>
         <span class="txt"><b id="cine"></b><small id="rolEu"></small><button type="button" id="schimbaParola">Schimbă parola</button></span>
@@ -300,6 +328,7 @@
       <a href="/admin" class="buton" id="linkAdmin" hidden title="Administrare">${icoana('admin')}<span class="txt">Administrare</span></a>
       <button type="button" id="ofertaNoua" class="primar">${icoana('plus')}Ofertă nouă</button>
       <span id="cine"></span>
+      ${butonTema}
       <button type="button" id="iesire" title="Ieşi din cont">${icoana('iesire')}</button>`;
   }
 
@@ -379,6 +408,7 @@
       location.href = '/login';
     });
     nav?.querySelector('#schimbaParola').addEventListener('click', schimbaParola);
+    radacina.querySelector('#comutaTema').addEventListener('click', () => window.comutaTema());
 
     let laDistanta = false;   // prin tabloul de pe Cloudflare (server/releu.js)
     fetch('/api/eu').then(r => { laDistanta = r.headers.has('x-distanta'); return r.ok ? r.json() : null; }).then(d => {

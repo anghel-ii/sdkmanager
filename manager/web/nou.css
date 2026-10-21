@@ -43,7 +43,7 @@
 .ct-lista li.asteapta .ct-text { color: var(--text-dim); }
 .ct-lista li.facut .ct-text { color: var(--text-dim); text-decoration: line-through; }
 .ct-cand { flex: none; font-size: 11.5px; color: var(--text-dim); }
-.ct-lista li.tarziu .ct-cand { color: #e8907f; }
+.ct-lista li.tarziu .ct-cand { color: var(--rosu-text); }
 .ct-nou { flex: none; min-width: 17px; height: 16px; padding: 0 5px; border-radius: 999px; background: #a3412f; color: #fff;
           font-size: 10.5px; font-weight: 600; display: inline-grid; place-items: center; }
 .ct-gol { margin: 4px 0 6px; font-size: 13px; color: var(--text-dim); }
@@ -56,7 +56,7 @@ html.cu-meniu body.ui-nou #taburiSus:not(:empty) + #continut { padding-top: 14px
 body.ui-nou:has(#continut > .antet) #taburiSus { display: none; }
 
 /* ── „Ofertă nouă": un rând de butoane, câte unul pe gamă ── */
-.eticheta-sus { margin: 0 2px 6px; font-size: 10.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #6f7684; }
+.eticheta-sus { margin: 0 2px 6px; font-size: 10.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--text-mute); }
 /* pe două rânduri, câte trei (userul, 2026-10-12), puţin mai mari */
 .placi-game { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
 .gama-btn { display: flex; align-items: center; gap: 10px; height: 50px; padding: 0 16px; min-width: 0; font-size: 15px;
@@ -87,7 +87,7 @@ body.ui-nou:has(#continut > .antet) #taburiSus { display: none; }
 .placa { display: flex; align-items: center; gap: 8px; height: 46px; padding: 0 12px 0 8px; min-width: 0; text-align: left;
          font: inherit; color: var(--text); cursor: pointer;
          background: var(--panel); border: 1px solid var(--line); border-radius: 10px; transition: border-color .15s, background .15s; }
-.placa:hover:not(:disabled) { background: #1f232a; border-color: #3a4049; }
+.placa:hover:not(:disabled) { background: #1f232a; border-color: var(--line-2); }
 .placa-ic { flex: none; width: 26px; height: 26px; border-radius: 7px; display: grid; place-items: center;
             background: rgba(77, 163, 255, .12); color: var(--accent); }
 .placa-ic .ic { width: 17px; height: 17px; }
@@ -95,9 +95,9 @@ body.ui-nou:has(#continut > .antet) #taburiSus { display: none; }
 .placa .tab-cate { flex: none; font-size: 18px; font-weight: 650; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
 .placa .tab-cate .din { font-size: 11.5px; font-weight: 500; letter-spacing: 0; }
 /* culoarea fiecărei stări — aceeaşi ca eticheta ei (.stare-pastila) */
-.ton-plata .placa-ic      { background: rgba(212, 162, 76, .13);  color: #e5b45a; }
-.ton-comanda .placa-ic    { background: rgba(180, 156, 255, .13); color: #b49cff; }
-.ton-finalizata .placa-ic { background: rgba(107, 155, 122, .16); color: #7cc493; }
+.ton-plata .placa-ic      { background: rgba(212, 162, 76, .13);  color: var(--cald); }
+.ton-comanda .placa-ic    { background: rgba(180, 156, 255, .13); color: var(--mov); }
+.ton-finalizata .placa-ic { background: rgba(107, 155, 122, .16); color: var(--verde-text); }
 /* tabul arătat acum în listă */
 .taburi .placa.activ { border-color: var(--accent); background: linear-gradient(rgba(31, 111, 209, .14), rgba(31, 111, 209, .14)), var(--panel);
                        box-shadow: inset 0 0 0 1px var(--accent); }
@@ -129,12 +129,12 @@ body.ui-nou .bara-lista { display: flex; align-items: center; gap: 8px; margin-b
 body.ui-nou .bara-lista[hidden] { display: none; }
 #unde.segmented { background: none; border: none; padding: 0; gap: 8px; }
 #unde.segmented button { flex: none; padding: 5px 14px; border: 1px solid var(--line); border-radius: 999px; color: var(--text-dim); font-size: 13px; }
-#unde.segmented button:hover:not(.active) { border-color: #3a4049; color: var(--text); }
-#unde.segmented button.active { background: var(--panel-2); border-color: #4a5160; color: var(--text); }
+#unde.segmented button:hover:not(.active) { border-color: var(--line-2); color: var(--text); }
+#unde.segmented button.active { background: var(--panel-2); border-color: var(--line-3); color: var(--text); }
 
 /* tabelul: un card cu margine, stările ca etichete */
 body.ui-nou #tabelLista table.lista { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; border-collapse: separate; border-spacing: 0; overflow: hidden; }
-body.ui-nou table.lista th { background: #191c21; padding: 9px 12px; white-space: nowrap; }
+body.ui-nou table.lista th { background: var(--bg-2); padding: 9px 12px; white-space: nowrap; }
 body.ui-nou table.lista td { padding: 11px 12px; border-bottom: 1px solid var(--line); }
 body.ui-nou table.lista tbody tr:last-child td { border-bottom: none; }
 body.ui-nou table.lista td[data-c="client"] { font-weight: 500; }
@@ -198,8 +198,8 @@ body.ui-nou .gol.card { border-radius: 12px; }
                       border-bottom: 1px solid var(--line); color: var(--text-dim); text-decoration: none; font-size: 13.5px; }
 .card-comanda a.rand:hover > span { color: var(--text); }
 .card-comanda .rand b { font-weight: 600; color: var(--text); white-space: nowrap; }
-.card-comanda .rand b.cald    { color: #e5b45a; }
-.card-comanda .rand b.liniste { color: #7cc493; font-weight: 500; }
+.card-comanda .rand b.cald    { color: var(--cald); }
+.card-comanda .rand b.liniste { color: var(--verde-text); font-weight: 500; }
 .card-comanda .rand b.info    { color: var(--accent); }
 .cc-indemn { margin-top: 14px; padding: 12px; border: 1px dashed var(--line); border-radius: 10px; font-size: 13px; color: var(--text); text-align: center; }
 .cc-indemn span { display: block; margin-top: 4px; font-size: 12px; color: var(--text-dim); }
@@ -222,7 +222,7 @@ body.ui-nou .gol.card { border-radius: 12px; }
 .card-comanda .cc-pasi .factura-form { flex-wrap: nowrap; }
 .card-comanda .cc-pasi .factura-form input { flex: 1; min-width: 0; max-width: none; }
 .fisa-printata { margin-top: 6px; font-size: 12px; color: var(--text-dim); }
-.cc-eticheta { margin: 14px 0 6px; font-size: 10.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #6f7684; }
+.cc-eticheta { margin: 14px 0 6px; font-size: 10.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--text-mute); }
 .cc-eticheta .cate { margin-left: 4px; color: var(--text-dim); }
 .cc-perechi { display: grid; grid-template-columns: 80px minmax(0, 1fr); gap: 4px 10px; margin-top: 12px; font-size: 13.5px; }
 .cc-perechi dt { color: var(--text-dim); }
@@ -247,7 +247,7 @@ body.ui-nou .antet { align-items: center; flex-wrap: wrap; gap: 10px; padding: 4
 body.ui-nou .antet h1 { font-size: 30px; font-weight: 700; letter-spacing: -.02em; line-height: 1.15; margin-bottom: 4px; }
 body.ui-nou .antet .nr-comanda { font-size: .95rem; color: var(--text); margin-bottom: 6px; }
 body.ui-nou .sectiune { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px; }
-body.ui-nou .sectiune > h2 { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: #6f7684; margin-bottom: 12px; }
+body.ui-nou .sectiune > h2 { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--text-mute); margin-bottom: 12px; }
 body.ui-nou .card.info-comanda { padding: 22px 24px; }
 
 /* ── ofertă nouă — alege gama: plăci mai mari ── */
@@ -274,7 +274,7 @@ body.ui-nou [data-z="info"] .factura-form input { flex: 1 1 110px; }
 /* cardul comenzii: stânga clientul, dreapta paşii (ofertat / acceptat / facturat / sticlă) */
 .info-comanda { display: grid; grid-template-columns: 1fr; gap: 16px 32px; }
 @media (min-width: 760px) { .info-comanda { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); } }
-.info-titlu { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: #6f7684; }
+.info-titlu { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--text-mute); }
 .info-nume { font-size: 1.15rem; font-weight: 600; margin: 2px 0 8px; }
 .info-client .perechi { grid-template-columns: 130px 1fr; }
 .info-client dt, .info-pasi dt { white-space: nowrap; }
@@ -308,7 +308,7 @@ body.ui-nou [data-z="info"] .factura-form input { flex: 1 1 110px; }
 .stare-pastila { display: inline-block; padding: 1px 10px; border-radius: 999px; border: 1px solid; font-size: .8rem; font-weight: 600; margin-right: 6px; }
 .stare-pastila.oferta { color: var(--accent); border-color: rgba(77, 163, 255, .45); background: rgba(77, 163, 255, .1); }
 .stare-pastila.plata  { color: #d4a24c; border-color: rgba(212, 162, 76, .45); background: rgba(212, 162, 76, .1); }
-.stare-pastila.lucru  { color: #b49cff; border-color: rgba(180, 156, 255, .45); background: rgba(180, 156, 255, .1); }
+.stare-pastila.lucru  { color: var(--mov); border-color: rgba(180, 156, 255, .45); background: rgba(180, 156, 255, .1); }
 .stare-pastila.gata   { color: var(--ok); border-color: rgba(107, 155, 122, .45); background: rgba(107, 155, 122, .1); }
 .cc-butoane a.buton { display: inline-flex; align-items: center; padding: 7px 12px; font-size: 13px; border: 1px solid var(--line);
                       border-radius: 8px; background: var(--panel-2); color: var(--text); text-decoration: none; }
@@ -318,7 +318,7 @@ body.ui-nou [data-z="info"] .factura-form input { flex: 1 1 110px; }
 .card.in-curand { display: flex; align-items: center; gap: 12px; padding: 14px 18px; }
 .card.in-curand .dim { flex: 1; font-size: 13px; }
 .eticheta-curand { padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600;
-                   color: #e5b45a; background: rgba(212, 162, 76, .12); border: 1px solid rgba(212, 162, 76, .45); }
+                   color: var(--cald); background: rgba(212, 162, 76, .12); border: 1px solid rgba(212, 162, 76, .45); }
 .card.in-curand button:disabled { opacity: .45; cursor: not-allowed; }
 
 /* anularea comenzii: cerută (aşteaptă conducerea) / anulată / respinsă — server/cereri.js */
@@ -329,4 +329,4 @@ body.ui-nou [data-z="info"] .factura-form input { flex: 1 1 110px; }
 .anulare-info.deschisa { border-color: rgba(212, 162, 76, .45); background: rgba(212, 162, 76, .08); }
 .anulare-info.anulata { border-color: rgba(201, 96, 76, .55); background: rgba(201, 96, 76, .1); }
 .stare-pastila.demo { color: #ffb366; border-color: rgba(255, 157, 46, .55); background: rgba(255, 157, 46, .14); letter-spacing: .04em; }
-.stare-pastila.anulata { color: #e8907f; border-color: rgba(201, 96, 76, .55); background: rgba(201, 96, 76, .1); }
+.stare-pastila.anulata { color: var(--rosu-text); border-color: rgba(201, 96, 76, .55); background: rgba(201, 96, 76, .1); }
