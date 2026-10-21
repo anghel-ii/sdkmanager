@@ -483,12 +483,16 @@ async function main() {
   verifica('lăţime invalidă → 400', (await cer('PUT', '/api/preferinte', { latimeBara: 50 })).stare === 400
     && (await cer('PUT', '/api/preferinte', { latimeBara: 'lata' })).stare === 400);
   verifica('… şi n-a stricat valoarea salvată', (await cer('GET', '/api/preferinte')).date.latimeBara === 612);
+  verifica('tema: implicit nesetată', (await cer('GET', '/api/preferinte')).date.tema == null);
+  verifica('tema se salvează pe cont', (await cer('PUT', '/api/preferinte', { tema: 'luminos' })).date.tema === 'luminos');
+  verifica('temă invalidă → 400', (await cer('PUT', '/api/preferinte', { tema: 'roz' })).stare === 400);
   const cookieAdmin = cookie; cookie = null;
   await cer('POST', '/api/login', { user: 'maria', parola: 'parola-maria-1' });
   const fixMaria = (await cer('GET', '/api/comenzi?tip=finalizata')).date.comenzi.find(c => c.id === id);
   verifica('alt utilizator NU o vede fixată', fixMaria && fixMaria.fixat === false);
   verifica('alt utilizator are sortarea lui', (await cer('GET', '/api/preferinte')).date.sortare === 'data');
   verifica('alt utilizator NU are lăţimea barei adminului', (await cer('GET', '/api/preferinte')).date.latimeBara == null);
+  verifica('alt utilizator NU are tema adminului', (await cer('GET', '/api/preferinte')).date.tema == null);
   cookie = cookieAdmin;
   verifica('lăţime null = înapoi la implicit', (await cer('PUT', '/api/preferinte', { latimeBara: null })).date.latimeBara == null);
   // pin-ul ajunge DOAR la conexiunile aceluiaşi utilizator

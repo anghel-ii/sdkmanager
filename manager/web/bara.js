@@ -65,18 +65,34 @@
   };
 })();
 
-// ── Tema (luminoasă / întunecată) — aleasă din bară, ţinută minte în browser (userul, 2026-10-21).
-// Se pune pe <html> cât mai devreme, ca pagina să nu clipească în cealaltă temă; culorile sunt în
-// comun.css / configurator css/main.css (:root[data-tema="luminos"]). Evenimentul `tema` — pt. scena 3D.
+// ── Tema (luminoasă / întunecată) — pe CONT, ca pin-urile şi sortarea (/api/preferinte, userul 2026-10-21).
+// Copia din localStorage o pune pe <html> imediat, ca pagina să nu clipească în cealaltă temă până vine
+// răspunsul serverului; culorile sunt în comun.css / configurator css/main.css (:root[data-tema="luminos"]).
+// Evenimentul `tema` — pt. scena 3D.
 (() => {
-  let t = null;
-  try { t = localStorage.getItem('tema'); } catch {}
-  if (t === 'luminos') document.documentElement.dataset.tema = 'luminos';
-  window.comutaTema = () => {
-    const luminos = document.documentElement.dataset.tema !== 'luminos';
+  const pune = t => {
+    const luminos = t === 'luminos';
+    if (luminos === (document.documentElement.dataset.tema === 'luminos')) return;
     if (luminos) document.documentElement.dataset.tema = 'luminos'; else delete document.documentElement.dataset.tema;
     try { localStorage.setItem('tema', luminos ? 'luminos' : 'intunecat'); } catch {}
     window.dispatchEvent(new Event('tema'));
+  };
+  let local = null;
+  try { local = localStorage.getItem('tema'); } catch {}
+  if (local === 'luminos') document.documentElement.dataset.tema = 'luminos';
+  const salveaza = tema => fetch('/api/preferinte', { method: 'PUT', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tema }) }).catch(() => {});
+  // tema contului; contul fără temă aleasă o ia pe cea din browserul ăsta (cine o alesese înainte s-o mutăm pe cont)
+  fetch('/api/preferinte').then(r => (r.ok ? r.json() : null)).then(p => {
+    if (!p) return;
+    if (p.tema) pune(p.tema);
+    else if (local === 'luminos') salveaza('luminos');
+    else pune('intunecat');
+  }).catch(() => {});
+  window.comutaTema = () => {
+    const tema = document.documentElement.dataset.tema === 'luminos' ? 'intunecat' : 'luminos';
+    pune(tema);
+    salveaza(tema);
   };
 })();
 

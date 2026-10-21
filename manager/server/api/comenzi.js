@@ -576,12 +576,13 @@ async function fixeaza(ctx) {
 const PREFERINTE = {
   sortare:    v => ['data', 'facturare'].includes(v),
   latimeBara: v => Number.isInteger(v) && v >= 380 && v <= 4000,
+  tema:       v => ['luminos', 'intunecat'].includes(v),   // tema aplicaţiei (bara.js), pe cont — 2026-10-21
 };
 const DIN_TEXT = { latimeBara: Number };   // în DB totul e text
 
 function preferinte(ctx) {
   const rows = db().prepare('SELECT cheie, valoare FROM preferinta WHERE utilizator_id = ?').all(ctx.utilizator.id);
-  json(ctx.res, 200, { sortare: 'data', latimeBara: null,
+  json(ctx.res, 200, { sortare: 'data', latimeBara: null, tema: null,
     ...Object.fromEntries(rows.map(r => [r.cheie, (DIN_TEXT[r.cheie] ?? String)(r.valoare)])) });
 }
 
