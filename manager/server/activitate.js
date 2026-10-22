@@ -84,6 +84,8 @@ const OPERATII = {
   'POST /api/tichete':                       ['Tichet nou', S, b => lista(b.tip, scurt(b.text, 120)), null, b => [b.comanda_id]],
   'POST /api/tichete/vazute':                ['Tichete văzute', V],
   'PATCH /api/tichete/:id':                  ['Tichet actualizat', S, b => lista(b.stare, b.raspuns && scurt(b.raspuns, 120))],
+  'POST /api/tichete/:id/raspuns':           ['Mesaj în tichet', S, (b, r, p) => lista(`tichetul ${p.id}`, scurt(b.text, 120))],
+  'POST /api/tichete/:id/citit':             ['A citit conversaţia unui tichet', V, (b, r, p) => `tichetul ${p.id}`],
   'POST /api/notificari/:id/inchide':        ['Notificare închisă', V],
 
   'POST /api/actualizare/verifica':          ['A verificat dacă e o versiune nouă', S],

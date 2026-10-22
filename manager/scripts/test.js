@@ -485,7 +485,7 @@ async function main() {
     const idVechi = Number(db2().prepare("INSERT INTO utilizator (nume, user, parola_hash, parola_salt, rol) VALUES ('Vechi', 'vechi', 'x', 'x', 'operator')").run().lastInsertRowid);
     require('../server/db.js').roluriNoi(db2());
     verifica('migraţie: operator → birou', db2().prepare('SELECT rol FROM utilizator WHERE id = ?').get(idVechi).rol === 'birou');
-    verifica('schema la versiunea 29', db2().prepare('PRAGMA user_version').get().user_version === 29);
+    verifica('schema la versiunea 30', db2().prepare('PRAGMA user_version').get().user_version === 30);
   }
 
   console.log('\nFixare şi sortare — per utilizator');
@@ -1152,9 +1152,26 @@ async function main() {
       verifica('autorul vede răspunsul (insignă 1) …', (await cer('GET', '/api/sumar')).date.tichete === 1
         && (await cer('GET', '/api/tichete')).date.tichete.find(t => t.id === id)?.raspuns === 'Reparat în versiunea nouă');
       await cer('POST', '/api/tichete/vazute');
-      verifica('… şi după ce deschide pagina, insigna dispare', (await cer('GET', '/api/sumar')).date.tichete === 0);
+      verifica('… pagina deschisă: starea e văzută, mesajul încă nu', (await cer('GET', '/api/sumar')).date.tichete === 1);
+      await cer('POST', `/api/tichete/${id}/citit`);
+      verifica('… după ce deschide conversaţia, insigna dispare', (await cer('GET', '/api/sumar')).date.tichete === 0);
+      // conversaţia (2026-10-22): răspunsul adminului e primul mesaj, starea — eveniment
+      const m = (await cer('GET', '/api/tichete')).date.tichete.find(t => t.id === id).mesaje;
+      verifica('conversaţie: răspunsul ca mesaj + starea ca eveniment', m.some(x => !x.eveniment && x.text === 'Reparat în versiunea nouă')
+        && m.some(x => x.eveniment === 'stare' && x.text === 'rezolvat'), JSON.stringify(m));
+      verifica('mesaj gol → 400', (await cer('POST', `/api/tichete/${id}/raspuns`, { text: '  ' })).stare === 400);
+      verifica('autorul scrie în conversaţie → 201', (await cer('POST', `/api/tichete/${id}/raspuns`, { text: 'Mersi, acum merge' })).stare === 201);
       verifica('biroul nu vede tabloul adminului → 403', (await cer('GET', '/api/admin/tablou')).stare === 403);
     });
+    {
+      const t = (await cer('GET', '/api/tichete')).date.tichete.find(x => x.id === id);
+      const n = (await cer('GET', '/api/notificari')).date.notificari;
+      verifica('adminul: mesajul autorului necitit + insignă + notificare', t.necitite === 1 && (await cer('GET', '/api/sumar')).date.tichete >= 1
+        && n.some(x => x.titlu.startsWith('Mesaj de la') && x.text.includes('Mersi, acum merge') && x.link === `/tichete?tichet=${id}`), JSON.stringify(n));
+      await cer('POST', `/api/tichete/${id}/citit`);
+      verifica('… citit de admin', (await cer('GET', '/api/tichete')).date.tichete.find(x => x.id === id).necitite === 0);
+      for (const x of n) await cer('POST', `/api/notificari/${x.id}/inchide`);
+    }
     // notificările autorului (server/notificari.js, 2026-10-19): rămân până le închide el cu X
     await cer('PATCH', `/api/tichete/${id}`, { stare: 'in_lucru' });   // doar starea
     await cer('PATCH', `/api/tichete/${id}`, { stare: 'in_lucru' });   // nimic schimbat → nicio notificare

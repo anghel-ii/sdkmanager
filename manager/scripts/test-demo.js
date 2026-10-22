@@ -267,7 +267,7 @@ async function main() {
   await actiune('admin: răspunde la tichetul anei → PE BUNE, cu notificare', async () => {
     const t = (await cer('admin', 'GET', '/api/tichete')).date.tichete.find(x => x.text === 'tichet din demo');
     return cer('admin', 'PATCH', `/api/tichete/${t.id}`, { stare: 'rezolvat', raspuns: 'am văzut' });
-  }, { real: ['tichet', 'notificare'], birou: ['tichet', 'notificare'], admin: ['tichet', 'notificare'] });
+  }, { real: ['tichet', 'tichet_mesaj', 'notificare'], birou: ['tichet', 'tichet_mesaj', 'notificare'], admin: ['tichet', 'tichet_mesaj', 'notificare'] });
   const nAna = (await cer('ana', 'GET', '/api/notificari')).date.notificari;
   verifica('ana (în demo) primeşte notificarea, şi o închide pe bune', nAna.length === 1 && nAna[0].titlu === 'Răspuns la tichetul tău'
     && (await cer('ana', 'POST', `/api/notificari/${nAna[0].id}/inchide`)).stare === 200

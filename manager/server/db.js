@@ -490,6 +490,22 @@ const MIGRATII = [
     UPDATE comanda SET coloana_borderou = CASE plata WHEN 'bon' THEN 'bon' WHEN 'fiscala' THEN 'factura'
       WHEN 'proforma' THEN 'op' WHEN 'proforma_amanunt' THEN 'op' WHEN 'avans' THEN 'op' END
      WHERE de_incasat IS NOT NULL;`),
+  // v29 → v30 (2026-10-22): conversaţie pe fiecare tichet, ca la taskuri (server/tichete.js) — autorul şi adminii.
+  // eveniment NULL = mesaj; 'stare' = adminul a schimbat starea (text = starea nouă). citit = l-a văzut cealaltă
+  // parte (autorul — mesajele adminilor; adminii — ale autorului). Răspunsurile de până acum devin primul mesaj.
+  d => d.exec(`
+    CREATE TABLE tichet_mesaj (
+      id        INTEGER PRIMARY KEY,
+      tichet_id INTEGER NOT NULL REFERENCES tichet(id) ON DELETE CASCADE,
+      autor     INTEGER NOT NULL REFERENCES utilizator(id),
+      text      TEXT NOT NULL DEFAULT '',
+      eveniment TEXT,
+      creat_la  TEXT NOT NULL,
+      citit     INTEGER NOT NULL DEFAULT 0
+    );
+    CREATE INDEX tichet_mesaj_tichet ON tichet_mesaj (tichet_id, creat_la);
+    INSERT INTO tichet_mesaj (tichet_id, autor, text, creat_la, citit)
+      SELECT id, raspuns_de, raspuns, modificat_la, vazut_de_autor FROM tichet WHERE raspuns IS NOT NULL AND raspuns_de IS NOT NULL;`),
 ];
 
 // Exportată pt. test.
