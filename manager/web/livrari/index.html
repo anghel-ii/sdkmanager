@@ -172,7 +172,7 @@ const COLOANA = { bon: 'bon', fiscala: 'factura', proforma: 'op', proforma_amanu
 const pret = c => Number(c.de_incasat) || 0;
 const numerar = cs => cs.reduce((s, c) => s + (['bon', 'factura'].includes(COLOANA[c.plata]) ? pret(c) : 0), 0);
 const data = s => dataOra(s).slice(0, 10);
-const PLATI = { proforma: 'Proformă', proforma_amanunt: 'Proformă amănunt', fiscala: 'Factură fiscală', bon: 'Bon fiscal', avans: 'Factură de avans' };
+const PLATI = { oferta: 'Ofertă', proforma: 'Proformă', proforma_amanunt: 'Proformă amănunt', fiscala: 'Factură fiscală', bon: 'Bon fiscal', avans: 'Factură de avans' };
 
 async function api(cale, optiuni = {}) {
   const r = await fetch(cale, { headers: { 'Content-Type': 'application/json' }, ...optiuni });

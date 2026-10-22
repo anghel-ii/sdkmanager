@@ -146,6 +146,7 @@
     <label class="camp">Modalitate de plată
       <select id="accPlata" required>
         <option value="" selected disabled>Alege…</option>
+<option value="oferta">Ofertă</option>
 <option value="proforma">Factură proformă</option>
         <option value="proforma_amanunt">Factură proformă cu amănuntul</option>
         <option value="fiscala">Factură fiscală</option>
@@ -316,7 +317,7 @@ const deCine = (nume, cand) => (nume ? `${esc(nume)} · ` : '') + dataOra(cand);
 // (op / factura = modalităţi vechi, doar pt. comenzile de dinainte de 2026-09-28)
 // modurile de livrare — aceleaşi ca în configurator (configurator_usi/js/lib/comun/comanda.js LIVRARE)
 const LIVRARI = ['Ridicare personala', 'Curier ramburs', 'Curier op avans', 'Curier op la termen', 'Cu masina noastra'];
-const PLATI = { proforma: 'Factură proformă', proforma_amanunt: 'Factură proformă cu amănuntul', fiscala: 'Factură fiscală',
+const PLATI = { oferta: 'Ofertă', proforma: 'Factură proformă', proforma_amanunt: 'Factură proformă cu amănuntul', fiscala: 'Factură fiscală',
                 bon: 'Bon fiscal', avans: 'Factură de avans', op: 'OP (ordin de plată)', factura: 'Factură' };
 const PLATI_SCURT = { ...PLATI, proforma_amanunt: 'Proformă amănunt', op: 'OP' };   // în coloana din listă
 const virgulaLei = n => Number(n).toLocaleString('ro-RO', { minimumFractionDigits: 0, maximumFractionDigits: 2 });

@@ -3,7 +3,7 @@ import { systems } from './systems/registry.js';
 import { currentSpec, currentBilling } from './builder.js';
 import gameJson from './systems/game.json';
 import { configuratieCompleta } from './ui.js';
-import { campuriLipsa } from './lib/comun/comanda.js';
+import { campuriLipsa, etichetaNumar } from './lib/comun/comanda.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  INTERFAŢA NOUĂ (userul, 2026-09-24; designul din Superdesign)
@@ -86,6 +86,7 @@ export function initNou() {
     l.append(el, ...(cautabil ? [cautabil] : []));
     if (id === 'ofertaNr') banda.insertBefore(l, clear ?? null);   // nr. de ofertă pe cardul de jos, lângă salvare
   }
+  etichetaNumar();   // „Număr ofertă / factură / bon…" după metoda de plată
   actiuni.querySelector('#nouStare').addEventListener('click', () => { deschide('oferta'); arataTab('roBilling'); });
 
   // ── cotele pe 3D + „Ascunde 3D" (doar la jumătate de ecran) ──

@@ -19,8 +19,8 @@ const { json, eroare, corpJson } = require('./http.js');
 
 const scurt = (t, n = 160) => { const s = String(t ?? '').replace(/\s+/g, ' ').trim(); return s.length > n ? s.slice(0, n - 1) + '…' : s; };
 const lei = v => (v == null || v === '' ? null : `${String(v).replace('.', ',')} lei`);
-const lista = (...x) => x.filter(v => v != null && v !== '').join(' · ') || null;
-const PLATI = { proforma: 'proformă', proforma_amanunt: 'proformă cu amănuntul', fiscala: 'factură fiscală', bon: 'bon fiscal', avans: 'factură de avans' };
+const lista = (...x) => x.filter(v => v != null && v !== '' && v !== false).join(' · ') || null;
+const PLATI = { oferta: 'ofertă', proforma: 'proformă', proforma_amanunt: 'proformă cu amănuntul', fiscala: 'factură fiscală', bon: 'bon fiscal', avans: 'factură de avans' };
 const ROLURI = { admin: 'administrator', conducere: 'conducere', birou: 'birou' };
 
 // comanda unei linii de sticlă / a unei cereri de anulare / a unui task — pt. operaţiile care n-o au în adresă

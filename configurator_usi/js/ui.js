@@ -13,7 +13,7 @@ import { geamPermisLux } from './lib/lux/index.js';
 import gameJson from './systems/game.json';
 import { renderRame, syncRame, refreshRame } from './ui_rame.js';
 import { activeazaCampuri } from './campuri.js';
-import { LIVRARE, AGENTI, PLATI, detaliiComanda, liniaTransport, campuriLipsa, focusCamp } from './lib/comun/comanda.js';
+import { LIVRARE, AGENTI, PLATI, detaliiComanda, detaliiDinManager, liniaTransport, campuriLipsa, focusCamp, etichetaNumar } from './lib/comun/comanda.js';
 import { stareRameGoala } from './lib/rame/rame.js';
 import { renderUtil } from './ui_util.js';
 import { initSugestiiClienti } from './sugestii-clienti.js';
@@ -982,8 +982,9 @@ function initDetaliiComanda() {
     sel.innerHTML = `<option value=""${ales ? '' : ' selected'} disabled>${alege}</option>` +
       lista.map(v => { const [cod, text] = Array.isArray(v) ? v : [v, v];
         return `<option value="${esc(cod)}"${cod === ales ? ' selected' : ''}>${esc(text)}</option>`; }).join('');
-    sel.addEventListener('change', () => { state.comanda[sel.dataset.c] = sel.value; rebuild(); });
+    sel.addEventListener('change', () => { state.comanda[sel.dataset.c] = sel.value; etichetaNumar(); rebuild(); });
   }
+  etichetaNumar();
 }
 
 // ── Ofertă (coş + confirmare) ───────────────────────────────────────────────
@@ -1381,6 +1382,7 @@ export async function initUI() {
     else {
       Object.assign(state, structuredClone(poz.config));
       state.usiIdentice = poz.config.usiIdentice;   // lipsă (oferte vechi) → se deduce din uşi
+      state.comanda = { ...detaliiComanda(state), ...detaliiDinManager(o.comanda) };   // plata aleasă la acceptare
       gamaActiva = systems[state.system]?.meta.family ?? null;
       $('clientNume').value    = o.comanda.client_nume ?? '';
       $('clientTelefon').value = o.comanda.client_telefon ?? '';
@@ -1388,6 +1390,7 @@ export async function initUI() {
       $('ofertaNr').value      = o.comanda.oferta_nr || o.comanda.numar || '';   // pe fişă, lângă livrare / plată / agent
       modFisa = {
         numar:  `${o.comanda.oferta_nr || o.comanda.numar}${n > 1 ? ` · produsul ${k + 1} din ${n}` : ''}`,
+        configurat: o.comanda.creat_de_nume ?? null,   // pe fişă: pe cine întreabă atelierul
         coduri: (o.coduri ?? []).map(cod_bare => ({ cod_bare })),
         client: o.comanda.client_nume ?? '',
         bom: (poz.linii?.necesar ?? []).map(l =>
