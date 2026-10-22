@@ -3,7 +3,7 @@ import * as manager from './manager.js';
 import * as cosul from './cos.js';
 import { cautator, laBara, arie, rotunjeste, textMod, sePoatePeJumatate } from './amanunt-calcul.js';
 import { initSugestiiClienti } from './sugestii-clienti.js';
-import { LIVRARE, AGENTI, PLATI, plataText, liniaTransport, campuriLipsa, focusCamp, marcheazaDeCompletat } from './lib/comun/comanda.js';
+import { LIVRARE, AGENTI, PLATI, plataText, numarText, detaliiDinManager, liniaTransport, campuriLipsa, focusCamp, etichetaNumar, marcheazaDeCompletat } from './lib/comun/comanda.js';
 import { copyRows } from './lib/comun/clipboard.js';
 import { qtyText } from './lib/comun/num.js';
 import { dataRo } from './ora.js';
@@ -414,7 +414,7 @@ for (const [id, valori, alege] of [['comandaLivrare', LIVRARE, 'Mod de livrare']
     return `<option value="${esc(cod)}">${esc(text)}</option>`;
   }).join('');
   // livrarea schimbă linia de transport → tabelul se reface
-  sel.addEventListener('change', () => { comanda[sel.dataset.c] = sel.value; randeaza(); });
+  sel.addEventListener('change', () => { comanda[sel.dataset.c] = sel.value; etichetaNumar(); randeaza(); });
 }
 $('plataMod').innerHTML = `<option value="" selected disabled>Alege…</option>` +
   PLATI.map(([cod, text]) => `<option value="${cod}">${esc(text)}</option>`).join('');
@@ -571,7 +571,7 @@ function tipareste({ vezi = false } = {}) {
     <table class="perechi">
       ${$('clientNume').value.trim() ? `<tr class="client"><td>Client</td><td>${esc($('clientNume').value.trim())}</td></tr>` : ''}${rand('Telefon', $('clientTelefon').value)}${rand('Adresă', $('clientAdresa').value)}
       ${rand('Mod de livrare', comanda.livrare)}${rand('Metodă de plată', plataText(comanda.plata))}${rand('Agent', comanda.agent)}
-      ${rand('Număr ofertă', $('ofertaNr').value.trim())}${rand('Observaţii', $('observatii').value.trim())}
+      ${rand(numarText(comanda.plata), $('ofertaNr').value.trim())}${rand('Configurat de', configuratDe())}${rand('Observaţii', $('observatii').value.trim())}
     </table>
     <table>
       <thead><tr class="margine"><td colspan="6"></td></tr><tr><th>#</th><th>Cod</th><th>Produs</th><th>Debitare</th><th>Cant.</th><th>✓</th></tr></thead>
@@ -589,9 +589,16 @@ function tipareste({ vezi = false } = {}) {
   addEventListener('afterprint', () => { try { window.top.postMessage({ tip: 'fisa-tiparita' }, location.origin); } catch {} }, { once: true });
   window.print();
 }
-$('btnFisa').addEventListener('click', () => tipareste({ vezi: true }));
+$('btnFisa').addEventListener('click', () => {
+  tipareste({ vezi: true });
+  window.noteazaVazut?.('A văzut lista (ofertă cu amănuntul)', cos.ofertaEditata ?? null);
+});
 
 // ── Pornire: produs nou, din coş (?cos=1&poz=k) sau „Fişă" din manager (?fisa=id&poz=k) ──
+
+// cine a configurat — pe fişă, ca atelierul să ştie pe cine întreabă (userul, 2026-10-22): la fişa unei comenzi
+// cel care a făcut oferta, altfel cel conectat acum
+const configuratDe = () => (modFisa ? modFisa.configurat : manager.stareOferta().utilizator?.nume) ?? null;
 
 const puneClientul = (client, ofertaNr, detalii) => {
   Object.assign(comanda, detalii);
@@ -600,6 +607,7 @@ const puneClientul = (client, ofertaNr, detalii) => {
   $('clientTelefon').value = client.telefon ?? '';
   $('clientAdresa').value = client.adresa ?? '';
   $('ofertaNr').value = ofertaNr ?? '';
+  etichetaNumar();
 };
 
 (async () => {
@@ -619,10 +627,11 @@ const puneClientul = (client, ofertaNr, detalii) => {
       // fişa: liniile ÎNGHEŢATE la salvare
       linii = p.linii.facturare.map(l => ({ cod: l.cod, denumire: l.denumire, um: l.um, cantitate: l.cantitate }));
       puneClientul({ nume: o.comanda.client_nume, telefon: o.comanda.client_telefon, adresa: o.comanda.client_adresa },
-                   o.comanda.oferta_nr, p.config.comanda);
+                   o.comanda.oferta_nr, { ...p.config.comanda, ...detaliiDinManager(o.comanda) });
       $('observatii').value = p.config.observatii ?? '';
       const n = o.pozitii.length;
       modFisa = { numar: `${o.comanda.oferta_nr || o.comanda.numar}${n > 1 ? ` · produsul ${k + 1} din ${n}` : ''}`,
+                  configurat: o.comanda.creat_de_nume ?? null,
                   debitare: new Map((p.linii.necesar ?? []).filter(x => x.debitare).map(x => [x.cod, x.debitare])) };
     }
   } else if (cosul.activ()) {

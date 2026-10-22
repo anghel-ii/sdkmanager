@@ -437,6 +437,24 @@ async function main() {
   verifica('anulare facturare → şterge şi „facturat de"', (await cer('GET', `/api/comenzi/${id}`)).date.comanda.facturat_de_nume == null);
   verifica('anulare facturare → nefacturată', anul.stare === 200 && anul.date.comanda.factura_nr === null);
 
+  console.log('\nJurnalul de activitate');
+  {
+    const act = (await cer('GET', `/api/comenzi/${id}/activitate`)).date.randuri ?? [];
+    verifica('comanda: facturarea e în jurnal, cu numărul şi cine', act.some(r => r.operatie === 'Facturată' && r.detalii === 'SDK 1234' && r.utilizator_nume === 'Admin Test'));
+    verifica('comanda: anularea facturii e în jurnal', act.some(r => r.operatie === 'Factura anulată'));
+    verifica('comanda: finalizarea şi redeschiderea sunt în jurnal', act.some(r => r.operatie === 'Marcată finalizată') && act.some(r => /^Redeschisă/.test(r.operatie)));
+    verifica('comanda: acceptarea are plata în detalii', act.some(r => r.operatie === 'Acceptată — comandă în lucru' && !!r.detalii), JSON.stringify(act.map(r => r.operatie)));
+    verifica('rândul ţine minte nr. ofertei şi clientul', act.every(r => r.comanda_nr && r.client_nume));
+    verifica('vizualizările NU apar în „doar schimbări"', (await cer('POST', '/api/activitate', { operatie: 'A deschis comanda', comanda_id: id })).stare === 200
+      && !(await cer('GET', `/api/comenzi/${id}/activitate`)).date.randuri.some(r => r.fel === 'vizualizare'));
+    verifica('… dar apar în „tot"', (await cer('GET', `/api/comenzi/${id}/activitate?tot=1`)).date.randuri.some(r => r.operatie === 'A deschis comanda'));
+    const toate = (await cer('GET', '/api/activitate?tot=1')).date;
+    verifica('pagina mare: intrarea în cont e în jurnal', toate.randuri.some(r => r.operatie === 'A intrat în cont'));
+    verifica('pagina mare: numărătoare pe zile pt. grafic', Array.isArray(toate.peZi) && toate.peZi.length > 0 && toate.total > 0);
+    verifica('pagina mare: căutare după nr. ofertei / client', (await cer('GET', `/api/activitate?tot=1&cauta=${encodeURIComponent(act[0].comanda_nr)}`)).date.randuri.every(r => r.comanda_nr === act[0].comanda_nr || (r.detalii ?? '').includes(act[0].comanda_nr)));
+    verifica('pagina mare: filtru pe operaţie', (await cer('GET', '/api/activitate?operatie=Facturată')).date.randuri.every(r => r.operatie === 'Facturată'));
+  }
+
   console.log('\n  facturare pe roluri');
   {
     const ca = async (user, parola, fn) => { const k = cookie; cookie = null;
@@ -467,7 +485,7 @@ async function main() {
     const idVechi = Number(db2().prepare("INSERT INTO utilizator (nume, user, parola_hash, parola_salt, rol) VALUES ('Vechi', 'vechi', 'x', 'x', 'operator')").run().lastInsertRowid);
     require('../server/db.js').roluriNoi(db2());
     verifica('migraţie: operator → birou', db2().prepare('SELECT rol FROM utilizator WHERE id = ?').get(idVechi).rol === 'birou');
-    verifica('schema la versiunea 27', db2().prepare('PRAGMA user_version').get().user_version === 27);
+    verifica('schema la versiunea 28', db2().prepare('PRAGMA user_version').get().user_version === 28);
   }
 
   console.log('\nFixare şi sortare — per utilizator');

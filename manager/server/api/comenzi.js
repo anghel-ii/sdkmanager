@@ -143,7 +143,7 @@ const text = (v, max = 200) => (v == null || String(v).trim() === '' ? null : St
 // Metodele de plată (userul, 2026-09-28) — vin din configurator (bara clientului,
 // pe ofertă) şi / sau la acceptare. Comenzile mai vechi pot avea 'op' / 'factura'
 // — rămân în DB şi se afişează, dar nu se mai pot alege.
-const PLATI = ['proforma', 'proforma_amanunt', 'fiscala', 'bon', 'avans'];
+const PLATI = ['oferta', 'proforma', 'proforma_amanunt', 'fiscala', 'bon', 'avans'];   // oferta: userul, 2026-10-22
 
 const campuriClient = (client, detalii = {}, ofertaNr) => [
   String(client.nume).trim(),
@@ -453,7 +453,7 @@ async function accepta(ctx) {
   if (c.anulat)            return eroare(ctx.res, 400, 'Oferta e anulată.');
   if (c.tip === 'comanda') return eroare(ctx.res, 409, 'Oferta e deja comandă în lucru.');
 
-  if (!PLATI.includes(corp.plata)) return eroare(ctx.res, 400, 'Alege modalitatea de plată: factură proformă, proformă cu amănuntul, factură fiscală, bon fiscal sau factură de avans.');
+  if (!PLATI.includes(corp.plata)) return eroare(ctx.res, 400, 'Alege modalitatea de plată: ofertă, factură proformă, proformă cu amănuntul, factură fiscală, bon fiscal sau factură de avans.');
   const avans = corp.avans == null || String(corp.avans).trim() === '' ? 0 : Number(String(corp.avans).replace(',', '.'));
   if (!Number.isFinite(avans) || avans < 0) return eroare(ctx.res, 400, 'Avansul trebuie să fie un număr (0 = fără avans).');
   // telefonul şi adresa: pe ofertă erau opţionale, la acceptare se cer (userul, 2026-10-05) —

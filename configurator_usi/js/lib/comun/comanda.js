@@ -9,10 +9,17 @@
 export const LIVRARE = ['Ridicare personala', 'Curier ramburs', 'Curier op avans', 'Curier op la termen', 'Cu masina noastra'];
 export const AGENTI = ['Birou', 'Site', 'Serban Dragos', 'Bondrea Oliver', 'Coroma Ciprian',
                        'Cucolas Catalin', 'Moise Razvan', 'Tanvuia Adrian'];
-// Metodele de plată — aceleaşi coduri ca PLATI din manager/server/api/comenzi.js
-export const PLATI = [['proforma', 'Factură proformă'], ['proforma_amanunt', 'Factură proformă cu amănuntul'],
+// Metodele de plată — aceleaşi coduri ca PLATI din manager/server/api/comenzi.js („Ofertă" — userul, 2026-10-22)
+export const PLATI = [['oferta', 'Ofertă'], ['proforma', 'Factură proformă'], ['proforma_amanunt', 'Factură proformă cu amănuntul'],
                       ['fiscala', 'Factură fiscală'], ['bon', 'Bon fiscal'], ['avans', 'Factură de avans']];
 export const plataText = id => PLATI.find(p => p[0] === id)?.[1] ?? null;
+// Numărul scris de mână (câmpul ofertaNr, în DB oferta_nr) e al documentului din NeoManager —
+// eticheta lui urmează metoda de plată (userul, 2026-10-22); fără metodă aleasă rămâne „Număr ofertă".
+// [eticheta, „numărul …" din mesajul de câmp lipsă]
+const DOCUMENT = { oferta: ['ofertă', 'ofertei'], proforma: ['proformă', 'proformei'], proforma_amanunt: ['proformă', 'proformei'],
+                   fiscala: ['factură', 'facturii'], bon: ['bon', 'bonului'], avans: ['factură de avans', 'facturii de avans'] };
+const document_ = plata => DOCUMENT[plata] ?? DOCUMENT.oferta;
+export const numarText = plata => `Număr ${document_(plata)[0]}`;
 
 // Ofertele de rame salvate înainte le aveau în state.rame — se citesc şi de acolo.
 export const detaliiComanda = state => ({
@@ -20,6 +27,11 @@ export const detaliiComanda = state => ({
   agent:     state.comanda?.agent     ?? state.rame?.agent     ?? null,
   plata:     state.comanda?.plata     ?? state.rame?.plata     ?? null,
 });
+
+// Fişa unei comenzi deschise din manager: livrarea / plata / agentul din COMANDĂ (la acceptare plata se poate
+// alege din nou), peste cele din configuraţia salvată; plăţile vechi (op, factura) nu le înlocuiesc.
+export const detaliiDinManager = c => Object.fromEntries(['livrare', 'plata', 'agent']
+  .filter(k => c?.[k] && (k !== 'plata' || plataText(c.plata))).map(k => [k, c[k]]));
 
 // Transportul se facturează la TOATE gamele când marfa nu e ridicată personal
 // (userul, 2026-09-25; înainte doar la rame, ca în formularul Excel).
@@ -37,8 +49,19 @@ export function campuriLipsa({ laAcceptare = false } = {}) {
   const v = id => /** @type {HTMLInputElement | null} */ (document.getElementById(id))?.value?.trim();
   return [['clientNume', 'numele clientului'],
           ...(laAcceptare ? [['clientTelefon', 'telefonul'], ['clientAdresa', 'adresa']] : []),
-          ['comandaLivrare', 'modul de livrare'], ['comandaAgent', 'agentul'], ['ofertaNr', 'numărul ofertei']]
+          ['comandaLivrare', 'modul de livrare'], ['comandaAgent', 'agentul'],
+          ['ofertaNr', `numărul ${document_(v('comandaPlata'))[1]}`]]
     .filter(([id]) => !v(id)).map(([id, text]) => ({ id, text }));
+}
+// Eticheta + placeholderul câmpului de număr după metoda de plată aleasă. Doar în browser; se cheamă
+// la schimbarea metodei şi după ce pagina pune valorile (ofertă / comandă deschisă).
+export function etichetaNumar() {
+  const el = /** @type {HTMLInputElement | null} */ (document.getElementById('ofertaNr'));
+  if (!el) return;
+  const t = numarText(/** @type {HTMLSelectElement | null} */ (document.getElementById('comandaPlata'))?.value);
+  el.placeholder = t.replace(/^Număr/, 'Nr.');
+  const span = el.closest('label')?.querySelector('span');
+  if (span) span.textContent = t;
 }
 // câmpul pe care-l vede omul (la meniul căutabil — caseta lui, <select>-ul e ascuns)
 const vizibil = el => el?.hidden ? el.nextElementSibling?.querySelector('input') : el;

@@ -121,6 +121,7 @@
     panou:   '<rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M9.5 4.5v15"/>',
     soare:   '<circle cx="12" cy="12" r="3.8"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/>',
     luna:    '<path d="M19.5 14.5A7.5 7.5 0 0 1 9.5 4.5a7.5 7.5 0 1 0 10 10z"/>',
+    activitate: '<path d="M3 12h4l2.5-6.5 5 13 2.5-6.5H21"/>',
     // gamele configuratorului (game.json) — butoanele „Ofertă nouă" din pagina principală
     suspendata: '<path d="M3 4.5h18"/><rect x="5" y="7" width="6.5" height="13" rx=".6"/><rect x="12.5" y="7" width="6.5" height="13" rx=".6"/><path d="M7 4.5V7M17 4.5V7"/>',
     confort: '<rect x="4" y="4" width="9" height="16" rx=".6"/><path d="M13 4h6.4a.6.6 0 0 1 .6.6v14.8a.6.6 0 0 1-.6.6H13"/><path d="M10.5 11.5v1.5M15.5 11.5v1.5"/>',
@@ -313,6 +314,7 @@
       ${link('/tichete', 'tichete', 'Tichete', 'id="linkTichete"', '<span class="insigna rosie" id="nrTichete"></span>')}
       <div class="grup" id="grupAdmin" hidden><span class="txt">Administrare</span></div>
       ${link('/clienti', 'clienti', 'Clienţi', 'id="linkClienti" hidden', '<span class="insigna cald" id="nrClienti" title="trimise de agenţi, de aprobat"></span>')}
+      ${link('/activitate', 'activitate', 'Activitate', 'id="linkActivitate" hidden')}
       ${link('/admin', 'admin', 'Tablou admin', 'id="linkAdmin" hidden')}
       <div class="spatiu"></div>
       <div class="meniu-live"><span class="live" title="Actualizare live: pagina se schimbă singură când lucrează altcineva"><span class="da">Conectat</span><span class="nu">Reconectare…</span></span>${butonTema}</div>
@@ -453,6 +455,7 @@
         localStorage.setItem('modTestVazut', mod);
       } catch {}
       radacina.querySelector('#linkAdmin').hidden = eu.rol !== 'admin';     // conturile — doar admin
+      radacina.querySelector('#linkActivitate')?.toggleAttribute('hidden', eu.rol === 'birou');   // jurnalul tuturor — admin + conducere
       radacina.querySelector('#linkClienti').hidden = eu.rol === 'birou';   // clienţii — nu şi biroul (userul, 2026-10-02)
       // de la distanţă se deschid doar tabloul de admin şi tichetele (releu.js le blochează pe restul) → restul meniului dispare
       if (laDistanta) radacina.querySelectorAll('#ofertaNoua, .grup:not(#grupAdmin), a[href]:not(.marca)').forEach(el => {
@@ -568,4 +571,26 @@
 
   const el = document.getElementById('bara');
   if (el) window.puneBara(el);
+})();
+
+// ── Jurnalul de activitate: ce doar SE VEDE (userul, 2026-10-21) — server/activitate.js ──
+// Schimbările le scrie serverul singur; paginile trimit aici „a deschis / a văzut / a copiat".
+// window.noteazaVazut(operatie, comandaId?, detalii?) — fără să aştepte, fără erori pe ecran.
+(() => {
+  window.noteazaVazut = (operatie, comanda_id = null, detalii = null) => {
+    try {
+      fetch('/api/activitate', { method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ operatie, comanda_id, detalii }) }).catch(() => {});
+    } catch { /* nimic */ }
+  };
+  if (window.top !== window) return;   // configuratorul din cadrul unei fişe nu e o pagină deschisă de om
+  const cale = location.pathname.replace(/\/$/, '') || '/';
+  const PAGINI = { '/': 'Comenzi', '/comenzi': 'Comenzi', '/sticla': 'Comandă sticlă', '/livrari': 'Organizează livrări',
+    '/taskuri': 'Taskuri', '/tichete': 'Tichete', '/cereri': 'Cereri', '/clienti': 'Clienţi', '/admin': 'Tablou admin',
+    '/activitate': 'Activitate', '/configurator': 'Configurator', '/configurator/index.html': 'Configurator',
+    '/configurator/amanunt.html': 'Ofertă cu amănuntul' };
+  const p = new URLSearchParams(location.search);
+  const id = p.get('oferta') || p.get('adauga');
+  if (id) return window.noteazaVazut(p.get('oferta') ? 'A deschis oferta în configurator' : 'A deschis comanda ca să adauge produse', +id);
+  window.noteazaVazut(`A deschis pagina ${PAGINI[cale] ?? document.title}`, null, p.get('gama') ? `gama: ${p.get('gama')}` : null);
 })();

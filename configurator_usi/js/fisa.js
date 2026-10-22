@@ -16,7 +16,8 @@ function asamblareRame(rame) {
     .filter(rd => +rd.lungime > 0 && +rd.buc > 0).map(rd => rd.model ?? rame.maner.model).filter(Boolean));
   return modele.size ? `${text} CU MANER ${[...modele].map(m => MODELE_MANER.find(([v]) => v === m)?.[1] ?? m).join(' + ')}` : text;
 }
-import { detaliiComanda, plataText } from './lib/comun/comanda.js';
+import { detaliiComanda, plataText, numarText } from './lib/comun/comanda.js';
+import { stareOferta } from './manager.js';
 import JsBarcode from 'jsbarcode';
 import { arataPrevizualizare } from './previzualizare.js';
 
@@ -526,6 +527,11 @@ export function deschideFisa(client, oferta = null, salvate = null, { vezi = fal
   const factura = salvate?.factura ?? currentBilling();
   // nr. ofertei (scris de mână) — rând în tabelul cu livrarea / plata / agentul, la toate gamele (userul, 2026-10-08)
   const nrOferta = document.getElementById('ofertaNr')?.value.trim() || oferta?.numar || '—';
+  // …cu eticheta documentului după metoda de plată: Număr ofertă / proformă / factură / bon (userul, 2026-10-22)
+  const etNumar = numarText(detaliiComanda(state).plata);
+  // cine a configurat — atelierul ştie pe cine întreabă (userul, 2026-10-22): la fişa unei comenzi cel care a
+  // făcut oferta (din manager), altfel cel conectat acum
+  const configurat = (oferta && 'configurat' in oferta ? oferta.configurat : stareOferta().utilizator?.nume) || '—';
   // observaţiile produsului (pasul „Observaţii" din configurator) — pe faţă, sub cap, la toate gamele
   const obsText = String(state.observatii ?? '').trim();
   // cale absolută — fereastra nouă porneşte de la about:blank, o cale
@@ -566,7 +572,8 @@ export function deschideFisa(client, oferta = null, salvate = null, { vezi = fal
     ['Mod de livrare',    detaliiComanda(state).livrare ?? '—'],
     ['Metodă de plată',   plataText(detaliiComanda(state).plata) ?? '—'],
     ['Agent',             detaliiComanda(state).agent ?? '—'],
-    ['Număr ofertă',      nrOferta],
+    [etNumar,             nrOferta],
+    ['Configurat de',     configurat],
   ], 'cote') : tabelMic([
     ['H gol',                `${spec.opening.h} mm`],
     ['L gol',                `${spec.opening.w} mm`],
@@ -591,7 +598,7 @@ export function deschideFisa(client, oferta = null, salvate = null, { vezi = fal
   // detaliile comenzii (toate gamele) — livrare / metodă de plată / agent
   const det = detaliiComanda(state);
   const detalii = tabelMic([['Mod de livrare', det.livrare ?? '—'], ['Metodă de plată', plataText(det.plata) ?? '—'], ['Agent', det.agent ?? '—'],
-    ['Număr ofertă', nrOferta]]);
+    [etNumar, nrOferta], ['Configurat de', configurat]]);
   const montaj = util ? tabelMic([
     ['Asamblăm noi',        `${nrNoi} uşi`],
     ['Asamblează clientul', `${nrClient} uşi`],
@@ -632,10 +639,13 @@ export function deschideFisa(client, oferta = null, salvate = null, { vezi = fal
 
   // Rame — 3 rubrici de observaţii scrise de mână (2026-09-21); pe FAŢĂ, jos, umplu
   // restul foii (userul, 2026-10-02 — înainte erau pe verso)
+  // „Detalii facturare" porneşte cu metoda de plată şi numărul documentului (userul, 2026-10-22)
+  const plataRame = plataText(detaliiComanda(state).plata);
+  const facturareRame = [plataRame, nrOferta !== '—' && `${etNumar.replace(/^Număr/, 'nr.')} ${nrOferta}`].filter(Boolean).join(' · ');
   const observatiiRame = `
   <div class="obs-rame">
-    ${['Detalii geam/oglinda', 'Detalii facturare', 'Detalii livrare'].map(c =>
-      `<div class="obs-camp"><div class="obs-et">${c}</div></div>`).join('')}
+    ${[['Detalii geam/oglinda'], ['Detalii facturare', facturareRame], ['Detalii livrare']].map(([c, text]) =>
+      `<div class="obs-camp"><div class="obs-et">${c}</div>${text ? `<div class="obs-scris">${esc(text)}</div>` : ''}</div>`).join('')}
   </div>`;
 
   const html = `<!DOCTYPE html>
@@ -821,6 +831,7 @@ export function deschideFisa(client, oferta = null, salvate = null, { vezi = fal
   .fata.intinde .jos:has(+ .obs-rame) { flex: 0 0 auto; }
   .obs-camp { flex: 1; min-height: 12mm; border: 1.5px solid #000; border-radius: 2mm; padding: 1.5mm 2.5mm; }
   .obs-et { font-size: 14px; font-weight: 700; letter-spacing: .05em; }
+  .obs-scris { font-size: 13px; margin-top: 1mm; }
   .obs-text { border: 1.5px solid #000; border-radius: 2mm; padding: 2mm 3mm; margin: 0 0 3mm;
               font-size: 13px; line-height: 1.35; white-space: pre-wrap; overflow-wrap: break-word; }
 
@@ -878,7 +889,7 @@ export function deschideFisa(client, oferta = null, salvate = null, { vezi = fal
 
   ${rame?.schita && spec.m?.grup === '820' ? `
   <div class="pagina3">
-    <div class="antet-mic"><strong>Schiţă de găurire — ${esc(modelScurt)}</strong> · ${esc(client || '—')} · ofertă ${esc(nrOferta)}</div>
+    <div class="antet-mic"><strong>Schiţă de găurire — ${esc(modelScurt)}</strong> · ${esc(client || '—')} · ${esc(etNumar.replace(/^Număr /, ''))} ${esc(nrOferta)}</div>
     <img src="${rame.schita}" alt="Schiţa de găurire">
   </div>` : ''}
 

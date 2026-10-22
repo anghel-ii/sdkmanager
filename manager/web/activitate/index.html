@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Activitate</title>
+<link rel="stylesheet" href="/comun.css">
+<link rel="stylesheet" href="/nou.css">
+<script src="/dialog.js"></script>
+<script src="/data.js"></script>
+<style>
+  /* Jurnalul de activitate al tuturor (userul, 2026-10-21) — admin + conducere. Sus filtrele (un rând),
+     graficul operaţiilor pe zi (sau pe om, când perioada e o zi), oamenii cu câte au făcut, apoi lista. */
+  #continut { max-width: 1400px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; margin-bottom: 16px; }
+  .filtre { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; }
+  .filtre .segmented { width: auto; }
+  .filtre .segmented button { padding: 6px 11px; }
+  .filtre select, .filtre input[type=search], .filtre input[type=date] { width: auto; padding: 7px 10px; font-size: 13.5px; }
+  .filtre select { max-width: 210px; }
+  .filtre input[type=search] { flex: 1 1 200px; min-width: 180px; }
+  .interval { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-dim); }
+  .interval[hidden] { display: none; }
+
+  .graf-cap { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+  .graf-cap h2 { font-size: 15px; margin: 0; }
+  .graf-cap .total { font-size: 13px; color: var(--text-dim); }
+  .grafic { position: relative; }
+  .grafic svg { display: block; width: 100%; height: 190px; overflow: visible; }
+  .grafic .bara { fill: var(--accent); }
+  .grafic .tinta { fill: transparent; cursor: default; }
+  .grafic .tinta:hover + .bara, .grafic g:hover .bara { fill: var(--accent-dim); }
+  .grafic .ax { stroke: var(--line); }
+  .grafic text { fill: var(--text-dim); font-size: 11px; font-family: inherit; }
+  .grafic text.val { fill: var(--text); font-weight: 600; }
+  .bule { position: absolute; pointer-events: none; z-index: 5; min-width: 150px; padding: 8px 10px; font-size: 12.5px;
+          background: var(--panel-2); border: 1px solid var(--line-2); border-radius: 8px; box-shadow: 0 6px 18px rgba(0, 0, 0, .3); }
+  .bule[hidden] { display: none; }
+  .bule b { display: block; margin-bottom: 4px; }
+  .bule div { display: flex; justify-content: space-between; gap: 14px; color: var(--text-dim); }
+  .bule div span:last-child { color: var(--text); font-variant-numeric: tabular-nums; }
+
+  .oameni { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+  .oameni button { display: inline-flex; align-items: center; gap: 8px; padding: 5px 10px; font-size: 13px; border-radius: 999px; }
+  .oameni button b { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .oameni button.activ { border-color: var(--accent); background: rgba(77, 163, 255, .13); }
+
+  table.jurnal { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  table.jurnal th { text-align: left; padding: 6px 8px; font-size: 12px; font-weight: 600; color: var(--text-dim); border-bottom: 1px solid var(--line); }
+  table.jurnal td { padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  table.jurnal td.cand { white-space: nowrap; color: var(--text-dim); font-variant-numeric: tabular-nums; width: 135px; }
+  table.jurnal td.cine { white-space: nowrap; width: 150px; }
+  table.jurnal td.comanda { width: 220px; }
+  table.jurnal td.comanda a { color: var(--accent); text-decoration: none; }
+  table.jurnal td.comanda a:hover { text-decoration: underline; }
+  table.jurnal td.comanda small { display: block; color: var(--text-dim); }
+  table.jurnal td.detalii { color: var(--text-dim); overflow-wrap: anywhere; }
+  table.jurnal tr.vazut td.ce { color: var(--text-dim); }
+  table.jurnal tr.cont td.ce b { color: var(--verde-text); }
+  table.jurnal tr.rau td.ce b { color: var(--rosu-text); }
+  .jos { display: flex; align-items: center; gap: 12px; margin-top: 12px; color: var(--text-dim); font-size: 13px; }
+  .gol { text-align: center; padding: 30px; color: var(--text-dim); }
+</style>
+</head>
+<body class="ui-nou">
+
+<div id="bara"></div>
+<script src="/bara.js"></script>
+
+<div id="continut">
+  <header class="pagina-cap">
+    <h1>Activitate</h1>
+    <p>Tot ce face fiecare om în aplicaţie: cine, ce, când şi la ce comandă.</p>
+  </header>
+
+  <div class="card filtre" role="search">
+    <div class="segmented mini" id="perioada" aria-label="Perioada">
+      <button data-p="azi" class="active">Azi</button><button data-p="ieri">Ieri</button>
+      <button data-p="7">7 zile</button><button data-p="30">30 zile</button>
+      <button data-p="luna">Luna asta</button><button data-p="tot">Tot</button><button data-p="interval">Interval</button>
+    </div>
+    <span class="interval" id="interval" hidden>
+      <input type="date" id="de" aria-label="De la"> — <input type="date" id="pana" aria-label="Până la">
+    </span>
+    <select id="om" aria-label="Utilizator"><option value="">Toţi oamenii</option></select>
+    <select id="operatie" aria-label="Operaţia"><option value="">Toate operaţiile</option></select>
+    <input type="search" id="cauta" placeholder="Caută: nr. ofertă, client, operaţie, detalii…" autocomplete="off">
+    <div class="segmented mini" id="fel" aria-label="Ce se arată">
+      <button data-tot="0" class="active">Doar schimbări</button><button data-tot="1">Tot</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="graf-cap"><h2 id="titluGrafic">Operaţii pe zi</h2><span class="total" id="total"></span></div>
+    <div class="grafic" id="grafic"></div>
+    <div class="oameni" id="oameni"></div>
+  </div>
+
+  <div class="card">
+    <div id="lista"></div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+async function api(cale) {
+  const r = await fetch(cale, { headers: { 'Content-Type': 'application/json' } });
+  if (r.status === 401) { location.href = '/login?redirect=' + encodeURIComponent(location.pathname); return null; }
+  return r;
+}
+
+// ── Starea filtrelor (în adresă nu; la reîncărcare porneşte de la „Azi") ──
+const f = { perioada: 'azi', de: '', pana: '', om: '', operatie: '', cauta: '', tot: false };
+let pagina = 0, randuri = [];
+
+// limitele perioadei, în ora calculatorului (= a României) → UTC, ca în baza de date ('AAAA-LL-ZZ HH:MM:SS')
+const sql = d => d.toISOString().slice(0, 19).replace('T', ' ');
+const miezulNoptii = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+const plusZile = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+function limite() {
+  const azi = miezulNoptii(new Date());
+  switch (f.perioada) {
+    case 'azi':  return [azi, plusZile(azi, 1)];
+    case 'ieri': return [plusZile(azi, -1), azi];
+    case '7':    return [plusZile(azi, -6), plusZile(azi, 1)];
+    case '30':   return [plusZile(azi, -29), plusZile(azi, 1)];
+    case 'luna': return [new Date(azi.getFullYear(), azi.getMonth(), 1), plusZile(azi, 1)];
+    case 'interval': {
+      const de = f.de ? new Date(f.de + 'T00:00') : null, pana = f.pana ? plusZile(new Date(f.pana + 'T00:00'), 1) : null;
+      return [de, pana];
+    }
+    default: return [null, null];
+  }
+}
+
+async function incarca(maiMulte = false) {
+  pagina = maiMulte ? pagina + 1 : 0;
+  const [de, pana] = limite();
+  const q = new URLSearchParams({ pagina, ...(f.tot && { tot: 1 }), ...(de && { de: sql(de) }), ...(pana && { pana: sql(pana) }),
+    ...(f.om && { utilizator: f.om }), ...(f.operatie && { operatie: f.operatie }), ...(f.cauta.trim() && { cauta: f.cauta.trim() }) });
+  const r = await api('/api/activitate?' + q);
+  if (!r) return;
+  if (r.status === 403) { $('lista').innerHTML = '<div class="gol">Jurnalul tuturor îl văd doar administratorul şi conducerea.</div>'; return; }
+  const d = await r.json();
+  randuri = maiMulte ? randuri.concat(d.randuri) : d.randuri;
+  if (!maiMulte) { umpleFiltre(d); grafic(d.peZi, de, pana); oameni(d.peZi); $('total').textContent = `${d.total} ${d.total === 1 ? 'operaţie' : 'operaţii'}`; }
+  lista(d.total);
+}
+
+function umpleFiltre(d) {
+  const om = $('om'), op = $('operatie');
+  if (om.options.length === 1) om.insertAdjacentHTML('beforeend', d.oameni.map(o => `<option value="${o.id}">${esc(o.nume)}</option>`).join(''));
+  if (op.options.length === 1) op.insertAdjacentHTML('beforeend', d.operatii.map(o => `<option value="${esc(o.operatie)}">${esc(o.operatie)}</option>`).join(''));
+}
+
+// ── Graficul: o bară pe zi (perioadă de mai multe zile) sau pe om (o singură zi). Trecând peste o bară:
+//    ziua, totalul şi câte a făcut fiecare om.
+const ZI = new Intl.DateTimeFormat('ro-RO', { day: 'numeric', month: 'short' });
+const ZI_LUNGA = new Intl.DateTimeFormat('ro-RO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+const cheieZi = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+function grafic(peZi, de, pana) {
+  const zile = new Map();
+  for (const r of peZi) { const z = zile.get(r.zi) ?? new Map(); z.set(r.cine, (z.get(r.cine) ?? 0) + r.n); zile.set(r.zi, z); }
+  // toate zilele perioadei (şi cele fără nimic), nu doar cele cu operaţii
+  let chei = [...zile.keys()].sort();
+  const start = de ?? (chei[0] ? new Date(chei[0] + 'T00:00') : null), stop = pana ?? (chei.at(-1) ? plusZile(new Date(chei.at(-1) + 'T00:00'), 1) : null);
+  if (start && stop && (stop - start) / 864e5 <= 400) { chei = []; for (let d = start; d < stop; d = plusZile(d, 1)) chei.push(cheieZi(d)); }
+  const oZi = chei.length <= 1;
+  $('titluGrafic').textContent = oZi ? 'Operaţii pe om' : 'Operaţii pe zi';
+  // pe o zi: barele sunt oamenii
+  const bare = oZi
+    ? [...(zile.get(chei[0]) ?? new Map())].sort((a, b) => b[1] - a[1]).map(([cine, n]) => ({ et: cine, n, defalcare: [[cine, n]], titlu: cine }))
+    : chei.map(k => { const z = zile.get(k) ?? new Map(); return { et: ZI.format(new Date(k + 'T00:00')), n: [...z.values()].reduce((s, x) => s + x, 0),
+        defalcare: [...z].sort((a, b) => b[1] - a[1]), titlu: ZI_LUNGA.format(new Date(k + 'T00:00')) }; });
+  if (!bare.length || !bare.some(b => b.n)) { $('grafic').innerHTML = '<div class="gol">Nicio operaţie în perioada asta.</div>'; return; }
+
+  const L = $('grafic').clientWidth || 1000, H = 190, sus = 16, jos = 22, st = 4;
+  const max = Math.max(...bare.map(b => b.n)), latime = (L - st) / bare.length, gros = Math.max(3, Math.min(56, latime - 2));
+  const y = n => sus + (H - sus - jos) * (1 - n / max);
+  const pas = Math.ceil(bare.length / Math.floor(L / 64));   // câte etichete încap dedesubt
+  $('grafic').innerHTML = `<svg viewBox="0 0 ${L} ${H}" role="img" aria-label="${esc($('titluGrafic').textContent)}">
+    <line class="ax" x1="0" x2="${L}" y1="${H - jos}" y2="${H - jos}"/>
+    ${bare.map((b, i) => {
+      const x = st + i * latime + (latime - gros) / 2, h = Math.max(b.n ? 2 : 0, H - jos - y(b.n));
+      return `<g data-i="${i}"><rect class="tinta" x="${st + i * latime}" y="0" width="${latime}" height="${H}"/>
+        <path class="bara" d="${baraRotunjita(x, H - jos - h, gros, h)}"/>
+        ${b.n === max || bare.length <= 14 ? `<text class="val" x="${x + gros / 2}" y="${H - jos - h - 4}" text-anchor="middle">${b.n || ''}</text>` : ''}
+        ${i % pas === 0 ? `<text x="${x + gros / 2}" y="${H - 6}" text-anchor="middle">${esc(b.et.length > 14 ? b.et.slice(0, 13) + '…' : b.et)}</text>` : ''}</g>`;
+    }).join('')}</svg><div class="bule" id="bule" hidden></div>`;
+  const bule = $('bule');
+  $('grafic').querySelectorAll('g[data-i]').forEach(g => {
+    g.addEventListener('mousemove', e => {
+      const b = bare[+g.dataset.i], box = $('grafic').getBoundingClientRect();
+      bule.innerHTML = `<b>${esc(b.titlu)}</b>${oZi ? '' : `<div><span>Total</span><span>${b.n}</span></div>`}
+        ${b.defalcare.map(([cine, n]) => `<div><span>${esc(cine)}</span><span>${n}</span></div>`).join('')}`;
+      bule.hidden = false;
+      const x = e.clientX - box.left + 14;
+      bule.style.left = Math.min(x, box.width - bule.offsetWidth) + 'px';
+      bule.style.top = Math.max(0, e.clientY - box.top - bule.offsetHeight - 10) + 'px';
+    });
+    g.addEventListener('mouseleave', () => { bule.hidden = true; });
+  });
+}
+
+// bară cu colţurile de sus rotunjite (4 px), lipită de axă jos
+function baraRotunjita(x, sus, gros, h) {
+  if (!h) return '';
+  const r = Math.min(4, gros / 2, h), jos = sus + h;
+  return `M${x},${jos} V${sus + r} Q${x},${sus} ${x + r},${sus} H${x + gros - r} Q${x + gros},${sus} ${x + gros},${sus + r} V${jos} Z`;
+}
+
+// cine a făcut cât în perioada aleasă — un clic filtrează pe omul ăla
+function oameni(peZi) {
+  const t = new Map();
+  for (const r of peZi) t.set(r.cine, (t.get(r.cine) ?? 0) + r.n);
+  const idDupaNume = new Map([...$('om').options].map(o => [o.textContent, o.value]));
+  $('oameni').innerHTML = [...t].sort((a, b) => b[1] - a[1]).map(([cine, n]) => {
+    const id = idDupaNume.get(cine) ?? '';
+    return `<button type="button" data-id="${id}"${id && id === f.om ? ' class="activ"' : ''} title="${id ? 'Doar ce a făcut ' + esc(cine) : ''}">${esc(cine)} <b>${n}</b></button>`;
+  }).join('');
+  $('oameni').querySelectorAll('button[data-id]').forEach(b => b.addEventListener('click', () => {
+    if (!b.dataset.id) return;
+    f.om = f.om === b.dataset.id ? '' : b.dataset.id;
+    $('om').value = f.om;
+    incarca();
+  }));
+}
+
+const FEL = { vizualizare: 'vazut', cont: 'cont', schimbare: '' };
+function lista(total) {
+  if (!randuri.length) { $('lista').innerHTML = '<div class="gol">Nimic găsit. Schimbă perioada sau filtrele.</div>'; return; }
+  $('lista').innerHTML = `<table class="jurnal"><thead><tr><th>Data şi ora</th><th>Cine</th><th>Ce a făcut</th><th>Comanda</th><th>Detalii</th></tr></thead>
+    <tbody>${randuri.map(a => `<tr class="${/^Intrare greşită/.test(a.operatie) ? 'rau' : FEL[a.fel] ?? ''}">
+      <td class="cand">${dataOra(a.la)}</td>
+      <td class="cine">${esc(a.utilizator_nume ?? '—')}</td>
+      <td class="ce"><b>${esc(a.operatie)}</b>${a.test ? ' <span class="stare-pastila demo" title="Făcută în modul test — nu e pe bune">TEST</span>' : ''}</td>
+      <td class="comanda">${a.comanda_id ? `<a href="/#comanda/${a.comanda_id}">${esc(a.comanda_nr ?? '#' + a.comanda_id)}</a><small>${esc(a.client_nume ?? '')}</small>` : ''}</td>
+      <td class="detalii">${esc(a.detalii ?? '')}</td></tr>`).join('')}</tbody></table>
+    <div class="jos"><span>${randuri.length} din ${total}</span>${randuri.length < total ? '<button type="button" id="maiMulte">Mai multe</button>' : ''}</div>`;
+  $('maiMulte')?.addEventListener('click', () => incarca(true));
+}
+
+// ── Filtrele ──
+document.querySelectorAll('#perioada button').forEach(b => b.addEventListener('click', () => {
+  f.perioada = b.dataset.p;
+  document.querySelectorAll('#perioada button').forEach(x => x.classList.toggle('active', x === b));
+  $('interval').hidden = f.perioada !== 'interval';
+  if (f.perioada === 'interval' && !f.de) { const a = miezulNoptii(new Date()); $('de').value = f.de = cheieZi(plusZile(a, -6)); $('pana').value = f.pana = cheieZi(a); }
+  incarca();
+}));
+$('de').addEventListener('change', () => { f.de = $('de').value; incarca(); });
+$('pana').addEventListener('change', () => { f.pana = $('pana').value; incarca(); });
+$('om').addEventListener('change', () => { f.om = $('om').value; incarca(); });
+$('operatie').addEventListener('change', () => { f.operatie = $('operatie').value; incarca(); });
+let tCauta = null;
+$('cauta').addEventListener('input', () => { clearTimeout(tCauta); tCauta = setTimeout(() => { f.cauta = $('cauta').value; incarca(); }, 300); });
+document.querySelectorAll('#fel button').forEach(b => b.addEventListener('click', () => {
+  f.tot = b.dataset.tot === '1';
+  document.querySelectorAll('#fel button').forEach(x => x.classList.toggle('active', x === b));
+  incarca();
+}));
+let tLatime = null;
+addEventListener('resize', () => { clearTimeout(tLatime); tLatime = setTimeout(() => incarca(), 250); });
+
+incarca();
+</script>
+</body>
+</html>

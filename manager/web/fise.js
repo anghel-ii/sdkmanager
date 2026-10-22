@@ -59,6 +59,7 @@
     f.removeAttribute('aria-hidden');
     f.style.cssText = 'position:fixed; inset:0; width:100%; height:100%; border:0; z-index:3000; background:transparent';
     f.focus();
+    window.noteazaVazut?.('A văzut fişa', id, poz > 0 ? `produsul ${poz + 1}` : null);
     await mesaj(['fisa-inchide']);
     f.remove();
   }
@@ -83,8 +84,10 @@
       }
     } finally { ocupat(buton, false); }
     const ce = n > 1 ? `toate cele ${n} fişe` : 'fişa';
-    return intreabaObligatoriu(`Ai printat ${ce}?\n\nDacă da, rămâne notat la comandă că ${n > 1 ? 'au fost printate' : 'a fost printată'} acum, de tine.`,
+    const da = await intreabaObligatoriu(`Ai printat ${ce}?\n\nDacă da, rămâne notat la comandă că ${n > 1 ? 'au fost printate' : 'a fost printată'} acum, de tine.`,
       'Da, am printat', 'Nu, n-am printat');
+    if (!da) window.noteazaVazut?.('Print neconfirmat — a răspuns „Nu, n-am printat"', id);   // „Da" îl notează serverul (Fişa printată)
+    return da;
   }
 
   // Notează la comandă printarea fişelor 0..n-1 (rândul „Fişa printată")

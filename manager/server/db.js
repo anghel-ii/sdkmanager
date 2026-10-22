@@ -179,7 +179,7 @@ function sincronizeaza() {
       c.sesiune.close();
       c.sesiune = sursa(nume).createSession();
       if (schimbari.length) c.brut.applyChangeset(schimbari, {
-        filter: tabel => tabel !== 'sesiune',
+        filter: tabel => tabel !== 'sesiune' && tabel !== 'activitate',   // jurnalul se citeşte mereu din baza reală
         onConflict: tip => tip === SQL.SQLITE_CHANGESET_DATA || tip === SQL.SQLITE_CHANGESET_CONFLICT
           ? SQL.SQLITE_CHANGESET_REPLACE : SQL.SQLITE_CHANGESET_OMIT,
       });
@@ -463,6 +463,26 @@ const MIGRATII = [
   d => d.exec('ALTER TABLE comanda ADD COLUMN livrare_modificata_la TEXT'),
   // v26 → v27 (2026-10-19): observaţiile de livrare, scrise la Organizează livrări — pe borderou (nu cele din ofertă)
   d => d.exec('ALTER TABLE comanda ADD COLUMN observatii_livrare TEXT'),
+  // v27 → v28 (2026-10-21): jurnalul de activitate — tot ce face fiecare om în aplicaţie (server/activitate.js).
+  // Stă mereu în baza REALĂ (şi ce se face în modul test, cu test = 1); nu se copiază în copiile de test.
+  // comanda_nr / client_nume / utilizator_nume — cum erau atunci (comanda se poate şterge / redenumi).
+  d => d.exec(`
+    CREATE TABLE activitate (
+      id              INTEGER PRIMARY KEY,
+      la              TEXT NOT NULL,
+      utilizator_id   INTEGER,
+      utilizator_nume TEXT,
+      fel             TEXT NOT NULL,                  -- 'schimbare' | 'cont' | 'vizualizare'
+      operatie        TEXT NOT NULL,
+      detalii         TEXT,
+      comanda_id      INTEGER,
+      comanda_nr      TEXT,
+      client_nume     TEXT,
+      test            INTEGER NOT NULL DEFAULT 0
+    );
+    CREATE INDEX activitate_la ON activitate (la);
+    CREATE INDEX activitate_comanda ON activitate (comanda_id, la);
+    CREATE INDEX activitate_utilizator ON activitate (utilizator_id, la);`),
 ];
 
 // Exportată pt. test.
