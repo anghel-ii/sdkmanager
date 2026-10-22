@@ -74,11 +74,16 @@
     return null;
   }
 
-  // Toate fişele comenzii (una pe produs), apoi O întrebare. true doar la „Da, am printat".
-  async function printeazaToate(id, n = 1, buton = null) {
+  // `fise` = câte fişe (0..n-1) sau lista produselor (poz) de printat — ex. doar cele adăugate după
+  // primul print (userul, 2026-10-22)
+  const lista = fise => (Array.isArray(fise) ? fise : Array.from({ length: fise }, (_, k) => k));
+
+  // Fişele comenzii (una pe produs), apoi O întrebare. true doar la „Da, am printat".
+  async function printeazaToate(id, fise = 1, buton = null) {
+    const poz = lista(fise), n = poz.length;
     ocupat(buton, true);
     try {
-      for (let k = 0; k < n; k++) {
+      for (const k of poz) {
         const eroare = await printeaza(id, k);
         if (eroare) { await spune(eroare); return false; }
       }
@@ -90,8 +95,8 @@
     return da;
   }
 
-  // Notează la comandă printarea fişelor 0..n-1 (rândul „Fişa printată")
-  const noteaza = (id, n = 1) => Promise.all(Array.from({ length: n }, (_, poz) =>
+  // Notează la comandă printarea fişelor (0..n-1 sau lista lor) — rândul „Fişa printată"
+  const noteaza = (id, fise = 1) => Promise.all(lista(fise).map(poz =>
     fetch(`/api/comenzi/${id}/fisa`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ poz }) })));
 
   window.Fise = { vezi, printeaza, printeazaToate, noteaza };

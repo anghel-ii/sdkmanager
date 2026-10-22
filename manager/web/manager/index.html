@@ -340,14 +340,40 @@ async function printeazaDinNou(id, n, buton) {
   }
   if (await Fise.printeazaToate(id, n, buton)) await Fise.noteaza(id, n);
 }
+// Fişele neprintate încă (poz) — ex. produsele adăugate la comandă după primul print (userul, 2026-10-22):
+// fiecare produs are fişa lui şi printarea ei se notează separat (fisa_printare.poz).
+const neprintate = (printari, n) => Array.from({ length: n }, (_, k) => k).filter(k => !printari.some(f => (f.poz ?? 0) === k));
+const numeFisa = (fise, k) => `Fişa ${fise[k] ?? k + 1}`;
+// Butoanele de print ale unei comenzi în lucru: întâi fişele neprintate (fără întrebare), apoi „Printează din nou" (toate)
+function butoanePrint(c, printari, n, fise) {
+  if (c.tip !== 'comanda' || c.anulat) return '';
+  if (!printari.length) return `<button data-print="toate" title="Printează ${n > 1 ? 'toate fişele' : 'fişa'} comenzii">🖶 Printează ${n > 1 ? 'fişele' : 'fişa'}</button>`;
+  const noi = neprintate(printari, n);
+  return (noi.length ? `<button class="primar" data-print="noi" title="Nu s-a printat încă: ${esc(noi.map(k => numeFisa(fise, k)).join(', '))}">🖶 Printează ${
+    noi.length > 1 ? `fişele noi (${noi.length})` : 'fişa nouă'}</button>` : '')
+    + `<button data-print="toate" title="Printează din nou ${n > 1 ? 'toate fişele' : 'fişa'} comenzii">🖶 Printează din nou</button>`;
+}
+// leagă butoanele de mai sus; `dupa` — redesenează (starea fişelor s-a schimbat)
+function leagaPrint(root, id, printari, n, dupa) {
+  root.querySelectorAll('[data-print]').forEach(b => b.addEventListener('click', async () => {
+    if (b.dataset.print === 'toate') await printeazaDinNou(id, n, b);
+    else {
+      const noi = neprintate(printari, n);
+      if (await Fise.printeazaToate(id, noi, b)) await Fise.noteaza(id, noi);
+    }
+    dupa?.();
+  }));
+}
 // „Fişa printată 13/10/2026 14:20 · Ana · încă 2 ori, ultima 15/10/2026 09:10 · Ion" — în cardul
 // comenzii şi în pagina ei; prima printare rămâne, retipăririle se numără (fise = /api/comenzi/:id)
-function fisaPrintata(fise = []) {
+function fisaPrintata(fise = [], n = 1, nume = []) {
   if (!fise.length) return '<div class="fisa-printata">🖶 Fişa nu s-a printat încă</div>';
+  const noi = neprintate(fise, n);
+  const lipsa = noi.length ? `<div class="fisa-printata neprintata">⚠ Nu s-a printat încă: ${esc(noi.map(k => numeFisa(nume, k)).join(', '))}</div>` : '';
   const cine = f => `${dataOra(f.la)}${f.de_nume ? ` · ${esc(f.de_nume)}` : ''}`;
   const alte = fise.length - 1;
   return `<div class="fisa-printata" title="${esc(fise.map(f => `${dataOra(f.la)} ${f.de_nume ?? ''}`).join('\n'))}">🖶 Fişa printată ${cine(fise[0])}${
-    alte ? ` · <b>retipărită ${alte === 1 ? 'o dată' : `de ${alte} ori`}</b>, ultima ${cine(fise.at(-1))}` : ''}</div>`;
+    alte ? ` · <b>retipărită ${alte === 1 ? 'o dată' : `de ${alte} ori`}</b>, ultima ${cine(fise.at(-1))}` : ''}</div>${lipsa}`;
 }
 
 const statusHtml = st => st
@@ -732,7 +758,10 @@ function cardDetalii({ comanda: c, cerere, pozitii, sticlaLinii = [], fise: prin
   const sticla = sticlaLinii.length ? { total: sticlaLinii.length, comandate: comandate.length } : null;
   const activa = !c.anulat && cerere?.stare !== 'deschisa';
   const treceri = butoaneTreceri(c, minuteInapoi(c)).trim() + butonAnulare(c, cerere);
-  const fisa = printari.length
+  const noi = printari.length ? neprintate(printari, pozitii.length) : [];
+  const fisa = noi.length && activa
+    ? pas('acum', 'Fişă', `<span class="urmeaza">neprintată: ${esc(noi.map(k => numeFisa(fise, k)).join(', '))}</span>`)
+    : printari.length
     ? pas('gata', 'Fişă', `printată ${deCine(printari[0].de_nume, printari[0].la)}${printari.length > 1
       ? ` · <span class="dim">retipărită ${printari.length === 2 ? 'o dată' : `de ${printari.length - 1} ori`}</span>` : ''}`)
     : pas(activa ? 'acum' : 'viitor', 'Fişă', '<span class="urmeaza">neprintată</span>');
@@ -748,7 +777,7 @@ function cardDetalii({ comanda: c, cerere, pozitii, sticlaLinii = [], fise: prin
       ${pozitii.length > 1
         ? pozitii.map((p, k) => `<button class="cc-fisa" data-poz="${k}" title="Vezi fişa produsului ${k + 1}: ${esc(p.eticheta)}">👁 Fişa ${esc(fise[k])}</button>`).join('')
         : '<button class="cc-fisa" data-poz="0" title="Vezi fişa (previzualizare)">👁 Vezi fişa</button>'}
-      ${eComanda && !c.anulat ? `<button class="cc-print" title="Printează ${pozitii.length > 1 ? 'toate fişele' : 'fişa'} comenzii">🖶 ${printari.length ? 'Printează din nou' : 'Printează fişa'}</button>` : ''}
+      ${butoanePrint(c, printari, pozitii.length, fise)}
       ${eOferta && !c.anulat ? '<button id="ccModifica">Modifică oferta</button>' : ''}
       ${eComanda && !c.finalizat_la && !c.anulat ? '<button data-adauga-la>+ Adaugă la comandă</button>' : ''}
     </div>
@@ -801,7 +830,7 @@ async function incarcaCard() {
   $('ccDeschide').addEventListener('click', () => { location.hash = '#comanda/' + id; });
   $('ccModifica')?.addEventListener('click', () => { location.href = '/configurator/?oferta=' + id; });
   el.querySelectorAll('button.cc-fisa').forEach(b => b.addEventListener('click', () => veziFisa(id, b, +b.dataset.poz)));
-  el.querySelector('button.cc-print')?.addEventListener('click', e => printeazaDinNou(id, d.pozitii.length, e.currentTarget));
+  leagaPrint(el, id, d.fise ?? [], d.pozitii.length, () => mergiLa(id));
 }
 
 // ↑ ↓ aleg comanda următoare / de dinainte; Enter o deschide; Esc închide cardul
@@ -851,7 +880,7 @@ const butonAnulare = (c, r) => (c.anulat || r?.stare === 'deschisa' ? '' : '<but
 // toate operaţiile (fişa, treceri, facturare, sticlă, livrare, modificări); rămân doar vederea şi
 // taskurile. Serverul le refuză oricum (index.js) — aici doar nu le arătăm degeaba.
 // „Vezi fişa" rămâne — e doar de văzut; printul nu
-const ACTIUNI = '[data-trecere], [data-adauga-la], #modifica, #ccModifica, .cc-print, #printDetaliu, '
+const ACTIUNI = '[data-trecere], [data-adauga-la], #modifica, #ccModifica, [data-print], '
   + '#schimbaLivrare, .factura-form, #anuleazaFactura, .sticla-comanda, .sticla-anuleaza, .sticla-da';
 const opresteActiuni = (el, cerere) => { if (cerere?.stare === 'deschisa') el.querySelectorAll(ACTIUNI).forEach(b => b.remove()); };
 
@@ -1063,13 +1092,13 @@ async function renderDetaliu(id) {
         <div class="mono nr-comanda">${esc(c.oferta_nr || c.numar)}</div>
         <div class="dim mic">${c.anulat ? '<span class="stare-pastila anulata">Anulată</span>' : `<span class="stare-pastila ${eOferta ? 'oferta' : ePlata ? 'plata' : c.finalizat_la ? 'gata' : 'lucru'}">${eOferta ? 'Ofertă'
           : ePlata ? 'Aşteaptă plata' : c.finalizat_la ? 'Comandă finalizată' : 'Comandă în lucru'}</span>`}${c.demo ? DEMO : ''}</div>
-        ${fisaPrintata(printari)}
+        ${fisaPrintata(printari, pozitii.length, fise)}
       </div>
       <div class="spatiu"></div>
       ${pozitii.length > 1
         ? pozitii.map((p, k) => `<button class="fisa-poz" data-poz="${k}" title="Vezi fişa produsului ${k + 1}: ${esc(p.eticheta)}">👁 Fişa ${esc(fise[k])}</button>`).join('')
         : '<button id="fisaDetaliu" title="Vezi fişa (previzualizare)">👁 Vezi fişa</button>'}
-      ${eComanda && !c.anulat ? `<button id="printDetaliu" title="Printează ${pozitii.length > 1 ? 'toate fişele' : 'fişa'} comenzii">🖶 ${printari.length ? 'Printează din nou' : 'Printează fişa'}</button>` : ''}
+      ${butoanePrint(c, printari, pozitii.length, fise)}
       ${eOferta && !c.anulat ? '<button id="modifica">Modifică oferta</button>' : ''}
       ${eComanda && !c.finalizat_la && !c.anulat ? '<button class="primar" data-adauga-la>+ Adaugă la comandă</button>' : ''}
       ${butoaneTreceri(c, minuteInapoi(c))}
@@ -1186,7 +1215,7 @@ async function renderDetaliu(id) {
   incarcaActivitate(id);
 
   $('fisaDetaliu')?.addEventListener('click', e => veziFisa(id, e.currentTarget));
-  $('printDetaliu')?.addEventListener('click', e => printeazaDinNou(id, pozitii.length, e.currentTarget));
+  leagaPrint(document, id, printari, pozitii.length, () => renderDetaliu(id));
   $('taskNou').addEventListener('click', () => { location.href = `/taskuri?comanda=${id}`; });
   $('tichetNou').addEventListener('click', () => { location.href = `/tichete?comanda=${id}`; });
   document.querySelectorAll('button.fisa-poz').forEach(b => b.addEventListener('click', () => veziFisa(id, b, +b.dataset.poz)));
