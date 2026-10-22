@@ -485,7 +485,7 @@ async function main() {
     const idVechi = Number(db2().prepare("INSERT INTO utilizator (nume, user, parola_hash, parola_salt, rol) VALUES ('Vechi', 'vechi', 'x', 'x', 'operator')").run().lastInsertRowid);
     require('../server/db.js').roluriNoi(db2());
     verifica('migraţie: operator → birou', db2().prepare('SELECT rol FROM utilizator WHERE id = ?').get(idVechi).rol === 'birou');
-    verifica('schema la versiunea 30', db2().prepare('PRAGMA user_version').get().user_version === 30);
+    verifica('schema la versiunea 31', db2().prepare('PRAGMA user_version').get().user_version === 31);
   }
 
   console.log('\nFixare şi sortare — per utilizator');
@@ -1161,13 +1161,30 @@ async function main() {
         && m.some(x => x.eveniment === 'stare' && x.text === 'rezolvat'), JSON.stringify(m));
       verifica('mesaj gol → 400', (await cer('POST', `/api/tichete/${id}/raspuns`, { text: '  ' })).stare === 400);
       verifica('autorul scrie în conversaţie → 201', (await cer('POST', `/api/tichete/${id}/raspuns`, { text: 'Mersi, acum merge' })).stare === 201);
+      // poze în conversaţie (2026-10-22)
+      const PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+      verifica('poză de alt tip → 400', (await cer('POST', `/api/tichete/${id}/raspuns`, { poze: ['data:text/html;base64,PGI+'] })).stare === 400);
+      verifica('mai mult de 4 poze → 400', (await cer('POST', `/api/tichete/${id}/raspuns`, { poze: Array(5).fill(PNG) })).stare === 400);
+      verifica('mesaj doar cu poză → 201', (await cer('POST', `/api/tichete/${id}/raspuns`, { poze: [PNG, PNG] })).stare === 201);
+      const cuPoze = (await cer('GET', '/api/tichete')).date.tichete.find(t => t.id === id).mesaje.at(-1);
+      const p = await fetch(`${baza}/api/tichete/poza/${cuPoze.poze[0]}`, { headers: { Cookie: cookie } });
+      verifica('pozele se văd în conversaţie şi se descarcă (autorul)', cuPoze.poze.length === 2 && !cuPoze.text && p.status === 200
+        && p.headers.get('content-type') === 'image/png' && (await p.arrayBuffer()).byteLength > 60, JSON.stringify(cuPoze));
+      globalThis.pozaTichet = cuPoze.poze[0];
       verifica('biroul nu vede tabloul adminului → 403', (await cer('GET', '/api/admin/tablou')).stare === 403);
     });
     {
       const t = (await cer('GET', '/api/tichete')).date.tichete.find(x => x.id === id);
       const n = (await cer('GET', '/api/notificari')).date.notificari;
-      verifica('adminul: mesajul autorului necitit + insignă + notificare', t.necitite === 1 && (await cer('GET', '/api/sumar')).date.tichete >= 1
+      verifica('adminul: mesajele autorului necitite + insignă + notificare', t.necitite === 2 && (await cer('GET', '/api/sumar')).date.tichete >= 1
         && n.some(x => x.titlu.startsWith('Mesaj de la') && x.text.includes('Mersi, acum merge') && x.link === `/tichete?tichet=${id}`), JSON.stringify(n));
+      verifica('adminul vede poza', (await fetch(`${baza}/api/tichete/poza/${globalThis.pozaTichet}`, { headers: { Cookie: cookie } })).status === 200);
+      {
+        const k = cookie; cookie = null;
+        await cer('POST', '/api/login', { user: 'ion', parola: 'parola-noua-1' });
+        verifica('alt coleg nu vede poza → 404', (await cer('GET', `/api/tichete/poza/${globalThis.pozaTichet}`)).stare === 404);
+        cookie = k;
+      }
       await cer('POST', `/api/tichete/${id}/citit`);
       verifica('… citit de admin', (await cer('GET', '/api/tichete')).date.tichete.find(x => x.id === id).necitite === 0);
       for (const x of n) await cer('POST', `/api/notificari/${x.id}/inchide`);

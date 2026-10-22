@@ -73,6 +73,21 @@
   .scrie { display: flex; gap: 8px; align-items: flex-end; padding: 10px 12px; border-top: 1px solid var(--line); }
   .scrie textarea { flex: 1; resize: none; min-height: 38px; max-height: 140px; border-radius: 19px; padding-inline: 14px; }
   .scrie button { border-radius: 19px; }
+  /* poze (2026-10-22): în bulă, în şirul de dinainte de trimitere, mărite la clic */
+  .msg .poze { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .msg.eu .poze { justify-content: flex-end; }
+  .msg .poze img { max-width: 220px; max-height: 180px; border-radius: 10px; border: 1px solid var(--line); cursor: zoom-in; display: block; }
+  .scrie .ataseaza { padding: 0; width: 38px; height: 38px; flex: none; font-size: 1.05rem; }
+  .de-trimis { display: flex; gap: 8px; flex-wrap: wrap; padding: 10px 12px 0; border-top: 1px solid var(--line); }
+  .de-trimis:empty { display: none; }
+  .de-trimis + .scrie { border-top: 0; }
+  .de-trimis .p { position: relative; }
+  .de-trimis img { width: 64px; height: 64px; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); display: block; }
+  .de-trimis button { position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; padding: 0; border-radius: 50%;
+    font-size: .7rem; line-height: 1; }
+  .detaliu.trage { outline: 2px dashed var(--accent); outline-offset: -4px; }
+  #marire { position: fixed; inset: 0; z-index: 4000; background: rgba(0, 0, 0, .85); display: grid; place-items: center; cursor: zoom-out; padding: 24px; }
+  #marire img { max-width: 100%; max-height: 100%; border-radius: 6px; }
   .pastila { display: inline-block; padding: 1px 9px; border-radius: 999px; border: 1px solid; font-size: .76rem; font-weight: 600; margin-right: 6px; }
   .pastila.problema { color: var(--rosu-text); border-color: rgba(201, 96, 76, .5); background: rgba(201, 96, 76, .1); }
   .pastila.idee     { color: var(--cald); border-color: rgba(212, 162, 76, .45); background: rgba(212, 162, 76, .1); }
@@ -162,6 +177,50 @@ const laComanda = t => !t.comanda_id ? '' : ' · despre ' + (t.comanda_nr
 let admin = false, eu = null, tichete = [];
 let ales = Number(new URLSearchParams(location.search).get('tichet')) || null;
 const ciorne = new Map();   // mesajul început, pe tichet — rămâne la actualizarea live
+const pozeCiorna = new Map();   // pozele alese şi netrimise, pe tichet (data-URL-uri micşorate)
+const MAX_POZE = 4;
+// o poză aleasă / lipită / trasă → JPEG de cel mult 1600 px pe latura mare (pozele de telefon au 4-8 MB)
+async function micsoreaza(fisier) {
+  const img = await createImageBitmap(fisier);
+  const k = Math.min(1, 1600 / Math.max(img.width, img.height));
+  const c = document.createElement('canvas');
+  c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+  const g = c.getContext('2d');
+  g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);   // PNG transparent → fundal alb
+  g.drawImage(img, 0, 0, c.width, c.height);
+  return c.toDataURL('image/jpeg', 0.85);
+}
+async function adaugaPoze(id, fisiere) {
+  const imagini = [...fisiere].filter(f => f.type.startsWith('image/'));
+  if (!imagini.length) return;
+  const lista = pozeCiorna.get(id) ?? [];
+  if (lista.length + imagini.length > MAX_POZE) alerta(`Cel mult ${MAX_POZE} poze într-un mesaj.`);
+  for (const f of imagini.slice(0, MAX_POZE - lista.length)) {
+    try { lista.push(await micsoreaza(f)); } catch { alerta(`„${f.name}" nu se poate deschide ca poză.`); }
+  }
+  pozeCiorna.set(id, lista);
+  arataDeTrimis(id);
+}
+function arataDeTrimis(id) {
+  const el = $('deTrimis');
+  if (!el) return;
+  el.innerHTML = (pozeCiorna.get(id) ?? []).map((p, k) => `<div class="p"><img src="${p}" alt=""><button type="button" data-k="${k}" title="Scoate poza">✕</button></div>`).join('');
+  el.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+    pozeCiorna.get(id).splice(+b.dataset.k, 1);
+    arataDeTrimis(id);
+  }));
+}
+// poza mărită peste pagină; clic sau Esc o închide
+function mareste(src) {
+  const el = document.createElement('div');
+  el.id = 'marire';
+  el.innerHTML = `<img src="${esc(src)}" alt="">`;
+  const inchide = () => { el.remove(); removeEventListener('keydown', laEsc); };
+  const laEsc = e => { if (e.key === 'Escape') inchide(); };
+  el.addEventListener('click', inchide);
+  addEventListener('keydown', laEsc);
+  document.body.appendChild(el);
+}
 // iniţialele + o nuanţă fixă pe om, pt. avatar (ca la taskuri)
 const avatar = (id, nume) => `<span class="avatar" style="--h:${(id * 67) % 360}">${esc(String(nume).split(/\s+/).map(x => x[0]).join('').slice(0, 2).toUpperCase())}</span>`;
 const pastile = t => `<span class="pastila ${esc(t.tip)}">${TIP[t.tip] ?? esc(t.tip)}</span><span class="pastila ${esc(t.stare)}">${STARE[t.stare] ?? esc(t.stare)}</span>`;
@@ -193,7 +252,8 @@ function randeazaDetaliu() {
   const mesaje = t.mesaje.map(m => m.eveniment
     ? `<div class="ev"><span>${m.autor === eu.id ? 'Ai' : `${esc(m.autor_nume)} a`} trecut tichetul la „${esc(STARE[m.text] ?? m.text)}” · ${dataOra(m.creat_la)}</span></div>`
     : `<div class="msg${m.autor === eu.id ? ' eu' : ''}">${avatar(m.autor, m.autor_nume)}<div class="bula">
-        <div class="cine">${m.autor === eu.id ? 'Tu' : esc(m.autor_nume)} · ${dataOra(m.creat_la)}</div><div class="txt">${esc(m.text)}</div></div></div>`).join('');
+        <div class="cine">${m.autor === eu.id ? 'Tu' : esc(m.autor_nume)} · ${dataOra(m.creat_la)}</div>${m.text ? `<div class="txt">${esc(m.text)}</div>` : ''}${
+          m.poze?.length ? `<div class="poze">${m.poze.map(p => `<img src="/api/tichete/poza/${p}" alt="Poză" loading="lazy">`).join('')}</div>` : ''}</div></div>`).join('');
   const cuCine = autor ? 'administratorul' : esc(t.creat_de_nume);
   $('detaliu').innerHTML = `
     <div class="fisa">
@@ -211,8 +271,13 @@ function randeazaDetaliu() {
     <div class="conv-cap">Conversaţie cu <b>${cuCine}</b> despre tichet</div>
     <div class="fir" id="fir">${mesaje || `<div class="gol">Niciun mesaj încă. ${autor ? 'Scrie-i administratorului dacă mai ai ceva de adăugat.'
       : `Scrie-i lui ${esc(t.creat_de_nume)} — vede mesajul la el.`}</div>`}</div>
-    <form class="scrie" id="scrie"><textarea rows="1" maxlength="4000" placeholder="Scrie un mesaj… (Enter trimite, Shift+Enter rând nou)">${esc(ciorne.get(t.id) ?? '')}</textarea>
+    <div class="de-trimis" id="deTrimis"></div>
+    <form class="scrie" id="scrie"><button type="button" class="ataseaza" title="Adaugă poze (sau lipeşte cu Ctrl+V / trage-le aici)">📎</button>
+      <input type="file" accept="image/*" multiple hidden>
+      <textarea rows="1" maxlength="4000" placeholder="Scrie un mesaj… (Enter trimite, Shift+Enter rând nou; Ctrl+V lipeşte o poză)">${esc(ciorne.get(t.id) ?? '')}</textarea>
       <button class="verde" type="submit">Trimite</button></form>`;
+  arataDeTrimis(t.id);
+  $('fir').querySelectorAll('.poze img').forEach(img => img.addEventListener('click', () => mareste(img.src)));
 
   $('stare')?.addEventListener('change', async e => {
     const r = await api(`/api/tichete/${t.id}`, { method: 'PATCH', body: JSON.stringify({ stare: e.target.value }) });
@@ -222,17 +287,36 @@ function randeazaDetaliu() {
   });
   const fir = $('fir');
   fir.scrollTop = fir.scrollHeight;
+  // pozele se încarcă după — firul rămâne jos (la ultimul mesaj)
+  fir.querySelectorAll('.poze img').forEach(img => img.addEventListener('load', () => { fir.scrollTop = fir.scrollHeight; }, { once: true }));
   const form = $('scrie'), camp = form.querySelector('textarea');
   const creste = () => { camp.style.height = 'auto'; camp.style.height = camp.scrollHeight + 2 + 'px'; };
   creste();
   camp.addEventListener('input', () => { ciorne.set(t.id, camp.value); creste(); });
   camp.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); form.requestSubmit(); } });
+  // poze: 📎, Ctrl+V (captură de ecran), trase peste conversaţie
+  const fisier = form.querySelector('input[type=file]');
+  form.querySelector('.ataseaza').addEventListener('click', () => fisier.click());
+  fisier.addEventListener('change', () => { adaugaPoze(t.id, fisier.files); fisier.value = ''; });
+  camp.addEventListener('paste', e => {
+    const f = [...(e.clipboardData?.files ?? [])];
+    if (f.some(x => x.type.startsWith('image/'))) { e.preventDefault(); adaugaPoze(t.id, f); }
+  });
+  const d = $('detaliu');
+  d.ondragover = e => { if ([...e.dataTransfer.types].includes('Files')) { e.preventDefault(); d.classList.add('trage'); } };
+  d.ondragleave = e => { if (!d.contains(e.relatedTarget)) d.classList.remove('trage'); };
+  d.ondrop = e => { e.preventDefault(); d.classList.remove('trage'); adaugaPoze(t.id, e.dataTransfer.files); };
   form.addEventListener('submit', async e => {
     e.preventDefault();
-    if (!camp.value.trim()) return;
-    const r = await api(`/api/tichete/${t.id}/raspuns`, { method: 'POST', body: JSON.stringify({ text: camp.value }) });
+    const poze = pozeCiorna.get(t.id) ?? [];
+    if (!camp.value.trim() && !poze.length) return;
+    const trimite = form.querySelector('button[type=submit]');
+    trimite.disabled = true;
+    const r = await api(`/api/tichete/${t.id}/raspuns`, { method: 'POST', body: JSON.stringify({ text: camp.value, poze }) });
+    trimite.disabled = false;
     if (r && !r.ok) return alerta((await r.json().catch(() => ({}))).eroare || 'Nu s-a trimis.');
     ciorne.delete(t.id);
+    pozeCiorna.delete(t.id);
     camp.blur();   // altfel actualizarea live aşteaptă să ieşi din câmp
     await incarca();
     $('scrie')?.querySelector('textarea').focus();

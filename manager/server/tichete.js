@@ -39,7 +39,12 @@ function lista(ctx) {
   const mesaje = Map.groupBy(tichete.length ? db().prepare(`SELECT m.id, m.tichet_id, m.autor, u.nume AS autor_nume, m.text,
       m.eveniment, m.creat_la FROM tichet_mesaj m JOIN utilizator u ON u.id = m.autor
     WHERE m.tichet_id IN (${tichete.map(t => t.id).join(',')}) ORDER BY m.creat_la, m.id`).all() : [], m => m.tichet_id);
-  for (const t of tichete) t.mesaje = mesaje.get(t.id) ?? [];
+  const poze = Map.groupBy(tichete.length ? db().prepare(`SELECT p.id, p.mesaj_id FROM tichet_poza p JOIN tichet_mesaj m ON m.id = p.mesaj_id
+    WHERE m.tichet_id IN (${tichete.map(t => t.id).join(',')}) ORDER BY p.id`).all() : [], p => p.mesaj_id);
+  for (const t of tichete) {
+    t.mesaje = mesaje.get(t.id) ?? [];
+    for (const m of t.mesaje) m.poze = (poze.get(m.id) ?? []).map(p => p.id);
+  }
   json(ctx.res, 200, { admin: toate, tichete });
 }
 
@@ -51,13 +56,34 @@ const alMeu = ctx => db().prepare('SELECT * FROM tichet WHERE id = ? AND (creat_
   .get(Number(ctx.params.id), ctx.utilizator.id, eAdmin(ctx) ? 1 : 0);
 const scurt = (t, n) => (t.length > n ? t.slice(0, n) + '…' : t);
 
-// mesaj în conversaţie: autorul ↔ adminii. Cealaltă parte primeşte o notificare (dreapta jos).
+// Pozele unui mesaj (userul, 2026-10-22): data-URL-uri, micşorate deja de pagină — cel mult 4, ~1,5 MB fiecare.
+const POZE = { max: 4, octeti: 1.5 * 1024 * 1024, tipuri: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'] };
+function citestePoze(lista) {
+  if (lista == null) return { poze: [] };
+  if (!Array.isArray(lista) || lista.length > POZE.max) return { eroare: `Cel mult ${POZE.max} poze într-un mesaj.` };
+  const poze = [];
+  for (const p of lista) {
+    const m = /^data:([\w/+.-]+);base64,([A-Za-z0-9+/=]+)$/.exec(String(p));
+    if (!m || !POZE.tipuri.includes(m[1])) return { eroare: 'Se pot trimite doar poze (JPG, PNG, WEBP, GIF).' };
+    const date = Buffer.from(m[2], 'base64');
+    if (!date.length || date.length > POZE.octeti) return { eroare: 'O poză e prea mare.' };
+    poze.push({ tip: m[1], date });
+  }
+  return { poze };
+}
+
+// mesaj în conversaţie (text şi / sau poze): autorul ↔ adminii. Cealaltă parte primeşte o notificare (dreapta jos).
 async function raspunde(ctx) {
   const t = alMeu(ctx);
   if (!t) return eroare(ctx.res, 404, 'Tichetul nu există.');
-  const text = String((await corpJson(ctx.req)).text ?? '').trim().slice(0, 4000);
-  if (!text) return eroare(ctx.res, 400, 'Scrie mesajul.');
-  inConversatie(t.id, ctx.utilizator.id, null, text);
+  const corp = await corpJson(ctx.req);
+  const text = String(corp.text ?? '').trim().slice(0, 4000);
+  const { poze, eroare: e } = citestePoze(corp.poze);
+  if (e) return eroare(ctx.res, 400, e);
+  if (!text && !poze.length) return eroare(ctx.res, 400, 'Scrie mesajul.');
+  const mesajId = Number(inConversatie(t.id, ctx.utilizator.id, null, text).lastInsertRowid);
+  const pune = db().prepare('INSERT INTO tichet_poza (mesaj_id, tip, date) VALUES (?, ?, ?)');
+  for (const p of poze) pune.run(mesajId, p.tip, p.date);
   db().prepare(`UPDATE tichet SET modificat_la = ${ACUM()} WHERE id = ?`).run(t.id);
   const catre = t.creat_de === ctx.utilizator.id
     ? db().prepare("SELECT id FROM utilizator WHERE rol = 'admin' AND activ = 1 AND id != ?").all(ctx.utilizator.id).map(u => u.id)
@@ -65,11 +91,20 @@ async function raspunde(ctx) {
   const { notifica } = require('./notificari.js');
   for (const id of catre) notifica(id, {
     titlu: t.creat_de === ctx.utilizator.id ? `Mesaj de la ${ctx.utilizator.nume} (tichet)` : 'Răspuns la tichetul tău',
-    text: `„${scurt(t.text, 90)}”\n${ctx.utilizator.nume}: ${scurt(text, 220)}`,
+    text: `„${scurt(t.text, 90)}”\n${ctx.utilizator.nume}: ${[scurt(text, 220), poze.length && `📷 ${poze.length} ${poze.length === 1 ? 'poză' : 'poze'}`].filter(Boolean).join(' ')}`,
     link: `/tichete?tichet=${t.id}`,
   });
   anunta({ tichet: t.id });
   json(ctx.res, 201, { ok: true });
+}
+
+// o poză din conversaţie — doar pt. cine vede tichetul (autorul sau un admin)
+function poza(ctx) {
+  const p = db().prepare(`SELECT p.tip, p.date, t.creat_de FROM tichet_poza p JOIN tichet_mesaj m ON m.id = p.mesaj_id
+    JOIN tichet t ON t.id = m.tichet_id WHERE p.id = ?`).get(Number(ctx.params.id));
+  if (!p || (p.creat_de !== ctx.utilizator.id && !eAdmin(ctx))) return eroare(ctx.res, 404, 'Poza nu există.');
+  ctx.res.writeHead(200, { 'Content-Type': p.tip, 'Content-Length': p.date.length, 'Cache-Control': 'private, max-age=31536000, immutable' });
+  ctx.res.end(Buffer.from(p.date));
 }
 
 // am deschis conversaţia: ce a scris cealaltă parte e citit (insigna din meniu scade)
@@ -145,5 +180,6 @@ module.exports = {
     ['PATCH', '/api/tichete/:id',     { handler: modifica, rol: ['admin'] }],
     ['POST',  '/api/tichete/:id/raspuns', { handler: raspunde }],
     ['POST',  '/api/tichete/:id/citit',   { handler: citit }],
+    ['GET',   '/api/tichete/poza/:id',    { handler: poza }],
   ],
 };

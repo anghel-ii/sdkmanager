@@ -179,7 +179,7 @@ function sincronizeaza() {
       c.sesiune.close();
       c.sesiune = sursa(nume).createSession();
       if (schimbari.length) c.brut.applyChangeset(schimbari, {
-        filter: tabel => tabel !== 'sesiune' && tabel !== 'activitate',   // jurnalul se citeşte mereu din baza reală
+        filter: tabel => !['sesiune', 'activitate', 'tichet_poza'].includes(tabel),   // jurnalul şi pozele tichetelor — mereu din baza reală
         onConflict: tip => tip === SQL.SQLITE_CHANGESET_DATA || tip === SQL.SQLITE_CHANGESET_CONFLICT
           ? SQL.SQLITE_CHANGESET_REPLACE : SQL.SQLITE_CHANGESET_OMIT,
       });
@@ -506,6 +506,16 @@ const MIGRATII = [
     CREATE INDEX tichet_mesaj_tichet ON tichet_mesaj (tichet_id, creat_la);
     INSERT INTO tichet_mesaj (tichet_id, autor, text, creat_la, citit)
       SELECT id, raspuns_de, raspuns, modificat_la, vazut_de_autor FROM tichet WHERE raspuns IS NOT NULL AND raspuns_de IS NOT NULL;`),
+  // v30 → v31 (2026-10-22): poze în conversaţia tichetelor — micşorate în browser (JPEG), aici ca blob. Nu se copiază
+  // în copiile de test (tichetele se citesc oricum din baza reală).
+  d => d.exec(`
+    CREATE TABLE tichet_poza (
+      id       INTEGER PRIMARY KEY,
+      mesaj_id INTEGER NOT NULL REFERENCES tichet_mesaj(id) ON DELETE CASCADE,
+      tip      TEXT NOT NULL,                   -- 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif'
+      date     BLOB NOT NULL
+    );
+    CREATE INDEX tichet_poza_mesaj ON tichet_poza (mesaj_id);`),
 ];
 
 // Exportată pt. test.
