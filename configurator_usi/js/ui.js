@@ -13,7 +13,7 @@ import { geamPermisLux } from './lib/lux/index.js';
 import gameJson from './systems/game.json';
 import { renderRame, syncRame, refreshRame } from './ui_rame.js';
 import { activeazaCampuri } from './campuri.js';
-import { LIVRARE, AGENTI, PLATI, detaliiComanda, detaliiDinManager, liniaTransport, campuriLipsa, focusCamp, etichetaNumar } from './lib/comun/comanda.js';
+import { LIVRARE, AGENTI, PLATI, detaliiComanda, detaliiDinManager, liniaTransport, campuriLipsa, focusCamp, etichetaNumar, opritDePlata } from './lib/comun/comanda.js';
 import { stareRameGoala } from './lib/rame/rame.js';
 import { renderUtil } from './ui_util.js';
 import { initSugestiiClienti } from './sugestii-clienti.js';
@@ -1050,8 +1050,13 @@ function renderOferta() {
          </div>`}
     ${altele > 0 ? `<div class="oferta-hint">+ ${altele} ${altele === 1 ? 'alt produs' : 'alte produse'} în ofertă (cardurile de sus) — se salvează împreună</div>` : ''}`;
   arata(true);
-  // se salvează tot coşul + produsul de pe ecran; unul început dar neterminat blochează
-  for (const b of butoane) b.disabled = !t.pozitii;
+  // se salvează tot coşul + produsul de pe ecran; unul început dar neterminat blochează;
+  // metoda de plată opreşte „Salvează oferta" / „Salvează comanda" (nu şi „Adaugă la comandă")
+  for (const b of butoane) {
+    const oprit = cos.adaugaLa ? null : opritDePlata(b === btn ? 'oferta' : b.id === 'btnComanda' ? 'comanda' : 'plata', state.comanda?.plata);
+    b.disabled = !t.pozitii || !!oprit;
+    b.title = oprit ?? '';
+  }
   document.dispatchEvent(new Event('configurator:oferta'));   // starea din ui_nou (butoanele s-au arătat)
 }
 

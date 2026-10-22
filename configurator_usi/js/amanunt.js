@@ -3,7 +3,7 @@ import * as manager from './manager.js';
 import * as cosul from './cos.js';
 import { cautator, laBara, arie, rotunjeste, textMod, sePoatePeJumatate } from './amanunt-calcul.js';
 import { initSugestiiClienti } from './sugestii-clienti.js';
-import { LIVRARE, AGENTI, PLATI, plataText, numarText, detaliiDinManager, liniaTransport, campuriLipsa, focusCamp, etichetaNumar, marcheazaDeCompletat } from './lib/comun/comanda.js';
+import { LIVRARE, AGENTI, PLATI, plataText, numarText, detaliiDinManager, liniaTransport, campuriLipsa, focusCamp, etichetaNumar, marcheazaDeCompletat, opritDePlata } from './lib/comun/comanda.js';
 import { copyRows } from './lib/comun/clipboard.js';
 import { qtyText } from './lib/comun/num.js';
 import { dataRo } from './ora.js';
@@ -467,7 +467,12 @@ function renderOferta() {
   $('btnConfirma').textContent = TEXT.btnConfirma();
   const t = cosul.toate(cos, curenta());
   $('ofertaUI').innerHTML = t.pozitii?.length > 1 ? `<div class="oferta-hint">${t.pozitii.length} produse în ofertă</div>` : '';
-  for (const id of BUTOANE) $(id).disabled = !t.pozitii;
+  // metoda de plată opreşte „Salvează oferta" / „Salvează comanda" (nu şi „Adaugă la comandă")
+  for (const id of BUTOANE) {
+    const oprit = cos.adaugaLa ? null : opritDePlata({ btnConfirma: 'oferta', btnComanda: 'comanda', btnPlata: 'plata' }[id], comanda.plata);
+    $(id).disabled = !t.pozitii || !!oprit;
+    $(id).title = oprit ?? '';
+  }
   pasi();   // butoanele s-au arătat (servit de manager) → starea cere şi datele clientului
 }
 

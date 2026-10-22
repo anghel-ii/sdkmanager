@@ -63,6 +63,15 @@ export function etichetaNumar() {
   const span = el.closest('label')?.querySelector('span');
   if (span) span.textContent = t;
 }
+// Butoanele de salvare după metoda de plată (userul, 2026-10-22): cu „Ofertă" nu se poate „Salvează
+// comanda", cu altă metodă nu se poate „Salvează oferta"; „Aşteaptă plata" rămâne cum e. Fără metodă
+// aleasă, merg toate. → textul de pus în title când butonul e oprit, altfel null.
+export function opritDePlata(buton, plata) {
+  if (!plata) return null;
+  if (buton === 'comanda' && plata === 'oferta') return 'Metoda de plată e „Ofertă" — se salvează ca ofertă';
+  if (buton === 'oferta' && plata !== 'oferta') return 'Metoda de plată nu e „Ofertă" — salvează comanda sau aşteaptă plata';
+  return null;
+}
 // câmpul pe care-l vede omul (la meniul căutabil — caseta lui, <select>-ul e ascuns)
 const vizibil = el => el?.hidden ? el.nextElementSibling?.querySelector('input') : el;
 // cursorul în câmpul care lipseşte

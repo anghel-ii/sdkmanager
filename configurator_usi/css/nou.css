@@ -215,6 +215,9 @@ body.ui-nou #btnComanda { background: rgba(63, 166, 106, .10); border-color: rgb
 body.ui-nou #btnPlata   { background: rgba(212, 162, 76, .10); border-color: rgba(212, 162, 76, .6); color: var(--cald); font-weight: 500; }
 body.ui-nou #btnComanda:hover:not(:disabled) { background: rgba(63, 166, 106, .2); border-color: #3fa66a; }
 body.ui-nou #btnPlata:hover:not(:disabled)   { background: rgba(212, 162, 76, .2); border-color: #d4a24c; }
+/* oprit (configuraţie neterminată sau metoda de plată nu se potriveşte) — gri */
+body.ui-nou #btnConfirma:disabled, body.ui-nou #btnComanda:disabled, body.ui-nou #btnPlata:disabled {
+  background: var(--panel-2); border-color: var(--line); color: var(--text-mute); cursor: not-allowed; }
 .nou-mesaje { display: flex; flex-direction: column; gap: 6px; }
 .nou-mesaje:not(:has(> :not(:empty))) { display: none; }
 body.ui-nou .nou-mesaje .oferta-msg, body.ui-nou .nou-mesaje .oferta-hint { margin: 0; }
