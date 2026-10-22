@@ -1020,9 +1020,11 @@ function renderOferta() {
   // mereu; aici se decide doar ce ţine de ofertă: butonul de salvare şi
   // rezumatul de deasupra lui.
   const butoane = [btn, $('btnComanda'), $('btnPlata')].filter(Boolean);
-  // „Adaugă la comandă": doar butonul de adăugare (comanda e deja în lucru)
-  const arata = da => { for (const b of butoane) b.style.display = da && (b === btn || !cos.adaugaLa) ? '' : 'none';
-                        $('ofertaNr').style.display = da && !cos.adaugaLa ? '' : 'none'; };
+  // „Adaugă la comandă": comanda e deja în lucru — doar „Salvează comanda şi printează" (userul, 2026-10-22)
+  const arata = da => { for (const b of butoane) b.style.display = da && (cos.adaugaLa ? b.id === 'btnComanda' : true) ? '' : 'none';
+                        const nr = $('ofertaNr'), eticheta = nr.closest('label.nou-camp');   // cu eticheta lui
+                        nr.style.display = da && !cos.adaugaLa ? '' : 'none';
+                        if (eticheta) eticheta.style.display = nr.style.display; };
   if (!servit || modFisa) { box.innerHTML = ''; arata(false); return; }
 
   if (stare === 'nelogat') {
@@ -1055,7 +1057,7 @@ function renderOferta() {
   for (const b of butoane) {
     const oprit = cos.adaugaLa ? null : opritDePlata(b === btn ? 'oferta' : b.id === 'btnComanda' ? 'comanda' : 'plata', state.comanda?.plata);
     b.disabled = !t.pozitii || !!oprit;
-    b.title = oprit ?? '';
+    b.title = oprit ?? b.dataset.titlu ?? '';
   }
   document.dispatchEvent(new Event('configurator:oferta'));   // starea din ui_nou (butoanele s-au arătat)
 }
@@ -1104,8 +1106,9 @@ function cerePlata() {
 // „Salvează comanda şi printează": o comandă nu intră în lucru fără fişa printată (userul, 2026-10-21)
 const TEXT_BUTON = { oferta: 'Salvează oferta', comanda: 'Salvează comanda şi printează', plata: 'Aşteaptă plata' };
 const textButoane = () => {
-  $('btnConfirma').textContent = cos.adaugaLa ? `Adaugă la comanda ${cos.adaugaLa.numar}` : cos.ofertaEditata ? 'Salvează modificările' : TEXT_BUTON.oferta;
+  $('btnConfirma').textContent = cos.ofertaEditata ? 'Salvează modificările' : TEXT_BUTON.oferta;
   $('btnComanda').textContent = TEXT_BUTON.comanda;
+  $('btnComanda').dataset.titlu = cos.adaugaLa ? `Produsele se adaugă la comanda ${cos.adaugaLa.numar} (în lucru), apoi se printează fişele lor` : '';
   $('btnPlata').textContent   = TEXT_BUTON.plata;
 };
 
@@ -1179,13 +1182,17 @@ async function trimiteOferta(unde = 'oferta') {
 async function adaugaLaComanda() {
   const tot = cosul.toate(cos, curentaUsi());
   if (tot.eroare) return mesajOferta(esc(tot.eroare), 'eroare');
-  $('btnConfirma').disabled = true;
-  $('btnConfirma').textContent = 'Se adaugă…';
+  const b = $('btnComanda');
+  b.disabled = true;
+  b.textContent = 'Se adaugă…';
   const r = await oferta.adaugaLaComanda(cos.adaugaLa.id, cosul.transportOData(tot.pozitii, null).map(x => x.pozitie));
-  if (r.eroare) { $('btnConfirma').disabled = false; textButoane(); return mesajOferta(esc(r.eroare), 'eroare'); }
+  if (r.eroare) { b.disabled = false; textButoane(); return mesajOferta(esc(r.eroare), 'eroare'); }
   const id = cos.adaugaLa.id;
   ciorna.gata();
   cosul.goleste();
+  // comanda e în lucru → fişele produselor noi se printează acum; fără „Da" rămân de printat din manager
+  if (await window.Fise.printeazaToate(id, r.pozitii, b)) await window.Fise.noteaza(id, r.pozitii);
+  else await window.alerta?.('Produsele s-au adăugat la comandă, dar fişa lor nu s-a printat.\n\nO printezi din manager, cu „Printează fişa nouă".');
   location.href = '/#comanda/' + id;
 }
 

@@ -260,7 +260,9 @@ async function adauga(ctx) {
     }
   });
   anunta({ comanda: id });
-  json(ctx.res, 200, { comanda: { id, numar: c.oferta_nr || c.numar }, adaugate: pozitii.length });
+  // `pozitii` = produsele noi (poz, în ordinea fişelor) — configuratorul le printează fişele (userul, 2026-10-22)
+  json(ctx.res, 200, { comanda: { id, numar: c.oferta_nr || c.numar }, adaugate: pozitii.length,
+                       pozitii: pozitii.map((_, k) => are + k) });
 }
 
 // ── Citire ───────────────────────────────────────────────────────────────────
