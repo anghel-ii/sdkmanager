@@ -485,7 +485,7 @@ async function main() {
     const idVechi = Number(db2().prepare("INSERT INTO utilizator (nume, user, parola_hash, parola_salt, rol) VALUES ('Vechi', 'vechi', 'x', 'x', 'operator')").run().lastInsertRowid);
     require('../server/db.js').roluriNoi(db2());
     verifica('migraţie: operator → birou', db2().prepare('SELECT rol FROM utilizator WHERE id = ?').get(idVechi).rol === 'birou');
-    verifica('schema la versiunea 28', db2().prepare('PRAGMA user_version').get().user_version === 28);
+    verifica('schema la versiunea 29', db2().prepare('PRAGMA user_version').get().user_version === 29);
   }
 
   console.log('\nFixare şi sortare — per utilizator');
@@ -1001,6 +1001,13 @@ async function main() {
 
     verifica('livrări: fără dată → 400', (await cer('POST', '/api/livrari', { comenzi: [iasi] })).stare === 400);
     verifica('livrări: comandă cu curier → 400', (await cer('POST', '/api/livrari', { data: '2026-10-09', comenzi: [curier] })).stare === 400);
+    // preţ fără coloana de pe borderou → nu se programează (userul, 2026-10-22)
+    const faraCol = await cer('POST', '/api/livrari', { data: '2026-10-09', comenzi: [vaslui, iasi] });
+    verifica('livrări: preţ fără coloană pe borderou → 400', faraCol.stare === 400 && /borderou/.test(faraCol.date.eroare), JSON.stringify(faraCol.date));
+    verifica('livrări: coloană necunoscută → 400', (await cer('PUT', `/api/livrari/comanda/${iasi}`, { coloana_borderou: 'card' })).stare === 400);
+    verifica('livrări: coloana Bon se salvează', (await cer('PUT', `/api/livrari/comanda/${iasi}`, { coloana_borderou: 'bon' })).stare === 200);
+    c = await cand();
+    verifica('livrări: coloana se vede în listă', id(iasi).coloana_borderou === 'bon');
     const l = await cer('POST', '/api/livrari', { data: '2026-10-09', comenzi: [vaslui, iasi] });
     verifica('livrări: livrare programată → 201', l.stare === 201, JSON.stringify(l.date));
     c = await cand();

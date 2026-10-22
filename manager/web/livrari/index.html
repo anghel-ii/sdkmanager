@@ -48,6 +48,9 @@
   .produse div { white-space: nowrap; }
   select.judet { width: auto; padding: 3px 6px; font-size: .78rem; margin-top: 4px; }
   select.judet.lipsa { border-color: #d4a24c; color: var(--cald); }
+  select.coloana { width: 140px; padding: 3px 6px; font-size: .78rem; margin-top: 4px; }
+  select.coloana.lipsa { border-color: #d4a24c; color: var(--cald); }
+  select.coloana.salvat { border-color: var(--ok); }
   input.incasat { width: 110px; padding: 6px 8px; text-align: right; font-family: 'JetBrains Mono', ui-monospace, monospace; }
   input.incasat.salvat { border-color: var(--ok); }
   textarea.obs { width: 190px; min-height: 38px; padding: 6px 8px; font-size: .84rem; resize: vertical; }
@@ -165,12 +168,14 @@ const $ = id => document.getElementById(id);
 const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const lei = n => `${Number(n).toLocaleString('ro-RO', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} lei`;
 const lei2 = n => `${Number(n).toLocaleString('ro-RO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} lei`;   // pe borderou, ca în Excel
-// Preţul comenzii (câmpul „Preţ" de aici, în DB de_incasat) intră pe borderou într-o coloană după metoda de plată
-// (userul, 2026-10-19): bon fiscal → Bon; factură fiscală → Factură + chitanţă (amândouă = numerar la livrare);
-// proformele şi factura de avans → OP (plătit prin bancă).
-const COLOANA = { bon: 'bon', fiscala: 'factura', proforma: 'op', proforma_amanunt: 'op', avans: 'op' };
+// Preţul comenzii (câmpul „Preţ" de aici, în DB de_incasat) intră pe borderou în coloana aleasă lângă el
+// (userul, 2026-10-22; în DB coloana_borderou): Bon şi Factură + chitanţă = numerar la livrare, OP = prin bancă.
+// Până atunci se deducea din metoda de plată — COLOANA_DIN_PLATA rămâne doar ca sugestie la prima alegere.
+const COLOANE = { bon: 'Bon', factura: 'Factură + chitanţă', op: 'OP' };
+const COLOANA_DIN_PLATA = { bon: 'bon', fiscala: 'factura', proforma: 'op', proforma_amanunt: 'op', avans: 'op' };
 const pret = c => Number(c.de_incasat) || 0;
-const numerar = cs => cs.reduce((s, c) => s + (['bon', 'factura'].includes(COLOANA[c.plata]) ? pret(c) : 0), 0);
+const numerar = cs => cs.reduce((s, c) => s + (['bon', 'factura'].includes(c.coloana_borderou) ? pret(c) : 0), 0);
+const faraColoana = c => c.de_incasat != null && !c.coloana_borderou;
 const data = s => dataOra(s).slice(0, 10);
 const PLATI = { oferta: 'Ofertă', proforma: 'Proformă', proforma_amanunt: 'Proformă amănunt', fiscala: 'Factură fiscală', bon: 'Bon fiscal', avans: 'Factură de avans' };
 
@@ -264,6 +269,9 @@ function randeazaPlan() {
         <td><textarea class="obs" rows="2" maxlength="300" placeholder="ex. sună înainte, descărcare la rampă">${esc(c.observatii_livrare ?? '')}</textarea></td>
         <td>${data(c.creat_la)}<div class="mic-dim">${c.finalizat_la ? 'finalizată' : 'în lucru'}</div></td>
         <td><input class="incasat" inputmode="decimal" placeholder="0" value="${c.de_incasat ?? ''}">
+            <div><select class="coloana${faraColoana(c) ? ' lipsa' : ''}" title="Unde ajunge preţul pe borderou">
+              <option value=""${c.coloana_borderou ? '' : ' selected'}>Pe borderou la…</option>
+              ${Object.entries(COLOANE).map(([k, t]) => `<option value="${k}"${k === c.coloana_borderou ? ' selected' : ''}>${t}</option>`).join('')}</select></div>
             <div class="mic-dim">${esc(PLATI[c.plata] ?? '')}${c.avans > 0 ? ` · avans ${lei(c.avans)}` : ''}</div></td>
       </tr>`; }).join('')}</tbody></table>`;
 
@@ -284,8 +292,22 @@ function randeazaPlan() {
       if (r && !r.ok) { inp.value = c.de_incasat ?? ''; return alerta(await eroareDin(r)); }
       c.de_incasat = inp.value.trim() === '' ? null : Number(inp.value.replace(',', '.'));
       inp.classList.add('salvat'); setTimeout(() => inp.classList.remove('salvat'), 1200);
+      // prima dată: coloana sugerată din metoda de plată (se poate schimba)
+      if (c.de_incasat != null && !c.coloana_borderou && COLOANA_DIN_PLATA[c.plata]) await puneColoana(COLOANA_DIN_PLATA[c.plata]);
+      sel.classList.toggle('lipsa', faraColoana(c));
       randeazaTotal();
     });
+    const sel = tr.querySelector('select.coloana');
+    const puneColoana = async v => {
+      const r = await api(`/api/livrari/comanda/${id}`, { method: 'PUT', body: JSON.stringify({ coloana_borderou: v }) });
+      if (r && !r.ok) { sel.value = c.coloana_borderou ?? ''; return alerta(await eroareDin(r)); }
+      c.coloana_borderou = v || null;
+      sel.value = v;
+      sel.classList.toggle('lipsa', faraColoana(c));
+      sel.classList.add('salvat'); setTimeout(() => sel.classList.remove('salvat'), 1200);
+      randeazaTotal();
+    };
+    sel.addEventListener('change', () => puneColoana(sel.value));
     const obs = tr.querySelector('textarea.obs');
     obs.addEventListener('change', async () => {
       const r = await api(`/api/livrari/comanda/${id}`, { method: 'PUT', body: JSON.stringify({ observatii_livrare: obs.value }) });
@@ -488,6 +510,11 @@ async function cautaPeHarta() {
 $('confirma').addEventListener('click', async () => {
   const b = bifate();
   if (!b.length) return alerta('Bifează cel puţin o comandă.');
+  const lipsa = b.filter(faraColoana);
+  if (lipsa.length) {
+    document.querySelector(`tr[data-id="${lipsa[0].id}"] select.coloana`)?.focus();
+    return alerta(`Alege unde ajunge preţul pe borderou (Bon / Factură + chitanţă / OP) la:\n${lipsa.map(c => c.client_nume).join('\n')}`);
+  }
   const zi = $('dataLivrare').value;
   if (!zi) { $('dataLivrare').focus(); return alerta('Alege data livrării.'); }
   if (!(await confirma(`Programezi livrarea din ${ziua(zi)} cu ${b.length} ${b.length === 1 ? 'comandă' : 'comenzi'}?`))) return;
@@ -520,7 +547,8 @@ function cardLivrare(l) {
         <td>${esc(c.client_adresa ?? '—')}${c.judet ? `<div class="mic-dim">${esc(c.judet)}</div>` : ''}${
           c.observatii_livrare ? `<div class="mic-dim">📝 ${esc(c.observatii_livrare)}</div>` : ''}</td>
         <td class="produse">${c.produse.map(p => `<div>${esc(p)}</div>`).join('')}</td>
-        <td>${c.de_incasat ? lei(c.de_incasat) : '<span class="dim">—</span>'}${c.plata ? `<div class="mic-dim">${esc(PLATI[c.plata] ?? c.plata)}</div>` : ''}</td>
+        <td>${c.de_incasat ? lei(c.de_incasat) : '<span class="dim">—</span>'}${c.de_incasat != null && c.coloana_borderou
+          ? `<div class="mic-dim">pe borderou: ${COLOANE[c.coloana_borderou]}</div>` : ''}${c.plata ? `<div class="mic-dim">${esc(PLATI[c.plata] ?? c.plata)}</div>` : ''}</td>
       </tr>`).join('')}</tbody>
     </table>
   </div>`;
@@ -535,7 +563,7 @@ function borderouHtml(l) {
   const [a, ll, z] = l.data.split('-');
   const sume = { pret: 0, bon: 0, factura: 0, op: 0 };
   const randuri = l.comenzi.map(c => {
-    const col = COLOANA[c.plata], p = pret(c);
+    const col = c.coloana_borderou, p = pret(c);
     sume.pret += p; if (col) sume[col] += p;
     const celula = k => `<td${k === 'factura' ? ' class="numerar"' : ''}>${col === k && c.de_incasat != null ? lei2(p) : ''}</td>`;
     return `<tr>

@@ -63,7 +63,7 @@ function produse(ids) {
 
 const CAMPURI = `c.id, COALESCE(c.oferta_nr, c.numar) AS numar, c.client_nume, c.client_telefon, c.client_adresa,
   c.creat_la, c.confirmat_la, c.finalizat_la, c.plata, c.avans, c.factura_nr, c.observatii_livrare,
-  c.judet AS judet_ales, c.de_incasat, c.lat, c.lon, c.geo_adresa`;
+  c.judet AS judet_ales, c.de_incasat, c.coloana_borderou, c.lat, c.lon, c.geo_adresa`;
 
 function cuDetalii(randuri) {
   const p = produse(randuri.map(r => r.id));
@@ -82,6 +82,8 @@ function candidati(ctx) {
   json(ctx.res, 200, { comenzi: cuDetalii(r), judete: JUDETE });
 }
 
+const COLOANE = ['bon', 'factura', 'op'];   // coloanele borderoului în care poate intra preţul
+
 // Pe comandă: judeţul ales de mână, suma de încasat, coordonatele găsite în browser.
 async function modificaComanda(ctx) {
   const id = Number(ctx.params.id);
@@ -97,6 +99,11 @@ async function modificaComanda(ctx) {
     const v = t === '' ? null : Number(t);
     if (v != null && !(Number.isFinite(v) && v >= 0)) return eroare(ctx.res, 400, 'Suma de încasat trebuie să fie un număr (gol = nimic de încasat).');
     set.push('de_incasat = ?'); val.push(v == null ? null : Math.round(v * 100) / 100);
+  }
+  // unde ajunge preţul pe borderou (userul, 2026-10-22); gol = nealeasă
+  if ('coloana_borderou' in corp) {
+    if (corp.coloana_borderou && !COLOANE.includes(corp.coloana_borderou)) return eroare(ctx.res, 400, 'Coloana de pe borderou: Bon, Factură + chitanţă sau OP.');
+    set.push('coloana_borderou = ?'); val.push(corp.coloana_borderou || null);
   }
   // observaţiile de livrare (userul, 2026-10-19): pe borderou, lângă telefon; gol = niciuna
   if ('observatii_livrare' in corp) {
@@ -138,6 +145,10 @@ async function creeaza(ctx) {
   const bune = new Set(db().prepare(`SELECT id FROM comanda c WHERE tip = 'comanda' AND anulat = 0 AND lower(trim(livrare)) = ?
                                      AND ${FARA_CERERE} AND id IN (${ids.map(() => '?').join(',')})`).all(CU_MASINA, ...ids).map(r => r.id));
   if (bune.size !== ids.length) return eroare(ctx.res, 400, 'Unele comenzi nu se livrează cu maşina noastră, nu sunt acceptate sau au o cerere de anulare.');
+  // preţ fără coloană → n-ar apărea corect pe borderou (după programare nu se mai modifică)
+  const faraColoana = db().prepare(`SELECT client_nume FROM comanda WHERE de_incasat IS NOT NULL AND coloana_borderou IS NULL
+                                    AND id IN (${ids.map(() => '?').join(',')})`).all(...ids).map(r => r.client_nume);
+  if (faraColoana.length) return eroare(ctx.res, 400, `Alege unde ajunge preţul pe borderou (Bon / Factură + chitanţă / OP) la: ${faraColoana.join(', ')}.`);
 
   try {
     const id = tranzactie(d => {

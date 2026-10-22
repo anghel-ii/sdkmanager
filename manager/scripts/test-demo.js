@@ -178,7 +178,7 @@ async function main() {
   await actiune('ana: sticla comandată', () => cer('ana', 'POST', '/api/sticla/comanda', { ids: linii.map(l => l.id) }), { birou: C, admin: C });
   await actiune('ana: sticla înapoi la „de comandat"', () => cer('ana', 'POST', '/api/sticla/anuleaza', { ids: linii.map(l => l.id) }), { birou: C, admin: C });
   await actiune('ana: sticla comandată din nou', () => cer('ana', 'POST', '/api/sticla/comanda', { ids: linii.map(l => l.id) }), { birou: C, admin: C });
-  await actiune('ana: judeţ / de încasat la livrare', () => cer('ana', 'PUT', `/api/livrari/comanda/${idR3}`, { judet: 'Cluj', de_incasat: '150' }), { birou: C, admin: C });
+  await actiune('ana: judeţ / de încasat la livrare', () => cer('ana', 'PUT', `/api/livrari/comanda/${idR3}`, { judet: 'Cluj', de_incasat: '150', coloana_borderou: 'factura' }), { birou: C, admin: C });
   const lv = await actiune('ana: programează livrarea', () => cer('ana', 'POST', '/api/livrari', { data: '2026-12-01', comenzi: [idR3] }), { birou: C, admin: C });
   const anaId = (await eu('ana')).id;
   const tk = await actiune('ana: task pentru ea', () => cer('ana', 'POST', '/api/taskuri', { text: 'task din demo', pentru: anaId }), { birou: C, admin: C });

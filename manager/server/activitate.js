@@ -20,6 +20,7 @@ const { json, eroare, corpJson } = require('./http.js');
 const scurt = (t, n = 160) => { const s = String(t ?? '').replace(/\s+/g, ' ').trim(); return s.length > n ? s.slice(0, n - 1) + '…' : s; };
 const lei = v => (v == null || v === '' ? null : `${String(v).replace('.', ',')} lei`);
 const lista = (...x) => x.filter(v => v != null && v !== '' && v !== false).join(' · ') || null;
+const COLOANE_BORDEROU = { bon: 'Bon', factura: 'Factură + chitanţă', op: 'OP' };
 const PLATI = { oferta: 'ofertă', proforma: 'proformă', proforma_amanunt: 'proformă cu amănuntul', fiscala: 'factură fiscală', bon: 'bon fiscal', avans: 'factură de avans' };
 const ROLURI = { admin: 'administrator', conducere: 'conducere', birou: 'birou' };
 
@@ -64,6 +65,7 @@ const OPERATII = {
   'PUT /api/sticla/furnizori/:cod':          ['Mailul furnizorului de sticlă modificat', S, (b, r, p) => lista(p.cod, b.email)],
 
   'PUT /api/livrari/comanda/:id':            ['Livrare: preţ / observaţii / loc', S, b => lista(b.de_incasat != null && b.de_incasat !== '' && `preţ ${lei(b.de_incasat)}`,
+                                               'coloana_borderou' in b && `pe borderou: ${COLOANE_BORDEROU[b.coloana_borderou] ?? 'nealeasă'}`,
                                                b.observatii_livrare && scurt(b.observatii_livrare, 80), b.judet), null, (b, r, p) => [p.id]],
   'POST /api/livrari':                       ['Livrare programată', S, b => lista(b.data, Array.isArray(b.comenzi) && `${b.comenzi.length} comenzi`),
                                                null, b => b.comenzi ?? []],

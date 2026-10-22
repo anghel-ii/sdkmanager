@@ -483,6 +483,13 @@ const MIGRATII = [
     CREATE INDEX activitate_la ON activitate (la);
     CREATE INDEX activitate_comanda ON activitate (comanda_id, la);
     CREATE INDEX activitate_utilizator ON activitate (utilizator_id, la);`),
+  // v28 → v29 (2026-10-22): unde ajunge preţul pe borderou — 'bon' | 'factura' (factură + chitanţă) | 'op'; ales la
+  // Organizează livrări, lângă preţ (înainte se deducea din metoda de plată — aşa se completează la comenzile cu preţ)
+  d => d.exec(`
+    ALTER TABLE comanda ADD COLUMN coloana_borderou TEXT;
+    UPDATE comanda SET coloana_borderou = CASE plata WHEN 'bon' THEN 'bon' WHEN 'fiscala' THEN 'factura'
+      WHEN 'proforma' THEN 'op' WHEN 'proforma_amanunt' THEN 'op' WHEN 'avans' THEN 'op' END
+     WHERE de_incasat IS NOT NULL;`),
 ];
 
 // Exportată pt. test.
