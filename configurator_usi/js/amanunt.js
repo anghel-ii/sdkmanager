@@ -148,7 +148,10 @@ function actualizeaza() {
   $('total').textContent = nr ? `${nr} ${nr === 1 ? 'produs' : 'produse'}` : '';
   const alteRanduri = linii.some(l => l.cod || String(l.denumire).trim());
   $('erori').innerHTML = alteRanduri ? errors.map(e => `<div class="bill-err">⚠ ${esc(e)}</div>`).join('') : '';
-  for (const id of ['btnCopyCod', 'btnCopyCant']) $(id).disabled = !!errors.length;
+  for (const id of ['btnCopyCod', 'btnCopyCant']) {
+    $(id).disabled = alteRanduri ? !!errors.length : !altele();   // pagina goală, dar coşul are produse → se copiază ele
+    $(id).textContent = `Copiază ${id === 'btnCopyCod' ? 'coduri' : 'cantităţi'}${altele() ? ' (toată oferta)' : ''}`;
+  }
   card?.actualizeaza();
   renderOferta();
   pasi();
@@ -397,10 +400,16 @@ window.addEventListener('resize', pozitioneaza);
 // ── Copiere pentru NeoManager (pe coloană, ca în configurator) ──────────────
 
 const flash = (btn, txt) => { const o = btn.textContent; btn.textContent = txt; setTimeout(() => { btn.textContent = o; }, 1400); };
+// ofertă cu mai multe produse (ex. Confort + amănunt): se copiază facturarea pe TOATĂ oferta,
+// comasată — ca tabelul de facturare din configurator; singur pe ofertă, doar rândurile de aici
+const altele = () => !modFisa && cos.pozitii.some((_, k) => k !== cos.curent);
+const deCopiat = () => (altele()
+  ? cosul.facturareComasata(cosul.transportOData(cosul.toate(cos, curenta()).pozitii ?? [], liniaTransport({ comanda })))
+  : facturare().lines);
 $('btnCopyCod').addEventListener('click', e =>
-  copyRows(facturare().lines.map(l => [l.cod])).then(ok => flash(e.target, ok ? '✓ copiat' : '⚠ eroare')));
+  copyRows(deCopiat().map(l => [l.cod])).then(ok => flash(e.target, ok ? '✓ copiat' : '⚠ eroare')));
 $('btnCopyCant').addEventListener('click', e =>
-  copyRows(facturare().lines.map(l => [qtyText(l.cantitate)])).then(ok => flash(e.target, ok ? '✓ copiat' : '⚠ eroare')));
+  copyRows(deCopiat().map(l => [qtyText(l.cantitate)])).then(ok => flash(e.target, ok ? '✓ copiat' : '⚠ eroare')));
 
 // ── Client: livrare / plată / agent ─────────────────────────────────────────
 
