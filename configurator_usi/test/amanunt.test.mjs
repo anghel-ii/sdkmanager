@@ -1,7 +1,7 @@
 // node test/amanunt.test.mjs — produsele ofertei cu amănuntul + căutarea din pagină
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { cautator, normal, debitare, sePoatePeJumatate } from '../js/amanunt-calcul.js';
+import { cautator, normal, debitare, sePoatePeJumatate, laBara, arie, rotunjeste } from '../js/amanunt-calcul.js';
 
 const produse = JSON.parse(fs.readFileSync(new URL('../js/catalog/amanunt.json', import.meta.url)));
 assert.ok(produse.length > 500, `prea puţine produse: ${produse.length}`);
@@ -51,4 +51,30 @@ assert.deepEqual(debitare([{ l: 1000, buc: 1 }], 4200, 0, true), { nr: 0.5, rest
 assert.equal(debitare([{ l: 2000, buc: 3 }], 4200, 0, true).nr, 1.5, '3 × 2000: o bară + o jumătate');
 assert.equal(debitare([{ l: 2100, buc: 1 }], 4200, 0, true).nr, 0.5, 'fix cât jumătatea → 0,5');
 assert.equal(debitare([{ l: 3000, buc: 1 }], 4200, 0, true).nr, 1, 'bucata mai lungă decât jumătatea → bară întreagă');
+// modul de facturare (userul, 2026-10-22 — „Toata baza de date 21.10.2026", ultima coloană)
+const fact = cod => produse.find(p => p.cod === cod)?.fact;
+assert.equal(fact('9200'), undefined, '„1" = bucăţi întregi (fără fact)');
+assert.equal(rotunjeste(undefined, 1.5), 2, 'întregi: 1,5 → 2');
+assert.deepEqual(fact('204'), { pas: 0.5 }, 'Profil maner Verona: întreg sau jumătate');
+assert.equal(rotunjeste({ pas: 0.5 }, 1.2), 1.5);
+assert.deepEqual(fact('146'), { pas: 0.5 }, 'Breda negru (gol în fişier) ia regula de la Breda alb mat');
+assert.deepEqual(fact('207'), { procent: 1.15 }, 'Orizontal inferior Confort: lungimea + 15 %');
+assert.deepEqual(fact('142'), { procent: 1.15 }, 'şina dublă Lux negru (gol) ia regula de la crom');
+assert.equal(laBara({ procent: 1.15 }, [{ l: 4000, buc: 1 }], 5800).nr, 1, '4000 / 5800 × 1,15 = 0,79 → 1');
+assert.equal(laBara({ procent: 1.15 }, [{ l: 2000, buc: 1 }], 5800).nr, 0.5, '2000 → 0,40 → 0,5');
+assert.equal(laBara({ procent: 1.15 }, [{ l: 3000, buc: 1 }], 3500).nr, 1, 'cupru: împărţit la bara lui de 3500');
+assert.equal(produse.find(p => p.cod === '294').bara, 3500);
+assert.deepEqual(fact('300').trepte, [[2000, 0.35], [3000, 0.52], [4000, 0.69], [5800, 1]], 'şina UTIL: treptele din configurator');
+assert.equal(laBara(fact('350'), [{ l: 1500, buc: 1 }, { l: 2500, buc: 2 }], 5800).nr, 1.18, 'şina suspendată: 0,28 + 2 × 0,45 —: fiecare bucată după lungimea ei');
+assert.equal(laBara(fact('805'), [{ l: 3500, buc: 1 }], 5800).nr, 1, 'Ocean > 3400 → 1');
+assert.deepEqual(laBara(fact('805'), [{ l: 6000, buc: 1 }], 5800).preaLungi, [6000]);
+assert.deepEqual(fact('440'), { multiplu: 10 });
+assert.equal(rotunjeste(fact('440'), 12), 20, 'colţar Gola: multiplu de 10');
+assert.deepEqual(fact('SEP150'), { multiplu: 6, set: true });
+assert.deepEqual(fact('GG004'), { arie: true }, 'geamul la mp: arie');
+assert.equal(arie([{ h: 2500, l: 450, buc: 3 }]).nr, 3.375, 'exemplul din fişier: 2500 × 450 × 3 = 3,375 mp');
+assert.equal(produse.find(p => p.cod === '800').bara, 3000, '„30000 mm" la usi pliante — bara de 3 m');
+assert.ok(produse.some(p => p.cod === '395') && produse.some(p => p.cod === 'C10Auriu'), 'codurile din fişier intră şi ele');
+assert.equal(produse.find(p => p.cod === '277').denumire, 'Garnitura pentru geam de 4 mm Confort/Usi suspendate cod 277', 'denumirea actualizată');
+
 console.log(`✓ oferta cu amănuntul: ${produse.length} produse (${produse.filter(p => p.bara).length} la bară), căutarea şi debitarea merg`);

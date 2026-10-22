@@ -48,8 +48,9 @@ export function cautator(produse) {
 // care încape" (First Fit Decreasing — aceeaşi ca la divizările aplicate UTIL).
 // `taiere` = lăţimea pânzei: fiecare bucată ia l + taiere, iar bara B + taiere
 // (ultima bucată dintr-o bară nu mai are tăietură după ea).
-// Ce se vinde şi pe jumătate de bară (userul, 2026-10-14): profilele Gola la bară, fără cele cupru.
-export const sePoatePeJumatate = p => !!p.bara && /^gola\b/i.test(p.denumire) && !/cupru/i.test(p.denumire);
+// Ce se vinde şi pe jumătate de bară: „0.5 1" în modul de facturare (scripts/amanunt.mjs; înainte,
+// 2026-10-14, doar profilele Gola fără cupru — fişierul userului din 2026-10-22 spune la fel la Gola).
+export const sePoatePeJumatate = p => !!p.bara && p.fact?.pas === 0.5;
 
 // `peJumatate` (ex. Gola, userul 2026-10-14): bara se vinde şi pe jumătate — o bară
 // începută din care se foloseşte cel mult jumătate se numără 0,5 (restul ei = din jumătate).
@@ -70,4 +71,56 @@ export function debitare(bucati, bara, taiere = 0, peJumatate = false) {
   const jumatate = r => peJumatate && bara - r <= bara / 2;   // bara - r = cât s-a folosit din ea
   return { nr: rest.reduce((s, r) => s + (jumatate(r) ? 0.5 : 1), 0),
     resturi: rest.map(r => Math.max(0, Math.round((jumatate(r) ? r - bara / 2 : r) - taiere))), preaLungi, bucati: toate.length };
+}
+
+// ── Modul de facturare (userul, 2026-10-22) — `fact` pe produs, din scripts/amanunt.mjs ──
+// lipsă = bucăţi întregi · { pas: 0.5 } = întreg sau jumătate · { procent } = lungimea totală / bară × procent,
+// în sus la 0,5 · { trepte: [[max mm, cât], …] } = fiecare bucată după lungimea ei · { multiplu: n } · { arie } = mp.
+const sus = (x, pas) => Math.round(Math.ceil(x / pas - 1e-9) * pas * 1000) / 1000;
+const zecimale = (x, n) => Math.round(x * 10 ** n) / 10 ** n;
+
+// Cantitatea scrisă de mână → cât se facturează („1" = să nu se poată pune 1,5).
+export function rotunjeste(fact, q) {
+  q = +q || 0;
+  if (q <= 0) return 0;
+  if (fact?.arie) return zecimale(q, 3);
+  if (fact?.trepte) return zecimale(q, 2);
+  if (fact?.multiplu) return sus(q, fact.multiplu);
+  return sus(q, fact?.pas ?? (fact?.procent ? 0.5 : 1));
+}
+
+// Bucăţile clientului la un produs vândut la bară, după modul lui de facturare. `intreaga` = „Dă bara
+// întreagă" (doar la cele pe jumătate). Ca debitare(): null când nu e nicio bucată completată.
+export function laBara(fact, bucati, bara, taiere = 0, intreaga = false) {
+  if (!fact?.procent && !fact?.trepte) return debitare(bucati, bara, taiere, fact?.pas === 0.5 && !intreaga);
+  const toate = (bucati ?? [])
+    .flatMap(({ l, buc }) => Array(Math.max(0, Math.floor(+buc || 0))).fill(+l || 0))
+    .filter(l => l > 0)
+    .sort((a, b) => b - a);
+  if (!toate.length) return null;
+  const preaLungi = [...new Set(toate.filter(l => l > bara))];
+  const bune = toate.filter(l => l <= bara);
+  const total = bune.reduce((s, l) => s + l, 0);
+  const nr = fact.procent
+    ? sus(total / bara * fact.procent, 0.5)
+    : zecimale(bune.reduce((s, l) => s + (fact.trepte.find(([max]) => l <= max)?.[1] ?? 1), 0), 2);
+  return { nr, preaLungi, bucati: toate.length, total, resturi: [] };
+}
+
+// Geamul la mp: bucăţile { h, l, buc } în mm → aria. null când nu e nicio bucată completată.
+export function arie(bucati) {
+  const bune = (bucati ?? []).filter(p => +p.h > 0 && +p.l > 0 && +p.buc > 0);
+  if (!bune.length) return null;
+  return { nr: zecimale(bune.reduce((s, p) => s + p.h * p.l * Math.floor(p.buc) / 1e6, 0), 3),
+           bucati: bune.reduce((s, p) => s + Math.floor(p.buc), 0), preaLungi: [], resturi: [] };
+}
+
+// Scurt, lângă UM: cum se facturează produsul (nimic la bucăţile întregi)
+export function textMod(fact, cantitate) {
+  if (fact?.multiplu) return `multiplu de ${fact.multiplu}${fact.set && cantitate > 0 ? ` (${cantitate / fact.multiplu} ${cantitate / fact.multiplu === 1 ? 'set' : 'seturi'})` : ''}`;
+  if (fact?.pas) return 'întreg sau jumătate';
+  if (fact?.procent) return `lungimea + ${Math.round((fact.procent - 1) * 100)} %`;
+  if (fact?.trepte) return 'după lungimea bucăţii';
+  if (fact?.arie) return 'H × L × buc';
+  return '';
 }

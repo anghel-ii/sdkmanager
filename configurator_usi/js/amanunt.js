@@ -1,7 +1,7 @@
 import produse from './catalog/amanunt.json';
 import * as manager from './manager.js';
 import * as cosul from './cos.js';
-import { cautator, debitare, sePoatePeJumatate } from './amanunt-calcul.js';
+import { cautator, laBara, arie, rotunjeste, textMod, sePoatePeJumatate } from './amanunt-calcul.js';
 import { initSugestiiClienti } from './sugestii-clienti.js';
 import { LIVRARE, AGENTI, PLATI, plataText, liniaTransport, campuriLipsa, focusCamp, marcheazaDeCompletat } from './lib/comun/comanda.js';
 import { copyRows } from './lib/comun/clipboard.js';
@@ -32,16 +32,30 @@ const peDenumire = new Map(produse.map(p => [p.denumire, p]));
 let linii = [];
 // Lăţimea pânzei de tăiere, în mm — se pierde la fiecare tăietură. 0 = nu se ţine cont.
 const TAIERE_MM = 0;
-// Produsele vândute şi pe jumătate de bară — cantitatea merge din 0,5 în 0,5 (userul, 2026-10-14):
-// toate profilele Gola la bară, în afară de cele cupru. Pe rând, „Dă bara întreagă" (l.intreaga):
-// clientul ia şi restul barei → bare întregi.
+// Modul de facturare al produsului (`fact`, din „Toata baza de date" — userul, 2026-10-22): bucăţi
+// întregi, întreg sau jumătate, lungime + 15 %, trepte după lungime, multiplu, arie — amanunt-calcul.js.
+const PE_COD = new Map(produse.map(p => [p.cod, p]));
+const mod = l => PE_COD.get(l?.cod)?.fact;
+// rândul are bucăţi de completat sub el: la bară (lungime × buc) sau geamul la mp (H × L × buc)
+const cuBucati = l => !!(l?.bara || mod(l)?.arie);
+// Produsele vândute şi pe jumătate de bară — pe rând, „Dă bara întreagă" (l.intreaga): clientul ia
+// şi restul barei → bare întregi (userul, 2026-10-14).
 const PE_JUMATATE = new Set(produse.filter(sePoatePeJumatate).map(p => p.cod));
-const peJumatate = l => PE_JUMATATE.has(l?.cod) && !l.intreaga;
-const deb = l => (l?.bara ? debitare(l.debitare, l.bara, TAIERE_MM, peJumatate(l)) : null);
-const cantitate = l => deb(l)?.nr ?? (peJumatate(l) ? Math.ceil(l.cantitate * 2) / 2 : l.cantitate);
+const deb = l => (l?.bara ? laBara(mod(l), l.debitare, l.bara, TAIERE_MM, l.intreaga) : mod(l)?.arie ? arie(l.debitare) : null);
+// la fişă: cantităţile îngheţate la salvare, aşa cum au fost
+const cantitate = l => (modFisa ? l.cantitate : deb(l)?.nr ?? rotunjeste(mod(l), l.cantitate));
 const textDebitare = l => {
   const d = deb(l);
-  return d ? `${(l.debitare ?? []).filter(p => +p.l > 0 && +p.buc > 0).map(p => `${p.buc} × ${p.l} mm`).join(', ')} → ${virgula(d.nr)} ${d.nr === 1 ? 'bară' : 'bare'} de ${l.bara} mm${l.intreaga ? ' (ia şi restul barei)' : ''}` : null;
+  if (!d) return null;
+  const peArie = mod(l)?.arie;
+  const piese = (l.debitare ?? []).filter(p => +p.l > 0 && +p.buc > 0 && (!peArie || +p.h > 0));
+  if (peArie) return `${piese.map(p => `${p.buc} × ${p.h} × ${p.l} mm`).join(', ')} → ${virgula(d.nr)} mp`;
+  return `${piese.map(p => `${p.buc} × ${p.l} mm`).join(', ')} → ${virgula(d.nr)} ${d.nr === 1 ? 'bară' : 'bare'} de ${l.bara} mm${l.intreaga ? ' (ia şi restul barei)' : ''}`;
+};
+// UM-ul şi, dedesubt, cum se facturează produsul (nimic la bucăţile întregi)
+const umHtml = l => {
+  const t = l?.cod ? textMod(mod(l), cantitate(l)) : '';
+  return `${esc(l?.um ?? '')}${t ? `<div class="regula">${esc(t)}</div>` : ''}`;
 };
 // livrare / plată / agent — aceeaşi formă ca state.comanda din configurator
 const comanda = { livrare: null, agent: null, plata: null };
@@ -74,7 +88,7 @@ function facturare() {
 const randHtml = (l, i) => {
   const gol = i === linii.length;
   const d = deb(l);
-  return `<tr data-i="${i}"${l?.bara ? ' class="cu-debitare"' : ''}>
+  return `<tr data-i="${i}"${cuBucati(l) ? ' class="cu-debitare"' : ''}>
     <td class="nr">${i + 1}</td>
     <td><input class="produs" value="${esc(l?.denumire ?? '')}" autocomplete="off" spellcheck="false"
          placeholder="${gol ? (i ? 'Încă un produs…' : 'Scrie denumirea sau codul…') : ''}"
@@ -82,31 +96,38 @@ const randHtml = (l, i) => {
     <td class="cod">${celulaCod(l)}</td>
     <td class="num"><input class="cant" type="number" min="0" step="any" inputmode="decimal"
          value="${d ? d.nr : l?.cantitate || ''}"${gol ? ' disabled' : ''}${d ? ' readonly title="Calculat din debitare"' : ''} aria-label="Cantitate"></td>
-    <td class="um">${esc(l?.um ?? '')}</td>
+    <td class="um">${umHtml(l)}</td>
     <td class="x">${gol ? '' : `<button class="sterge" type="button" aria-label="Scoate rândul ${i + 1}">✕</button>`}</td>
-  </tr>${l?.bara ? debitareHtml(l, i) : ''}`;
+  </tr>${cuBucati(l) ? debitareHtml(l, i) : ''}`;
 };
 
 // Sub produsele la bară: bucăţile (lungime × nr. bucăţi) — mereu cu o pereche goală la coadă.
+// La geamul vândut la mp: înălţime × lăţime × nr. bucăţi.
 const debitareHtml = (l, i) => {
-  const piese = l.debitare ?? [];
+  const piese = l.debitare ?? [], peArie = !!mod(l)?.arie;
   return `<tr class="debitare" data-i="${i}"><td></td><td colspan="5"><div class="deb">
-    <span class="deb-titlu">Debitare <span class="dim">· bară de ${l.bara} mm</span></span>
+    <span class="deb-titlu">${peArie ? 'Arie <span class="dim">· înălţime × lăţime × bucăţi</span>' : `Debitare <span class="dim">· bară de ${l.bara} mm</span>`}</span>
     ${PE_JUMATATE.has(l.cod) ? `<button class="deb-intreaga${l.intreaga ? ' activ' : ''}" type="button" aria-pressed="${!!l.intreaga}"
       title="Clientul ia şi restul barei — se facturează bare întregi, nu jumătăţi">${l.intreaga ? '✓ Bara întreagă' : 'Dă bara întreagă'}</button>` : ''}
-    ${[...piese, { l: '', buc: '' }].map((p, k) => piesaHtml(p, k, k < piese.length)).join('')}
+    ${[...piese, { l: '', buc: '' }].map((p, k) => piesaHtml(p, k, k < piese.length, peArie)).join('')}
     <span class="deb-rez">${rezultatHtml(l)}</span></div></td></tr>`;
 };
 const butonX = k => `<button class="deb-x" type="button" aria-label="Scoate bucata ${k + 1}">✕</button>`;
-const piesaHtml = (p, k, cuX) => `<span class="piesa" data-k="${k}">
-      <input class="deb-l" type="number" min="0" step="1" inputmode="numeric" value="${p.l || ''}" placeholder="mm" aria-label="Lungimea bucăţii ${k + 1} (mm)">
+const piesaHtml = (p, k, cuX, cuH = false) => `<span class="piesa" data-k="${k}">
+      ${cuH ? `<input class="deb-h" type="number" min="0" step="1" inputmode="numeric" value="${p.h || ''}" placeholder="H mm" aria-label="Înălţimea bucăţii ${k + 1} (mm)">
+      <span class="dim">×</span>` : ''}
+      <input class="deb-l" type="number" min="0" step="1" inputmode="numeric" value="${p.l || ''}" placeholder="${cuH ? 'L mm' : 'mm'}" aria-label="${cuH ? 'Lăţimea' : 'Lungimea'} bucăţii ${k + 1} (mm)">
       <span class="dim">×</span>
       <input class="deb-b" type="number" min="0" step="1" inputmode="numeric" value="${p.buc || ''}" placeholder="buc" aria-label="Nr. de bucăţi ${k + 1}">
       ${cuX ? butonX(k) : ''}</span>`;
 const rezultatHtml = l => {
-  const d = deb(l);
-  if (!d) return '<span class="dim">scrie lungimea şi nr. de bucăţi — se calculează din câte bare ies</span>';
+  const d = deb(l), f = mod(l);
+  if (!d) return `<span class="dim">${f?.arie ? 'scrie înălţimea, lăţimea şi nr. de bucăţi — se calculează aria'
+    : 'scrie lungimea şi nr. de bucăţi — se calculează din câte bare ies'}</span>`;
   if (d.preaLungi.length) return `<span class="avert">⚠ ${d.preaLungi.join(' / ')} mm nu încape într-o bară de ${l.bara} mm</span>`;
+  if (f?.arie) return `→ <strong>${virgula(d.nr)} mp</strong> <span class="dim">· ${d.bucati} buc</span>`;
+  if (f?.procent) return `→ <strong>${virgula(d.nr)} ${d.nr === 1 ? 'bară' : 'bare'}</strong> <span class="dim">· ${d.bucati} buc · ${d.total} mm + ${Math.round((f.procent - 1) * 100)} %, în sus la jumătate</span>`;
+  if (f?.trepte) return `→ <strong>${virgula(d.nr)} ${d.nr === 1 ? 'bară' : 'bare'}</strong> <span class="dim">· ${d.bucati} buc, fiecare după lungimea ei</span>`;
   return `→ <strong>${virgula(d.nr)} ${d.nr === 1 ? 'bară' : 'bare'}</strong> <span class="dim">· ${d.bucati} buc · rest: ${d.resturi.map(r => `${r} mm`).join(', ')}</span>`;
 };
 const celulaCod = l => (l?.cod ? esc(l.cod) : String(l?.denumire ?? '').trim() ? '<span class="avert">alege din listă</span>' : '');
@@ -175,8 +196,8 @@ const focus = (i, cls) => {
 };
 
 function alege(i, p) {
-  linii[i] = { cod: p.cod, denumire: p.denumire, um: p.um, cantitate: linii[i]?.cantitate || 1,
-               ...(p.bara && { bara: p.bara, debitare: linii[i]?.debitare ?? [] }) };
+  linii[i] = { cod: p.cod, denumire: p.denumire, um: p.um, cantitate: rotunjeste(p.fact, linii[i]?.cantitate || 1),
+               ...(cuBucati(p) && { ...(p.bara && { bara: p.bara }), debitare: linii[i]?.debitare ?? [] }) };
   ascundeSugestii();
   randeaza();
   focus(i, 'cant');
@@ -189,25 +210,28 @@ $('randuri').addEventListener('input', e => {
     const nou = i === linii.length;
     // textul identic cu un produs = ales; altfel rândul n-are încă produs
     const p = peDenumire.get(text);
+    const inainte = cuBucati(linii[i]);
     const { bara, debitare: piese, ...rest } = linii[i] ?? { cantitate: null };
-    linii[i] = { ...rest, denumire: text, cod: p?.cod ?? null, um: p?.um ?? '', ...(p?.bara && { bara: p.bara, debitare: piese ?? [] }) };
-    if (!!bara !== !!p?.bara) { randeaza(); focus(i, 'produs'); arataSugestii(i); return; }   // apare / dispare debitarea
+    linii[i] = { ...rest, denumire: text, cod: p?.cod ?? null, um: p?.um ?? '',
+                 ...(cuBucati(p) && { ...(p.bara && { bara: p.bara }), debitare: piese ?? [] }) };
+    if (inainte !== cuBucati(linii[i])) { randeaza(); focus(i, 'produs'); arataSugestii(i); return; }   // apare / dispare debitarea
     if (nou) { randeaza(); focus(i, 'produs'); }   // apare rândul gol următor
     else {
       const tr = e.target.closest('tr');
       tr.querySelector('.cod').innerHTML = celulaCod(linii[i]);
-      tr.querySelector('.um').textContent = linii[i].um;
+      tr.querySelector('.um').innerHTML = umHtml(linii[i]);
       actualizeaza();
     }
     arataSugestii(i);
   } else if (e.target.classList.contains('cant')) {
     if (faraMinus(e.target)) return;
     linii[i].cantitate = parseFloat(String(e.target.value).replace(',', '.')) || 0;
+    e.target.closest('tr').querySelector('.um').innerHTML = umHtml(linii[i]);
     actualizeaza();
-  } else if (e.target.matches('.deb-l, .deb-b')) {
+  } else if (e.target.matches('.deb-h, .deb-l, .deb-b')) {
     if (faraMinus(e.target)) return;
     const k = +e.target.closest('.piesa').dataset.k, piese = linii[i].debitare;
-    const camp = e.target.classList.contains('deb-l') ? 'l' : 'buc';
+    const camp = e.target.classList.contains('deb-h') ? 'h' : e.target.classList.contains('deb-l') ? 'l' : 'buc';
     // perechea goală de la coadă devine bucată → după ea apare alta goală. Fără să
     // refacă tabelul: refăcut, câmpul s-ar fi refocusat cu cifra selectată şi a doua
     // tastă ar fi înlocuit-o („345" → „45").
@@ -215,16 +239,26 @@ $('randuri').addEventListener('input', e => {
       piese.push({ l: '', buc: '' });
       const piesa = e.target.closest('.piesa');
       piesa.insertAdjacentHTML('beforeend', butonX(k));
-      piesa.insertAdjacentHTML('afterend', piesaHtml({ l: '', buc: '' }, k + 1, false));
+      piesa.insertAdjacentHTML('afterend', piesaHtml({ l: '', buc: '' }, k + 1, false, !!mod(linii[i])?.arie));
     }
     piese[k][camp] = e.target.value;
     // fără să refacă tabelul: doar cantitatea (nr. de bare) şi rezultatul
     const d = deb(linii[i]);
     $('randuri').querySelector(`tr[data-i="${i}"] .cant`).value = d ? d.nr : linii[i].cantitate ?? '';
     $('randuri').querySelector(`tr[data-i="${i}"] .cant`).readOnly = !!d;
+    $('randuri').querySelector(`tr[data-i="${i}"] .um`).innerHTML = umHtml(linii[i]);
     e.target.closest('.deb').querySelector('.deb-rez').innerHTML = rezultatHtml(linii[i]);
     actualizeaza();
   }
+});
+// La ieşirea din câmp, cantitatea scrisă devine cea facturată (userul, 2026-10-22: „dacă e setat 1
+// să nu putem pune la cantitate 1,5") — ca să nu se vadă una şi să se factureze alta.
+$('randuri').addEventListener('change', e => {
+  if (!e.target.classList.contains('cant')) return;
+  const l = linii[rand(e.target)];
+  if (!l?.cod || deb(l)) return;
+  const q = cantitate(l);
+  if (q !== l.cantitate) { l.cantitate = q; e.target.value = q || ''; actualizeaza(); }
 });
 // Cantităţi / lungimi negative nu există (testarea ca începător, 2026-10-13: „-3" trecea,
 // cu doar „1 eroare" fără loc) — câmpul se goleşte şi spunem de ce.
@@ -267,7 +301,11 @@ $('randuri').addEventListener('keydown', e => {
   else if (e.target.classList.contains('cant')) {
     e.preventDefault();
     const i = rand(e.target);
-    if (linii[i]?.bara) focusPe(`tr.debitare[data-i="${i}"] .piesa[data-k="${linii[i].debitare.length}"] .deb-l`); else focus(i + 1, 'produs');
+    if (cuBucati(linii[i])) focusPe(`tr.debitare[data-i="${i}"] .piesa[data-k="${linii[i].debitare.length}"] input`); else focus(i + 1, 'produs');
+  } else if (e.target.classList.contains('deb-h')) {
+    // înălţime goală + Enter = gata cu bucăţile → produsul următor
+    e.preventDefault();
+    if (e.target.value) e.target.closest('.piesa').querySelector('.deb-l').focus(); else focus(rand(e.target) + 1, 'produs');
   } else if (e.target.classList.contains('deb-l')) {
     // lungime goală + Enter = gata cu debitarea → produsul următor
     e.preventDefault();
@@ -277,7 +315,7 @@ $('randuri').addEventListener('keydown', e => {
     e.preventDefault();
     const i = rand(e.target), urm = e.target.closest('.piesa').nextElementSibling;
     // pe perechea goală de la coadă: gata cu debitarea → produsul următor
-    if (urm?.classList.contains('piesa')) urm.querySelector('.deb-l').focus(); else focus(i + 1, 'produs');
+    if (urm?.classList.contains('piesa')) urm.querySelector('input').focus(); else focus(i + 1, 'produs');
   }
 });
 // Enter pe rândul de produs gol (fără sugestii) = gata cu produsele → numele clientului
@@ -541,7 +579,7 @@ function tipareste({ vezi = false } = {}) {
       <tbody>${lines.map((l, k) => { const d = bucatiDebitare(peCod.get(l.cod)); return `<tr><td>${k + 1}</td><td>${esc(l.cod)}</td>
         <td class="produs">${esc(l.denumire)}</td>
         <td class="deb-col">${d ? d.bucati.map(b => `<div>${esc(b)}</div>`).join('') + (d.bara ? `<div class="bara-de">din bare de ${d.bara} mm</div>` : '') : ''}</td>
-        <td class="num">${virgula(l.cantitate)} ${d ? (+l.cantitate === 1 ? 'bară' : 'bare') : esc(l.um)}</td><td class="bifa"></td></tr>`; }).join('')}</tbody>
+        <td class="num">${virgula(l.cantitate)} ${d?.bara ? (+l.cantitate === 1 ? 'bară' : 'bare') : esc(l.um)}</td><td class="bifa"></td></tr>`; }).join('')}</tbody>
     </table>`;
   if (vezi) {
     return arataPrevizualizare(`<!DOCTYPE html><html lang="ro"><head><meta charset="UTF-8"><link rel="stylesheet" href="/fonte.css">
