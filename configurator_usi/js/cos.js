@@ -1,7 +1,7 @@
 import gameJson from './systems/game.json';
 import { copyRows } from './lib/comun/clipboard.js';
 import { qtyText } from './lib/comun/num.js';
-import { pleaca } from './ciorna.js';
+import { pleaca, goleste as golesteCiorna } from './ciorna.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  COŞUL OFERTEI — o ofertă poate avea mai multe produse (userul, 2026-10-01):
@@ -34,6 +34,21 @@ export function citeste() {
 }
 export function scrie(cos) { try { sessionStorage.setItem(CHEIE, JSON.stringify(cos)); } catch { /* fără coş */ } }
 export function goleste() { try { sessionStorage.removeItem(CHEIE); } catch { /* nimic */ } }
+
+// „Goleşte pagina" (după confirmare): produsul de pe ecran iese şi din coş — altfel, deschis din
+// coş (?poz=k), reîncărcarea l-ar aduce înapoi. Fără alte produse (şi fără ofertă modificată /
+// comandă la care se adaugă) se goleşte tot, cu client cu tot. Pagina se redeschide fără ?poz.
+export function golesteEcranul(cos) {
+  if (cos.curent != null) cos.pozitii.splice(cos.curent, 1);
+  cos.curent = null;
+  golesteCiorna();   // după scoatere: „modificat" = mai sunt alte produse nesalvate
+  if (!cos.pozitii.length && !cos.ofertaEditata && !cos.adaugaLa) Object.assign(cos, gol());
+  if (activ()) scrie(cos);
+  const u = new URL(location.href);
+  u.searchParams.delete('poz');
+  u.hash = '';
+  if (u.href === location.href) location.reload(); else location.replace(u.href);
+}
 
 // „Adaugă la comandă" din manager (?adauga=<id>): un coş nou, legat de comanda în lucru —
 // clientul şi livrarea sunt ale ei (pt. fişă), produsele de aici i se adaugă la salvare.

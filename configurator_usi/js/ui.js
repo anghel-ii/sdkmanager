@@ -1489,14 +1489,12 @@ export async function initUI() {
   if (obs) { obs.value = state.observatii ?? ''; obs.addEventListener('input', () => { state.observatii = obs.value; }); }
   // la alegerea unui client din listă, agentul lui trece în selectorul de agent
   initSugestiiClienti(agent => { $('comandaAgent').value = agent; state.comanda.agent = agent; rebuild(); });
-  // CLEAR PAGE — configuraţie nouă de la zero: reîncărcarea paginii (cu acelaşi
-  // ?gama=) readuce exact ecranul iniţial gol, fără stare rămasă pe undeva.
+  // CLEAR PAGE — configuraţie nouă de la zero: pagina se redeschide (cu acelaşi ?gama=, fără ?poz)
+  // pe ecranul iniţial gol; produsul deschis din coş iese şi din coş (cosul.golesteEcranul).
   // cu ceva deja ales, întâi o întrebare — butonul e lângă „Salvează" şi şterge tot ce nu e salvat
   $('btnClear')?.addEventListener('click', () => {
     if (state.system && !confirm('Goleşti pagina? Tot ce ai configurat aici şi n-ai salvat se pierde.')) return;
-    ciorna.goleste();
-    cosul.scrie(cos);
-    location.reload();
+    cosul.golesteEcranul(cos);
   });
 
   applyLimits();
