@@ -537,7 +537,8 @@ export function deschideFisa(client, oferta = null, salvate = null, { vezi = fal
   // nr. ofertei (scris de mână) — rând în tabelul cu livrarea / plata / agentul, la toate gamele (userul, 2026-10-08)
   const nrOferta = document.getElementById('ofertaNr')?.value.trim() || oferta?.numar || '—';
   // …cu eticheta documentului după metoda de plată: Număr ofertă / proformă / factură / bon (userul, 2026-10-22)
-  const etNumar = numarText(detaliiComanda(state).plata);
+  // (fişa unei comenzi din manager: după plata de la salvare — vezi etNumar în ui.js)
+  const etNumar = oferta?.etNumar ?? numarText(detaliiComanda(state).plata);
   // cine a configurat — atelierul ştie pe cine întreabă (userul, 2026-10-22): la fişa unei comenzi cel care a
   // făcut oferta (din manager), altfel cel conectat acum
   const configurat = (oferta && 'configurat' in oferta ? oferta.configurat : stareOferta().utilizator?.nume) || '—';

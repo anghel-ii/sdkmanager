@@ -614,7 +614,7 @@ function tipareste({ vezi = false } = {}) {
     <table class="perechi">
       ${$('clientNume').value.trim() ? `<tr class="client"><td>Client</td><td>${esc($('clientNume').value.trim())}</td></tr>` : ''}${rand('Telefon', $('clientTelefon').value)}${rand('Adresă', $('clientAdresa').value)}
       ${rand('Mod de livrare', comanda.livrare)}${rand('Metodă de plată', plataText(comanda.plata))}${rand('Agent', comanda.agent)}
-      ${rand(numarText(comanda.plata), $('ofertaNr').value.trim())}${rand('Configurat de', configuratDe())}${rand('Observaţii', $('observatii').value.trim())}
+      ${rand(modFisa?.etNumar ?? numarText(comanda.plata), $('ofertaNr').value.trim())}${rand('Configurat de', configuratDe())}${rand('Observaţii', $('observatii').value.trim())}
     </table>
     <table>
       <thead><tr class="margine"><td colspan="6"></td></tr><tr><th>#</th><th>Cod</th><th>Produs</th><th>Debitare</th><th>Cant.</th><th>✓</th></tr></thead>
@@ -676,6 +676,7 @@ const puneClientul = (client, ofertaNr, detalii) => {
       const n = o.pozitii.length;
       modFisa = { numar: `${o.comanda.oferta_nr || o.comanda.numar}${n > 1 ? ` · produsul ${k + 1} din ${n}` : ''}`,
                   configurat: o.comanda.creat_de_nume ?? null,
+                  etNumar: numarText(p.config.comanda?.plata),   // după plata de la salvare, nu cea de la acceptare
                   debitare: new Map((p.linii.necesar ?? []).filter(x => x.debitare).map(x => [x.cod, x.debitare])) };
     }
   } else if (cosul.activ()) {

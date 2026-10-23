@@ -13,7 +13,7 @@ import { geamPermisLux } from './lib/lux/index.js';
 import gameJson from './systems/game.json';
 import { renderRame, syncRame, refreshRame } from './ui_rame.js';
 import { activeazaCampuri } from './campuri.js';
-import { LIVRARE, AGENTI, PLATI, detaliiComanda, detaliiDinManager, dinAcceptare, liniaTransport, campuriLipsa, focusCamp, etichetaNumar, opritDePlata } from './lib/comun/comanda.js';
+import { LIVRARE, AGENTI, PLATI, numarText, detaliiComanda, detaliiDinManager, dinAcceptare, liniaTransport, campuriLipsa, focusCamp, etichetaNumar, opritDePlata } from './lib/comun/comanda.js';
 import { stareRameGoala } from './lib/rame/rame.js';
 import { renderUtil } from './ui_util.js';
 import { initSugestiiClienti } from './sugestii-clienti.js';
@@ -1437,6 +1437,9 @@ export async function initUI() {
       modFisa = {
         numar:  `${o.comanda.oferta_nr || o.comanda.numar}${n > 1 ? ` · produsul ${k + 1} din ${n}` : ''}`,
         configurat: o.comanda.creat_de_nume ?? null,   // pe fişă: pe cine întreabă atelierul
+        // eticheta nr. („Număr ofertă" …) după plata de la salvare — plata aleasă la acceptare schimbă doar
+        // rândul „Metodă de plată" (userul, 2026-10-23)
+        etNumar: numarText(detaliiComanda(poz.config).plata),
         coduri: (o.coduri ?? []).map(cod_bare => ({ cod_bare })),
         client: o.comanda.client_nume ?? '',
         bom: (poz.linii?.necesar ?? []).map(l =>
