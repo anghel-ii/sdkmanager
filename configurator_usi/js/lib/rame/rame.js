@@ -247,8 +247,8 @@ export const stareRameGoala = () => ({
   balama: null, placuta: null, manson: true,
   maner: { randuri: [randManerGol()] },
   ral: '', vopsitCant: 0,
-  // 820 / 822 / 824: schiţele de găurire încărcate (poze sau pagini de PDF, data URL JPEG), tipărite pe
-  // pagina 3 a fişei, câte una pe pagină; cu ele, schiţa desenată de program nu mai apare (userul, 2026-10-23)
+  // 820 / 822 / 824: schiţele de găurire încărcate (poze sau pagini de PDF, data URL JPEG) — pe verso-ul
+  // fişei, în locul schiţei desenate de program, cu tabelele sub ele (userul, 2026-10-23)
   schite: /** @type {string[]} */ ([]),
   livrare: null, agent: null, plata: null,
 });

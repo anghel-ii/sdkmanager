@@ -243,7 +243,7 @@ export function renderRame(box, { rebuild, geamOptionsHtml }) {
         <img src="${s}" alt="Schiţa ${k + 1}"><button type="button" class="rame-schita-sterge" data-k="${k}" title="Şterge schiţa ${k + 1}">✕</button></div>`).join('')}</div>` : ''}
       ${x.schite.length < MAX_SCHITE ? `<div class="rame-schita" id="rameSchita"><span>${x.schite.length
         ? 'Încă o schiţă (JPG / PNG / PDF): trage-o aici sau apasă'
-        : 'Trage aici schiţa (JPG / PNG / PDF) sau apasă ca s-o alegi — se tipăreşte pe pagina 3 a fişei, în locul celei desenate'}</span>
+        : 'Trage aici schiţa (JPG / PNG / PDF) sau apasă ca s-o alegi — pe verso-ul fişei, în locul celei desenate'}</span>
       <input type="file" accept="image/png,image/jpeg,image/webp,application/pdf" multiple hidden></div>` : ''}`)}` : `
     ${x.gaurire === 'Gaurire Standard' ? camp('Manşon', `<div class="segmented mini rame-seg" data-c="manson">
       <button data-v="1"${x.manson ? ' class="active"' : ''}>Cu manşon</button>

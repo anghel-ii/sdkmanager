@@ -419,6 +419,15 @@ function schiteGaurire(spec, rame) {
   return `<div class="schite-gaurire"><div class="gaur-lista" style="grid-template-columns: repeat(${col}, 1fr)">${desene}</div></div>`;
 }
 
+// Schiţele încărcate (poze / pagini de PDF) stau în locul celor desenate, pe verso, cu tabelele sub ele
+// (userul, 2026-10-23: fişa rămâne de 2 pagini). Pornesc mari; scriptul de la load le micşorează cât
+// trebuie ca versoul să încapă pe o foaie.
+function schiteIncarcate(lista) {
+  const col = lista.length <= 1 ? 1 : lista.length <= 4 ? 2 : 3;
+  return `<div class="schite-gaurire"><div class="gaur-lista" style="grid-template-columns: repeat(${col}, 1fr)">${
+    lista.map((s, k) => `<div class="gaur-desen gaur-poza"><img src="${s}" alt="Schiţa de găurire ${k + 1}"></div>`).join('')}</div></div>`;
+}
+
 // ── Codul de bare al comenzii (Code128) — UNUL pe comandă, oricâte uşi / rame
 // (userul, 2026-09-22), cum l-a creat managerul la salvarea ofertei
 // (`oferta.coduri[0]`). Se scanează în atelier la fiecare operaţie (pagina
@@ -754,10 +763,6 @@ export function deschideFisa(client, oferta = null, salvate = null, { vezi = fal
   .fata.intinde { min-height: 296mm; display: flex; flex-direction: column; }
   .fata.intinde .jos { flex: 1; }
   .spate { padding: 6mm; }
-  /* rame 820 / 822 / 824: schiţa de găurire trasă în configurator — pagina 3, cât încape */
-  .pagina3 { page-break-before: always; break-before: page; padding: 6mm; }
-  .pagina3 .antet-mic { font-size: 13px; color: #555; margin-bottom: 4mm; }
-  .pagina3 img { display: block; max-width: 100%; max-height: 270mm; margin: 0 auto; object-fit: contain; }
   /* necesar 75% din lăţime, câmpurile de atelier 25% (userul, 2026-09-21) */
   .jos { align-items: stretch; gap: 3mm; }
   .jos table.necesar-materiale { align-self: flex-start; flex: 0 0 calc(75% - 1.5mm); width: calc(75% - 1.5mm); }
@@ -824,6 +829,8 @@ export function deschideFisa(client, oferta = null, salvate = null, { vezi = fal
   .gaur-rand { color: #666; font-size: 11px; margin-right: 1mm; }
   .gaur-cote { font-size: 11.5px; align-self: stretch; margin-top: 0.5mm; }
   .gaur-desen svg { display: block; margin-top: 2mm; font-family: 'Segoe UI', Arial, sans-serif; }
+  .gaur-poza { padding: 2mm; }
+  .gaur-poza img { display: block; width: 100%; height: auto; max-height: 230mm; object-fit: contain; }
   /* rame: rubricile de observaţii — un rând de 3 căsuţe care umple restul feţei */
   .obs-rame { display: flex; gap: 3mm; min-height: 25mm; margin-top: 3mm; }
   .obs-rame .obs-camp { flex: 1; }
@@ -874,7 +881,7 @@ export function deschideFisa(client, oferta = null, salvate = null, { vezi = fal
     ${rame ? '' : `<div class="antet-mic"><strong>${esc(modelScurt)} — ${esc(finisajLabel)}</strong>${oferta ? ` · <strong>${esc(oferta.numar)}</strong>` : ''}
       ${client ? ` · ${esc(client)}` : ''} · ${acum()}</div>`}
 
-    ${rame && !schiteRame(rame).length ? schiteGaurire(spec, rame) : ''}
+    ${!rame ? '' : schiteRame(rame).length && spec.m?.grup === '820' ? schiteIncarcate(schiteRame(rame)) : schiteGaurire(spec, rame)}
 
     ${tabel(['Cod', 'Denumire', 'Cant.'],
         factura.lines.map(l => `<tr><td>${esc(l.cod)}</td><td>${esc(l.denumire ?? '—')}</td>
@@ -887,11 +894,6 @@ export function deschideFisa(client, oferta = null, salvate = null, { vezi = fal
     ${rame ? necesarSP : schite + notaSchite(sys, spec, factura)}
   </div>
 
-  ${spec.m?.grup === '820' ? schiteRame(rame).map((s, k, toate) => `
-  <div class="pagina3">
-    <div class="antet-mic"><strong>Schiţă de găurire${toate.length > 1 ? ` ${k + 1} / ${toate.length}` : ''} — ${esc(modelScurt)}</strong> · ${esc(client || '—')} · ${esc(etNumar.replace(/^Număr /, ''))} ${esc(nrOferta)}</div>
-    <img src="${s}" alt="Schiţa de găurire ${k + 1}">
-  </div>`).join('') : ''}
 
 <script>
   // După ce se încarcă schiţa (altfel nu i se ştie înălţimea):
@@ -971,7 +973,13 @@ export function deschideFisa(client, oferta = null, salvate = null, { vezi = fal
     // pagină şi strică printul faţă-verso). Cel mult la jumătate, să rămână cotele lizibile.
     var spate = document.querySelector('.spate'), schite = document.querySelectorAll('.gaur-desen svg');
     var foaieSpate = 297 * PX * 0.98;
-    if (spate && schite.length && spate.offsetHeight > foaieSpate) {
+    // cât ocupă conţinutul versoului (nu cutia lui — în previzualizare are oricum o foaie întreagă)
+    var ocupa = function () {
+      var sus = spate.getBoundingClientRect().top, jos = sus;
+      Array.prototype.forEach.call(spate.children, function (c) { jos = Math.max(jos, c.getBoundingClientRect().bottom); });
+      return jos - sus + 6 * PX;   // + marginea de jos (padding 6 mm)
+    };
+    if (spate && schite.length && ocupa() > foaieSpate) {
       var mari = Array.prototype.map.call(schite, function (sv) { return [parseFloat(sv.style.width), parseFloat(sv.style.height)]; });
       // cifrele cotelor nu se micşorează odată cu desenul (pe hârtie rămân ~2,4 mm, nu 1,5)
       var scara = function (f) {
@@ -985,8 +993,16 @@ export function deschideFisa(client, oferta = null, salvate = null, { vezi = fal
         });
       };
       var fMin = 0.5, fMax = 1;
-      for (var t = 0; t < 10; t++) { var f = (fMin + fMax) / 2; scara(f); if (spate.offsetHeight > foaieSpate) fMax = f; else fMin = f; }
+      for (var t = 0; t < 10; t++) { var f = (fMin + fMax) / 2; scara(f); if (ocupa() > foaieSpate) fMax = f; else fMin = f; }
       scara(fMin);
+    }
+    // schiţele încărcate (poze / PDF): la fel, cea mai mare înălţime cu care versoul încape pe o foaie
+    var poze = document.querySelectorAll('.gaur-poza img');
+    if (spate && poze.length && ocupa() > foaieSpate) {
+      var inalt = function (mm) { poze.forEach(function (im) { im.style.maxHeight = mm + 'mm'; }); };
+      var hMin = 40, hMax = 230;
+      for (var u = 0; u < 12; u++) { var h = (hMin + hMax) / 2; inalt(h); if (ocupa() > foaieSpate) hMax = h; else hMin = h; }
+      inalt(Math.floor(hMin));
     }
   });
 </script>
@@ -1001,7 +1017,7 @@ ${vezi ? '' : `<script>
 </script>`}
 </body></html>`;
 
-  if (vezi) return arataPrevizualizare(html, { titlu: `Fişa — ${sys.meta.label}`, pagini: '.fata, .spate, .pagina3' });
+  if (vezi) return arataPrevizualizare(html, { titlu: `Fişa — ${sys.meta.label}`, pagini: '.fata, .spate' });
 
   // Fără filă nouă (cerut): fişa se scrie într-un cadru ascuns din pagina
   // curentă, de lăţimea unei foi A4 (ca măsurătorile de încadrare din fişă să
