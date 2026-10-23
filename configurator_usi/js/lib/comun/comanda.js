@@ -35,6 +35,15 @@ export const detaliiComanda = state => ({
 // alege din nou), peste cele din configuraţia salvată; plăţile vechi (op, factura) nu le înlocuiesc.
 export const detaliiDinManager = c => Object.fromEntries(['livrare', 'plata', 'agent']
   .filter(k => c?.[k] && (k !== 'plata' || plataText(c.plata))).map(k => [k, c[k]]));
+// La „Acceptă comanda / Plată primită … şi printează" fişa se printează ÎNAINTE ca serverul să primească
+// plata, telefonul şi adresa din dialog (fără fişă printată oferta nu intră în lucru) — managerul le trimite
+// în adresa fişei (&plata=&telefon=&adresa=), ca fişa să aibă plata aleasă (userul, 2026-10-23).
+// → câmpurile de pus peste comanda încărcată.
+export const dinAcceptare = params => ({
+  ...(plataText(params.get('plata')) && { plata: params.get('plata') }),
+  ...(params.get('telefon') && { client_telefon: params.get('telefon') }),
+  ...(params.get('adresa') && { client_adresa: params.get('adresa') }),
+});
 
 // Transportul se facturează la TOATE gamele când marfa nu e ridicată personal
 // (userul, 2026-09-25; înainte doar la rame, ca în formularul Excel) — nici la „Curier fara costuri".

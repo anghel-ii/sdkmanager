@@ -13,7 +13,7 @@ import { geamPermisLux } from './lib/lux/index.js';
 import gameJson from './systems/game.json';
 import { renderRame, syncRame, refreshRame } from './ui_rame.js';
 import { activeazaCampuri } from './campuri.js';
-import { LIVRARE, AGENTI, PLATI, detaliiComanda, detaliiDinManager, liniaTransport, campuriLipsa, focusCamp, etichetaNumar, opritDePlata } from './lib/comun/comanda.js';
+import { LIVRARE, AGENTI, PLATI, detaliiComanda, detaliiDinManager, dinAcceptare, liniaTransport, campuriLipsa, focusCamp, etichetaNumar, opritDePlata } from './lib/comun/comanda.js';
 import { stareRameGoala } from './lib/rame/rame.js';
 import { renderUtil } from './ui_util.js';
 import { initSugestiiClienti } from './sugestii-clienti.js';
@@ -1419,6 +1419,7 @@ export async function initUI() {
   // listele îngheţate la salvare; fişa se deschide singură la final.
   if (params.get('fisa')) {
     const o = await oferta.incarcaOferta(params.get('fisa'));
+    if (o.comanda) Object.assign(o.comanda, dinAcceptare(params));   // plata aleasă chiar acum, la acceptare
     // fiecare produs al ofertei are fişa lui (?poz=k), „ca şi cum ar fi comenzi diferite"
     const k = +params.get('poz') || 0, n = o.pozitii?.length ?? 0;
     if (o.pozitii?.[k]?.sistem === 'amanunt') return location.replace('amanunt.html' + location.search);

@@ -21,14 +21,16 @@
     document.head.appendChild(s);
   }
 
-  const cadru = (id, poz, vezi) => {
+  // `extra` = {plata, telefon, adresa} aleşi la acceptare, încă nesalvaţi — fişa îi pune peste ai comenzii
+  const cadru = (id, poz, vezi, extra = {}) => {
     document.getElementById('cadruFisa')?.remove();
     const f = document.createElement('iframe');
     f.id = 'cadruFisa';
     f.setAttribute('aria-hidden', 'true');
     // nu display:none — configuratorul are nevoie de un cadru „viu" (3D, print)
     f.style.cssText = 'position:fixed; left:-10000px; top:0; width:1200px; height:900px; border:0; visibility:hidden';
-    f.src = `/configurator/?fisa=${encodeURIComponent(id)}&poz=${poz}${vezi ? '&vezi=1' : ''}`;
+    const alese = new URLSearchParams(Object.entries(extra).filter(([, v]) => v)).toString();
+    f.src = `/configurator/?fisa=${encodeURIComponent(id)}&poz=${poz}${vezi ? '&vezi=1' : ''}${alese ? '&' + alese : ''}`;
     document.body.appendChild(f);
     return f;
   };
@@ -65,10 +67,10 @@
   }
 
   // Dialogul de print pt. o fişă; null după ce s-a închis dialogul, sau textul erorii.
-  async function printeaza(id, poz = 0) {
+  async function printeaza(id, poz = 0, extra = {}) {
     // „s-a închis dialogul" se ascultă de la început: poate veni şi înaintea lui „fişa e gata"
     const tiparita = mesaj(['fisa-tiparita']);
-    const f = cadru(id, poz, false);
+    const f = cadru(id, poz, false, extra);
     const r = await mesaj(['fisa']);
     if (r.eroare) { f.remove(); return r.eroare; }
     await tiparita;
@@ -81,12 +83,12 @@
   const lista = fise => (Array.isArray(fise) ? fise : Array.from({ length: fise }, (_, k) => k));
 
   // Fişele comenzii (una pe produs), apoi O întrebare. true doar la „Da, am printat".
-  async function printeazaToate(id, fise = 1, buton = null) {
+  async function printeazaToate(id, fise = 1, buton = null, extra = {}) {
     const poz = lista(fise), n = poz.length;
     ocupat(buton, true);
     try {
       for (const k of poz) {
-        const eroare = await printeaza(id, k);
+        const eroare = await printeaza(id, k, extra);
         if (eroare) { await spune(eroare); return false; }
       }
     } finally { ocupat(buton, false); }

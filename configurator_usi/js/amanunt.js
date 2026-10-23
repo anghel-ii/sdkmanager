@@ -3,7 +3,7 @@ import * as manager from './manager.js';
 import * as cosul from './cos.js';
 import { cautator, laBara, arie, rotunjeste, textMod, sePoatePeJumatate } from './amanunt-calcul.js';
 import { initSugestiiClienti } from './sugestii-clienti.js';
-import { LIVRARE, AGENTI, PLATI, plataText, numarText, detaliiDinManager, liniaTransport, campuriLipsa, focusCamp, etichetaNumar, marcheazaDeCompletat, opritDePlata } from './lib/comun/comanda.js';
+import { LIVRARE, AGENTI, PLATI, plataText, numarText, detaliiDinManager, dinAcceptare, liniaTransport, campuriLipsa, focusCamp, etichetaNumar, marcheazaDeCompletat, opritDePlata } from './lib/comun/comanda.js';
 import { copyRows } from './lib/comun/clipboard.js';
 import { qtyText } from './lib/comun/num.js';
 import { dataRo } from './ora.js';
@@ -664,6 +664,7 @@ const puneClientul = (client, ofertaNr, detalii) => {
   }
   if (params.get('fisa')) {
     const o = await manager.incarcaOferta(params.get('fisa'));
+    if (o.comanda) Object.assign(o.comanda, dinAcceptare(params));   // plata aleasă chiar acum, la acceptare
     const k = +params.get('poz') || 0, p = o.pozitii?.[k];
     if (o.eroare || p?.sistem !== 'amanunt') eroare = o.eroare || 'Nu e o ofertă cu amănuntul.';
     else {

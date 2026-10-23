@@ -952,7 +952,9 @@ function leagaTreceri(root, c, dupa, nrFise = 1) {
       $('accOk').disabled = true;
       // fără fişa printată nu intră în lucru (userul, 2026-10-21): întâi printul, apoi „Ai printat?"
       dlg.close();
-      if (!(await Fise.printeazaToate(id, nrFise))) {
+      // plata (şi telefonul / adresa) se salvează abia după print — fişa le primeşte direct de aici
+      if (!(await Fise.printeazaToate(id, nrFise, null,
+          { plata: $('accPlata').value, telefon: $('accTelefon').value.trim(), adresa: $('accAdresa').value.trim() }))) {
         return alerta(`${ePlata ? 'Plata nu s-a confirmat' : 'Comanda nu s-a acceptat'} — fişa nu s-a printat. Rămâne ${ePlata ? 'la „Aşteaptă plata"' : 'ofertă'}.`);
       }
       const rr = await api(`/api/comenzi/${id}/accepta`, { method: 'POST',
