@@ -758,6 +758,9 @@ async function main() {
       (await livr('Cu masina noastra')).stare === 200 && transport() === 1
       && db2().prepare('SELECT livrare FROM comanda WHERE id = ?').get(pid).livrare === 'Cu masina noastra'
       && JSON.parse(db2().prepare('SELECT config_json FROM pozitie WHERE comanda_id = ?').get(pid).config_json).comanda.livrare === 'Cu masina noastra');
+    verifica('… → Curier fara costuri: prin curier, dar transportul iese din facturare', (await livr('Curier fara costuri')).stare === 200 && transport() === 0
+      && db2().prepare('SELECT livrare FROM comanda WHERE id = ?').get(pid).livrare === 'Curier fara costuri');
+    verifica('… → Curier ramburs: transportul revine', (await livr('Curier ramburs')).stare === 200 && transport() === 1);
     verifica('… → Ridicare personala: transportul iese din facturare', (await livr('Ridicare personala')).stare === 200 && transport() === 0);
     verifica('livrarea unei oferte → 409 (se schimbă din „Modifică oferta")',
       (await cer('POST', `/api/comenzi/${oc.date.comanda.id}/livrare`, { livrare: 'Curier ramburs' })).stare === 409);

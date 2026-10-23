@@ -469,7 +469,9 @@ function detaliu(ctx) {
 // se schimbă din „Modifică oferta". Odată cu el se potrivesc: linia de transport din facturare
 // (o dată pe comandă, pe prima poziţie — ca în configurator, cos.js transportOData; la „Ridicare
 // personala" nu se facturează) şi livrarea din configuraţiile salvate (de acolo o ia fişa).
-const LIVRARI = ['Ridicare personala', 'Curier ramburs', 'Curier op avans', 'Curier op la termen', 'Cu masina noastra'];
+const LIVRARI = ['Ridicare personala', 'Curier ramburs', 'Curier op avans', 'Curier op la termen', 'Curier fara costuri', 'Cu masina noastra'];
+// fără transport facturat (ca FARA_TRANSPORT din configurator, lib/comun/comanda.js)
+const FARA_TRANSPORT = ['Ridicare personala', 'Curier fara costuri'];
 const TRANSPORT = { cod: 'CHLTTRMANIP', denumire: 'Cheltuieli de Transport si Manipulare', um: 'buc', cantitate: 1 };
 // Livrarea şi / sau adresa unei comenzi în lucru / care aşteaptă plata (userul, 2026-10-08; adresa 2026-10-19).
 // { livrare?, adresa? } — ce lipseşte rămâne. O schimbare ţine minte când (livrare_modificata_la): dacă fişa
@@ -499,7 +501,7 @@ async function schimbaLivrare(ctx) {
     if (!poz.length) return;
     const ids = poz.map(p => p.id), semne = ids.map(() => '?').join(',');
     const are = d.prepare(`SELECT 1 FROM pozitie_linie WHERE lista = 'facturare' AND cod = ? AND pozitie_id IN (${semne})`).get(TRANSPORT.cod, ...ids);
-    const trebuie = livrare !== 'Ridicare personala';
+    const trebuie = !FARA_TRANSPORT.includes(livrare);
     if (are && !trebuie) d.prepare(`DELETE FROM pozitie_linie WHERE lista = 'facturare' AND cod = ? AND pozitie_id IN (${semne})`).run(TRANSPORT.cod, ...ids);
     if (!are && trebuie) {
       const idx = (d.prepare("SELECT MAX(idx) AS m FROM pozitie_linie WHERE pozitie_id = ? AND lista = 'facturare'").get(ids[0]).m ?? 0) + 1;

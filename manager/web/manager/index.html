@@ -316,7 +316,9 @@ const deCine = (nume, cand) => (nume ? `${esc(nume)} · ` : '') + dataOra(cand);
 
 // (op / factura = modalităţi vechi, doar pt. comenzile de dinainte de 2026-09-28)
 // modurile de livrare — aceleaşi ca în configurator (configurator_usi/js/lib/comun/comanda.js LIVRARE)
-const LIVRARI = ['Ridicare personala', 'Curier ramburs', 'Curier op avans', 'Curier op la termen', 'Cu masina noastra'];
+const LIVRARI = ['Ridicare personala', 'Curier ramburs', 'Curier op avans', 'Curier op la termen', 'Curier fara costuri', 'Cu masina noastra'];
+// fără transport facturat (ca FARA_TRANSPORT din configurator) — „Curier fara costuri": prin curier, transportul nu se facturează
+const FARA_TRANSPORT = ['Ridicare personala', 'Curier fara costuri'];
 const PLATI = { oferta: 'Ofertă', proforma: 'Factură proformă', proforma_amanunt: 'Factură proformă cu amănuntul', fiscala: 'Factură fiscală',
                 bon: 'Bon fiscal', avans: 'Factură de avans', op: 'OP (ordin de plată)', factura: 'Factură' };
 const PLATI_SCURT = { ...PLATI, proforma_amanunt: 'Proformă amănunt', op: 'OP' };   // în coloana din listă
@@ -1190,9 +1192,9 @@ async function renderDetaliu(id) {
       e.preventDefault();
       const livrare = $('livNoua').value, adresa = $('livAdresa').value.trim();
       if (livrare === c.livrare && adresa === (c.client_adresa ?? '')) return dlg.close();   // nimic schimbat
-      // transportul se facturează la orice livrare în afară de ridicarea personală
-      const transport = (livrare === 'Ridicare personala') !== (c.livrare === 'Ridicare personala');
-      if (transport && !(await confirma(`Livrarea devine „${livrare}" — ${livrare === 'Ridicare personala'
+      // transportul se facturează la orice livrare în afară de ridicarea personală şi „Curier fara costuri"
+      const transport = FARA_TRANSPORT.includes(livrare) !== FARA_TRANSPORT.includes(c.livrare);
+      if (transport && !(await confirma(`Livrarea devine „${livrare}" — ${FARA_TRANSPORT.includes(livrare)
         ? 'linia de transport se scoate din facturare' : 'se adaugă linia de transport în facturare'}.${c.factura_nr
         ? ' Atenţie: comanda e deja facturată — verifică factura.' : ''} Continui?`))) return;
       $('livOk').disabled = true;

@@ -30,6 +30,8 @@ INSERT INTO articol (cod, denumire, grosime, oglinda) VALUES
   ('OVI002', 'Geam parsol GRI de 4mm, securizat cod:OVI002', 4, 0),
   ('CS003', 'Geam GRI 4mm slefuit perimetral CS', 4, 0),
   ('OVI004', 'Geam FLOAT de 4mm, securizat cod:OVI004', 4, 0),
+  -- userul, 2026-10-23: float 4 mm NEsecurizat (încă nu e în exportul NeoManager — denumirea după OVI004)
+  ('OVI015', 'Geam FLOAT de 4mm, nesecurizat cod:OVI015', 4, 0),
   ('GG004', 'Geam float transparent 4mm GG', 4, 0),
   ('HD007', 'Geam float transparent 4mm HD', 4, 0),
   ('HD008', 'Geam float transparent 4mm HD slefuit perimetral', 4, 0),

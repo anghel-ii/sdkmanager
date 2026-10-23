@@ -78,9 +78,9 @@ export const GAURIRE_820 = [FARA_GAURIRE, DOUA_GAURI, '100 mm sus/jos si la mijl
 export const GAURIRE_831 = ['Fara gaurire', 'Gaurire Standard'];
 export const SCHITA_CLIENT = 'vezi schita pe spate';
 // Geamul pe care îl montăm noi (userul, 2026-10-20): la 820/822/824 orice sticlă / oglindă de 4 mm;
-// la 831/841/842 doar cea de 4 mm şlefuită sau securizată.
+// la 831/841/842 doar cea de 4 mm şlefuită sau securizată („nesecurizat" — ex. OVI015 — nu).
 export const geamPermisRame = model => g => !!g && g.grosime === 4
-  && (MODELE_RAME[model]?.grup === '820' || /slefuit|securizat/i.test(g.denumire));
+  && (MODELE_RAME[model]?.grup === '820' || /slefuit|(?<!ne)securizat/i.test(g.denumire));
 
 // Cotele găurilor de balama pe o ramă, de SUS în jos, în mm (la centrul găurii) —
 // pt. schiţa de găurire de pe verso (CNC). Prima şi ultima la 100 mm de margini,

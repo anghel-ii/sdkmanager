@@ -6,7 +6,10 @@
 //  pleacă la manager în coloanele comenzii.
 // ═══════════════════════════════════════════════════════════════════════════
 
-export const LIVRARE = ['Ridicare personala', 'Curier ramburs', 'Curier op avans', 'Curier op la termen', 'Cu masina noastra'];
+export const LIVRARE = ['Ridicare personala', 'Curier ramburs', 'Curier op avans', 'Curier op la termen', 'Curier fara costuri', 'Cu masina noastra'];
+// fără transport facturat: ridicarea personală şi „Curier fara costuri" (trimitem prin curier, dar nu
+// facturăm transportul — userul, 2026-10-23). Aceeaşi listă în manager (server/api/comenzi.js, web/manager).
+export const FARA_TRANSPORT = ['Ridicare personala', 'Curier fara costuri'];
 export const AGENTI = ['Birou', 'Site', 'Serban Dragos', 'Bondrea Oliver', 'Coroma Ciprian',
                        'Cucolas Catalin', 'Moise Razvan', 'Tanvuia Adrian'];
 // Metodele de plată — aceleaşi coduri ca PLATI din manager/server/api/comenzi.js („Ofertă" — userul, 2026-10-22)
@@ -34,11 +37,11 @@ export const detaliiDinManager = c => Object.fromEntries(['livrare', 'plata', 'a
   .filter(k => c?.[k] && (k !== 'plata' || plataText(c.plata))).map(k => [k, c[k]]));
 
 // Transportul se facturează la TOATE gamele când marfa nu e ridicată personal
-// (userul, 2026-09-25; înainte doar la rame, ca în formularul Excel).
+// (userul, 2026-09-25; înainte doar la rame, ca în formularul Excel) — nici la „Curier fara costuri".
 const TRANSPORT = { cod: 'CHLTTRMANIP', denumire: 'Cheltuieli de Transport si Manipulare', um: 'buc', cantitate: 1 };
 export const liniaTransport = state => {
   const livrare = detaliiComanda(state).livrare;
-  return livrare && livrare !== 'Ridicare personala' ? TRANSPORT : null;
+  return livrare && !FARA_TRANSPORT.includes(livrare) ? TRANSPORT : null;
 };
 
 // Ce mai trebuie completat ca oferta să se poată salva (userul, 2026-10-05): numele

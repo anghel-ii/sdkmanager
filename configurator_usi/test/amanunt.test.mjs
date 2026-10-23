@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { cautator, normal, debitare, sePoatePeJumatate, laBara, arie, rotunjeste } from '../js/amanunt-calcul.js';
+import { liniaTransport, LIVRARE } from '../js/lib/comun/comanda.js';
 
 const produse = JSON.parse(fs.readFileSync(new URL('../js/catalog/amanunt.json', import.meta.url)));
 assert.ok(produse.length > 500, `prea puţine produse: ${produse.length}`);
@@ -76,5 +77,13 @@ assert.equal(arie([{ h: 2500, l: 450, buc: 3 }]).nr, 3.375, 'exemplul din fişie
 assert.equal(produse.find(p => p.cod === '800').bara, 3000, '„30000 mm" la usi pliante — bara de 3 m');
 assert.ok(produse.some(p => p.cod === '395') && produse.some(p => p.cod === 'C10Auriu'), 'codurile din fişier intră şi ele');
 assert.equal(produse.find(p => p.cod === '277').denumire, 'Garnitura pentru geam de 4 mm Confort/Usi suspendate cod 277', 'denumirea actualizată');
+
+// transportul (la toate gamele): nu la ridicare personală şi nici la „Curier fara costuri" (userul, 2026-10-23)
+const transport = livrare => liniaTransport({ comanda: { livrare } })?.cod ?? null;
+assert.ok(LIVRARE.includes('Curier fara costuri'), '„Curier fara costuri" e în lista de livrări');
+assert.equal(transport('Curier fara costuri'), null, 'curier fără costuri → fără transport facturat');
+assert.equal(transport('Ridicare personala'), null, 'ridicare personală → fără transport');
+assert.equal(transport('Curier ramburs'), 'CHLTTRMANIP', 'curier ramburs → transport');
+assert.equal(transport('Cu masina noastra'), 'CHLTTRMANIP', 'maşina noastră → transport');
 
 console.log(`✓ oferta cu amănuntul: ${produse.length} produse (${produse.filter(p => p.bara).length} la bară), căutarea şi debitarea merg`);

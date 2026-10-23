@@ -27,6 +27,7 @@ import { systems } from '../js/systems/registry.js';
 import { initBuilder, buildConfig, currentSpec, currentBom, currentBilling,
          currentClientPanels, currentSticla, finishesOf } from '../js/builder.js';
 import { cotaGauri, randGol, geamPermisRame } from '../js/lib/rame/rame.js';
+import { geamPermisLux } from '../js/lib/lux/index.js';
 import catalog from '../js/catalog/catalog.generated.json';
 
 const FISIER = new URL('./referinta.json', import.meta.url);
@@ -438,6 +439,9 @@ for (const sys of Object.values(systems).filter(s => s.meta.family === 'suspenda
   verifica(p820(geam('GG004')) && p820(geam('GG001')) && !catalog.geam.filter(g => g.grosime !== 4).some(p820), '820: orice 4 mm, nimic altceva');
   verifica(p841(geam('HD008')) && p841(geam('CS001')) && p841(geam('HD002')) && !p841(geam('GG004')) && !p841(geam('GG001')),
     '841: doar 4 mm şlefuit / securizat');
+  // OVI015 — float 4 mm NEsecurizat (userul, 2026-10-23): „nesecurizat" nu e „securizat"
+  verifica(!!geam('OVI015') && p820(geam('OVI015')) && !p841(geam('OVI015')) && !geamPermisLux(geam('OVI015')),
+    'OVI015: la 820 da, la 831/841/842 nu (nesecurizat), la LUX nu (transparent)');
   console.log('✓ rame: nr. de găuri obligatoriu (0 = fără), sticla permisă pe model (820: 4 mm; 831/841/842: 4 mm şlefuit / securizat)');
 }
 

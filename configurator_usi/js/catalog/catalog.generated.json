@@ -6791,6 +6791,13 @@
       "activ": 1
     },
     {
+      "cod": "OVI015",
+      "denumire": "Geam FLOAT de 4mm, nesecurizat cod:OVI015",
+      "grosime": 4,
+      "oglinda": 0,
+      "activ": 1
+    },
+    {
       "cod": "TG 004",
       "denumire": "Geam transparent de 8 mm Securizat TG",
       "grosime": 8,
