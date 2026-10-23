@@ -395,6 +395,8 @@ const stareRand = c => (c.tip === 'comanda' ? (c.finalizat_la ? 'finalizata' : '
 // utilizatorul logat (/api/eu) — rolul decide ce butoane apar. Serverul verifică
 // oricum: „birou" nu poate schimba / anula un nr. de factură deja trecut.
 let eu = null;
+// „Modifică comanda" (userul, 2026-10-23): o comandă în lucru se redeschide în configurator, ca oferta
+const MODIFICA_COMANDA = 'Deschide comanda în configurator — la salvare se printează din nou doar fişele produselor schimbate';
 const poateAnulaFactura = () => eu?.rol === 'admin' || eu?.rol === 'conducere';
 // schimbarea nr. facturii cerută de birou (server/cereri.js) — aşteaptă conducerea / a fost respinsă
 const schimbareFactura = (c, r) => (r?.stare === 'deschisa'
@@ -784,7 +786,7 @@ function cardDetalii({ comanda: c, cerere, cerereFactura, pozitii, sticlaLinii =
         ? pozitii.map((p, k) => `<button class="cc-fisa" data-poz="${k}" title="Vezi fişa produsului ${k + 1}: ${esc(p.eticheta)}">👁 Fişa ${esc(fise[k])}</button>`).join('')
         : '<button class="cc-fisa" data-poz="0" title="Vezi fişa (previzualizare)">👁 Vezi fişa</button>'}
       ${butoanePrint(c, printari, pozitii.length, fise)}
-      ${eOferta && !c.anulat ? '<button id="ccModifica">Modifică oferta</button>' : ''}
+      ${(eOferta || eComanda && !c.finalizat_la) && !c.anulat ? `<button id="ccModifica" title="${eComanda ? MODIFICA_COMANDA : 'Deschide oferta în configurator'}">Modifică ${eComanda ? 'comanda' : 'oferta'}</button>` : ''}
       ${eComanda && !c.finalizat_la && !c.anulat ? '<button data-adauga-la>+ Adaugă la comandă</button>' : ''}
     </div>
     ${treceri ? `<div class="cc-butoane cc-treceri">${treceri}</div>` : ''}
@@ -1105,7 +1107,7 @@ async function renderDetaliu(id) {
         ? pozitii.map((p, k) => `<button class="fisa-poz" data-poz="${k}" title="Vezi fişa produsului ${k + 1}: ${esc(p.eticheta)}">👁 Fişa ${esc(fise[k])}</button>`).join('')
         : '<button id="fisaDetaliu" title="Vezi fişa (previzualizare)">👁 Vezi fişa</button>'}
       ${butoanePrint(c, printari, pozitii.length, fise)}
-      ${eOferta && !c.anulat ? '<button id="modifica">Modifică oferta</button>' : ''}
+      ${(eOferta || eComanda && !c.finalizat_la) && !c.anulat ? `<button id="modifica" title="${eComanda ? MODIFICA_COMANDA : 'Deschide oferta în configurator'}">Modifică ${eComanda ? 'comanda' : 'oferta'}</button>` : ''}
       ${eComanda && !c.finalizat_la && !c.anulat ? '<button class="primar" data-adauga-la>+ Adaugă la comandă</button>' : ''}
       ${butoaneTreceri(c, minuteInapoi(c))}
       <button id="taskNou" title="Un task / reminder legat de comanda asta">+ Task</button>

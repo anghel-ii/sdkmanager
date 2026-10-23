@@ -86,7 +86,8 @@ export async function salveaza({ nume, telefon, adresa, email, observatii, detal
   const date = await r.json().catch(() => ({}));
   if (!r.ok) return { eroare: date.eroare || `Trimiterea a eşuat (${r.status}).` };
 
-  return { ok: true, comanda: date.comanda };
+  // la o comandă în lucru modificată şi `pozitii` (fişele de printat din nou) + `sticlaRamasa`
+  return { ok: true, ...date };
 }
 
 // „Adaugă la comandă" (comandă în lucru): produsele se pun după cele existente.

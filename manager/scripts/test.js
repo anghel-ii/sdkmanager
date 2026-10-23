@@ -346,8 +346,7 @@ async function main() {
 
   const s2 = (await cer('GET', '/api/sumar')).date;
   verifica('sumarul urmăreşte acceptarea', s2.oferte === 1 && s2.comenzi === 1, JSON.stringify(s2));
-  verifica('comanda acceptată nu se mai modifică', (await cer('PUT', `/api/comenzi/${id}`, {
-    client: { nume: 'Y' }, pozitii: [pozitie('confortGamma', 'G', 1, 1200)] })).stare === 409);
+  // (o comandă în lucru se modifică — „Modifică comanda", testat mai jos; finalizată nu)
   // `cer` parsează singur răspunsurile application/json — game.json vine cu
   // content-type corect, deci `.date` e deja obiect.
   const gj = (await cer('GET', '/configurator/game.json')).date;
@@ -1088,6 +1087,73 @@ async function main() {
     verifica('printările unei comenzi inexistente → 404', (await cer('GET', '/api/comenzi/999999/fise')).stare === 404);
     verifica('pagina /cereri se serveşte', String((await cer('GET', '/cereri')).date).includes('<title>Cereri</title>'));
     verifica('/admin află ultimul backup', 'backup' in (await cer('GET', '/api/actualizare')).date);
+  }
+
+  console.log('\nModifică comanda (în lucru) — produsele neschimbate îşi păstrează fişa şi sticla');
+  {
+    const cuSticla = (latime, sticla = 'GG004') => ({ ...pozitie('confortGamma', 'Confort Gamma', 1, latime),
+      linii: { ...pozitie('confortGamma', 'Confort Gamma', 1, latime).linii,
+        sticla: [{ cod: sticla, denumire: `Geam ${sticla}`, um: 'buc', cantitate: 1, debitare: '1000 × 500 mm' }] } });
+    const corp = pozitii => ({ client: { nume: 'Client Modific', telefon: '0700', adresa: 'X' }, detalii: { livrare: 'Ridicare personala' },
+      ofertaNr: 'MC-1', pozitii });
+    const id = (await cer('POST', '/api/comenzi', corp([cuSticla(1200), cuSticla(1500)]))).date.comanda.id;
+    await cer('POST', `/api/comenzi/${id}/accepta`, { plata: 'fiscala', telefon: '0700', adresa: 'X' });
+    const pozitii = () => db2().prepare('SELECT id, idx, latime FROM pozitie WHERE comanda_id = ? ORDER BY idx').all(id);
+    const sticla = () => db2().prepare(`SELECT l.cod, l.comandat_la, p.idx FROM pozitie_linie l JOIN pozitie p ON p.id = l.pozitie_id
+      WHERE p.comanda_id = ? AND l.lista = 'sticla' ORDER BY p.idx`).all(id);
+    const fise = () => db2().prepare('SELECT poz FROM fisa_printare WHERE comanda_id = ? ORDER BY poz').all(id).map(f => f.poz).join();
+    const cod = () => db2().prepare('SELECT a.cod_bare, p.idx FROM usa a JOIN pozitie p ON p.id = a.pozitie_id WHERE p.comanda_id = ?').get(id);
+    const linieA = db2().prepare(`SELECT l.id FROM pozitie_linie l JOIN pozitie p ON p.id = l.pozitie_id
+      WHERE p.comanda_id = ? AND l.lista = 'sticla' AND p.idx = 1`).get(id).id;
+    await cer('POST', '/api/sticla/comanda', { ids: [linieA] });
+    await cer('POST', `/api/comenzi/${id}/fisa`, { poz: 0 });
+    await cer('POST', `/api/comenzi/${id}/fisa`, { poz: 1 });
+    const inainte = pozitii(), codInainte = cod();
+
+    const r1 = await cer('PUT', `/api/comenzi/${id}`, corp([cuSticla(1200), cuSticla(1500)]));
+    verifica('comanda în lucru se modifică → 200', r1.stare === 200, JSON.stringify(r1.date));
+    verifica('nimic schimbat → nicio fişă de printat, aceleaşi rânduri', r1.date.pozitii?.length === 0
+      && JSON.stringify(pozitii()) === JSON.stringify(inainte) && fise() === '0,1', JSON.stringify([r1.date, pozitii(), fise()]));
+    verifica('… rămâne comandă în lucru, cu plata ei', (await cer('GET', `/api/comenzi/${id}`)).date.comanda.tip === 'comanda'
+      && db2().prepare('SELECT plata FROM comanda WHERE id = ?').get(id).plata === 'fiscala');
+
+    const r2 = await cer('PUT', `/api/comenzi/${id}`, corp([cuSticla(1200), cuSticla(1600)]));
+    verifica('al doilea produs schimbat → doar fişa lui de printat', JSON.stringify(r2.date.pozitii) === '[1]' && fise() === '0'
+      && pozitii()[0].id === inainte[0].id && pozitii()[1].latime === 1600, JSON.stringify([r2.date, fise(), pozitii()]));
+    verifica('… sticla comandată a primului rămâne comandată', sticla()[0].comandat_la && !sticla()[1].comandat_la);
+    verifica('… codul de bare rămâne pe primul produs', JSON.stringify(cod()) === JSON.stringify(codInainte));
+
+    const r3 = await cer('PUT', `/api/comenzi/${id}`, corp([cuSticla(1300), cuSticla(1600)]));
+    verifica('primul schimbat, aceeaşi sticlă → sticla rămâne comandată (pe rândul nou)', JSON.stringify(r3.date.pozitii) === '[0]'
+      && !!sticla()[0].comandat_la && !r3.date.sticlaRamasa.length, JSON.stringify([r3.date, sticla()]));
+    verifica('… codul de bare trece pe noul prim produs', cod()?.cod_bare === codInainte.cod_bare && cod().idx === 1);
+
+    const r4 = await cer('PUT', `/api/comenzi/${id}`, corp([cuSticla(1300, 'GG006'), cuSticla(1600)]));
+    verifica('sticlă schimbată după comandare → anunţată în răspuns', r4.date.sticlaRamasa?.length === 1 && r4.date.sticlaRamasa[0].cod === 'GG004'
+      && !sticla().some(l => l.comandat_la), JSON.stringify(r4.date));
+
+    await cer('POST', `/api/comenzi/${id}/fisa`, { poz: 0 });
+    await cer('POST', `/api/comenzi/${id}/fisa`, { poz: 1 });
+    // doar livrarea schimbată (în config.comanda + transportul pe primul) → produsele rămân, fişele la fel
+    const transport = { cod: 'CHLTTRMANIP', denumire: 'Transport', um: 'buc', cantitate: 1 };
+    const cuLivrare = p => ({ ...p, config: { ...p.config, comanda: { livrare: 'Cu masina noastra' } } });
+    const a = cuLivrare(cuSticla(1300, 'GG006')), b = cuLivrare(cuSticla(1600));
+    a.linii = { ...a.linii, facturare: [...a.linii.facturare, transport] };
+    const r45 = await cer('PUT', `/api/comenzi/${id}`, { ...corp([a, b]), detalii: { livrare: 'Cu masina noastra' } });
+    const transportPe = db2().prepare(`SELECT p.idx FROM pozitie_linie l JOIN pozitie p ON p.id = l.pozitie_id
+      WHERE p.comanda_id = ? AND l.cod = 'CHLTTRMANIP'`).all(id).map(x => x.idx).join();
+    verifica('doar livrarea schimbată → nicio fişă de printat, transportul pe primul', JSON.stringify(r45.date.pozitii) === '[]' && fise() === '0,1'
+      && transportPe === '1', JSON.stringify([r45.date, fise(), transportPe]));
+    // (ca la „Modifică livrarea": fişele printate înainte de ora asta se completează de mână)
+    verifica('… livrarea schimbată se ţine minte', !!db2().prepare('SELECT livrare_modificata_la FROM comanda WHERE id = ?').get(id).livrare_modificata_la);
+    const r5 = await cer('PUT', `/api/comenzi/${id}`, corp([cuSticla(1600)]));
+    verifica('primul scos → al doilea (neschimbat) trece primul, cu fişa lui', JSON.stringify(r5.date.pozitii) === '[]' && fise() === '0'
+      && pozitii().length === 1 && pozitii()[0].latime === 1600 && cod()?.idx === 1, JSON.stringify([r5.date, fise(), pozitii()]));
+    const act = (await cer('GET', `/api/comenzi/${id}/activitate`)).date.randuri ?? [];
+    verifica('jurnal: „Comandă modificată", cu fişele de printat din nou', act.some(x => x.operatie === 'Comandă modificată' && /fişa 2/.test(x.detalii ?? ''))
+      && act.some(x => x.operatie === 'Comandă modificată' && /sticlă comandată scoasă: GG004/.test(x.detalii ?? '')), JSON.stringify(act.map(x => [x.operatie, x.detalii])));
+    await cer('POST', `/api/comenzi/${id}/finalizeaza`);
+    verifica('comanda finalizată nu se mai modifică → 409', (await cer('PUT', `/api/comenzi/${id}`, corp([cuSticla(1600)]))).stare === 409);
   }
 
   console.log('\nSchimbarea nr. facturii — biroul o cere, conducerea o aprobă (server/cereri.js)');

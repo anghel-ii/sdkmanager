@@ -111,3 +111,6 @@ const confirmaMailTrimis = (furnizor, buc) => intreabaObligatoriu(
   `Ai trimis mailul către ${furnizor.nume}${furnizor.email ? ` (${furnizor.email})` : ''}? — ${buc} buc de sticlă.\n\n` +
   'Dacă l-ai trimis, sticla apare comandată de tine, cu ora de acum.',
   'Da, am trimis — marchează comandată', 'Nu, n-am trimis');
+
+// şi pt. configurator (module ES): `const` de aici nu ajunge singur pe `window`
+Object.assign(window, { alerta, confirma, intreabaObligatoriu, cereText });

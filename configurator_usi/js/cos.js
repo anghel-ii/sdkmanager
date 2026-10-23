@@ -1,7 +1,7 @@
 import gameJson from './systems/game.json';
 import { copyRows } from './lib/comun/clipboard.js';
 import { qtyText } from './lib/comun/num.js';
-import { pleaca, goleste as golesteCiorna } from './ciorna.js';
+import { pleaca, gata as gataCiorna, goleste as golesteCiorna } from './ciorna.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  COŞUL OFERTEI — o ofertă poate avea mai multe produse (userul, 2026-10-01):
@@ -18,6 +18,7 @@ import { pleaca, goleste as golesteCiorna } from './ciorna.js';
 //          client: { nume, telefon, adresa }, ofertaNr, comanda: { livrare, plata, agent },
 //          ofertaEditata: id | null, numar, adaugaLa: { id, numar } | null }
 //  adaugaLa = „Adaugă la comandă" din manager: produsele se ADAUGĂ la o comandă în lucru.
+//  comandaEditata = „Modifică comanda" (o comandă în lucru, nu o ofertă): { facturata: nr. facturii | null }.
 //  ciornaId = ciorna reluată (ciorna.js); modificat = ceva nesalvat pe paginile de dinainte.
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -26,7 +27,7 @@ const $ = id => document.getElementById(id);
 const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 const gol = () => ({ pozitii: [], curent: null, client: {}, ofertaNr: '', comanda: {}, ofertaEditata: null, numar: null, adaugaLa: null,
-             ciornaId: null, modificat: false });
+             comandaEditata: null, ciornaId: null, modificat: false });
 export const activ = () => new URLSearchParams(location.search).has('cos');
 export function citeste() {
   if (!activ()) return gol();
@@ -133,7 +134,32 @@ export function dinOferta(o, gamaDin) {
     client: { nume: o.comanda.client_nume ?? '', telefon: o.comanda.client_telefon ?? '', adresa: o.comanda.client_adresa ?? '' },
     ofertaNr: o.comanda.oferta_nr ?? '',
     comanda: { livrare: o.comanda.livrare ?? null, plata: o.comanda.plata ?? null, agent: o.comanda.agent ?? null },
-    ofertaEditata: o.comanda.id, numar: o.comanda.oferta_nr || o.comanda.numar };
+    ofertaEditata: o.comanda.id, numar: o.comanda.oferta_nr || o.comanda.numar,
+    comandaEditata: o.comanda.tip === 'comanda' ? { facturata: o.comanda.factura_nr ?? null } : null };
+}
+
+// „Modifică comanda" (userul, 2026-10-23) — comanda e deja în lucru: un singur buton, iar la salvare
+// se printează din nou doar fişele produselor schimbate (serverul le spune în `r.pozitii`).
+export const TEXT_MODIFICA_COMANDA = 'Salvează modificările şi printează';
+export const mesajModificaComanda = cos => `Modifici comanda <strong>${esc(cos.numar ?? '')}</strong> (în lucru) — la salvare se printează din nou
+  doar fişele produselor schimbate.${cos.comandaEditata?.facturata ? ` <strong>E facturată (${esc(cos.comandaEditata.facturata)})</strong>.` : ''}`;
+// înainte de salvare: o comandă facturată — modificările nu sunt pe factură
+export const confirmaModificarea = cos => !cos.comandaEditata?.facturata || window.confirma(
+  `Comanda ${cos.numar} e deja facturată (${cos.comandaEditata.facturata}). Modificările NU apar pe factura asta — o corectezi în NeoManager.\n\nSalvezi modificările?`,
+  'Salvez');
+// după salvare: sticla comandată care nu mai e în comandă, fişele de printat din nou, apoi pagina comenzii
+export async function dupaModificare(id, r, buton) {
+  gataCiorna();   // salvată de-adevăratelea: fără ciornă, coşul s-a terminat
+  goleste();
+  if (r.sticlaRamasa?.length) {
+    await window.alerta(`Sticla asta era deja comandată şi nu mai e în comandă — anunţă furnizorul:\n\n${r.sticlaRamasa
+      .map(l => `• ${l.denumire}${l.debitare ? ` (${l.debitare})` : ''} × ${l.cantitate}`).join('\n')}`);
+  }
+  if (r.pozitii?.length) {
+    if (await window.Fise.printeazaToate(id, r.pozitii, buton)) await window.Fise.noteaza(id, r.pozitii);
+    else await window.alerta('Modificările s-au salvat, dar fişa produselor schimbate nu s-a printat.\n\nO printezi din manager, cu „Printează fişa nouă".');
+  }
+  location.href = '/#comanda/' + id;
 }
 
 // Rândurile cardului restrâns al unui produs din coş: model, culoare, dimensiuni

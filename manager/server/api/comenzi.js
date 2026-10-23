@@ -194,9 +194,27 @@ async function creeaza(ctx) {
   json(res, 201, { comanda: rezultat });
 }
 
-// ── Modificare (doar oferte) ─────────────────────────────────────────────────
-// „Modifică oferta" din manager redeschide configuratorul cu configuraţia
-// salvată; la salvare vine aici. Numărul şi codul de bare rămân aceleaşi.
+// ── Modificare: oferte şi comenzi în lucru ───────────────────────────────────
+// „Modifică oferta" / „Modifică comanda" din manager redeschide configuratorul cu
+// configuraţia salvată; la salvare vine aici. Numărul şi codul de bare rămân aceleaşi.
+// La o comandă în lucru (userul, 2026-10-23) contează ce s-a făcut deja pe ea: produsele
+// NESCHIMBATE rămân aceleaşi rânduri (fişa printată, sticla comandată, scanările); doar
+// cele schimbate / noi se scriu din nou — fişa lor e de printat din nou. Sticla comandată
+// la un produs schimbat rămâne comandată dacă aceeaşi linie e şi în varianta nouă.
+
+// cheile sortate — ordinea lor nu face un produs „schimbat"
+const canonic = v => (Array.isArray(v) ? v.map(canonic)
+  : v && typeof v === 'object' ? Object.fromEntries(Object.keys(v).sort().map(k => [k, canonic(v[k])])) : v);
+const linieCanonica = l => [l.cod != null ? String(l.cod) : null, String(l.denumire), l.um != null ? String(l.um) : null,
+  +l.cantitate, l.debitare != null ? String(l.debitare) : null];
+// ce se scrie dintr-un produs (vezi scriePozitia) — din corpul cererii sau din bază. Fără livrare / plată /
+// agent (config.comanda) şi fără transport: sunt ale comenzii (fişa le ia din ea), nu schimbă produsul.
+const faraComanda = config => (config && typeof config === 'object'
+  ? { ...config, comanda: undefined, ...(config.rame && { rame: { ...config.rame, livrare: undefined } }) } : config);
+const semnatura = (p, config, linii) => JSON.stringify([String(p.sistem), String(p.eticheta || p.sistem), String(p.finisaj || ''),
+  Math.round(+p.latime), Math.round(+p.inaltime), +(p.nrUsi ?? p.nr_usi), canonic(faraComanda(config)),
+  LISTE.map(lista => (linii[lista] ?? []).filter(l => !(lista === 'facturare' && l.cod === TRANSPORT.cod)).map(linieCanonica))]);
+const cheieSticla = l => JSON.stringify(linieCanonica(l));
 
 async function modifica(ctx) {
   const id = Number(ctx.params.id);
@@ -204,7 +222,9 @@ async function modifica(ctx) {
   const c = db().prepare('SELECT * FROM comanda WHERE id = ?').get(id);
   if (!c)                  return eroare(ctx.res, 404, 'Oferta nu există.');
   if (c.anulat)            return eroare(ctx.res, 400, 'Oferta e anulată.');
-  if (c.tip !== 'oferta')  return eroare(ctx.res, 409, 'Oferta a fost deja acceptată — nu se mai modifică.');
+  const eComanda = c.tip === 'comanda';
+  if (eComanda && c.finalizat_la) return eroare(ctx.res, 409, 'Comanda e finalizată — nu se mai modifică.');
+  if (c.tip !== 'oferta' && !eComanda) return eroare(ctx.res, 409, 'Oferta a fost deja acceptată — nu se mai modifică.');
 
   const v = validează(corp);
   if (v.gresit) return eroare(ctx.res, 400, v.gresit);
@@ -213,24 +233,82 @@ async function modifica(ctx) {
     d.prepare(`UPDATE comanda SET client_nume = ?, client_telefon = ?, client_email = ?, client_adresa = ?,
                  livrare = ?, agent = ?, tip_facturare = ?, oferta_nr = ?, plata = ? WHERE id = ?`)
       .run(...campuriClient(corp.client, corp.detalii, corp.ofertaNr), id);
+    // la o comandă plata rămâne cea aleasă la acceptare dacă din configurator nu vine alta
+    if (eComanda && (!PLATI.includes(corp.detalii?.plata) || corp.detalii.plata === 'oferta')) d.prepare('UPDATE comanda SET plata = ? WHERE id = ?').run(c.plata, id);
+    // livrarea / adresa schimbate pe o comandă — ca la „Modifică livrarea": fişele printate deja se completează de mână
+    const nou = d.prepare('SELECT livrare, client_adresa FROM comanda WHERE id = ?').get(id);
+    if (eComanda && (nou.livrare !== c.livrare || nou.client_adresa !== c.client_adresa)) {
+      d.prepare(`UPDATE comanda SET livrare_modificata_la = ${ACUM()} WHERE id = ?`).run(id);
+    }
 
-    const vechi = d.prepare('SELECT id FROM pozitie WHERE comanda_id = ?').all(id);
+    const vechi = d.prepare('SELECT * FROM pozitie WHERE comanda_id = ? ORDER BY idx').all(id);
+    const liniiVechi = d.prepare(`SELECT l.* FROM pozitie_linie l JOIN pozitie p ON p.id = l.pozitie_id
+                                   WHERE p.comanda_id = ? ORDER BY l.lista, l.idx`).all(id);
+    for (const p of vechi) {
+      p.linii = Object.fromEntries(LISTE.map(lista => [lista, liniiVechi.filter(l => l.pozitie_id === p.id && l.lista === lista)]));
+      p.semn = semnatura(p, JSON.parse(p.config_json || 'null'), p.linii);
+    }
     const cod = d.prepare(`SELECT a.cod_bare FROM usa a JOIN pozitie p ON p.id = a.pozitie_id
                             WHERE p.comanda_id = ? ORDER BY p.idx, a.idx LIMIT 1`).get(id)?.cod_bare;
 
-    // poziţiile noi întâi, apoi mutăm codul de bare pe prima (scanările rămân legate
-    // de rândul lui din `usa`), abia apoi ştergem poziţiile vechi cu tot ce ţine de ele
-    const noi = corp.pozitii.map(p => scriePozitia(d, id, p));
-    if (cod) d.prepare('UPDATE usa SET pozitie_id = ?, idx = 1 WHERE cod_bare = ?').run(noi[0], cod);
-    for (const p of vechi) d.prepare('DELETE FROM pozitie WHERE id = ?').run(p.id);   // CASCADE: linii, coduri vechi pe uşă
-    // renumerotare 1..N, în ordine (fiecare idx ţintă e deja liber — UNIQUE pe comandă)
-    noi.forEach((pid, k) => d.prepare('UPDATE pozitie SET idx = ? WHERE id = ?').run(k + 1, pid));
+    // fiecare produs nou: acelaşi produs vechi (întâi pe acelaşi loc) → rămâne rândul lui; altfel unul nou.
+    // (La ofertă la fel — n-are nimic de păstrat, dar nici nu strică.)
+    const folosite = new Set();
+    const potrivit = corp.pozitii.map((p, k) => {
+      const s = semnatura(p, p.config, p.linii ?? {});
+      const v = [vechi[k], ...vechi].find(x => x && !folosite.has(x.id) && x.semn === s);
+      if (v) folosite.add(v.id);
+      return v ?? null;
+    });
+    // idx temporar peste cele finale (UNIQUE pe comandă), apoi poziţiile noi
+    d.prepare('UPDATE pozitie SET idx = idx + 10000 WHERE comanda_id = ?').run(id);
+    const ids = corp.pozitii.map((p, k) => potrivit[k]?.id ?? scriePozitia(d, id, p));
+    const schimbate = ids.map((_, k) => k).filter(k => !potrivit[k]);
+    // la cele păstrate: livrarea din configuraţie şi transportul (pe primul produs) — ca în varianta nouă
+    for (const [k, v] of potrivit.entries()) {
+      if (!v) continue;
+      d.prepare('UPDATE pozitie SET config_json = ? WHERE id = ?').run(JSON.stringify(corp.pozitii[k].config), v.id);
+      d.prepare("DELETE FROM pozitie_linie WHERE pozitie_id = ? AND lista = 'facturare' AND cod = ?").run(v.id, TRANSPORT.cod);
+      for (const l of (corp.pozitii[k].linii?.facturare ?? []).filter(l => l.cod === TRANSPORT.cod)) {
+        d.prepare(`INSERT INTO pozitie_linie (pozitie_id, lista, idx, cod, denumire, um, cantitate)
+          VALUES (?, 'facturare', (SELECT COALESCE(MAX(idx), 0) + 1 FROM pozitie_linie WHERE pozitie_id = ? AND lista = 'facturare'), ?, ?, ?, ?)`)
+          .run(v.id, v.id, String(l.cod), String(l.denumire), l.um != null ? String(l.um) : null, +l.cantitate);
+      }
+    }
 
-    return { id, numar: c.numar, ...(config.scanare && { coduri: cod ? [{ cod_bare: cod }] : [] }) };
+    // sticla comandată a produselor scoase / schimbate: trece pe aceeaşi linie din varianta nouă
+    const comandata = vechi.filter(p => !folosite.has(p.id)).flatMap(p => p.linii.sticla.filter(l => l.comandat_la));
+    const ramasa = [];
+    for (const l of comandata) {
+      const noua = d.prepare(`SELECT l.* FROM pozitie_linie l JOIN pozitie p ON p.id = l.pozitie_id
+        WHERE p.comanda_id = ? AND l.lista = 'sticla' AND l.comandat_la IS NULL AND l.pozitie_id IN (${schimbate.map(k => ids[k]).join(',') || 'NULL'})
+        ORDER BY l.pozitie_id, l.idx`).all(id).find(x => cheieSticla(x) === cheieSticla(l));
+      if (noua) d.prepare('UPDATE pozitie_linie SET comandat_la = ?, comandat_de = ? WHERE id = ?').run(l.comandat_la, l.comandat_de, noua.id);
+      else ramasa.push({ cod: l.cod, denumire: l.denumire, cantitate: l.cantitate, debitare: l.debitare });
+    }
+
+    // printările fişelor: rămân la produsele neschimbate (pe locul lor nou); ale celor schimbate se şterg
+    const pozNou = new Map(vechi.map(p => [p.idx - 1, ids.indexOf(p.id)]));
+    for (const f of d.prepare('SELECT id, poz FROM fisa_printare WHERE comanda_id = ?').all(id)) {
+      const k = pozNou.get(f.poz) ?? -1;
+      if (k < 0) d.prepare('DELETE FROM fisa_printare WHERE id = ?').run(f.id);
+      else d.prepare('UPDATE fisa_printare SET poz = ? WHERE id = ?').run(k, f.id);
+    }
+
+    // codul de bare pe primul produs (scanările rămân legate de rândul lui din `usa`), apoi
+    // ştergem produsele vechi rămase nefolosite, cu tot ce ţine de ele (CASCADE)
+    if (cod) d.prepare('UPDATE usa SET pozitie_id = ?, idx = 1 WHERE cod_bare = ?').run(ids[0], cod);
+    for (const p of vechi) if (!folosite.has(p.id)) d.prepare('DELETE FROM pozitie WHERE id = ?').run(p.id);
+    // renumerotare 1..N, în ordine (toate sunt acum peste N)
+    ids.forEach((pid, k) => d.prepare('UPDATE pozitie SET idx = ? WHERE id = ?').run(k + 1, pid));
+
+    return { comanda: { id, numar: c.numar, ...(config.scanare && { coduri: cod ? [{ cod_bare: cod }] : [] }) },
+             // la comandă: produsele de printat din nou (poz) + sticla comandată care nu mai e în ea
+             ...(eComanda && { pozitii: schimbate, sticlaRamasa: ramasa }) };
   });
 
   anunta({ comanda: id });
-  json(ctx.res, 200, { comanda: rezultat });
+  json(ctx.res, 200, rezultat);
 }
 
 // ── Adaugă la comandă (userul, 2026-10-12) ───────────────────────────────────

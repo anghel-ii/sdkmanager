@@ -46,7 +46,10 @@ const OPERATII = {
 
   'POST /api/comenzi':                       ['Ofertă nouă', S, b => lista(b.nume, b.ofertaNr, Array.isArray(b.pozitii) && `${b.pozitii.length} ${b.pozitii.length === 1 ? 'produs' : 'produse'}`),
                                                null, (b, r) => [r?.comanda?.id]],
-  'PUT /api/comenzi/:id':                    ['Ofertă modificată', S, b => lista(b.nume, Array.isArray(b.pozitii) && `${b.pozitii.length} ${b.pozitii.length === 1 ? 'produs' : 'produse'}`)],
+  'PUT /api/comenzi/:id':                    [(b, p) => (db().prepare('SELECT tip FROM comanda WHERE id = ?').get(p.id)?.tip === 'comanda' ? 'Comandă modificată' : 'Ofertă modificată'), S,
+                                               (b, r) => lista(b.nume, Array.isArray(b.pozitii) && `${b.pozitii.length} ${b.pozitii.length === 1 ? 'produs' : 'produse'}`,
+                                                 Array.isArray(r?.pozitii) && (r.pozitii.length ? `de printat din nou: ${r.pozitii.map(k => `fişa ${k + 1}`).join(', ')}` : 'fişele rămân aceleaşi'),
+                                                 r?.sticlaRamasa?.length && `sticlă comandată scoasă: ${r.sticlaRamasa.map(l => l.cod).join(', ')}`)],
   'POST /api/comenzi/:id/accepta':           ['Acceptată — comandă în lucru', S, b => lista(PLATI[b.plata] ?? b.plata, Number(b.avans) > 0 && `avans ${lei(b.avans)}`)],
   'POST /api/comenzi/:id/asteapta-plata':    ['Trimisă la „Aşteaptă plata"', S],
   'POST /api/comenzi/:id/livrare':           ['Livrarea / adresa modificată', S, b => lista(b.livrare, b.adresa && scurt(b.adresa, 80))],
