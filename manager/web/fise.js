@@ -66,10 +66,12 @@
 
   // Dialogul de print pt. o fişă; null după ce s-a închis dialogul, sau textul erorii.
   async function printeaza(id, poz = 0) {
+    // „s-a închis dialogul" se ascultă de la început: poate veni şi înaintea lui „fişa e gata"
+    const tiparita = mesaj(['fisa-tiparita']);
     const f = cadru(id, poz, false);
     const r = await mesaj(['fisa']);
     if (r.eroare) { f.remove(); return r.eroare; }
-    await mesaj(['fisa-tiparita']);
+    await tiparita;
     f.remove();
     return null;
   }

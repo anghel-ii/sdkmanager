@@ -684,8 +684,9 @@ const puneClientul = (client, ofertaNr, detalii) => {
       return `Ofertă cu amănuntul${n ? ` + ${n} ${n === 1 ? 'produs' : 'produse'}` : ''} · ${$('clientNume').value.trim() || 'fără client'}`;
     } });
   if (params.get('fisa')) {
-    if (modFisa) tipareste({ vezi: params.get('vezi') === '1' });
-    // managerul încarcă pagina într-un cadru ascuns şi aşteaptă răspunsul
+    // managerul încarcă pagina într-un cadru ascuns şi aşteaptă răspunsul — ÎNAINTE de print: dialogul
+    // blochează pagina, iar „s-a închis" (afterprint) ar ajunge înaintea lui „fişa e gata" şi s-ar pierde
     if (window.parent !== window) window.parent.postMessage({ tip: 'fisa', eroare: modFisa ? null : eroare }, location.origin);
+    if (modFisa) tipareste({ vezi: params.get('vezi') === '1' });
   } else focus(linii.length, 'produs');
 })();
