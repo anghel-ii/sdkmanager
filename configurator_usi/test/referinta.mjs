@@ -26,7 +26,7 @@ import { state } from '../js/state.js';
 import { systems } from '../js/systems/registry.js';
 import { initBuilder, buildConfig, currentSpec, currentBom, currentBilling,
          currentClientPanels, currentSticla, finishesOf } from '../js/builder.js';
-import { cotaGauri, randGol, geamPermisRame } from '../js/lib/rame/rame.js';
+import { cotaGauri, randGol, geamPermisRame, SCHITA_CLIENT, schiteRame } from '../js/lib/rame/rame.js';
 import { geamPermisLux } from '../js/lib/lux/index.js';
 import catalog from '../js/catalog/catalog.generated.json';
 
@@ -443,6 +443,16 @@ for (const sys of Object.values(systems).filter(s => s.meta.family === 'suspenda
   verifica(!!geam('OVI015') && p820(geam('OVI015')) && !p841(geam('OVI015')) && !geamPermisLux(geam('OVI015')),
     'OVI015: la 820 da, la 831/841/842 nu (nesecurizat), la LUX nu (transparent)');
   console.log('✓ rame: nr. de găuri obligatoriu (0 = fără), sticla permisă pe model (820: 4 mm; 831/841/842: 4 mm şlefuit / securizat)');
+  // „vezi schita pe spate" (userul, 2026-10-23): fără cote sub rânduri — cele rămase scrise nu contează,
+  // nr. de găuri (balamalele) da
+  state.rame.gaurire = SCHITA_CLIENT;
+  state.rame.randuri = [{ h: 1000, l: 400, buc: 2, gauri: 3, cote: [{ v: 150, de: 'sus' }] }];
+  buildConfig();
+  const sc = currentSpec().pline[0];
+  verifica(sc.cote.length === 0 && sc.gauri === 3, `schiţa clientului: cotele ignorate, găurile rămân — ${JSON.stringify(sc)}`);
+  verifica(JSON.stringify(schiteRame({ schita: 'a' })) === '["a"]' && JSON.stringify(schiteRame({ schite: ['a', 'b'] })) === '["a","b"]'
+    && schiteRame({}).length === 0, 'schiţele încărcate: şi cea singură din ofertele vechi');
+  console.log('✓ rame: „vezi schita pe spate" fără cote (găurile rămân), schiţele încărcate (şi formatul vechi)');
 }
 
 // UTIL Roma (userul, 2026-10-12): oglindă aplicată pe PAL — în necesarul clientului,

@@ -5,7 +5,7 @@ import { currentSpec, currentBom, currentBilling, currentClientPanels } from './
 import { finishesOf, familia } from './familii.js';
 import { findGeam } from './lib/comun/geam.js';
 import { suprapuneriEfective, PROFIL_H_3D } from './lib/confort/index.js';
-import { ASAMBLARE, FARA_GAURIRE, MODELE_MANER, cotaGauri } from './lib/rame/rame.js';
+import { ASAMBLARE, FARA_GAURIRE, MODELE_MANER, cotaGauri, schiteRame } from './lib/rame/rame.js';
 
 // Rame pe care le asamblăm NOI şi au mâner: mânerul îl montăm tot noi — scris chiar în rândul
 // „Asamblare" de pe faţa fişei: „NOI ASAMBLAM CU MANER L 40" (userul, 2026-10-21).
@@ -874,7 +874,7 @@ export function deschideFisa(client, oferta = null, salvate = null, { vezi = fal
     ${rame ? '' : `<div class="antet-mic"><strong>${esc(modelScurt)} — ${esc(finisajLabel)}</strong>${oferta ? ` · <strong>${esc(oferta.numar)}</strong>` : ''}
       ${client ? ` · ${esc(client)}` : ''} · ${acum()}</div>`}
 
-    ${rame ? schiteGaurire(spec, rame) : ''}
+    ${rame && !schiteRame(rame).length ? schiteGaurire(spec, rame) : ''}
 
     ${tabel(['Cod', 'Denumire', 'Cant.'],
         factura.lines.map(l => `<tr><td>${esc(l.cod)}</td><td>${esc(l.denumire ?? '—')}</td>
@@ -887,11 +887,11 @@ export function deschideFisa(client, oferta = null, salvate = null, { vezi = fal
     ${rame ? necesarSP : schite + notaSchite(sys, spec, factura)}
   </div>
 
-  ${rame?.schita && spec.m?.grup === '820' ? `
+  ${spec.m?.grup === '820' ? schiteRame(rame).map((s, k, toate) => `
   <div class="pagina3">
-    <div class="antet-mic"><strong>Schiţă de găurire — ${esc(modelScurt)}</strong> · ${esc(client || '—')} · ${esc(etNumar.replace(/^Număr /, ''))} ${esc(nrOferta)}</div>
-    <img src="${rame.schita}" alt="Schiţa de găurire">
-  </div>` : ''}
+    <div class="antet-mic"><strong>Schiţă de găurire${toate.length > 1 ? ` ${k + 1} / ${toate.length}` : ''} — ${esc(modelScurt)}</strong> · ${esc(client || '—')} · ${esc(etNumar.replace(/^Număr /, ''))} ${esc(nrOferta)}</div>
+    <img src="${s}" alt="Schiţa de găurire ${k + 1}">
+  </div>`).join('') : ''}
 
 <script>
   // După ce se încarcă schiţa (altfel nu i se ştie înălţimea):

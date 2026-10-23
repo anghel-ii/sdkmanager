@@ -77,6 +77,9 @@ export const GAURIRE_820 = [FARA_GAURIRE, DOUA_GAURI, '100 mm sus/jos si la mijl
                             '100 mm sus/jos si impartite egal', COTE_PE_RAMA, 'vezi schita pe spate'];   // SCHITA_CLIENT
 export const GAURIRE_831 = ['Fara gaurire', 'Gaurire Standard'];
 export const SCHITA_CLIENT = 'vezi schita pe spate';
+// schiţele încărcate — şi din ofertele de dinainte de 2026-10-23, cu o singură poză (`schita`)
+export const schiteRame = r => [...(r?.schite ?? []), ...(r?.schita ? [r.schita] : [])];
+export const MAX_SCHITE = 6;   // ~0,5 MB fiecare; oferta întreagă intră în 8 MB (manager/server/http.js)
 // Geamul pe care îl montăm noi (userul, 2026-10-20): la 820/822/824 orice sticlă / oglindă de 4 mm;
 // la 831/841/842 doar cea de 4 mm şlefuită sau securizată („nesecurizat" — ex. OVI015 — nu).
 export const geamPermisRame = model => g => !!g && g.grosime === 4
@@ -244,8 +247,9 @@ export const stareRameGoala = () => ({
   balama: null, placuta: null, manson: true,
   maner: { randuri: [randManerGol()] },
   ral: '', vopsitCant: 0,
-  // 820 / 822 / 824: poza schiţei de găurire (data URL JPEG), tipărită pe pagina 3 a fişei
-  schita: /** @type {string | null} */ (null),
+  // 820 / 822 / 824: schiţele de găurire încărcate (poze sau pagini de PDF, data URL JPEG), tipărite pe
+  // pagina 3 a fişei, câte una pe pagină; cu ele, schiţa desenată de program nu mai apare (userul, 2026-10-23)
+  schite: /** @type {string[]} */ ([]),
   livrare: null, agent: null, plata: null,
 });
 
@@ -278,20 +282,22 @@ export function specRame(model, state) {
   // fără găurire: nicio gaură, deci nici balamale / plăcuţe / şuruburi de balama
   const faraGaurire = r.gaurire === FARA_GAURIRE;
   const douaGauri  = r.gaurire === DOUA_GAURI;
-  const cuCote     = m.grup === '820' && !faraGaurire;              // câmpurile de cote sub rânduri
+  const cuGauri    = m.grup === '820' && !faraGaurire;              // găuri de balama (nr. de găuri pe rând)
+  // câmpurile de cote sub rânduri — nu şi la „vezi schita pe spate" (cotele sunt pe schiţa clientului)
+  const cuCote     = cuGauri && r.gaurire !== SCHITA_CLIENT;
   const peRama     = cuCote && r.gaurire === COTE_PE_RAMA;
 
   const randuri = (r.randuri ?? []).map((x, i) => {
     const h = +x.h || 0, l = +x.l || 0, buc = Math.max(0, Math.round(+x.buc || 0));
     const cote = cuCote ? (x.cote ?? []).filter(c => +c.v > 0).map(c => ({ v: +c.v, de: c.de === 'jos' ? 'jos' : 'sus' })) : [];
-    const gauri = !cuCote ? 0 : cote.length ? cote.length : douaGauri ? 2 : peRama ? 0 : Math.max(0, Math.round(+x.gauri || 0));
+    const gauri = !cuGauri ? 0 : cote.length ? cote.length : douaGauri ? 2 : peRama ? 0 : Math.max(0, Math.round(+x.gauri || 0));
     if (!h || !l || !buc) {
       if (h && l) erori.push(`rândul ${i + 1}: completează nr. de bucăţi`);
       return { i, gol: true, h, l, buc, gauri, cote };
     }
     if (peRama && !cote.length) erori.push(`rândul ${i + 1}: completează cotele de găurire`);
     // nr. de găuri se scrie mereu de mână — 0 dacă rama n-are găuri (userul, 2026-10-20), nu se ghiceşte
-    if (cuCote && !cote.length && !douaGauri && !peRama && (x.gauri == null || x.gauri === ''))
+    if (cuGauri && !cote.length && !douaGauri && !peRama && (x.gauri == null || x.gauri === ''))
       erori.push(`rândul ${i + 1}: completează nr. de găuri (0 dacă n-are)`);
     for (const c of cote) if (c.v >= h) erori.push(`rândul ${i + 1}: cota ${c.v} (de ${c.de}) e mai mare decât înălţimea ramei, ${h}`);
     const hR = rotunjeste(h, m.H), lR = rotunjeste(l, m.L);

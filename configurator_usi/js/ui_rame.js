@@ -4,9 +4,10 @@ import { currentSpec } from './builder.js';
 import {
   MODELE_RAME, ASAMBLARE, GAURIRE_820, GAURIRE_831,
   BALAMALE, PLACUTE, FARA_BALAMALE, FARA_PLACUTE, FARA_GAURIRE, DOUA_GAURI, COTE_PE_RAMA, BARA_MANER_MM, MODELE_MANER, codManer,
-  stareRameGoala, randGol, randManerGol, cotaGoala, geamPermisRame,
+  stareRameGoala, randGol, randManerGol, cotaGoala, geamPermisRame, SCHITA_CLIENT, schiteRame, MAX_SCHITE,
 } from './lib/rame/rame.js';
 import { findGeam } from './lib/rame/geam.js';
+import { paginiPdf } from './pdf-pagini.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  UI RAME — panoul din bara laterală pt. gama „rame" (în locul cotelor de gol,
@@ -33,6 +34,8 @@ export function syncRame() {
   const model = systems[state.system].meta.rame;
   if (x.gaurire && !(m.grup === '820' ? GAURIRE_820 : GAURIRE_831).includes(x.gaurire)) x.gaurire = null;
   if (x.geam && !geamPermisRame(model)(findGeam(x.geam))) x.geam = null;   // ex. sticlă de 8 mm, sau nesecurizată la 831
+  // ofertele de dinainte de 2026-10-23: o singură schiţă (`schita`) → lista `schite`
+  if (x.schita || !Array.isArray(x.schite)) { x.schite = schiteRame(x); delete x.schita; }
   const valid = (val, lista, fara) => val === fara || lista.some(e => e[0] === val);
   if (m.grup === '820') {
     if (x.balama && !valid(x.balama, BALAMALE[model], FARA_BALAMALE)) x.balama = null;
@@ -191,8 +194,9 @@ export function renderRame(box, { rebuild, geamOptionsHtml }) {
   // la „Cote pe fiecare rama": doar cotele)
   const cuGauri  = cuBalama && x.gaurire !== DOUA_GAURI && x.gaurire !== COTE_PE_RAMA;
   const COL_RAME = [['h', m.H.at(-1)], ['l', m.L.at(-1)], ['buc', Infinity, true], ...(cuGauri ? [['gauri', Infinity, true, true]] : [])];
-  // cotele sub fiecare rând (laSchimbare e mai jos — se cheamă abia la editare)
-  const coteSub = cuBalama ? coteRand(COL_RAME.length + 2, () => laSchimbare()) : null;
+  // cotele sub fiecare rând (laSchimbare e mai jos — se cheamă abia la editare); la „vezi schita pe spate"
+  // nu — cotele sunt pe schiţa clientului (userul, 2026-10-23)
+  const coteSub = cuBalama && x.gaurire !== SCHITA_CLIENT ? coteRand(COL_RAME.length + 2, () => laSchimbare()) : null;
   // toate modelele de mâner la vedere; cele fără cod în culoarea aleasă — gri
   const existaInCuloare = v => !state.finish || !!codManer(v, state.finish);
   const COL_MANER = [['model', { variante: MODELE_MANER.map(([v, t]) => [v, t, existaInCuloare(v)]) }],
@@ -235,10 +239,12 @@ export function renderRame(box, { rebuild, geamOptionsHtml }) {
       optiuni([[FARA_BALAMALE, FARA_BALAMALE], ...BALAMALE[model]], x.balama, 'Alege balama')}</select>`)}
     ${camp('Plăcuţă', `<select class="rame-sel" data-c="placuta">${
       optiuni([[FARA_PLACUTE, FARA_PLACUTE], ...PLACUTE[model]], x.placuta, 'Alege placuta')}</select>`)}`}
-    ${camp('Schiţă de găurire', `<div class="rame-schita" id="rameSchita">${x.schita
-      ? `<img src="${x.schita}" alt="Schiţa de găurire"><button type="button" class="rame-schita-sterge">Şterge schiţa</button>`
-      : '<span>Trage aici poza schiţei (JPG / PNG) sau apasă ca s-o alegi — se tipăreşte pe pagina 3 a fişei</span>'}
-      <input type="file" accept="image/png,image/jpeg,image/webp" hidden></div>`)}` : `
+    ${camp('Schiţă de găurire', `${x.schite.length ? `<div class="rame-schite">${x.schite.map((s, k) => `<div class="rame-schite-una">
+        <img src="${s}" alt="Schiţa ${k + 1}"><button type="button" class="rame-schita-sterge" data-k="${k}" title="Şterge schiţa ${k + 1}">✕</button></div>`).join('')}</div>` : ''}
+      ${x.schite.length < MAX_SCHITE ? `<div class="rame-schita" id="rameSchita"><span>${x.schite.length
+        ? 'Încă o schiţă (JPG / PNG / PDF): trage-o aici sau apasă'
+        : 'Trage aici schiţa (JPG / PNG / PDF) sau apasă ca s-o alegi — se tipăreşte pe pagina 3 a fişei, în locul celei desenate'}</span>
+      <input type="file" accept="image/png,image/jpeg,image/webp,application/pdf" multiple hidden></div>` : ''}`)}` : `
     ${x.gaurire === 'Gaurire Standard' ? camp('Manşon', `<div class="segmented mini rame-seg" data-c="manson">
       <button data-v="1"${x.manson ? ' class="active"' : ''}>Cu manşon</button>
       <button data-v="0"${!x.manson ? ' class="active"' : ''}>Fara manson</button></div>`) : ''}`}
@@ -266,19 +272,42 @@ export function renderRame(box, { rebuild, geamOptionsHtml }) {
   const zona = box.querySelector('#rameSchita');
   if (zona) {
     const fisier = /** @type {HTMLInputElement} */ (zona.querySelector('input[type=file]'));
-    const ia = async (/** @type {File | undefined} */ f) => {
-      if (!f) return;
-      if (!f.type.startsWith('image/')) { alert('Trage o poză a schiţei (JPG sau PNG).'); return; }
-      x.schita = await pozaSchita(f);
+    // poze şi PDF-uri (fiecare pagină = o schiţă), cel mult MAX_SCHITE în total
+    const ia = async (/** @type {File[]} */ fisiere) => {
+      if (!fisiere.length) return;
+      const text = /** @type {HTMLElement} */ (zona.querySelector('span'));
+      const ramas = [];
+      for (const f of fisiere) {
+        const loc = MAX_SCHITE - x.schite.length;
+        if (loc <= 0) { ramas.push(f.name); continue; }
+        try {
+          if (f.type === 'application/pdf' || /\.pdf$/i.test(f.name)) {
+            text.textContent = `Se citeşte ${f.name}…`;
+            const { poze, total } = await paginiPdf(f, loc);
+            x.schite.push(...poze);
+            if (total > poze.length) ramas.push(`${f.name}: ${total - poze.length} ${total - poze.length === 1 ? 'pagină' : 'pagini'}`);
+          } else if (f.type.startsWith('image/')) x.schite.push(await pozaSchita(f));
+          else ramas.push(`${f.name} (nu e poză sau PDF)`);
+        } catch (e) {
+          console.error('Schiţa', f.name, e);
+          ramas.push(`${f.name} (nu s-a putut citi)`);
+        }
+      }
       redeseneaza();
+      if (ramas.length) {
+        await window.alerta(`Schiţe neadăugate — cel mult ${MAX_SCHITE} pagini, doar poze (JPG / PNG) sau PDF:\n${ramas.map(t => `• ${t}`).join('\n')}`);
+      }
     };
-    zona.addEventListener('click', e => { if (!(/** @type {Element} */ (e.target)).closest('.rame-schita-sterge')) fisier.click(); });
-    fisier.addEventListener('change', () => ia(fisier.files?.[0]));
+    zona.addEventListener('click', () => fisier.click());
+    fisier.addEventListener('change', () => ia([...fisier.files ?? []]));
     zona.addEventListener('dragover', e => { e.preventDefault(); zona.classList.add('peste'); });
     zona.addEventListener('dragleave', () => zona.classList.remove('peste'));
-    zona.addEventListener('drop', e => { e.preventDefault(); zona.classList.remove('peste'); ia(/** @type {DragEvent} */ (e).dataTransfer?.files[0]); });
-    zona.querySelector('.rame-schita-sterge')?.addEventListener('click', () => { x.schita = null; redeseneaza(); });
+    zona.addEventListener('drop', e => { e.preventDefault(); zona.classList.remove('peste'); ia([.../** @type {DragEvent} */ (e).dataTransfer?.files ?? []]); });
   }
+  box.querySelectorAll('.rame-schita-sterge').forEach(b => b.addEventListener('click', () => {
+    x.schite.splice(+(/** @type {HTMLElement} */ (b).dataset.k), 1);
+    redeseneaza();
+  }));
   box.querySelectorAll('input.rame-text').forEach(inp => inp.addEventListener('change', () => {
     x[inp.dataset.c] = inp.dataset.c === 'vopsitCant' ? Math.max(0, +inp.value || 0) : inp.value.trim();
     rebuild();

@@ -96,6 +96,20 @@ async function build() {
   // (/configurator/game.json), fără să dubleze lista de modele.
   fs.copyFileSync('js/systems/game.json', 'dist/game.json');
 
+  // pdf.js — schiţele de găurire ale ramelor date ca PDF (js/pdf-pagini.js îl încarcă doar atunci).
+  // Cu extensia .js: serverul managerului nu ştie .mjs, iar un modul vrea tip JavaScript.
+  const PDFJS = 'node_modules/pdfjs-dist';
+  fs.rmSync('dist/pdfjs', { recursive: true, force: true });
+  fs.mkdirSync('dist/pdfjs/wasm', { recursive: true });
+  fs.copyFileSync(`${PDFJS}/build/pdf.min.mjs`, 'dist/pdfjs/pdf.min.js');
+  fs.copyFileSync(`${PDFJS}/build/pdf.worker.min.mjs`, 'dist/pdfjs/pdf.worker.min.js');
+  fs.cpSync(`${PDFJS}/standard_fonts`, 'dist/pdfjs/standard_fonts', { recursive: true });
+  // imaginile JPEG 2000 / JBIG2 şi culorile ICC din PDF-uri (fără quickjs — scripturile din PDF nu ne trebuie)
+  for (const f of fs.readdirSync(`${PDFJS}/wasm`).filter(f => !f.startsWith('quickjs') && !f.startsWith('LICENSE'))) {
+    fs.copyFileSync(`${PDFJS}/wasm/${f}`, `dist/pdfjs/wasm/${f}`);
+  }
+  fs.copyFileSync(`${PDFJS}/LICENSE`, 'dist/pdfjs/LICENSE');
+
   // assets (schite)
   if (fs.existsSync('assets')) {
     fs.mkdirSync('dist/assets', { recursive: true });
