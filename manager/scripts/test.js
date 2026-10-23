@@ -485,7 +485,7 @@ async function main() {
     const idVechi = Number(db2().prepare("INSERT INTO utilizator (nume, user, parola_hash, parola_salt, rol) VALUES ('Vechi', 'vechi', 'x', 'x', 'operator')").run().lastInsertRowid);
     require('../server/db.js').roluriNoi(db2());
     verifica('migraţie: operator → birou', db2().prepare('SELECT rol FROM utilizator WHERE id = ?').get(idVechi).rol === 'birou');
-    verifica('schema la versiunea 31', db2().prepare('PRAGMA user_version').get().user_version === 31);
+    verifica('schema la versiunea 32', db2().prepare('PRAGMA user_version').get().user_version === 32);
   }
 
   console.log('\nFixare şi sortare — per utilizator');
@@ -1088,6 +1088,48 @@ async function main() {
     verifica('printările unei comenzi inexistente → 404', (await cer('GET', '/api/comenzi/999999/fise')).stare === 404);
     verifica('pagina /cereri se serveşte', String((await cer('GET', '/cereri')).date).includes('<title>Cereri</title>'));
     verifica('/admin află ultimul backup', 'backup' in (await cer('GET', '/api/actualizare')).date);
+  }
+
+  console.log('\nSchimbarea nr. facturii — biroul o cere, conducerea o aprobă (server/cereri.js)');
+  {
+    const r = await cer('POST', '/api/comenzi', { client: { nume: 'Client Factura', telefon: '0700', adresa: 'X' }, ofertaNr: 'FN-1',
+      pozitii: [pozitie('confortGamma', 'Confort Gamma', 1, 1200)] });
+    const id = r.date.comanda.id;
+    await cer('POST', `/api/comenzi/${id}/accepta`, { plata: 'proforma', telefon: '0700', adresa: 'X' });
+    const caMaria = async fn => { const k = cookie; cookie = null; await cer('POST', '/api/login', { user: 'maria', parola: 'parola-maria-1' });
+      try { return await fn(); } finally { cookie = k; } };
+    const cere = corp => cer('POST', `/api/comenzi/${id}/schimba-factura`, corp);
+    await caMaria(async () => {
+      verifica('schimbare cerută pe o comandă nefacturată → 409', (await cere({ numar: 'F-2', motiv: 'greşit' })).stare === 409);
+      verifica('biroul trece numărul pe o nefacturată → 200', (await cer('POST', `/api/comenzi/${id}/factura`, { numar: 'F-1' })).stare === 200);
+      verifica('biroul NU schimbă direct un număr trecut → 403', (await cer('POST', `/api/comenzi/${id}/factura`, { numar: 'F-2' })).stare === 403);
+      verifica('cerere fără numărul nou → 400', (await cere({ numar: ' ', motiv: 'greşit' })).stare === 400);
+      verifica('cerere cu acelaşi număr → 400', (await cere({ numar: 'F-1', motiv: 'greşit' })).stare === 400);
+      verifica('cerere fără motiv → 400', (await cere({ numar: 'F-2', motiv: '' })).stare === 400);
+      verifica('biroul cere schimbarea cu numărul nou şi motivul → 201', (await cere({ numar: ' F-2 ', motiv: 'Stornată şi refăcută' })).stare === 201);
+      verifica('a doua cerere de schimbare pe aceeaşi comandă → 409', (await cere({ numar: 'F-3', motiv: 'iar' })).stare === 409);
+      verifica('biroul poate cere şi anularea în paralel', (await cer('POST', `/api/comenzi/${id}/anulare`, { motiv: 'test paralel' })).stare === 201);
+    });
+    const d = (await cer('GET', `/api/comenzi/${id}`)).date;
+    verifica('pagina comenzii arată schimbarea cerută', d.cerereFactura?.stare === 'deschisa' && d.cerereFactura.numar_nou === 'F-2'
+      && d.cerereFactura.creat_de_nume === 'Maria Birou' && d.comanda.factura_nr === 'F-1');
+    const lista = (await cer('GET', '/api/cereri')).date.cereri;
+    const rf = lista.find(x => x.comanda_id === id && x.tip === 'factura'), ra = lista.find(x => x.comanda_id === id && x.tip === 'anulare');
+    // anularea în paralel o respingem întâi: altfel comanda e pe hold
+    await cer('POST', `/api/cereri/${ra.id}/respinge`);
+    const pe = async () => (await cer('GET', '/api/comenzi?tip=comanda')).date.comenzi.find(c => c.id === id)?.pe_hold;
+    verifica('schimbarea de factură cerută NU pune comanda pe hold', await pe() === 0);
+    verifica('aprobare → 200', (await cer('POST', `/api/cereri/${rf.id}/aproba`, { raspuns: 'ok' })).stare === 200);
+    const c = (await cer('GET', `/api/comenzi/${id}`)).date.comanda;
+    verifica('… factura are numărul nou, trecut de cine a cerut', c.factura_nr === 'F-2' && c.facturat_de_nume === 'Maria Birou', JSON.stringify([c.factura_nr, c.facturat_de_nume]));
+    await caMaria(async () => { await cere({ numar: 'F-9', motiv: 'încă o dată' }); });
+    const rf2 = (await cer('GET', '/api/cereri')).date.cereri.find(x => x.comanda_id === id && x.tip === 'factura' && x.stare === 'deschisa');
+    verifica('respingere → factura rămâne', (await cer('POST', `/api/cereri/${rf2.id}/respinge`, { raspuns: 'nu' })).stare === 200
+      && (await cer('GET', `/api/comenzi/${id}`)).date.comanda.factura_nr === 'F-2');
+    const act = (await cer('GET', `/api/comenzi/${id}/activitate`)).date.randuri ?? [];
+    verifica('jurnal: cerută / aprobată / respinsă, cu numărul nou', act.some(x => x.operatie === 'Schimbarea facturii cerută' && /F-2/.test(x.detalii))
+      && act.some(x => x.operatie === 'Schimbarea facturii aprobată' && /F-2/.test(x.detalii)) && act.some(x => x.operatie === 'Schimbarea facturii respinsă')
+      && act.some(x => x.operatie === 'Anulare respinsă'), JSON.stringify(act.map(x => [x.operatie, x.detalii])));
   }
 
   console.log('\nAnulare cerută → comanda „pe hold" până decide conducerea');

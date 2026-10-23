@@ -369,6 +369,7 @@ function detaliu(ctx) {
   json(ctx.res, 200, {
     comanda,
     cerere: require('../cereri.js').cerereComenzii(id),   // anularea cerută / decisă (tichetele conducerii)
+    cerereFactura: require('../cereri.js').cerereFactura(id),   // schimbarea nr. facturii cerută / decisă
     sticla,                          // null = comanda n-are sticlă de comandat
     sticlaLinii: require('../sticla.js').sticlaComenzii(id),   // pe furnizor: mail + bifă
     fise: fiseComenzii(id),          // printările fişei (prima + retipăririle)
@@ -524,9 +525,9 @@ async function factura(ctx) {
   if (!c)                  return eroare(ctx.res, 404, 'Comandă inexistentă.');
   if (c.tip !== 'comanda') return eroare(ctx.res, 409, 'Doar o comandă acceptată se poate factura.');
   // Rolul „birou" doar TRECE numărul pe o comandă nefacturată — schimbarea sau
-  // anularea unui număr existent e a conducerii / administratorului.
+  // anularea unui număr existent e a conducerii / administratorului (biroul o cere: cereri.js).
   if (c.factura_nr && ctx.utilizator.rol === 'birou') {
-    return eroare(ctx.res, 403, 'Numărul unei facturi deja trecute îl poate schimba sau anula doar conducerea sau administratorul.');
+    return eroare(ctx.res, 403, 'Numărul unei facturi deja trecute îl poate schimba sau anula doar conducerea sau administratorul — cere schimbarea din pagina comenzii.');
   }
   const numar = String(corp.numar ?? '').trim().slice(0, 40);
   if (!numar && !corp.anuleaza) return eroare(ctx.res, 400, 'Completează numărul facturii.');

@@ -38,7 +38,7 @@
 <div id="continut">
   <header class="pagina-cap">
     <h1>Cereri</h1>
-    <p id="subtitlu">Cererile de anulare a comenzilor. Le decide conducerea.</p>
+    <p id="subtitlu">Cererile de anulare a comenzilor şi de schimbare a nr. facturii. Le decide conducerea.</p>
   </header>
   <div class="card"><h2 class="titlu-card">De decis</h2><div id="deschise">Se încarcă…</div></div>
   <div class="card"><details><summary id="istoricTitlu">Decise în ultimele 60 de zile</summary><div id="decise"></div></details></div>
@@ -46,9 +46,10 @@
 
 <script>
 // ═══════════════════════════════════════════════════════════════════════════
-//  Cererile (tichetele) pentru conducere — server/cereri.js. Deocamdată anularea
-//  unei comenzi: oricine o cere din pagina comenzii (cu motivul), conducerea sau
-//  adminul o aprobă (comanda devine anulată) ori o respinge, cu un răspuns.
+//  Cererile (tichetele) pentru conducere — server/cereri.js. Anularea unei comenzi:
+//  oricine o cere din pagina comenzii (cu motivul), conducerea sau adminul o aprobă
+//  (comanda devine anulată) ori o respinge, cu un răspuns. Schimbarea nr. facturii:
+//  biroul o cere cu numărul nou; la aprobare factura comenzii primeşte numărul nou.
 //  Biroul îşi vede aici doar cererile lui, fără butoane.
 // ═══════════════════════════════════════════════════════════════════════════
 const $ = id => document.getElementById(id);
@@ -59,6 +60,7 @@ async function api(cale, optiuni = {}) {
   return r;
 }
 const STARI = { deschisa: 'Aşteaptă decizia', aprobata: 'Anulată', respinsa: 'Respinsă' };
+const eFactura = r => r.tip === 'factura';
 const TIP_COMANDA = c => (c.comanda_tip === 'oferta' ? 'ofertă' : c.comanda_tip === 'plata' ? 'aşteaptă plata' : c.finalizat_la ? 'finalizată' : 'în lucru');
 
 let poateDecide = false;
@@ -66,17 +68,19 @@ function randCerere(r) {
   const deschisa = r.stare === 'deschisa';
   return `<div class="cerere" data-id="${r.id}">
     <div>
-      <div class="cap">Anulare · <a href="/#comanda/${r.comanda_id}">${esc(r.comanda_nr)} · ${esc(r.client_nume)}</a>
-        <span class="pastila ${esc(r.stare)}">${STARI[r.stare] ?? esc(r.stare)}</span></div>
+      <div class="cap">${eFactura(r) ? `Schimbare nr. factură${deschisa ? ` <span class="mono">${esc(r.factura_nr ?? '—')}</span>` : ''} → <span class="mono">${esc(r.numar_nou)}</span>` : 'Anulare'}
+        · <a href="/#comanda/${r.comanda_id}">${esc(r.comanda_nr)} · ${esc(r.client_nume)}</a>
+        <span class="pastila ${esc(r.stare)}">${eFactura(r) && r.stare === 'aprobata' ? 'Schimbată' : STARI[r.stare] ?? esc(r.stare)}</span></div>
       <div class="motiv">${esc(r.motiv)}</div>
-      <div class="info">cerută de <b>${esc(r.creat_de_nume)}</b> · ${dataOra(r.creat_la)} · comanda e ${TIP_COMANDA(r)}${r.factura_nr
+      <div class="info">cerută de <b>${esc(r.creat_de_nume)}</b> · ${dataOra(r.creat_la)} · comanda e ${TIP_COMANDA(r)}${r.factura_nr && !eFactura(r)
         ? ` · <b>facturată (${esc(r.factura_nr)})</b> — la aprobare, anulează şi factura în NeoManager` : ''}</div>
       ${deschisa ? '' : `<div class="info">${r.stare === 'aprobata' ? 'aprobată' : 'respinsă'} de <b>${esc(r.decis_de_nume)}</b> · ${dataOra(r.decis_la)}${
         r.raspuns ? ` — „${esc(r.raspuns)}"` : ''}</div>`}
     </div>
     ${deschisa && poateDecide ? `<div class="decizie">
       <textarea placeholder="Răspuns pentru cine a cerut (opţional)" maxlength="1000"></textarea>
-      <div class="butoane"><button class="respinge">Respinge</button><button class="rosu aproba">Aprobă anularea</button></div>
+      <div class="butoane"><button class="respinge">Respinge</button>${eFactura(r)
+        ? '<button class="primar aproba">Aprobă numărul nou</button>' : '<button class="rosu aproba">Aprobă anularea</button>'}</div>
     </div>` : ''}
   </div>`;
 }
@@ -86,22 +90,26 @@ async function incarca() {
   if (!r) return;
   const d = await r.json();
   poateDecide = d.poateDecide;
-  $('subtitlu').textContent = poateDecide ? 'Cererile de anulare a comenzilor — aprobi sau respingi, cu un răspuns pentru cine a cerut.'
-    : 'Cererile tale de anulare a comenzilor şi ce a hotărât conducerea.';
+  $('subtitlu').textContent = poateDecide ? 'Cererile de anulare a comenzilor şi de schimbare a nr. facturii — aprobi sau respingi, cu un răspuns pentru cine a cerut.'
+    : 'Cererile tale (anulări, schimbări de factură) şi ce a hotărât conducerea.';
   const deschise = d.cereri.filter(x => x.stare === 'deschisa'), decise = d.cereri.filter(x => x.stare !== 'deschisa');
   $('deschise').innerHTML = deschise.length ? deschise.map(randCerere).join('') : '<div class="gol">Nicio cerere de decis.</div>';
   $('istoricTitlu').textContent = `Decise în ultimele 60 de zile (${decise.length})`;
   $('decise').innerHTML = decise.map(randCerere).join('');
   document.querySelectorAll('.cerere .decizie').forEach(el => {
     const id = el.closest('.cerere').dataset.id;
+    const r = d.cereri.find(x => String(x.id) === id);
     const decide = async (cale, intrebare) => {
-      if (!(await confirma(intrebare, cale === 'aproba' ? 'Aprobă anularea' : 'Respinge'))) return;
+      if (!(await confirma(intrebare, cale === 'aproba' ? (eFactura(r) ? 'Aprobă numărul nou' : 'Aprobă anularea') : 'Respinge'))) return;
       const rr = await api(`/api/cereri/${id}/${cale}`, { method: 'POST', body: JSON.stringify({ raspuns: el.querySelector('textarea').value }) });
       if (rr && !rr.ok) alerta((await rr.json().catch(() => ({}))).eroare || 'Operaţia a eşuat.');
       incarca();
     };
-    el.querySelector('.aproba').addEventListener('click', () => decide('aproba', 'Aprobi anularea? Comanda iese din liste, din sticla de comandat şi din livrări.'));
-    el.querySelector('.respinge').addEventListener('click', () => decide('respinge', 'Respingi cererea? Comanda rămâne cum e.'));
+    el.querySelector('.aproba').addEventListener('click', () => decide('aproba', eFactura(r)
+      ? `Aprobi schimbarea? Factura comenzii ${r.comanda_nr} devine ${r.numar_nou} (acum: ${r.factura_nr ?? '—'}).`
+      : 'Aprobi anularea? Comanda iese din liste, din sticla de comandat şi din livrări.'));
+    el.querySelector('.respinge').addEventListener('click', () => decide('respinge', eFactura(r)
+      ? `Respingi cererea? Factura rămâne ${r.factura_nr ?? '—'}.` : 'Respingi cererea? Comanda rămâne cum e.'));
   });
 }
 

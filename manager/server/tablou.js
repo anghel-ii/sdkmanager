@@ -33,7 +33,7 @@ function tablou(ctx) {
       COALESCE(SUM(creat_la > ${din}), 0) AS oferte, COALESCE(SUM(confirmat_la > ${din}), 0) AS acceptate,
       COALESCE(SUM(finalizat_la > ${din}), 0) AS finalizate, COALESCE(SUM(fisa_printata_la > ${din}), 0) AS fise
     FROM comanda`).get();
-  activitate.anulate = db().prepare(`SELECT COUNT(*) AS n FROM cerere WHERE stare = 'aprobata' AND decis_la > ${din}`).get().n;
+  activitate.anulate = db().prepare(`SELECT COUNT(*) AS n FROM cerere WHERE tip = 'anulare' AND stare = 'aprobata' AND decis_la > ${din}`).get().n;
   // pe om: ce a făcut în ultimele 7 zile (conturile active)
   const peOm = db().prepare(`SELECT u.id, u.nume, u.rol,
       (SELECT COUNT(*) FROM comanda c WHERE c.creat_de = u.id AND c.creat_la > ${din}) AS oferte,

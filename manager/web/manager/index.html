@@ -396,6 +396,12 @@ const stareRand = c => (c.tip === 'comanda' ? (c.finalizat_la ? 'finalizata' : '
 // oricum: „birou" nu poate schimba / anula un nr. de factură deja trecut.
 let eu = null;
 const poateAnulaFactura = () => eu?.rol === 'admin' || eu?.rol === 'conducere';
+// schimbarea nr. facturii cerută de birou (server/cereri.js) — aşteaptă conducerea / a fost respinsă
+const schimbareFactura = (c, r) => (r?.stare === 'deschisa'
+  ? ` · <span class="urmeaza">schimbare cerută în <strong class="mono">${esc(r.numar_nou)}</strong> de ${esc(r.creat_de_nume)}${
+      poateAnulaFactura() ? ' — <a href="/cereri">decide în Cereri</a>' : ', aşteaptă conducerea'}</span>`
+  : r?.stare === 'respinsa' && r.decis_la > (c.facturat_la ?? '')
+  ? ` · <span class="dim">schimbarea în ${esc(r.numar_nou)} respinsă de ${esc(r.decis_de_nume)}${r.raspuns ? ` — „${esc(r.raspuns)}"` : ''}</span>` : '');
 
 const TABURI = [['oferta', 'Oferte'], ['plata', 'Aşteaptă plata'], ['comanda', 'Comenzi în lucru'], ['finalizata', 'Comenzi finalizate']];
 
@@ -750,7 +756,7 @@ const deVerificat = c => c.livrare && c.livrare !== 'Ridicare personala' ? ' dat
 // întâi ce faci CU comanda (deschizi, printezi, modifici / adaugi), apoi unde o MUŢI (trecerile
 // colorate; „Anulează…" la capăt). Task / Tichet stau mici lângă ×. În „Drumul comenzii", pasul
 // la care eşti are butonul lui chiar pe rând (factura, sticla, fişa), fără să cauţi în altă parte.
-function cardDetalii({ comanda: c, cerere, pozitii, sticlaLinii = [], fise: printari = [] }, fise) {
+function cardDetalii({ comanda: c, cerere, cerereFactura, pozitii, sticlaLinii = [], fise: printari = [] }, fise) {
   const eOferta = c.tip === 'oferta', ePlata = c.tip === 'plata', eComanda = c.tip === 'comanda';
   const [cls, stare] = eOferta ? ['oferta', 'Ofertă'] : ePlata ? ['plata', 'Aşteaptă plata']
     : c.finalizat_la ? ['gata', 'Comandă finalizată'] : ['lucru', 'Comandă în lucru'];
@@ -796,7 +802,7 @@ function cardDetalii({ comanda: c, cerere, pozitii, sticlaLinii = [], fise: prin
       ${c.confirmat_la ? pas('gata', 'Acceptat', deCine(c.confirmat_de_nume, c.confirmat_la))
         : pas(c.anulat ? 'viitor' : 'acum', 'Acceptat', c.anulat ? '' : `<span class="urmeaza">urmează „${ePlata ? 'Plată primită şi printează' : 'Acceptă comanda şi printează'}"</span>`)}
       ${!eComanda ? pas('viitor', 'Facturat', '')
-        : c.factura_nr ? pas('gata', 'Facturat', `<strong class="mono">${esc(c.factura_nr)}</strong> · ${deCine(c.facturat_de_nume, c.facturat_la)}`)
+        : c.factura_nr ? pas('gata', 'Facturat', `<strong class="mono">${esc(c.factura_nr)}</strong> · ${deCine(c.facturat_de_nume, c.facturat_la)}${schimbareFactura(c, cerereFactura)}`)
         : pas(activa ? 'acum' : 'viitor', 'Facturat', activa ? formFactura(c) : '<span class="nefacturat">nefacturat</span>', 'facturare')}
       ${!eComanda ? '' : !sticla ? pas('info', 'Sticlă', '<span class="dim">fără sticlă</span>')
         : sticla.comandate === sticla.total ? pas('gata', 'Sticlă', `comandată ${deCine(comandate.at(-1)?.comandat_de_nume, comandate.map(l => l.comandat_la).sort().at(-1))}`)
@@ -881,7 +887,7 @@ const butonAnulare = (c, r) => (c.anulat || r?.stare === 'deschisa' ? '' : '<but
 // taskurile. Serverul le refuză oricum (index.js) — aici doar nu le arătăm degeaba.
 // „Vezi fişa" rămâne — e doar de văzut; printul nu
 const ACTIUNI = '[data-trecere], [data-adauga-la], #modifica, #ccModifica, [data-print], '
-  + '#schimbaLivrare, .factura-form, #anuleazaFactura, .sticla-comanda, .sticla-anuleaza, .sticla-da';
+  + '#schimbaLivrare, .factura-form, #anuleazaFactura, #cereFactura, .sticla-comanda, .sticla-anuleaza, .sticla-da';
 const opresteActiuni = (el, cerere) => { if (cerere?.stare === 'deschisa') el.querySelectorAll(ACTIUNI).forEach(b => b.remove()); };
 
 // `dupa()` — după o trecere reuşită (pagina comenzii se redesenează, cardul trece la tabul nou)
@@ -1074,7 +1080,7 @@ async function renderDetaliu(id) {
   if (!r) return;
   if (!r.ok) { $('continut').innerHTML = '<div class="mesaj eroare">Comanda nu există.</div>'; return; }
 
-  const { comanda: c, cerere, pozitii, coduri, scanari, sticlaLinii = [], fise: printari = [] } = await r.json();
+  const { comanda: c, cerere, cerereFactura, pozitii, coduri, scanari, sticlaLinii = [], fise: printari = [] } = await r.json();
   const fise = pozitii.length > 1 ? numeFise(pozitii, await incarcaGame()) : [];
   const total = facturareTotala(pozitii);
   const eOferta = c.tip === 'oferta';
@@ -1133,7 +1139,8 @@ async function renderDetaliu(id) {
           <div class="dim mic">${esc(PLATI[c.plata] ?? 'plată nealeasă')} · ${c.avans > 0 ? `avans <strong>${virgulaLei(c.avans)} lei</strong>` : 'fără avans'}</div>`)
           : pas(c.anulat ? 'viitor' : 'acum', 'Acceptat', c.anulat ? '' : `<span class="urmeaza">Urmează: „${ePlata ? 'Plată primită şi printează' : 'Acceptă comanda şi printează'}"</span>`)}
         ${eComanda ? pas(c.factura_nr ? 'gata' : 'acum', 'Facturat', c.factura_nr
-          ? `<strong class="mono">${esc(c.factura_nr)}</strong> · ${deCine(c.facturat_de_nume, c.facturat_la)}${poateAnulaFactura() ? ' <button class="mic rosu-contur" id="anuleazaFactura">Anulează</button>' : ''}`
+          ? `<strong class="mono">${esc(c.factura_nr)}</strong> · ${deCine(c.facturat_de_nume, c.facturat_la)}${poateAnulaFactura() ? ' <button class="mic rosu-contur" id="anuleazaFactura">Anulează</button>'
+            : cerereFactura?.stare === 'deschisa' || c.anulat ? '' : ' <button class="mic" id="cereFactura" title="Numărul nou îl aprobă conducerea">Cere schimbarea…</button>'}${schimbareFactura(c, cerereFactura)}`
           : formFactura(c), 'facturare') : pas('viitor', 'Facturat', '')}
         ${eComanda ? pas('info', 'Sticlă', sticlaLinii.length ? blocSticla(sticlaLinii) : '<span class="dim">— fără sticlă de comandat</span>') : ''}
         ${c.finalizat_la ? pas('gata', 'Finalizat', deCine(c.finalizat_de_nume, c.finalizat_la))
@@ -1206,6 +1213,16 @@ async function renderDetaliu(id) {
   $('anuleazaFactura')?.addEventListener('click', async () => {
     if (!(await confirma('Anulezi facturarea (se şterge nr. facturii)?'))) return;
     await api(`/api/comenzi/${id}/factura`, { method: 'POST', body: JSON.stringify({ numar: '', anuleaza: true }) });
+    renderDetaliu(id);
+  });
+  // biroul: numărul nou + motivul pleacă la conducere (Cereri); la aprobare se schimbă singur
+  $('cereFactura')?.addEventListener('click', async () => {
+    const r = await cereNumarSiText(`Schimbi numărul facturii ${c.factura_nr} (${c.oferta_nr || c.numar}, ${c.client_nume})?\n\n`
+      + 'Scrie numărul nou şi de ce se schimbă. Cererea merge la conducere; la aprobare, numărul se schimbă singur.',
+      { trimite: 'Trimite cererea', numar: 'nr. factură nou', loc: 'ex. factura a fost stornată şi refăcută' });
+    if (!r) return;
+    const rr = await api(`/api/comenzi/${id}/schimba-factura`, { method: 'POST', body: JSON.stringify({ numar: r.numar, motiv: r.text }) });
+    if (rr && !rr.ok) return alerta((await rr.json().catch(() => ({}))).eroare || 'Cererea n-a plecat.');
     renderDetaliu(id);
   });
   leagaCopiere($('copCod'),  total.map(l => l.cod));

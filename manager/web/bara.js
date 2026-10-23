@@ -310,7 +310,7 @@
       ${link('/sticla', 'sticla', 'Comandă sticlă', 'id="linkSticla"', '<span class="insigna cald" id="nrSticla"></span>')}
       ${link('/livrari', 'livrari', 'Organizează livrări', 'id="linkLivrari"')}
       ${link('/taskuri', 'taskuri', 'Taskuri', 'id="linkTaskuri"', '<span class="insigna rosie" id="nrTaskuri" title="ajunse la ora reminderului"></span>')}
-      ${link('/cereri', 'cereri', 'Cereri', 'id="linkCereri"', '<span class="insigna rosie" id="nrCereri" title="cereri de anulare de decis"></span>')}
+      ${link('/cereri', 'cereri', 'Cereri', 'id="linkCereri"', '<span class="insigna rosie" id="nrCereri" title="cereri de decis (anulări, schimbări de factură)"></span>')}
       ${link('/tichete', 'tichete', 'Tichete', 'id="linkTichete"', '<span class="insigna rosie" id="nrTichete"></span>')}
       <div class="grup" id="grupAdmin" hidden><span class="txt">Administrare</span></div>
       ${link('/clienti', 'clienti', 'Clienţi', 'id="linkClienti" hidden', '<span class="insigna cald" id="nrClienti" title="trimise de agenţi, de aprobat"></span>')}

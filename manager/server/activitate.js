@@ -27,6 +27,8 @@ const ROLURI = { admin: 'administrator', conducere: 'conducere', birou: 'birou' 
 // comanda unei linii de sticlă / a unei cereri de anulare / a unui task — pt. operaţiile care n-o au în adresă
 const comandaLiniei = id => db().prepare('SELECT p.comanda_id AS c FROM pozitie_linie l JOIN pozitie p ON p.id = l.pozitie_id WHERE l.id = ?').get(id)?.c;
 const comandaCererii = id => db().prepare('SELECT comanda_id AS c FROM cerere WHERE id = ?').get(id)?.c;
+const cererea = id => db().prepare('SELECT tip, numar_nou FROM cerere WHERE id = ?').get(id);
+const decizie = da => (b, p) => (cererea(p.id)?.tip === 'factura' ? `Schimbarea facturii ${da ? 'aprobată' : 'respinsă'}` : `Anulare ${da ? 'aprobată' : 'respinsă'}`);
 const comandaTaskului = id => db().prepare('SELECT comanda_id AS c FROM task WHERE id = ?').get(id)?.c;
 
 // „METODĂ /cale" → [operaţie, fel, detalii(corp, răspuns, params), comenzi(corp, răspuns, params)]
@@ -56,6 +58,7 @@ const OPERATII = {
   'POST /api/comenzi/:id/fixare':            [b => (b.fixat ? 'A fixat-o sus (pin)' : 'A scos-o de sus (pin)'), V],
   'POST /api/comenzi/:id/fisa':              ['Fişa printată', S, b => (b.poz > 0 ? `produsul ${+b.poz + 1}` : null)],
   'POST /api/comenzi/:id/anulare':           ['Anulare cerută', S, b => scurt(b.motiv)],
+  'POST /api/comenzi/:id/schimba-factura':   ['Schimbarea facturii cerută', S, b => lista(b.numar && `nr. nou: ${scurt(b.numar, 40)}`, scurt(b.motiv))],
   'PUT /api/preferinte':                     ['Setări personale', V, b => lista(...Object.entries(b).map(([k, v]) => `${k}: ${v}`))],
 
   'POST /api/sticla/comanda':                ['Sticlă comandată', S, b => `${(b.ids ?? []).length} ${(b.ids ?? []).length === 1 ? 'linie' : 'linii'}`,
@@ -78,8 +81,9 @@ const OPERATII = {
   'POST /api/taskuri/:id/raspuns':           ['Răspuns la task', S, b => scurt(b.text), null, (b, r, p) => [comandaTaskului(p.id)]],
   'POST /api/taskuri/:id/citit':             ['Task citit', V],
 
-  'POST /api/cereri/:id/aproba':             ['Anulare aprobată', S, b => scurt(b.raspuns), null, (b, r, p) => [comandaCererii(p.id)]],
-  'POST /api/cereri/:id/respinge':           ['Anulare respinsă', S, b => scurt(b.raspuns), null, (b, r, p) => [comandaCererii(p.id)]],
+  'POST /api/cereri/:id/aproba':             [decizie(true), S, (b, r, p) => { const c = cererea(p.id);
+                                               return lista(c?.tip === 'factura' && `nr. nou: ${c.numar_nou}`, scurt(b.raspuns)); }, null, (b, r, p) => [comandaCererii(p.id)]],
+  'POST /api/cereri/:id/respinge':           [decizie(false), S, b => scurt(b.raspuns), null, (b, r, p) => [comandaCererii(p.id)]],
 
   'POST /api/tichete':                       ['Tichet nou', S, b => lista(b.tip, scurt(b.text, 120)), null, b => [b.comanda_id]],
   'POST /api/tichete/vazute':                ['Tichete văzute', V],

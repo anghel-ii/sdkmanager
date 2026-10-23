@@ -67,6 +67,40 @@ function cereText(text, { trimite = 'Trimite', loc = '', min = 3 } = {}) {
   });
 }
 
+// Un număr + motivul (ex. schimbarea nr. facturii): un câmp scurt deasupra celui mare.
+// → { numar, text } sau null la Renunţă / Esc.
+function cereNumarSiText(text, { trimite = 'Trimite', numar = '', loc = '', min = 3 } = {}) {
+  return new Promise(rezolva => {
+    const d = document.createElement('dialog');
+    d.className = 'mesaj-dialog';
+    const p = document.createElement('p');
+    p.textContent = text;
+    const nr = document.createElement('input');
+    nr.placeholder = numar; nr.maxLength = 40; nr.autocomplete = 'off';
+    nr.style.cssText = 'width:100%;margin:10px 0 0';
+    const camp = document.createElement('textarea');
+    camp.rows = 3; camp.placeholder = loc; camp.maxLength = 1000;
+    camp.style.cssText = 'width:100%;margin:8px 0 4px;resize:vertical';
+    const bara = document.createElement('div');
+    bara.className = 'butoane';
+    const renunta = document.createElement('button'), ok = document.createElement('button');
+    renunta.type = ok.type = 'button';
+    renunta.textContent = 'Renunţă'; ok.textContent = trimite; ok.className = 'primar'; ok.disabled = true;
+    const verifica = () => { ok.disabled = !nr.value.trim() || camp.value.trim().length < min; };
+    nr.addEventListener('input', verifica);
+    camp.addEventListener('input', verifica);
+    let gata = null;
+    renunta.onclick = () => d.close();
+    ok.onclick = () => { gata = { numar: nr.value.trim(), text: camp.value.trim() }; d.close(); };
+    bara.append(renunta, ok);
+    d.append(p, nr, camp, bara);
+    d.addEventListener('close', () => { d.remove(); rezolva(gata); });
+    document.body.append(d);
+    d.showModal();
+    nr.focus();
+  });
+}
+
 const alerta   = text => fereastraMesaj(text, [['OK', undefined, true]]);
 const confirma = (text, da = 'Da') => fereastraMesaj(text, [['Renunţă', false], [da, true, true]]);
 const intreabaObligatoriu = (text, da, nu) => fereastraMesaj(text, [[nu, false], [da, true, true]], true);

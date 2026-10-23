@@ -369,7 +369,7 @@ const MIGRATII = [
   d => d.exec(`
     CREATE TABLE cerere (
       id         INTEGER PRIMARY KEY,
-      tip        TEXT NOT NULL,                    -- 'anulare'
+      tip        TEXT NOT NULL,                    -- 'anulare' | 'factura' (v32)
       comanda_id INTEGER REFERENCES comanda(id) ON DELETE CASCADE,
       motiv      TEXT NOT NULL,
       creat_de   INTEGER NOT NULL REFERENCES utilizator(id),
@@ -516,6 +516,9 @@ const MIGRATII = [
       date     BLOB NOT NULL
     );
     CREATE INDEX tichet_poza_mesaj ON tichet_poza (mesaj_id);`),
+  // v31 → v32 (2026-10-23): cererea de schimbare a nr. facturii (tip 'factura', server/cereri.js) — numărul nou,
+  // pus pe comandă la aprobare
+  d => d.exec('ALTER TABLE cerere ADD COLUMN numar_nou TEXT'),
 ];
 
 // Exportată pt. test.
