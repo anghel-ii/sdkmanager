@@ -5,6 +5,27 @@
 //   if (await confirma('text')) …   → Da = true, Renunţă / Esc = false
 //   if (await intreabaObligatoriu('text', 'Da…', 'Nu…')) …
 //        → la fel, dar NU se poate închide fără răspuns (Esc nu merge)
+
+// Stilul lor vine de aici, ca să arate la fel pe orice pagină care încarcă /dialog.js (userul, 2026-10-26):
+// în configurator resetul `margin: 0` din main.css le lipea în stânga sus, cu butoanele nestilizate.
+// Culorile — variabilele paginii (aceleaşi nume în manager şi în configurator).
+if (!document.getElementById('stilDialog')) {
+  const s = document.createElement('style');
+  s.id = 'stilDialog';
+  s.textContent = `dialog.mesaj-dialog { margin: auto; background: var(--panel); color: var(--text); border: 1px solid var(--line);
+      border-radius: 12px; padding: 20px; width: min(420px, calc(100% - 32px)); font: inherit; font-size: 14px; }
+    .mesaj-dialog::backdrop { background: rgba(0, 0, 0, .55); }
+    .mesaj-dialog p { white-space: pre-line; line-height: 1.45; }
+    .mesaj-dialog .butoane { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
+    .mesaj-dialog .butoane button { font: inherit; width: auto; padding: 9px 16px; border: 1px solid var(--line);
+      border-radius: 9px; background: var(--panel-2); color: var(--text); cursor: pointer; }
+    .mesaj-dialog .butoane button:hover:not(:disabled) { background: var(--hover); border-color: var(--line-2); }
+    .mesaj-dialog .butoane button:disabled { opacity: .5; cursor: not-allowed; }
+    .mesaj-dialog .butoane button.primar { background: var(--accent-dim); border-color: var(--accent); color: #fff; font-weight: 600; }
+    .mesaj-dialog .butoane button.primar:hover:not(:disabled) { background: #2f82e6; }`;
+  document.head.appendChild(s);
+}
+
 function fereastraMesaj(text, butoane, obligatoriu = false) {
   return new Promise(rezolva => {
     let raspuns = false;

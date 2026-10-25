@@ -2,6 +2,7 @@ import gameJson from './systems/game.json';
 import { copyRows } from './lib/comun/clipboard.js';
 import { qtyText } from './lib/comun/num.js';
 import { pleaca, gata as gataCiorna, goleste as golesteCiorna } from './ciorna.js';
+import { confirma } from './intrebari.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  COŞUL OFERTEI — o ofertă poate avea mai multe produse (userul, 2026-10-01):
@@ -234,9 +235,9 @@ export function initCard(el, cos, { curenta, client, gamaEcran, transport, factu
       const gama = cos.pozitii[k].gama;
       if (pune()) { pleaca(); location.href = url(gama, { poz: k }); }
     }));
-    toti('[data-scoate]').forEach(b => b.addEventListener('click', () => {
+    toti('[data-scoate]').forEach(b => b.addEventListener('click', async () => {
       const k = +b.dataset.scoate;
-      if (!confirm(`Scoţi din ofertă: ${descriere(cos.pozitii[k].pozitie)}?`)) return;
+      if (!(await confirma(`Scoţi din ofertă: ${descriere(cos.pozitii[k].pozitie)}?`, 'Scoate'))) return;
       cos.pozitii.splice(k, 1);
       if (cos.curent != null && cos.curent > k) cos.curent--;
       scrie(cos);

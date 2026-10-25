@@ -9,18 +9,6 @@
 // Folosit de pagina principală a managerului şi de configurator (/configurator, /configurator/amanunt.html);
 // întrebările — din /dialog.js.
 (() => {
-  // configuratorul nu are comun.css: stilul ferestrelor de întrebare (dialog.js) vine de aici
-  if (!document.getElementById('stilFise')) {
-    const s = document.createElement('style');
-    s.id = 'stilFise';
-    s.textContent = `.mesaj-dialog { background: var(--panel); color: var(--text); border: 1px solid var(--line);
-      border-radius: 12px; padding: 20px; width: min(420px, calc(100% - 32px)); }
-    .mesaj-dialog::backdrop { background: rgba(0, 0, 0, .5); }
-    .mesaj-dialog p { white-space: pre-line; line-height: 1.45; }
-    .mesaj-dialog .butoane { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }`;
-    document.head.appendChild(s);
-  }
-
   // `extra` = {plata, telefon, adresa} aleşi la acceptare, încă nesalvaţi — fişa îi pune peste ai comenzii
   const cadru = (id, poz, vezi, extra = {}) => {
     document.getElementById('cadruFisa')?.remove();

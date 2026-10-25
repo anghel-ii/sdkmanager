@@ -20,6 +20,7 @@ import { initSugestiiClienti } from './sugestii-clienti.js';
 import * as cosul from './cos.js';
 import { stareUtilGoala } from './lib/util/util.js';
 import * as ciorna from './ciorna.js';
+import { confirma } from './intrebari.js';
 
 // Toate accesele la DOM sunt tolerante la elemente lipsă (HTML din cache vechi).
 const $ = id => document.getElementById(id);
@@ -757,11 +758,11 @@ function renderWheels() {
   });
 
   box.querySelectorAll('[data-usi-identice] button').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       const da = btn.dataset.v === '1';
       if (da === usiIdentice()) return;
       // înapoi la identice: celelalte uşi iau opţiunile uşii 1 — întrebăm dacă diferă
-      if (da && !toateLaFel() && !confirm('Toate uşile iau opţiunile uşii 1. Continui?')) return;
+      if (da && !toateLaFel() && !(await confirma('Toate uşile iau opţiunile uşii 1. Continui?', 'Continui'))) return;
       state.usiIdentice = da;
       renderWheels();
       rebuild();
@@ -1525,8 +1526,8 @@ export async function initUI() {
   // CLEAR PAGE — configuraţie nouă de la zero: pagina se redeschide (cu acelaşi ?gama=, fără ?poz)
   // pe ecranul iniţial gol; produsul deschis din coş iese şi din coş (cosul.golesteEcranul).
   // cu ceva deja ales, întâi o întrebare — butonul e lângă „Salvează" şi şterge tot ce nu e salvat
-  $('btnClear')?.addEventListener('click', () => {
-    if (state.system && !confirm('Goleşti pagina? Tot ce ai configurat aici şi n-ai salvat se pierde.')) return;
+  $('btnClear')?.addEventListener('click', async () => {
+    if (state.system && !(await confirma('Goleşti pagina? Tot ce ai configurat aici şi n-ai salvat se pierde.', 'Goleşte'))) return;
     cosul.golesteEcranul(cos);
   });
 

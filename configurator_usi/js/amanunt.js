@@ -10,6 +10,7 @@ import { dataRo } from './ora.js';
 import { activeazaCampuri } from './campuri.js';
 import * as ciorna from './ciorna.js';
 import { arataPrevizualizare } from './previzualizare.js';
+import { confirma } from './intrebari.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  OFERTĂ CU AMĂNUNTUL (amanunt.html) — sertare, mânere, accesorii: produsele
@@ -183,8 +184,8 @@ for (const id of ['clientNume', 'clientTelefon', 'clientAdresa', 'comandaLivrare
   for (const ev of ['input', 'change']) $(id).addEventListener(ev, pasi);
 // Goleşte pagina — ca în configurator: produsul de pe ecran de la zero (coşul rămâne)
 // cu produse deja puse, întâi o întrebare — butonul e lângă „Salvează" şi şterge tot ce nu e salvat
-$('btnClear').addEventListener('click', () => {
-  if (linii.some(l => l?.cod) && !confirm('Goleşti pagina? Produsele puse aici şi nesalvate se pierd.')) return;
+$('btnClear').addEventListener('click', async () => {
+  if (linii.some(l => l?.cod) && !(await confirma('Goleşti pagina? Produsele puse aici şi nesalvate se pierd.', 'Goleşte'))) return;
   cosul.golesteEcranul(cos);
 });
 

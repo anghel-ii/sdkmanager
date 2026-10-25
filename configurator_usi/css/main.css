@@ -66,6 +66,10 @@
 
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+/* Dialogurile (<dialog>) stau pe mijlocul ecranului, ca în manager — resetul de mai sus le anula
+   centrarea şi le lipea în stânga sus (userul, 2026-10-26). */
+dialog { margin: auto; }
+dialog::backdrop { background: rgba(0, 0, 0, .55); }
 html, body { height: 100%; }
 
 body {

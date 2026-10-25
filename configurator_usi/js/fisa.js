@@ -20,6 +20,7 @@ import { detaliiComanda, plataText, numarText } from './lib/comun/comanda.js';
 import { stareOferta } from './manager.js';
 import JsBarcode from 'jsbarcode';
 import { arataPrevizualizare } from './previzualizare.js';
+import { alerta } from './intrebari.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  FIŞĂ ATELIER — imprimabilă, pt. echipa care debitează/asamblează
@@ -526,7 +527,7 @@ function necesarSticlaPal(sys, spec) {
 export function deschideFisa(client, oferta = null, salvate = null, { vezi = false } = {}) {
   const sys  = systems[state.system];
   const spec = currentSpec();
-  if (!sys || !spec) { alert('Configuraţia nu e gata.'); return; }
+  if (!sys || !spec) { alerta('Configuraţia nu e gata.'); return; }
 
   const bom           = salvate?.bom ?? currentBom();
   const panouriClient = salvate?.panouriClient ?? currentClientPanels();
