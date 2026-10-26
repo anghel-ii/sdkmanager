@@ -699,8 +699,8 @@ function randeazaTabel() {
       <thead><tr>
         <th data-c="pin" title="📌 fixează o comandă sus în listă (doar pentru tine)"></th><th data-c="client">Client</th><th data-c="oferta">Nr. ofertă</th><th data-c="sistem">Sistem</th>${
           cuStatus ? '<th data-c="status">Status</th>' : ''}${cuSticla ? '<th data-c="sticla">Sticlă</th>' : ''}${cuFacturare
-          ? '<th data-c="plata">Plată<span class="stivuit"> / Facturare / Avans</span></th><th class="num" data-c="avans">Avans</th><th data-c="factura">Facturare</th>' : ''}
-        <th data-c="cine">Creat de<span class="stivuit"> / ${titluData}</span></th><th data-c="data">${titluData}</th><th data-c="actiuni"></th>
+          ? '<th data-c="plata">Plată<span class="stivuit">Facturare · Avans</span></th><th class="num" data-c="avans">Avans</th><th data-c="factura">Facturare</th>' : ''}
+        <th data-c="cine">Creat de<span class="stivuit">${titluData}</span></th><th data-c="data">${titluData}</th><th data-c="actiuni"></th>
       </tr></thead>
       <tbody>${randuri.map((c, i) => `${titluGrup(c, i)}
         <tr data-id="${c.id}" class="${c.fixat ? 'fixat' : ''}${c.id === selectat ? ' selectat' : ''}${c.demo ? ' demo' : ''}">

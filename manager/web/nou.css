@@ -160,11 +160,13 @@ body.ui-nou .gol.card { border-radius: 12px; }
 /* lista lângă card: nicio coloană nu iese (userul, 2026-10-26: „mai ales avansul") — când nu încap,
    facturarea şi avansul trec sub plată, data sub cine a creat-o (.stivuit, în aceeaşi celulă) */
 table.lista .stivuit { display: none; }
+body.ui-nou table.lista .facturat, body.ui-nou table.lista .nefacturat { white-space: nowrap; }
 @container lista (max-width: 1060px) {
   body.ui-nou table.lista [data-c="avans"], body.ui-nou table.lista [data-c="factura"],
   body.ui-nou table.lista [data-c="data"] { display: none; }
   body.ui-nou table.lista td .stivuit { display: block; margin-top: 4px; }
-  body.ui-nou table.lista th .stivuit { display: inline; }
+  body.ui-nou table.lista th, body.ui-nou table.lista td { padding-left: 8px; padding-right: 8px; }
+  body.ui-nou table.lista th .stivuit { display: block; margin-top: 2px; }
   body.ui-nou table.lista td.actiuni button { display: block; margin: 0 0 4px auto; white-space: nowrap; }
 }
 /* listă îngustă: fiecare comandă pe două rânduri — client, sistem, dată / apoi
