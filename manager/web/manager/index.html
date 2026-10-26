@@ -236,22 +236,27 @@ const HASH_TAB = { oferta: '#oferte', plata: '#plata', comanda: '#comenzi', fina
 // Coloana „Status" = ultima operaţie scanată în atelier
 // Facturare: nr. facturii sau „nefacturat" (în listă). Câmpul pt. număr + „Marchează
 // facturat" (activ doar cu numărul completat) stau în cardul din dreapta şi în pagina comenzii.
+// La o comandă în lucru facturarea o şi finalizează (userul, 2026-10-26) — butonul o spune.
 const facturareHtml = c => c.factura_nr
   ? `<span class="facturat">✓ <strong class="mono">${esc(c.factura_nr)}</strong></span>`
   : '<span class="nefacturat">nefacturat</span>';
 const formFactura = c => `<span class="factura-form" data-id="${c.id}">
        <input class="factura-nr" placeholder="nr. factură" autocomplete="off">
-       <button class="mic primar factura-ok" disabled>Marchează facturat</button>
+       <button class="mic primar factura-ok" disabled>${c.finalizat_la ? 'Marchează facturat' : 'Marchează finalizat şi facturat'}</button>
      </span>`;
 
-// Leagă câmpurile de facturare din `radacina`; după salvare, `dupa()` re-randează.
-function leagaFacturare(radacina, dupa) {
+// Leagă câmpurile de facturare din `radacina`; după salvare, `dupa()` re-randează. `c` = comanda —
+// facturarea o finalizează, deci aceeaşi întrebare ca la „Marchează finalizată" (livrarea schimbată după print).
+function leagaFacturare(radacina, c, dupa) {
   radacina.querySelectorAll('.factura-form').forEach(f => {
     const inp = f.querySelector('.factura-nr'), btn = f.querySelector('.factura-ok');
     f.addEventListener('click', e => e.stopPropagation());   // nu deschide detaliul
     inp.addEventListener('input', () => { btn.disabled = !inp.value.trim(); });
     const trimite = async () => {
       if (!inp.value.trim()) return;
+      if (!c.finalizat_la && c.fisa_de_completat && !(await intreabaObligatoriu(`Livrarea sau adresa s-au schimbat după ce s-a printat fişa.\n\n`
+        + `Ai completat de mână, pe fişa de comandă, modificarea?\nLivrare: ${c.livrare ?? '—'}\nAdresă: ${c.client_adresa ?? '—'}`,
+        'Da, am completat — finalizează', 'Nu încă'))) return;
       btn.disabled = true;
       const r = await api(`/api/comenzi/${f.dataset.id}/factura`, { method: 'POST', body: JSON.stringify({ numar: inp.value }) });
       if (r && !r.ok) { alerta((await r.json().catch(() => ({}))).eroare || 'Salvarea a eşuat.'); btn.disabled = false; return; }
@@ -882,7 +887,7 @@ async function incarcaCard() {
   Adresa.marcheaza(el);
   opresteActiuni(el, d.cerere);
   leagaTreceri(el, d.comanda, () => mergiLa(id), d.pozitii.length);
-  leagaFacturare(el, () => mergiLa(id));
+  leagaFacturare(el, d.comanda, () => mergiLa(id));
   leagaNumar(el, d.comanda, d.plataNumar, d.cerereNumar, () => mergiLa(id));
   $('ccInchide').addEventListener('click', () => selecteaza(null));
   $('ccDeschide').addEventListener('click', () => { location.hash = '#comanda/' + id; });
@@ -921,7 +926,7 @@ function butoaneTreceri(c, minute) {
                  <button class="verde" data-trecere="accepta" title="Oferta devine comandă: se printează fişa, apoi „Ai printat?"">Acceptă comanda şi printează</button>` : ''}
     ${ePlata ? '<button class="verde" data-trecere="accepta" title="Comanda intră în lucru: se printează fişa, apoi „Ai printat?"">Plată primită şi printează</button>' : ''}
     ${eComanda && !c.finalizat_la ? '<button class="verde-contur" data-trecere="finalizeaza">Marchează finalizată</button>' : ''}
-    ${c.finalizat_la ? '<button class="galben-contur" data-trecere="redeschide">Redeschide</button>' : ''}`;
+    ${c.finalizat_la && !c.factura_nr ? '<button class="galben-contur" data-trecere="redeschide">Redeschide</button>' : ''}`;
 }
 // ── Anularea: o cere oricine, cu motivul; o decide conducerea (pagina /cereri, server/cereri.js) ──
 // Pe pagina comenzii şi în card: starea cererii (sau a anulării) + butonul „Anulează…".
@@ -1270,7 +1275,7 @@ async function renderDetaliu(id) {
     };
     dlg.showModal();
   });
-  leagaFacturare($('continut'), () => renderDetaliu(id));
+  leagaFacturare($('continut'), c, () => renderDetaliu(id));
   leagaNumar($('continut'), c, plataNumar, cerereNumar, () => renderDetaliu(id));
   leagaSticla(sticlaLinii, () => renderDetaliu(id));
   $('anuleazaFactura')?.addEventListener('click', async () => {

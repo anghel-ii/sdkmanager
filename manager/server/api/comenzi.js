@@ -612,13 +612,15 @@ function inapoiInOferta(ctx) {
   json(ctx.res, 200, { comanda: db().prepare('SELECT * FROM comanda WHERE id = ?').get(id) });
 }
 
-// Finalizare manuală / redeschidere (automat: la scanarea „Coletare").
+// Finalizare manuală / redeschidere (automat: la scanarea „Coletare" şi la facturare). Finalizarea fără
+// facturare merge; o comandă facturată nu se redeschide (userul, 2026-10-26) — întâi se anulează factura.
 function schimbaFinalizare(finalizata) {
   return ctx => {
     const id = Number(ctx.params.id);
     const c = db().prepare('SELECT * FROM comanda WHERE id = ?').get(id);
     if (!c)                  return eroare(ctx.res, 404, 'Comandă inexistentă.');
     if (c.tip !== 'comanda') return eroare(ctx.res, 409, 'Doar o comandă acceptată se poate finaliza.');
+    if (!finalizata && c.factura_nr) return eroare(ctx.res, 409, `Comanda e facturată (${c.factura_nr}) — o comandă facturată rămâne finalizată. Anulează întâi factura.`);
     db().prepare(`UPDATE comanda SET finalizat_la = ${finalizata ? ACUM() : 'NULL'}, finalizat_de = ? WHERE id = ?`)
       .run(finalizata ? ctx.utilizator.id : null, id);
     anunta({ comanda: id });
@@ -647,6 +649,8 @@ async function numar(ctx) {
 
 // Facturare: nr. facturii se trece de mână (vine din NeoManager). Fără număr
 // comanda NU se poate marca facturată; `numar` gol = anulează facturarea.
+// Facturată = şi finalizată (userul, 2026-10-26): o comandă în lucru trece la finalizate odată cu numărul;
+// anularea facturii o lasă finalizată (finalizarea fără facturare e voie).
 async function factura(ctx) {
   const id = Number(ctx.params.id);
   const corp = await corpJson(ctx.req);
@@ -660,10 +664,12 @@ async function factura(ctx) {
   }
   const numar = String(corp.numar ?? '').trim().slice(0, 40);
   if (!numar && !corp.anuleaza) return eroare(ctx.res, 400, 'Completează numărul facturii.');
+  const finalizeaza = !!numar && !c.finalizat_la;
   db().prepare(`UPDATE comanda SET factura_nr = ?, facturat_la = ${numar ? ACUM() : 'NULL'}, facturat_de = ? WHERE id = ?`)
     .run(numar || null, numar ? ctx.utilizator.id : null, id);
+  if (finalizeaza) db().prepare(`UPDATE comanda SET finalizat_la = ${ACUM()}, finalizat_de = ? WHERE id = ?`).run(ctx.utilizator.id, id);
   anunta({ comanda: id });
-  json(ctx.res, 200, { comanda: db().prepare('SELECT * FROM comanda WHERE id = ?').get(id) });
+  json(ctx.res, 200, { comanda: db().prepare('SELECT * FROM comanda WHERE id = ?').get(id), finalizata: finalizeaza });
 }
 
 // Fişa de atelier a pornit la print (butonul „Fişă" din manager — userul, 2026-10-13:

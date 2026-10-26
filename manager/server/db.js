@@ -572,6 +572,10 @@ const MIGRATII = [
   // v34 → v35 (2026-10-26): metoda de încasare (userul) — „plata" rămâne documentul (afişat „Facturare"), încasarea
   // (OP avans, Cash BF la sofer, Card…) e câmp separat, obligatoriu la salvare; comenzile vechi rămân fără (NULL).
   d => d.exec('ALTER TABLE comanda ADD COLUMN incasare TEXT'),
+  // v35 → v36 (2026-10-26): o comandă facturată e şi finalizată (userul: „facturare fără finalizare să nu se poată")
+  // — cele facturate dar rămase în lucru trec la finalizate, cu data şi omul facturării.
+  d => d.exec(`UPDATE comanda SET finalizat_la = COALESCE(facturat_la, datetime('now')), finalizat_de = facturat_de
+                WHERE tip = 'comanda' AND factura_nr IS NOT NULL AND finalizat_la IS NULL`),
 ];
 
 // Exportată pt. test.

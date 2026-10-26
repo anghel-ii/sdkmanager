@@ -165,9 +165,10 @@ async function main() {
   await actiune('ana: modifică oferta REALĂ', () => cer('ana', 'PUT', `/api/comenzi/${idR1}`, oferta('Real Unu MODIFICAT ÎN DEMO', 'R-1')), { birou: C, admin: C });
   await actiune('ana: ofertă reală → aşteaptă plata', () => cer('ana', 'POST', `/api/comenzi/${idR1}/asteapta-plata`), { birou: C, admin: C });
   await actiune('ana: ofertă reală → acceptată', () => cer('ana', 'POST', `/api/comenzi/${idR1}/accepta`, { incasare: 'card', plata: 'bon', avans: 10, telefon: '0711', adresa: 'X, Iași' }), { birou: C, admin: C });
-  await actiune('ana: factură pe comanda reală', () => cer('ana', 'POST', `/api/comenzi/${idR2}/factura`, { numar: 'F-DEMO' }), { birou: C, admin: C });
   await actiune('ana: finalizează comanda reală', () => cer('ana', 'POST', `/api/comenzi/${idR2}/finalizeaza`), { birou: C, admin: C });
   await actiune('ana: redeschide', () => cer('ana', 'POST', `/api/comenzi/${idR2}/redeschide`), { birou: C, admin: C });
+  // facturată = şi finalizată (2026-10-26) — după ea nu se mai redeschide, deci la urmă
+  await actiune('ana: factură pe comanda reală', () => cer('ana', 'POST', `/api/comenzi/${idR2}/factura`, { numar: 'F-DEMO' }), { birou: C, admin: C });
   await actiune('ana: schimbă livrarea', () => cer('ana', 'POST', `/api/comenzi/${idR3}/livrare`, { livrare: 'Curier ramburs' }), { birou: C, admin: C });
   await actiune('ana: înapoi la livrare cu maşina', () => cer('ana', 'POST', `/api/comenzi/${idR3}/livrare`, { livrare: 'Cu masina noastra' }), { birou: C, admin: C });
   await actiune('ana: adaugă produs la comanda reală', () => cer('ana', 'POST', `/api/comenzi/${idR3}/adauga`, { pozitii: [pozitie(1700)] }), { birou: C, admin: C });

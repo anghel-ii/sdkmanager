@@ -489,7 +489,7 @@ async function main() {
     const idVechi = Number(db2().prepare("INSERT INTO utilizator (nume, user, parola_hash, parola_salt, rol) VALUES ('Vechi', 'vechi', 'x', 'x', 'operator')").run().lastInsertRowid);
     require('../server/db.js').roluriNoi(db2());
     verifica('migraţie: operator → birou', db2().prepare('SELECT rol FROM utilizator WHERE id = ?').get(idVechi).rol === 'birou');
-    verifica('schema la versiunea 35', db2().prepare('PRAGMA user_version').get().user_version === 35);
+    verifica('schema la versiunea 36', db2().prepare('PRAGMA user_version').get().user_version === 36);
   }
 
   console.log('\nFixare şi sortare — per utilizator');
@@ -757,9 +757,21 @@ async function main() {
     db2().prepare("UPDATE comanda SET tip_schimbat_la = datetime('now', '-11 minutes') WHERE id = ?").run(pid);
     verifica('după 10 minute → 409', (await cer('POST', `/api/comenzi/${pid}/inapoi-oferta`)).stare === 409);
     db2().prepare("UPDATE comanda SET tip_schimbat_la = datetime('now') WHERE id = ?").run(pid);
-    await cer('POST', `/api/comenzi/${pid}/factura`, { numar: 'F-INAPOI' });
+    const fct = await cer('POST', `/api/comenzi/${pid}/factura`, { numar: 'F-INAPOI' });
+    // facturată = şi finalizată (userul, 2026-10-26)
+    verifica('facturarea unei comenzi în lucru o finalizează', fct.stare === 200 && fct.date.finalizata === true && !!fct.date.comanda.finalizat_la
+      && (await cer('GET', '/api/comenzi?tip=finalizata')).date.comenzi.some(c => c.id === pid));
     verifica('facturată → nu se mai întoarce (409)', (await cer('POST', `/api/comenzi/${pid}/inapoi-oferta`)).stare === 409);
+    verifica('facturată → nu se redeschide (409)', (await cer('POST', `/api/comenzi/${pid}/redeschide`)).stare === 409);
     await cer('POST', `/api/comenzi/${pid}/factura`, { numar: '', anuleaza: true });
+    verifica('factura anulată → rămâne finalizată', !!db2().prepare('SELECT finalizat_la FROM comanda WHERE id = ?').get(pid).finalizat_la);
+    verifica('… şi acum se redeschide', (await cer('POST', `/api/comenzi/${pid}/redeschide`)).stare === 200);
+    verifica('finalizare fără facturare → 200, fără factură', (await cer('POST', `/api/comenzi/${pid}/finalizeaza`)).stare === 200
+      && db2().prepare('SELECT factura_nr FROM comanda WHERE id = ?').get(pid).factura_nr === null);
+    const fct2 = await cer('POST', `/api/comenzi/${pid}/factura`, { numar: 'F-DUPA' });
+    verifica('facturată după finalizare: rămâne cu data finalizării', fct2.stare === 200 && fct2.date.finalizata === false);
+    await cer('POST', `/api/comenzi/${pid}/factura`, { numar: '', anuleaza: true });
+    await cer('POST', `/api/comenzi/${pid}/redeschide`);
     // modul de livrare la o comandă în lucru (userul, 2026-10-08): transportul şi configuraţia se potrivesc
     const transport = () => db2().prepare(`SELECT count(*) n FROM pozitie_linie l JOIN pozitie p ON p.id = l.pozitie_id
       WHERE p.comanda_id = ? AND l.lista = 'facturare' AND l.cod = 'CHLTTRMANIP'`).get(pid).n;
@@ -1204,7 +1216,7 @@ async function main() {
     const rf = lista.find(x => x.comanda_id === id && x.tip === 'factura'), ra = lista.find(x => x.comanda_id === id && x.tip === 'anulare');
     // anularea în paralel o respingem întâi: altfel comanda e pe hold
     await cer('POST', `/api/cereri/${ra.id}/respinge`);
-    const pe = async () => (await cer('GET', '/api/comenzi?tip=comanda')).date.comenzi.find(c => c.id === id)?.pe_hold;
+    const pe = async () => (await cer('GET', '/api/comenzi?tip=finalizata')).date.comenzi.find(c => c.id === id)?.pe_hold;   // facturată = finalizată
     verifica('schimbarea de factură cerută NU pune comanda pe hold', await pe() === 0);
     verifica('aprobare → 200', (await cer('POST', `/api/cereri/${rf.id}/aproba`, { raspuns: 'ok' })).stare === 200);
     const c = (await cer('GET', `/api/comenzi/${id}`)).date.comanda;
