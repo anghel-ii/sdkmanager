@@ -1211,7 +1211,7 @@ async function renderDetaliu(id) {
           : formFactura(c), 'facturare') : pas('viitor', 'Facturat', '')}
         ${eComanda ? pas('info', 'Sticlă', sticlaLinii.length ? blocSticla(sticlaLinii) : '<span class="dim">— fără sticlă de comandat</span>') : ''}
         ${c.finalizat_la ? pas('gata', 'Finalizat', deCine(c.finalizat_de_nume, c.finalizat_la))
-          : pas('viitor', 'Finalizat', eComanda ? '<span class="dim">după „Marchează finalizată"</span>' : '')}
+          : pas('viitor', 'Finalizat', eComanda ? '<span class="dim">după „Marchează finalizată" sau la facturare</span>' : '')}
       </dl>
     </div>
 
