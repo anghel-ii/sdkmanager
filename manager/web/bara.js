@@ -530,7 +530,7 @@
   const anuntate = () => { try { return JSON.parse(localStorage.getItem('taskuriAnuntate') ?? '[]'); } catch { return []; } };
   const anuntaTask = t => {
     const titlu = `⏰ ${t.text}`;
-    const detaliu = [t.comanda_nr && `${t.comanda_nr} · ${t.client_nume}`, t.creat_de !== t.pentru && `de la ${t.creat_de_nume}`]
+    const detaliu = [t.comanda_nr && `${t.comanda_nr} · ${t.client_nume}`, t.de_la_altcineva && `de la ${t.creat_de_nume}`]
       .filter(Boolean).join(' — ');
     if (window.Notification?.permission === 'granted') {
       const n = new Notification(titlu, { body: detaliu, tag: `task-${t.id}`, requireInteraction: true });

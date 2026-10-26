@@ -157,7 +157,7 @@ async function main() {
   // ── 1. Demo birou: fiecare acţiune ──
   console.log('\nDemo birou (ana) — nimic pe bune');
   const C = ['comanda', 'pozitie', 'pozitie_linie', 'usa', 'fixare', 'cerere', 'fisa_printare', 'livrare', 'livrare_comanda',
-    'task', 'task_mesaj', 'preferinta'];   // ce are voie să se schimbe în copii
+    'task', 'task_mesaj', 'task_destinatar', 'task_citit', 'preferinta'];   // ce are voie să se schimbe în copii
   const oA = await actiune('ana: ofertă nouă', () => cer('ana', 'POST', '/api/comenzi', oferta('Demo Ana', 'D-1')), { birou: C, admin: C });
   const idA = oA.date.comanda.id;
   verifica('ana: oferta ei are id ≥ 1e9 şi număr 9001+', idA >= 1e9 && idA < 2e9 && +oA.date.comanda.numar.slice(-4) > 9000, JSON.stringify(oA.date.comanda));

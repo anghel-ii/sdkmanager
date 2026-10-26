@@ -34,6 +34,18 @@
   .adauga { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 6px; padding: 10px; border-bottom: 1px solid var(--line); }
   .adauga #text { grid-column: 1 / -1; }
   .adauga:not(:focus-within):not(.plin) > :not(#text) { display: none; }
+  /* pentru cine: unul sau mai mulţi oameni (userul, 2026-10-26) — butonul arată alegerea, lista are câte o bifă pe om */
+  .alege-oameni { position: relative; min-width: 0; }
+  .alege-oameni .alege-btn { width: 100%; height: 100%; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .alege-oameni .oameni { position: absolute; z-index: 20; left: 0; top: calc(100% + 4px); min-width: 230px; max-height: 320px; overflow-y: auto;
+    padding: 5px; background: var(--panel); border: 1px solid var(--line-2); border-radius: 10px; box-shadow: 0 12px 32px rgba(0, 0, 0, .35); }
+  .alege-oameni .oameni[hidden] { display: none; }
+  .alege-oameni label { display: flex; align-items: center; gap: 8px; margin: 0; padding: 6px 8px; border-radius: 6px; cursor: pointer; white-space: nowrap;
+    font-size: .86rem; color: var(--text); text-transform: none; letter-spacing: 0; }   /* nu ca etichetele de formular (comun.css) */
+  .alege-oameni label:hover { background: var(--hover); }
+  .alege-oameni input { width: 16px; height: 16px; margin: 0; flex: none; }
+  .alege-oameni .nota { padding: 4px 8px 2px; font-size: .74rem; color: var(--text-dim); }
+  .props .alege-oameni .alege-btn { height: auto; padding: 4px 10px; font-size: .82rem; }
   .legat { padding: 6px 12px; font-size: .82rem; color: var(--text-dim); border-bottom: 1px solid var(--line); }
   .legat a { color: var(--accent); }
 
@@ -118,7 +130,7 @@
     <section class="panou">
       <form class="adauga" id="formular">
         <input id="text" maxlength="1000" placeholder="+ Task nou: ce e de făcut…" required autocomplete="off">
-        <select id="pentru" title="Pentru cine"></select>
+        <div class="alege-oameni" id="pentruNou" title="Pentru cine — unul sau mai mulţi"></div>
         <input type="datetime-local" id="scadenta" title="Reminder (opţional)">
         <button class="verde" type="submit">Adaugă</button>
       </form>
@@ -136,8 +148,9 @@
 //  Taskuri + remindere (server/taskuri.js). Notificarea la ora reminderului o face
 //  bara de sus (bara.js), pe orice pagină a managerului / configuratorului deschisă.
 //  În stânga lista (filtrată), în dreapta taskul ales: acţiunile lui şi conversaţia
-//  dintre cei doi (doar la taskurile date cuiva). „+ Task" din detaliul unei comenzi
-//  deschide pagina cu ?comanda=<id>; ?task=<id> alege direct un task (cardul de pe Acasă).
+//  participanţilor — cel care l-a dat + destinatarii, unul sau mai mulţi (userul, 2026-10-26);
+//  la taskul personal nu e. „+ Task" din detaliul unei comenzi deschide pagina cu
+//  ?comanda=<id>; ?task=<id> alege direct un task (cardul de pe Acasă).
 // ═══════════════════════════════════════════════════════════════════════════
 window.name = 'taskuri';   // notificarea / caseta deschid tot tabul ăsta, nu altul nou
 const $ = id => document.getElementById(id);
@@ -166,21 +179,30 @@ let comanda = Number(params.get('comanda')) || null;
 let ales = Number(params.get('task')) || null;
 const ciorne = new Map();   // răspunsul început, pe task — rămâne la actualizarea live
 
-const EVENIMENT = { asteptare: 'a pus taskul în aşteptare', reluat: 'a reluat taskul', facut: 'a bifat taskul făcut', redeschis: 'a redeschis taskul' };
-const cuConversatie = t => t.pentru !== t.creat_de;
+const EVENIMENT = { asteptare: 'a pus taskul în aşteptare', reluat: 'a reluat taskul', facut: 'a bifat taskul făcut', redeschis: 'a redeschis taskul',
+  destinatari: 'a schimbat cui e dat taskul' };
+// participanţii: cel care l-a dat + destinatarii — [{ id, nume }], fără dubluri
+const participanti = t => [{ id: t.creat_de, nume: t.creat_de_nume }, ...t.destinatari.filter(d => d.id !== t.creat_de)];
+const cuConversatie = t => participanti(t).length > 1;
+const pentruMine = t => t.destinatari.some(d => d.id === eu.id);
 // lista: trei secţiuni una sub alta
 const SECTIUNI = [
   ['mie', 'Pentru mine', 'Nimic de făcut. 🎉'],
   ['altora', 'Date altora', 'N-ai dat niciun task altcuiva.'],
   ['facut', 'Făcute în ultimele 14 zile', 'Nimic încă.'],
 ];
-const categorie = t => t.facut_la ? 'facut' : t.pentru === eu.id ? 'mie' : 'altora';
+const categorie = t => t.facut_la ? 'facut' : pentruMine(t) ? 'mie' : 'altora';
 // iniţialele + o nuanţă fixă pe om, pt. avatar
 const avatar = (id, nume) => `<span class="avatar" style="--h:${(id * 67) % 360}">${esc(String(nume).split(/\s+/).map(x => x[0]).join('').slice(0, 2).toUpperCase())}</span>`;
 const tarziu = t => !t.facut_la && !t.in_asteptare_la && t.scadenta && utc(t.scadenta) <= Date.now();
+// „Ana, Ion" — cel mult doi pe nume, apoi „şi încă n"
+const nume = oameni => (oameni.length > 2 ? `${oameni.slice(0, 2).map(o => o.nume).join(', ')} şi încă ${oameni.length - 2}`
+  : oameni.map(o => o.nume).join(', '));
 
 function meta(t, lung) {
-  const cine = t.pentru !== eu.id ? `pentru ${esc(t.pentru_nume)}` : t.creat_de !== eu.id ? `de la ${esc(t.creat_de_nume)}` : '';
+  const altii = t.destinatari.filter(d => d.id !== eu.id);
+  const cine = !pentruMine(t) ? `pentru ${esc(nume(t.destinatari))}`
+    : [t.creat_de !== eu.id && `de la ${esc(t.creat_de_nume)}`, altii.length && `împreună cu ${esc(nume(altii))}`].filter(Boolean).join(' · ');
   return [
     t.in_asteptare_la && !t.facut_la && `<span class="pauza">⏸ în aşteptare</span>`,
     t.scadenta && !t.facut_la && `<span class="${tarziu(t) ? 'tarziu' : ''}">⏰ ${cand(t.scadenta)}</span>`,
@@ -218,7 +240,7 @@ function randeazaDetaliu() {
   const t = taskuri.find(x => x.id === ales);
   if (!t) { $('detaliu').className = 'panou detaliu'; $('detaliu').innerHTML = '<div class="gol">Alege un task din listă ca să vezi detaliile şi conversaţia.</div>'; return; }
   const facut = !!t.facut_la, cat = categorie(t);
-  const celalalt = t.pentru === eu.id ? [t.creat_de, t.creat_de_nume] : [t.pentru, t.pentru_nume];
+  const ceilalti = nume(participanti(t).filter(o => o.id !== eu.id));   // cu cine vorbeşti în conversaţie
   const om = (id, nume) => `<span class="om">${avatar(id, nume)}${id === eu.id ? 'Tu' : esc(nume)}</span>`;
   const mesaje = t.mesaje.map(m => m.eveniment
     ? `<div class="ev"><span>${m.autor === eu.id ? 'Ai' : esc(m.autor_nume)} ${(EVENIMENT[m.eveniment] ?? m.eveniment).replace(/^a /, m.autor === eu.id ? '' : 'a ')}${
@@ -237,7 +259,8 @@ function randeazaDetaliu() {
       <div class="titlu">${esc(t.text)}</div>
       <dl class="props">
         <dt>De la</dt><dd>${om(t.creat_de, t.creat_de_nume)}</dd>
-        <dt>Pentru</dt><dd>${om(t.pentru, t.pentru_nume)}</dd>
+        <dt>Pentru</dt><dd id="pentruDd">${t.destinatari.map(d => om(d.id, d.nume)).join('')}${t.creat_de === eu.id && !facut
+          ? '<button type="button" class="link-mic" data-a="schimbaPentru">schimbă</button>' : ''}</dd>
         ${reminder}
         ${t.comanda_id ? `<dt>Comanda</dt><dd><a href="/#comanda/${t.comanda_id}">${esc(t.comanda_nr)} · ${esc(t.client_nume)}</a></dd>` : ''}
         <dt>Creat</dt><dd class="dim">${cand(t.creat_la)}${facut ? ` · făcut ${cand(t.facut_la)}` : ''}${
@@ -251,8 +274,8 @@ function randeazaDetaliu() {
       </div>
     </div>
     ${cuConversatie(t) ? `
-      <div class="conv-cap" title="${esc(t.text)}">Conversaţie cu <b>${esc(celalalt[1])}</b> referitor la taskul: „${esc(t.text)}”</div>
-      <div class="fir" id="fir">${mesaje || `<div class="gol">Niciun mesaj încă. Scrie-i ${esc(celalalt[1])} dacă ai ceva de spus despre task.</div>`}</div>
+      <div class="conv-cap" title="${esc(t.text)}">Conversaţie cu <b>${esc(ceilalti)}</b> referitor la taskul: „${esc(t.text)}”</div>
+      <div class="fir" id="fir">${mesaje || `<div class="gol">Niciun mesaj încă. Scrie aici dacă ai ceva de spus despre task — vede ${esc(ceilalti)}.</div>`}</div>
       <form class="scrie" id="scrie"><textarea rows="1" maxlength="2000" placeholder="Scrie un mesaj… (Enter trimite, Shift+Enter rând nou)">${esc(ciorne.get(t.id) ?? '')}</textarea>
         <button class="verde" type="submit">Trimite</button></form>`
     : ''}`;
@@ -268,6 +291,15 @@ function randeazaDetaliu() {
     $('reminder').querySelector('button').addEventListener('click', randeazaDetaliu);
     camp.focus();
     try { camp.showPicker(); } catch { /* unele browsere nu-l deschid fără click direct */ }
+  });
+  // cui e dat (doar cel care l-a dat): bifele pe loc, „Salvează" trimite lista nouă
+  d.querySelector('[data-a=schimbaPentru]')?.addEventListener('click', () => {
+    const alesi = new Set(t.destinatari.map(x => x.id));
+    $('pentruDd').innerHTML = `<div class="alege-oameni" id="pentruSchimba"></div>
+      <button type="button" class="mic verde" data-a="salveazaPentru">Salvează</button><button type="button" class="link-mic" data-a="renuntaPentru">renunţă</button>`;
+    alegereOameni($('pentruSchimba'), alesi, true);
+    $('pentruDd').querySelector('[data-a=salveazaPentru]').addEventListener('click', () => schimba(t.id, { pentru: [...alesi] }));
+    $('pentruDd').querySelector('[data-a=renuntaPentru]').addEventListener('click', randeazaDetaliu);
   });
   d.querySelector('[data-a=sterge]')?.addEventListener('click', () => schimba(t.id, null, 'Ştergi taskul?'));
   d.querySelector('[data-a=asteptare]')?.addEventListener('click', async () => {
@@ -326,13 +358,51 @@ async function marcheazaCitite() {
 }
 document.addEventListener('visibilitychange', marcheazaCitite);
 
+// ── Pentru cine: unul sau mai mulţi oameni (userul, 2026-10-26) ──
+// Un buton cu alegerea („Pentru mine", „Pentru Ana, Ion", „Pentru mine şi Ana"…) şi sub el lista de bife;
+// măcar unul rămâne bifat. `alesi` = Set de id-uri, schimbat pe loc. Acelaşi lucru la „schimbă" pe un task.
+const pentruText = alesi => {
+  const altii = utilizatori.filter(u => alesi.has(u.id) && u.id !== eu.id);
+  if (!altii.length) return 'Pentru mine';
+  return alesi.has(eu.id) ? `Pentru mine şi ${altii.length > 1 ? `încă ${altii.length}` : esc(altii[0].nume)}` : `Pentru ${esc(nume(altii))}`;
+};
+function alegereOameni(rad, alesi, deschisa = false) {
+  rad.innerHTML = `<button type="button" class="alege-btn" aria-haspopup="true" aria-expanded="${deschisa}"></button>
+    <div class="oameni"${deschisa ? '' : ' hidden'}>${utilizatori.map(u => `<label>
+      <input type="checkbox" value="${u.id}"${alesi.has(u.id) ? ' checked' : ''}>${avatar(u.id, u.nume)}<span>${u.id === eu.id ? 'Eu' : esc(u.nume)}</span></label>`).join('')}
+      <div class="nota">Bifează unul sau mai mulţi. Oricare îl poate bifa făcut — e făcut pentru toţi.</div></div>`;
+  const btn = rad.querySelector('.alege-btn'), lista = rad.querySelector('.oameni');
+  const scrie = () => { btn.innerHTML = `${pentruText(alesi)} ▾`; btn.title = utilizatori.filter(u => alesi.has(u.id)).map(u => u.nume).join(', '); };
+  scrie();
+  btn.addEventListener('click', () => { lista.hidden = !lista.hidden; btn.setAttribute('aria-expanded', String(!lista.hidden)); });
+  lista.addEventListener('change', e => {
+    const id = +e.target.value;
+    if (e.target.checked) alesi.add(id);
+    else if (alesi.size > 1) alesi.delete(id);
+    else e.target.checked = true;   // măcar unul
+    scrie();
+  });
+}
+// lista se închide la un clic în afara ei sau cu Esc
+const inchideAlegeri = (pastreaza = null) => document.querySelectorAll('.alege-oameni').forEach(a => {
+  if (a === pastreaza || a.querySelector('.oameni').hidden) return;
+  a.querySelector('.oameni').hidden = true;
+  a.querySelector('.alege-btn').setAttribute('aria-expanded', 'false');
+  if (deReimprospatat) setTimeout(reimprospateaza, 0);   // o actualizare amânată cât era deschisă
+});
+// (un clic pe ceva care tocmai a dispărut — ex. „schimbă", înlocuit chiar de lista deschisă — nu e „în afară")
+document.addEventListener('click', e => { if (e.target.isConnected) inchideAlegeri(e.target.closest('.alege-oameni')); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') inchideAlegeri(); });
+
+let pentruNou = null;   // alegerea din formularul de task nou — rămâne de la un task la altul
 async function incarca() {
   const r = await api('/api/taskuri');
   if (!r) return;
   ({ taskuri, utilizatori } = await r.json());
-  const pentru = $('pentru').value || eu.id;
-  $('pentru').innerHTML = utilizatori.map(u => `<option value="${u.id}">${u.id === eu.id ? 'Pentru mine' : `Pentru ${esc(u.nume)}`}</option>`).join('');
-  $('pentru').value = pentru;
+  pentruNou ??= new Set([eu.id]);
+  for (const id of pentruNou) if (!utilizatori.some(u => u.id === id)) pentruNou.delete(id);   // cont dezactivat între timp
+  if (!pentruNou.size) pentruNou.add(eu.id);
+  alegereOameni($('pentruNou'), pentruNou);
   randeazaLista();
   randeazaDetaliu();
   marcheazaCitite();
@@ -355,9 +425,8 @@ async function arataComanda() {
 $('text').addEventListener('input', () => $('formular').classList.toggle('plin', !!$('text').value));
 $('formular').addEventListener('submit', async e => {
   e.preventDefault();
-  const pentru = +$('pentru').value;
   const r = await api('/api/taskuri', { method: 'POST', body: JSON.stringify({
-    text: $('text').value, pentru, scadenta: $('scadenta').value || null, comanda_id: comanda }) });
+    text: $('text').value, pentru: [...pentruNou], scadenta: $('scadenta').value || null, comanda_id: comanda }) });
   if (r && !r.ok) return alerta(await eroareDin(r));
   $('text').value = $('scadenta').value = '';
   $('formular').classList.remove('plin');
@@ -391,7 +460,10 @@ function arataNotificari() {
 // ── Pornire + actualizare live (nu în timp ce scrii) ──
 let deReimprospatat = false;
 const reimprospateaza = () => {
-  if (document.activeElement?.matches?.('input, select, textarea')) { deReimprospatat = true; return; }
+  // nici cât alegi oamenii (lista de bife deschisă) — redesenarea ar închide-o
+  if (document.activeElement?.matches?.('input, select, textarea') || document.querySelector('.alege-oameni .oameni:not([hidden])')) {
+    deReimprospatat = true; return;
+  }
   deReimprospatat = false; incarca();
 };
 document.addEventListener('focusout', () => { if (deReimprospatat) setTimeout(reimprospateaza, 0); });

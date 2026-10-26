@@ -484,7 +484,7 @@ async function main() {
     const idVechi = Number(db2().prepare("INSERT INTO utilizator (nume, user, parola_hash, parola_salt, rol) VALUES ('Vechi', 'vechi', 'x', 'x', 'operator')").run().lastInsertRowid);
     require('../server/db.js').roluriNoi(db2());
     verifica('migraţie: operator → birou', db2().prepare('SELECT rol FROM utilizator WHERE id = ?').get(idVechi).rol === 'birou');
-    verifica('schema la versiunea 32', db2().prepare('PRAGMA user_version').get().user_version === 32);
+    verifica('schema la versiunea 33', db2().prepare('PRAGMA user_version').get().user_version === 33);
   }
 
   console.log('\nFixare şi sortare — per utilizator');
@@ -1382,6 +1382,42 @@ async function main() {
     verifica('deschis = citit', (await cer('POST', `/api/taskuri/${t1.date.id}/citit`)).stare === 200
       && (await cer('GET', '/api/taskuri/scadente')).date.necitite === 0);
     verifica('cel care l-a dat îl şterge', (await cer('DELETE', `/api/taskuri/${t1.date.id}`)).stare === 200);
+
+    // mai mulţi destinatari (userul, 2026-10-26): toţi îl văd şi îl bifează (făcut o dată pentru toţi), reminder la
+    // fiecare, „necitit" pe fiecare om; cui e dat îl schimbă doar cel care l-a dat
+    const ion = db2().prepare("SELECT id FROM utilizator WHERE user = 'ion'").get().id;
+    const ca = async (user, parola, fn) => {
+      const k2 = cookie; cookie = null;
+      await cer('POST', '/api/login', { user, parola });
+      try { return await fn(); } finally { cookie = k2; }
+    };
+    const caMaria = fn => ca('maria', 'parola-maria-1', fn), caIon = fn => ca('ion', 'parola-noua-1', fn);
+    const alTau = async id => (await cer('GET', '/api/taskuri')).date.taskuri.find(t => t.id === id);
+    verifica('listă cu un cont inexistent → 400', (await cer('POST', '/api/taskuri', { text: 'x', pentru: [maria, 99999] })).stare === 400);
+    verifica('listă goală → 400', (await cer('POST', '/api/taskuri', { text: 'x', pentru: [] })).stare === 400);
+    const t3 = (await cer('POST', '/api/taskuri', { text: 'Inventar sticlă', pentru: [maria, ion, maria], scadenta: '2020-01-01T09:00' })).date.id;
+    const a3 = await alTau(t3);
+    verifica('task pentru doi: destinatarii (fără dubluri, după nume) + pentru_nume',
+      JSON.stringify(a3?.destinatari.map(d => d.id)) === JSON.stringify([ion, maria]) && a3.pentru_nume === 'Ion Conducere, Maria Birou', JSON.stringify(a3));
+    verifica('Maria îl vede şi are reminderul (de la altcineva)', await caMaria(async () => !!(await alTau(t3))
+      && (await cer('GET', '/api/taskuri/scadente')).date.taskuri.some(t => t.id === t3 && t.de_la_altcineva === 1)));
+    verifica('Ion îl vede şi are reminderul', await caIon(async () => (await cer('GET', '/api/taskuri/scadente')).date.taskuri.some(t => t.id === t3)));
+    verifica('adminul (l-a dat, nu-i e dat) — fără reminder', !(await cer('GET', '/api/taskuri/scadente')).date.taskuri.some(t => t.id === t3));
+    await caMaria(() => cer('POST', `/api/taskuri/${t3}/raspuns`, { text: 'Eu număr sticla, Ion oglinzile' }));
+    const necititeIon = () => caIon(async () => (await cer('GET', '/api/taskuri/scadente')).date.necitite);
+    verifica('răspunsul Mariei e necitit şi la Ion, şi la admin', await necititeIon() === 1 && (await alTau(t3)).necitite === 1);
+    verifica('Ion îl deschide → citit doar la Ion', await caIon(() => cer('POST', `/api/taskuri/${t3}/citit`)).then(r => r.stare === 200)
+      && await necititeIon() === 0 && (await alTau(t3)).necitite === 1);
+    verifica('Ion îl bifează făcut → e făcut şi la Maria, fără reminder',
+      (await caIon(() => cer('PATCH', `/api/taskuri/${t3}`, { facut: true }))).stare === 200
+      && await caMaria(async () => !!(await alTau(t3))?.facut_la && !(await cer('GET', '/api/taskuri/scadente')).date.taskuri.some(t => t.id === t3)));
+    verifica('Maria nu schimbă cui e dat (nu l-a dat ea) → 403', (await caMaria(() => cer('PATCH', `/api/taskuri/${t3}`, { pentru: [maria] }))).stare === 403);
+    verifica('adminul îl dă doar lui Ion → Maria nu-l mai vede; schimbarea apare în conversaţie',
+      (await cer('PATCH', `/api/taskuri/${t3}`, { pentru: [ion] })).stare === 200 && await caMaria(async () => !(await alTau(t3)))
+      && (await alTau(t3)).mesaje.some(m => m.eveniment === 'destinatari' && m.text === 'Ion Conducere'));
+    verifica('şters → pleacă şi destinatarii, şi citirile', (await cer('DELETE', `/api/taskuri/${t3}`)).stare === 200
+      && db2().prepare('SELECT (SELECT COUNT(*) FROM task_destinatar WHERE task_id = ?) + (SELECT COUNT(*) FROM task_citit WHERE task_id = ?) AS n').get(t3, t3).n === 0);
+
     const pag = String((await cer('GET', '/taskuri')).date);
     verifica('pagina /taskuri se serveşte', pag.includes('<title>Taskuri</title>') && pag.includes("api('/api/taskuri'"));
   }

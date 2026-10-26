@@ -519,6 +519,28 @@ const MIGRATII = [
   // v31 → v32 (2026-10-23): cererea de schimbare a nr. facturii (tip 'factura', server/cereri.js) — numărul nou,
   // pus pe comandă la aprobare
   d => d.exec('ALTER TABLE cerere ADD COLUMN numar_nou TEXT'),
+  // v32 → v33 (2026-10-26): un task poate fi dat mai multor oameni (userul) — task_destinatar; task.pentru rămâne
+  // primul dintre ei. „Necitit" se ţine pe fiecare om (task_citit: ultimul mesaj văzut), în locul lui
+  // task_mesaj.citit, care mergea doar cu doi oameni pe task — citirile de până acum se păstrează.
+  d => d.exec(`
+    CREATE TABLE task_destinatar (
+      task_id       INTEGER NOT NULL REFERENCES task(id) ON DELETE CASCADE,
+      utilizator_id INTEGER NOT NULL REFERENCES utilizator(id),
+      PRIMARY KEY (task_id, utilizator_id)
+    );
+    CREATE INDEX task_destinatar_om ON task_destinatar (utilizator_id);
+    INSERT INTO task_destinatar (task_id, utilizator_id) SELECT id, pentru FROM task;
+    CREATE TABLE task_citit (
+      task_id       INTEGER NOT NULL REFERENCES task(id) ON DELETE CASCADE,
+      utilizator_id INTEGER NOT NULL REFERENCES utilizator(id),
+      pana_la       INTEGER NOT NULL,             -- task_mesaj.id: ce e până la el (inclusiv) e văzut
+      PRIMARY KEY (task_id, utilizator_id)
+    );
+    INSERT INTO task_citit (task_id, utilizator_id, pana_la)
+      SELECT o.task_id, o.om, MAX(m.id)
+        FROM (SELECT id AS task_id, pentru AS om FROM task UNION SELECT id, creat_de FROM task) o
+        JOIN task_mesaj m ON m.task_id = o.task_id AND m.autor != o.om AND m.citit = 1
+       GROUP BY o.task_id, o.om;`),
 ];
 
 // Exportată pt. test.

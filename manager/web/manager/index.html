@@ -541,7 +541,9 @@ async function incarcaTaskuri() {
   const toate = (await r.json()).taskuri;
   // ale mele de făcut + cele date altora la care mi-au răspuns; cele făcute mai stau 24 h (tăiate, la sfârşit)
   const ieri = Date.now() - 864e5;
-  const aleMele = t => t.pentru === eu.id || t.necitite;
+  // un task poate fi dat mai multor oameni (destinatari) — „ale mele" = sunt printre ei
+  const pentruMine = t => t.destinatari.some(d => d.id === eu.id);
+  const aleMele = t => pentruMine(t) || t.necitite;
   const ale = [...toate.filter(t => !t.facut_la && aleMele(t)),
     ...toate.filter(t => t.facut_la && aleMele(t) && new Date(t.facut_la.replace(' ', 'T') + 'Z') > ieri)];
   const deFacut = ale.filter(t => !t.facut_la).length;
@@ -553,7 +555,7 @@ async function incarcaTaskuri() {
       <span class="spatiu"></span><a class="ct-plus" href="/taskuri" title="Task nou">+</a></div>
     ${ale.length ? `<ul class="ct-lista">${ale.slice(0, ARATA_TASKURI).map(t => `
       <li class="${tarziu(t) ? 'tarziu' : ''}${t.in_asteptare_la ? ' asteapta' : ''}${t.facut_la ? ' facut' : ''}" data-id="${t.id}">
-        ${t.pentru === eu.id ? `<input type="checkbox" title="${t.facut_la ? 'Nu e făcut' : 'Făcut'}"${t.facut_la ? ' checked' : ''}>` : '<span class="ct-loc"></span>'}
+        ${pentruMine(t) ? `<input type="checkbox" title="${t.facut_la ? 'Nu e făcut' : 'Făcut'}"${t.facut_la ? ' checked' : ''}>` : '<span class="ct-loc"></span>'}
         <a class="ct-text" href="/taskuri?task=${t.id}" title="${esc(t.text)}">${esc(t.text)}</a>
         ${t.necitite ? `<span class="ct-nou" title="Răspunsuri noi">${t.necitite}</span>`
           : t.facut_la ? '<span class="ct-cand">✓</span>'
