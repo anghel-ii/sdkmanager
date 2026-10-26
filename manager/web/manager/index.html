@@ -164,7 +164,8 @@
     <label class="camp" id="accAdresaCamp">Adresa clientului
       <input id="accAdresa" type="text" autocomplete="off" data-adresa>
     </label>
-    <label class="camp">Avans încasat (lei) — gol dacă nu se încasează avans
+    <!-- din „Aşteaptă plata": suma încasată e obligatorie şi peste 0 (comanda devine achitată) -->
+    <label class="camp"><span id="accAvansText">Avans încasat (lei) — gol dacă nu se încasează avans</span>
       <input id="accAvans" type="number" min="0" step="0.01" placeholder="0" inputmode="decimal">
     </label>
     <div class="butoane">
@@ -325,6 +326,9 @@ const FARA_TRANSPORT = ['Ridicare personala', 'Curier fara costuri'];
 const PLATI = { oferta: 'Ofertă', proforma: 'Factură proformă', proforma_amanunt: 'Factură proformă cu amănuntul', fiscala: 'Factură fiscală',
                 bon: 'Bon fiscal', avans: 'Factură de avans', op: 'OP (ordin de plată)', factura: 'Factură' };
 const PLATI_SCURT = { ...PLATI, proforma_amanunt: 'Proformă amănunt', op: 'OP' };   // în coloana din listă
+// achitată = trecută prin „Aşteaptă plata" şi „Plată primită" (achitat_la); suma încasată e în `avans`
+const achitatHtml = c => `<span class="facturat" title="Plată primită ${dataOra(c.achitat_la)}">✓ achitat${c.avans > 0 ? ` ${virgulaLei(c.avans)} lei` : ''}</span>`;
+const avansHtml = c => (c.achitat_la ? achitatHtml(c) : c.avans > 0 ? `${virgulaLei(c.avans)} lei` : '<span class="dim">—</span>');
 const virgulaLei = n => Number(n).toLocaleString('ro-RO', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 
 // Fişele (userul, 2026-10-21): „Vezi fişa" = previzualizare în aplicaţie, oricând; printul — doar când
@@ -683,6 +687,7 @@ function randeazaTabel() {
   potriviri = totul ? Object.fromEntries(TABURI.map(([t]) => [t, randuri.filter(c => tabRand(c) === t).length])) : null;
   puneCate();
   const coloane = 7 + cuStatus + cuSticla + 3 * cuFacturare;
+  const facturaCel = c => (tabRand(c) === 'comanda' || tabRand(c) === 'finalizata' ? facturareHtml(c) : '<span class="dim">—</span>');
   // căutare: un rând-titlu înaintea fiecărei stări („Oferte 2")
   const titluGrup = (c, i) => !totul || (i && tabRand(randuri[i - 1]) === tabRand(c)) ? '' : `
         <tr class="grup"><td colspan="${coloane}">${TABURI[ordine(c)][1]}<span class="cate">${
@@ -694,8 +699,8 @@ function randeazaTabel() {
       <thead><tr>
         <th data-c="pin" title="📌 fixează o comandă sus în listă (doar pentru tine)"></th><th data-c="client">Client</th><th data-c="oferta">Nr. ofertă</th><th data-c="sistem">Sistem</th>${
           cuStatus ? '<th data-c="status">Status</th>' : ''}${cuSticla ? '<th data-c="sticla">Sticlă</th>' : ''}${cuFacturare
-          ? '<th data-c="plata">Plată</th><th class="num" data-c="avans">Avans</th><th data-c="factura">Facturare</th>' : ''}
-        <th data-c="cine">Creat de</th><th data-c="data">${titluData}</th><th data-c="actiuni"></th>
+          ? '<th data-c="plata">Plată<span class="stivuit"> / Facturare / Avans</span></th><th class="num" data-c="avans">Avans</th><th data-c="factura">Facturare</th>' : ''}
+        <th data-c="cine">Creat de<span class="stivuit"> / ${titluData}</span></th><th data-c="data">${titluData}</th><th data-c="actiuni"></th>
       </tr></thead>
       <tbody>${randuri.map((c, i) => `${titluGrup(c, i)}
         <tr data-id="${c.id}" class="${c.fixat ? 'fixat' : ''}${c.id === selectat ? ' selectat' : ''}${c.demo ? ' demo' : ''}">
@@ -706,11 +711,12 @@ function randeazaTabel() {
           <td data-c="sistem">${esc(c.sistem ?? '—')}</td>
           ${cuStatus ? `<td data-c="status">${statusHtml(c.status)}</td>` : ''}
           ${cuSticla ? `<td class="facturare" data-c="sticla">${sticlaHtml(c.sticla)}</td>` : ''}
-          ${cuFacturare ? `<td data-c="plata">${esc(PLATI_SCURT[c.plata] ?? '—')}</td>
-            <td class="num" data-c="avans">${c.avans > 0 ? `${virgulaLei(c.avans)} lei` : '<span class="dim">—</span>'}</td>
-            <td class="facturare" data-c="factura">${tabRand(c) === 'comanda' || tabRand(c) === 'finalizata'
-              ? facturareHtml(c) : '<span class="dim">—</span>'}</td>` : ''}
-          <td class="dim" data-c="cine">${esc(c.creat_de_nume)}</td>
+          ${cuFacturare ? `<td data-c="plata">${esc(PLATI_SCURT[c.plata] ?? '—')}
+              <div class="stivuit facturare">${facturaCel(c)}</div>
+              <div class="stivuit">${c.achitat_la ? achitatHtml(c) : c.avans > 0 ? `avans <strong>${virgulaLei(c.avans)} lei</strong>` : '<span class="dim">fără avans</span>'}</div></td>
+            <td class="num" data-c="avans">${avansHtml(c)}</td>
+            <td class="facturare" data-c="factura">${facturaCel(c)}</td>` : ''}
+          <td class="dim" data-c="cine">${esc(c.creat_de_nume)}<div class="stivuit mic data">${dataOra(dataRand(c))}</div></td>
           <td class="dim mic data" data-c="data">${dataOra(dataRand(c))}</td>
           <td class="actiuni" data-c="actiuni">${c.nr_pozitii > 1
             ? `<button class="mic fise" data-id="${c.id}" title="${c.nr_pozitii} produse — fiecare cu fişa lui, în pagina comenzii">👁 Fişe (${c.nr_pozitii})</button>`
@@ -834,7 +840,7 @@ function cardDetalii({ comanda: c, cerere, cerereFactura, cerereNumar, plataNuma
       ${c.client_adresa ? `<dt>Adresă</dt><dd${deVerificat(c)}>${esc(c.client_adresa)}</dd>` : ''}
       ${c.client_email ? `<dt>E-mail</dt><dd>${esc(c.client_email)}</dd>` : ''}
       <dt>Livrare</dt><dd>${esc(c.livrare ?? '—')}</dd>
-      <dt>Plată</dt><dd>${esc(PLATI[c.plata] ?? '—')}${c.avans > 0 ? ` · avans <strong>${virgulaLei(c.avans)} lei</strong>` : ''}</dd>
+      <dt>Plată</dt><dd>${esc(PLATI[c.plata] ?? '—')}${c.achitat_la ? ` · ${achitatHtml(c)}` : c.avans > 0 ? ` · avans <strong>${virgulaLei(c.avans)} lei</strong>` : ''}</dd>
       <dt>Agent</dt><dd>${esc(c.agent ?? '—')}</dd>
     </dl>
     <div class="cc-eticheta">Drumul comenzii</div>
@@ -977,6 +983,9 @@ function leagaTreceri(root, c, dupa, nrFise = 1) {
     $('formAccepta').reset();
     $('titluAccepta').textContent = ePlata ? 'Plată primită' : 'Acceptă comanda';
     $('accOk').textContent = ePlata ? 'Plată primită şi printează' : 'Acceptă comanda şi printează';
+    $('accAvansText').textContent = ePlata ? 'Suma încasată (lei) — obligatoriu' : 'Avans încasat (lei) — gol dacă nu se încasează avans';
+    $('accAvans').required = ePlata;
+    $('accAvans').min = ePlata ? '0.01' : '0';
     // metoda aleasă deja în configurator (dacă e una din cele actuale)
     if (c.plata && $('accPlata').querySelector(`option[value="${c.plata}"]`)) $('accPlata').value = c.plata;
     for (const [camp, inp, are] of [['accTelefonCamp', 'accTelefon', c.client_telefon], ['accAdresaCamp', 'accAdresa', c.client_adresa]]) {
@@ -1180,7 +1189,7 @@ async function renderDetaliu(id) {
       <dl class="info-pasi">
         ${pas('gata', 'Ofertat', deCine(c.creat_de_nume, c.creat_la))}
         ${c.confirmat_la ? pas('gata', 'Acceptat', `${deCine(c.confirmat_de_nume, c.confirmat_la)}
-          <div class="dim mic">${esc(PLATI[c.plata] ?? 'plată nealeasă')} · ${c.avans > 0 ? `avans <strong>${virgulaLei(c.avans)} lei</strong>` : 'fără avans'}</div>`)
+          <div class="dim mic">${esc(PLATI[c.plata] ?? 'plată nealeasă')} · ${c.achitat_la ? achitatHtml(c) : c.avans > 0 ? `avans <strong>${virgulaLei(c.avans)} lei</strong>` : 'fără avans'}</div>`)
           : pas(c.anulat ? 'viitor' : 'acum', 'Acceptat', c.anulat ? '' : `<span class="urmeaza">Urmează: „${ePlata ? 'Plată primită şi printează' : 'Acceptă comanda şi printează'}"</span>`)}
         ${eComanda ? pas(c.factura_nr ? 'gata' : 'acum', 'Facturat', c.factura_nr
           ? `<strong class="mono">${esc(c.factura_nr)}</strong> · ${deCine(c.facturat_de_nume, c.facturat_la)}${poateAnulaFactura() ? ' <button class="mic rosu-contur" id="anuleazaFactura">Anulează</button>'

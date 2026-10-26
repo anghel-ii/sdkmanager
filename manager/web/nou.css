@@ -157,10 +157,15 @@ body.ui-nou .nefacturat, body.ui-nou .sticla-nu { color: var(--danger); border-c
 body.ui-nou .sticla-partial { color: #d4a24c; border-color: rgba(212, 162, 76, .45); background: rgba(212, 162, 76, .1); }
 body.ui-nou .gol.card { border-radius: 12px; }
 
-/* lista lângă card: creat de / plată / avans / butoanele se văd în card — coloanele lor ies */
+/* lista lângă card: nicio coloană nu iese (userul, 2026-10-26: „mai ales avansul") — când nu încap,
+   facturarea şi avansul trec sub plată, data sub cine a creat-o (.stivuit, în aceeaşi celulă) */
+table.lista .stivuit { display: none; }
 @container lista (max-width: 1060px) {
-  body.ui-nou table.lista [data-c="cine"], body.ui-nou table.lista [data-c="plata"],
-  body.ui-nou table.lista [data-c="avans"], body.ui-nou table.lista [data-c="actiuni"] { display: none; }
+  body.ui-nou table.lista [data-c="avans"], body.ui-nou table.lista [data-c="factura"],
+  body.ui-nou table.lista [data-c="data"] { display: none; }
+  body.ui-nou table.lista td .stivuit { display: block; margin-top: 4px; }
+  body.ui-nou table.lista th .stivuit { display: inline; }
+  body.ui-nou table.lista td.actiuni button { display: block; margin: 0 0 4px auto; white-space: nowrap; }
 }
 /* listă îngustă: fiecare comandă pe două rânduri — client, sistem, dată / apoi
    nr. ofertă şi stările. Ordinea vine din data-c; ::before rupe rândul. */
@@ -186,6 +191,9 @@ body.ui-nou .gol.card { border-radius: 12px; }
   body.ui-nou td[data-c="sticla"]::before { content: 'Sticlă: '; color: var(--text-dim); }
   body.ui-nou td[data-c="status"] .dim, body.ui-nou td[data-c="sticla"] .dim.mic { display: none; }
   body.ui-nou table.lista tbody tr.grup { padding-left: 14px; }
+  /* aici data e sus, lângă client */
+  body.ui-nou table.lista td[data-c="data"] { display: block; }
+  body.ui-nou table.lista td[data-c="cine"] .stivuit { display: none; }
 }
 
 /* ── cardul comenzii alese (dreapta); fără comandă aleasă: „Azi" ── */

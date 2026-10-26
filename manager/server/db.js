@@ -551,6 +551,24 @@ const MIGRATII = [
         FROM (SELECT id AS task_id, pentru AS om FROM task UNION SELECT id, creat_de FROM task) o
         JOIN task_mesaj m ON m.task_id = o.task_id AND m.autor != o.om AND m.citit = 1
        GROUP BY o.task_id, o.om;`),
+  // v33 → v34 (2026-10-26): comanda trecută prin „Aşteaptă plata" şi apoi „Plată primită" e ACHITATĂ (userul) —
+  // achitat_la = momentul plăţii primite; suma încasată stă în `avans`. Retroactiv, din jurnalul de activitate
+  // (pornit 2026-10-21, doar ce s-a făcut pe bune): trimisă la „Aşteaptă plata" înainte de acceptare şi neîntoarsă
+  // în oferte între timp. Ce s-a acceptat înainte de jurnal nu se mai poate şti.
+  d => {
+    const { OPERATII } = require('./activitate.js');
+    const op = cale => OPERATII[`POST /api/comenzi/:id/${cale}`][0];
+    d.exec('ALTER TABLE comanda ADD COLUMN achitat_la TEXT');
+    d.prepare(`
+      UPDATE comanda SET achitat_la = confirmat_la
+       WHERE tip = 'comanda' AND confirmat_la IS NOT NULL
+         AND EXISTS (SELECT 1 FROM activitate p
+                      WHERE p.comanda_id = comanda.id AND p.test = 0 AND p.operatie = :plata AND p.la <= comanda.confirmat_la
+                        AND NOT EXISTS (SELECT 1 FROM activitate o
+                                         WHERE o.comanda_id = comanda.id AND o.test = 0 AND o.operatie = :oferta
+                                           AND o.la >= p.la AND o.la <= comanda.confirmat_la))`)
+      .run({ plata: op('asteapta-plata'), oferta: op('inapoi-oferta') });
+  },
 ];
 
 // Exportată pt. test.

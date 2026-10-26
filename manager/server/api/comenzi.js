@@ -400,7 +400,7 @@ function listeaza(ctx) {
 
   const randuri = db().prepare(`
     SELECT c.id, c.numar, c.oferta_nr, c.tip, c.client_nume, c.client_telefon, c.creat_la, c.confirmat_la, c.finalizat_la, c.tip_schimbat_la,
-           c.factura_nr, c.facturat_la, c.plata, c.avans,
+           c.factura_nr, c.facturat_la, c.plata, c.avans, c.achitat_la,
            u.nume AS creat_de_nume,
            -- toate produsele ofertei, în ordine: „Ramă 820 + Confort Gamma + Ofertă cu amănuntul"
            (SELECT GROUP_CONCAT(eticheta, ' + ') FROM (SELECT p.eticheta FROM pozitie p WHERE p.comanda_id = c.id ORDER BY p.idx)) AS sistem,
@@ -544,6 +544,8 @@ function asteaptaPlata(ctx) {
 // Acceptarea unei oferte (sau „Plată primită" din aşteaptă plata): acelaşi rând,
 // alt tip, acelaşi număr (de ofertă) — etichetele deja tipărite rămân valabile.
 // Cere obligatoriu modalitatea de plată; avansul (lei) e opţional, implicit 0.
+// Din „Aşteaptă plata" (userul, 2026-10-26): suma încasată e obligatorie, peste 0, iar comanda
+// rămâne marcată achitată (achitat_la) — suma stă tot în `avans`.
 async function accepta(ctx) {
   const id = Number(ctx.params.id);
   const corp = await corpJson(ctx.req);
@@ -555,6 +557,8 @@ async function accepta(ctx) {
 
   if (!PLATI.includes(corp.plata)) return eroare(ctx.res, 400, 'Alege modalitatea de plată: ofertă, factură proformă, proformă cu amănuntul, factură fiscală, bon fiscal sau factură de avans.');
   const avans = corp.avans == null || String(corp.avans).trim() === '' ? 0 : Number(String(corp.avans).replace(',', '.'));
+  const achitat = c.tip === 'plata';
+  if (achitat && !(avans > 0)) return eroare(ctx.res, 400, 'Scrie suma încasată (mai mare de 0) — comanda aştepta plata.');
   if (!Number.isFinite(avans) || avans < 0) return eroare(ctx.res, 400, 'Avansul trebuie să fie un număr (0 = fără avans).');
   // telefonul şi adresa: pe ofertă erau opţionale, la acceptare se cer (userul, 2026-10-05) —
   // dacă lipsesc, vin din fereastra de acceptare
@@ -563,7 +567,8 @@ async function accepta(ctx) {
 
   db().prepare(`
     UPDATE comanda SET tip = 'comanda', confirmat_la = ${ACUM()}, confirmat_de = ?, plata = ?, avans = ?,
-                       tip_schimbat_la = ${ACUM()}, client_telefon = ?, client_adresa = ?
+                       tip_schimbat_la = ${ACUM()}, client_telefon = ?, client_adresa = ?,
+                       achitat_la = ${achitat ? ACUM() : 'NULL'}
      WHERE id = ?
   `).run(ctx.utilizator.id, corp.plata, Math.round(avans * 100) / 100, telefon, adresa, id);
 
@@ -594,7 +599,7 @@ function inapoiInOferta(ctx) {
   if (lucrat.sticla)        return eroare(ctx.res, 409, 'Sticla e deja comandată la furnizor.');
   if (lucrat.scanat)        return eroare(ctx.res, 409, 'S-a început lucrul în atelier (există scanări).');
   db().prepare(`UPDATE comanda SET tip = 'oferta', numar_comanda = NULL, confirmat_la = NULL, confirmat_de = NULL,
-                                   avans = NULL, tip_schimbat_la = NULL WHERE id = ?`).run(id);
+                                   avans = NULL, achitat_la = NULL, tip_schimbat_la = NULL WHERE id = ?`).run(id);
   anunta({ comanda: id });
   json(ctx.res, 200, { comanda: db().prepare('SELECT * FROM comanda WHERE id = ?').get(id) });
 }
