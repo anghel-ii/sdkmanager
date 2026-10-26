@@ -122,6 +122,10 @@
     soare:   '<circle cx="12" cy="12" r="3.8"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/>',
     luna:    '<path d="M19.5 14.5A7.5 7.5 0 0 1 9.5 4.5a7.5 7.5 0 1 0 10 10z"/>',
     activitate: '<path d="M3 12h4l2.5-6.5 5 13 2.5-6.5H21"/>',
+    // „⋯ Mai multe" (acţiunile rare ale unei comenzi), pioneza din listă, creionul ciornelor
+    mai:     '<circle cx="5.5" cy="12" r="1.1"/><circle cx="12" cy="12" r="1.1"/><circle cx="18.5" cy="12" r="1.1"/>',
+    pin:     '<path d="M9.5 3.5h5l-.8 5.2 3.3 3.3H7l3.3-3.3z"/><path d="M12 12v8.5"/>',
+    creion:  '<path d="M4.5 19.5l1-4.2L15.6 5.2a2 2 0 0 1 2.9 0l.3.3a2 2 0 0 1 0 2.9L8.7 18.5z"/><path d="M13.6 7.2l3.2 3.2"/>',
     // gamele configuratorului (game.json) — butoanele „Ofertă nouă" din pagina principală
     suspendata: '<path d="M3 4.5h18"/><rect x="5" y="7" width="6.5" height="13" rx=".6"/><rect x="12.5" y="7" width="6.5" height="13" rx=".6"/><path d="M7 4.5V7M17 4.5V7"/>',
     confort: '<rect x="4" y="4" width="9" height="16" rx=".6"/><path d="M13 4h6.4a.6.6 0 0 1 .6.6v14.8a.6.6 0 0 1-.6.6H13"/><path d="M10.5 11.5v1.5M15.5 11.5v1.5"/>',
@@ -206,6 +210,11 @@
     #meniu #ofertaNoua { display: flex; align-items: center; justify-content: center; gap: 7px; height: 34px; padding: 0 10px; margin: 0 0 6px;
       font: inherit; font-weight: 600; color: #fff; background: var(--accent-dim); border: 1px solid var(--accent); border-radius: 8px; cursor: pointer; }
     #meniu #ofertaNoua:hover { background: #2f82e6; }
+    /* câte ciorne ai de continuat — ele sunt în fereastra „Ofertă nouă", pe gama lor */
+    #nrCiorne { display: inline-grid; place-items: center; min-width: 18px; height: 17px; padding: 0 5px; border-radius: 999px;
+      background: #b7791f; color: #fff; font-size: 11px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+    #ofertaNoua { position: relative; }
+    html.meniu-strans #meniu #nrCiorne { position: absolute; top: -6px; right: -6px; }
     #meniu .grup { margin: 10px 8px 3px; font-size: 10.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--text-mute); white-space: nowrap; }
     #meniu .link { display: flex; align-items: center; gap: 10px; min-height: 32px; padding: 0 8px; border-radius: 7px; position: relative;
       color: var(--text-2); text-decoration: none; white-space: nowrap; }
@@ -302,7 +311,7 @@
         <a href="/" class="marca" title="Manager comenzi — acasă"><span class="logo">${icoana('logo')}</span><b class="txt">Manager comenzi</b></a>
         <button type="button" class="comuta" id="comutaMeniu" title="Restrânge / extinde meniul" aria-label="Restrânge meniul">${icoana('panou')}</button>
       </div>
-      <button type="button" id="ofertaNoua" title="Ofertă nouă">${icoana('plus')}<span class="txt">Ofertă nouă</span></button>
+      <button type="button" id="ofertaNoua" title="Ofertă nouă">${icoana('plus')}<span class="txt">Ofertă nouă</span><span id="nrCiorne" hidden></span></button>
       ${link('/', 'acasa', 'Acasă')}
       <div class="grup"><span class="txt">Comenzi</span></div>
       ${STARI.map(([t, , h, ic, n]) => link('/' + h, ic, n, `data-tab="${t}"`, `<span class="insigna" data-cate-meniu="${t}"></span>`)).join('')}
@@ -344,7 +353,7 @@
       <a href="/tichete" class="buton" id="linkTichete" title="Tichete: ce nu merge, idei — pentru administrator">${icoana('tichete')}<span class="txt">Tichete</span><span class="insigna rosie" id="nrTichete"></span></a>
       <a href="/clienti" class="buton" id="linkClienti" hidden title="Clienţi; numărul = trimise de agenţi, de aprobat">${icoana('clienti')}<span class="txt">Clienţi</span><span class="insigna cald" id="nrClienti"></span></a>
       <a href="/admin" class="buton" id="linkAdmin" hidden title="Administrare">${icoana('admin')}<span class="txt">Administrare</span></a>
-      <button type="button" id="ofertaNoua" class="primar">${icoana('plus')}Ofertă nouă</button>
+      <button type="button" id="ofertaNoua" class="primar">${icoana('plus')}Ofertă nouă<span id="nrCiorne" hidden></span></button>
       <span id="cine"></span>
       ${butonTema}
       <button type="button" id="iesire" title="Ieşi din cont">${icoana('iesire')}</button>`;
@@ -454,6 +463,19 @@
         if ((localStorage.getItem('modTestVazut') ?? mod) !== mod) localStorage.removeItem('ciorne');
         localStorage.setItem('modTestVazut', mod);
       } catch {}
+      // ciornele mele (configurator_usi/js/ciorna.js — doar în browserul ăsta, 48 de ore): numărul lângă „Ofertă nouă";
+      // ele stau în fereastra lui, pe gama lor (userul, 2026-10-26 — nu mai sunt pe pagina principală)
+      const puneCiorne = () => {
+        let n = 0;
+        try { n = JSON.parse(localStorage.getItem('ciorne') || '[]').filter(c => c.uid === eu.id && Date.now() - c.la < 48 * 3600e3).length; } catch {}
+        const el = radacina.querySelector('#nrCiorne');
+        if (!el) return;
+        el.textContent = n || '';
+        el.hidden = !n;
+        el.title = `${n} ${n === 1 ? 'ciornă' : 'ciorne'} de continuat — în fereastra „Ofertă nouă"`;
+      };
+      puneCiorne();
+      window.addEventListener('storage', e => { if (e.key === 'ciorne') puneCiorne(); });
       radacina.querySelector('#linkAdmin').hidden = eu.rol !== 'admin';     // conturile — doar admin
       radacina.querySelector('#linkActivitate')?.toggleAttribute('hidden', eu.rol === 'birou');   // jurnalul tuturor — admin + conducere
       radacina.querySelector('#linkClienti').hidden = eu.rol === 'birou';   // clienţii — nu şi biroul (userul, 2026-10-02)

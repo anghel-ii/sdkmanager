@@ -172,7 +172,7 @@ button.rosu-contur:hover:not(:disabled)   { background: rgba(201, 96, 76, .2);  
 /* ═══ Cadrul paginilor cu meniul din stânga (bara.js pune html.cu-meniu) ═══
    Redesign 2026-10-12: conţinutul începe la aceeaşi margine pe toate paginile,
    lângă meniu (fără bară sus); fiecare pagină îşi păstrează lăţimea maximă. */
-html.cu-meniu #continut, html.cu-meniu #taburiSus { margin: 0; }
+html.cu-meniu #continut { margin: 0; }
 html.cu-meniu #continut { padding: 22px 24px 48px; }
 @media (max-width: 1099px) { html.cu-meniu #continut { padding: 18px 20px 40px; } }
 

@@ -36,14 +36,7 @@
   .camp select, .camp input { font: inherit; padding: 8px 10px; border-radius: 8px;
     border: 1px solid var(--line); background: var(--panel-2); color: var(--text); }
   .butoane { display: flex; gap: 8px; justify-content: flex-end; }
-  .game { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
-  .game a { display: block; padding: 16px; background: var(--panel-2); border: 1px solid var(--line);
-            border-radius: 10px; color: var(--text); text-decoration: none; }
-  .game a:hover { border-color: var(--accent); }
-  .game a .titlu { display: block; font-weight: 600; font-size: 1.05rem; margin-bottom: 4px; }
-  .game a .sub { display: block; font-size: .8rem; color: var(--text-dim); }
-  /* aşezarea paginii (tabloul de sus, lista, detaliul) — în /nou.css */
-  #taburiSus:empty { display: none; }
+  /* aşezarea paginii (lista, cardul, detaliul, plăcile din „Ofertă nouă") — în /nou.css */
   table.lista td.mono, table.lista td.data { white-space: nowrap; }
   table.lista tbody tr.grup { cursor: default; }
   table.lista tbody tr.grup:hover { background: none; }
@@ -55,10 +48,13 @@
   .tab-cate .din { font-size: .8rem; font-weight: 400; color: var(--text-dim); }
   #sortare.activ { background: var(--accent-dim); border-color: var(--accent); color: #fff; }
   td.pin { width: 34px; padding-right: 0; }
-  .btn-pin { background: none; border: none; padding: 2px 4px; font-size: 15px; cursor: pointer;
-             filter: grayscale(1); opacity: .25; }
-  .btn-pin:hover { opacity: .7; }
-  .btn-pin.activ { filter: none; opacity: 1; }
+  /* pioneza: doar pe rândul de sub mouse şi pe cele fixate (userul, 2026-10-26 — pe fiecare rând era zgomot) */
+  .btn-pin { display: inline-grid; place-items: center; width: 26px; height: 26px; padding: 0; background: none; border: none;
+             border-radius: 6px; color: var(--text-dim); cursor: pointer; opacity: 0; }
+  .btn-pin .ic { width: 15px; height: 15px; }
+  table.lista tr:hover .btn-pin, .btn-pin:focus-visible { opacity: .75; }
+  .btn-pin:hover:not(:disabled) { opacity: 1; color: var(--text); background: var(--hover); border: none; }
+  .btn-pin.activ { opacity: 1; color: var(--accent); }
   table.lista tr.fixat td { background: rgba(77, 163, 255, .10); }
 
   table.lista { width: 100%; border-collapse: collapse; }
@@ -117,6 +113,7 @@
       <h2 id="titluGama">Ofertă nouă — alege gama</h2>
       <button id="inchideGama" class="mic" aria-label="Închide">✕</button>
     </div>
+    <p id="notaCiorne" class="nota-ciorne" hidden>Ciornele tale stau pe gama lor: clic pe una o continui. Rămân 48 de ore, doar în browserul ăsta.</p>
     <div id="listaGame" class="game"></div>
   </div>
 </div>
@@ -171,11 +168,11 @@
   </form>
 </dialog>
 
-<!-- pagina principală: stânga butoanele „Ofertă nouă", stările, căutarea şi lista; dreapta,
-     de sus până jos, cardul comenzii alese (userul, 2026-10-12). Pe pagina unei comenzi cardul dispare. -->
+<!-- pagina principală: stânga stările (taburi), căutarea şi lista; dreapta, de sus până jos, cardul comenzii
+     alese (userul, 2026-10-12). Pe jumătate de ecran cardul vine peste listă (#acasa.mod-panou, userul 2026-10-26).
+     Pe pagina unei comenzi cardul dispare. -->
 <div id="acasa">
   <div class="acasa-stanga">
-    <div id="taburiSus"></div>
     <div id="continut">Se încarcă…</div>
   </div>
   <div class="acasa-dreapta">
@@ -232,9 +229,10 @@ const HASH_TAB = { oferta: '#oferte', plata: '#plata', comanda: '#comenzi', fina
 const facturareHtml = c => c.factura_nr
   ? `<span class="facturat">✓ <strong class="mono">${esc(c.factura_nr)}</strong></span>`
   : '<span class="nefacturat">nefacturat</span>';
-const formFactura = c => `<span class="factura-form" data-id="${c.id}">
+// `primar` — butonul e plin doar când factura e pasul următor al comenzii (pasUrmator)
+const formFactura = (c, primar = false) => `<span class="factura-form" data-id="${c.id}">
        <input class="factura-nr" placeholder="nr. factură" autocomplete="off">
-       <button class="mic primar factura-ok" disabled>Marchează facturat</button>
+       <button class="mic${primar ? ' primar' : ''} factura-ok" disabled>Marchează facturat</button>
      </span>`;
 
 // Leagă câmpurile de facturare din `radacina`; după salvare, `dupa()` re-randează.
@@ -275,17 +273,18 @@ function peFurnizoriSticla(linii) {
   return [...m.values()];
 }
 const bucati = ls => ls.reduce((s, l) => s + l.buc, 0);
-const blocSticla = linii => !linii.length ? '' : `<div class="sticla-furnizori">${peFurnizoriSticla(linii).map(f => {
+// `primar` — butoanele „Comandă sticla" pline doar când sticla e pasul următor al comenzii
+const blocSticla = (linii, primar = false) => !linii.length ? '' : `<div class="sticla-furnizori">${peFurnizoriSticla(linii).map(f => {
   const deComandat = f.linii.filter(l => !l.comandat_la);
   const ult = f.linii.filter(l => l.comandat_la).sort((a, b) => b.comandat_la.localeCompare(a.comandat_la))[0];
   return `<div class="sticla-furnizor" data-furnizor="${esc(f.cod)}">
     <strong>${esc(f.nume)}</strong> <span class="dim mic">${bucati(f.linii)} buc</span>
     ${deComandat.length
-      ? `<button class="mic primar sticla-comanda" data-furnizor="${esc(f.cod)}"
-           title="${f.email ? 'Către ' + esc(f.email) : 'Fără adresă salvată — o completezi în mail'}">✉ Comandă sticla${
+      ? `<button class="mic${primar ? ' primar' : ''} sticla-comanda" data-furnizor="${esc(f.cod)}"
+           title="${f.email ? 'Mail către ' + esc(f.email) : 'Fără adresă salvată — o completezi în mail'}">Comandă sticla${
            ult ? ` (${bucati(deComandat)} buc rămase)` : ''}</button>`
       : `<span class="sticla-da">✓ comandată</span> <span class="dim mic">· ${dataOra(ult.comandat_la)} · ${esc(ult.comandat_de_nume ?? '')}</span>
-         <button class="mic rosu-contur sticla-anuleaza" data-furnizor="${esc(f.cod)}">Anulează</button>`}
+         <button class="mic sticla-anuleaza" data-furnizor="${esc(f.cod)}" title="Sticla redevine necomandată">Anulează marcarea</button>`}
   </div>`;
 }).join('')}</div>`;
 
@@ -346,16 +345,92 @@ async function printeazaDinNou(id, n, buton) {
 // fiecare produs are fişa lui şi printarea ei se notează separat (fisa_printare.poz).
 const neprintate = (printari, n) => Array.from({ length: n }, (_, k) => k).filter(k => !printari.some(f => (f.poz ?? 0) === k));
 const numeFisa = (fise, k) => `Fişa ${fise[k] ?? k + 1}`;
-// Butoanele de print ale unei comenzi în lucru: întâi fişele neprintate (fără întrebare), apoi „Printează din nou" (toate)
-function butoanePrint(c, printari, n, fise) {
-  if (c.tip !== 'comanda' || c.anulat) return '';
-  if (!printari.length) return `<button data-print="toate" title="Printează ${n > 1 ? 'toate fişele' : 'fişa'} comenzii">🖶 Printează ${n > 1 ? 'fişele' : 'fişa'}</button>`;
+// Pasul „Fişă" din „Drumul comenzii" (cardul şi pagina comenzii, userul 2026-10-26): neprintată → butonul de print
+// chiar pe rând (fişele noi fără întrebare; plin doar dacă e pasul următor); printată → prima printare, apoi
+// retipăririle. „Printează din nou" (toate, cu întrebarea) e în „⋯".
+function pasFisa(c, printari, n, fise, activa, urmator) {
+  const buton = (ce, text) => (activa ? ` <button class="mic${urmator === 'fisa' ? ' primar' : ''}" data-print="${ce}">${text}</button>` : '');
+  if (!printari.length) return pas(activa ? 'acum' : 'viitor', 'Fişă', `<span class="urmeaza">neprintată</span>${buton('toate', `Printează ${n > 1 ? 'fişele' : 'fişa'}`)}`);
+  const cine = f => deCine(f.de_nume, f.la);
+  const alte = printari.length - 1;
+  const istoric = `printată ${cine(printari[0])}${alte ? ` · <span class="dim">retipărită ${alte === 1 ? 'o dată' : `de ${alte} ori`}, ultima ${cine(printari.at(-1))}</span>` : ''}`;
   const noi = neprintate(printari, n);
-  return (noi.length ? `<button class="primar" data-print="noi" title="Nu s-a printat încă: ${esc(noi.map(k => numeFisa(fise, k)).join(', '))}">🖶 Printează ${
-    noi.length > 1 ? `fişele noi (${noi.length})` : 'fişa nouă'}</button>` : '')
-    + `<button data-print="toate" title="Printează din nou ${n > 1 ? 'toate fişele' : 'fişa'} comenzii">🖶 Printează din nou</button>`;
+  return noi.length && activa
+    ? pas(urmator === 'fisa' ? 'acum' : 'viitor', 'Fişă', `<span class="urmeaza">neprintată: ${esc(noi.map(k => numeFisa(fise, k)).join(', '))}</span>${
+        buton('noi', noi.length > 1 ? `Printează fişele noi (${noi.length})` : 'Printează fişa nouă')}<div class="dim mic">${istoric}</div>`)
+    : pas('gata', 'Fişă', istoric);
 }
-// leagă butoanele de mai sus; `dupa` — redesenează (starea fişelor s-a schimbat)
+// Pasul următor al unei comenzi — singurul cu buton plin pe ecran (userul, 2026-10-26): la ofertă / aşteaptă plata
+// acceptarea; în lucru, în ordinea din drum: fişa neprintată, factura, sticla, apoi finalizarea. null = nimic
+// (finalizată, anulată sau oprită de o cerere de anulare). `sticla` = { total, comandate } sau null.
+function pasUrmator(c, printari, n, sticla, activa) {
+  if (!activa || c.finalizat_la) return null;
+  if (c.tip !== 'comanda') return 'accepta';
+  if (!printari.length || neprintate(printari, n).length) return 'fisa';
+  if (!c.factura_nr) return 'factura';
+  if (sticla && sticla.comandate < sticla.total) return 'sticla';
+  return 'finalizeaza';
+}
+
+// ── „⋯ Mai multe" şi „Fişe ▾" (userul, 2026-10-26): ce se foloseşte rar stă într-un meniu, ca la vedere să rămână
+// pasul următor şi ce se foloseşte des. Elementele păstrează data-* / id-urile de acum, deci le leagă aceleaşi
+// funcţii (leagaTreceri, leagaPrint, fişele). Un singur meniu deschis; clic în altă parte, Esc sau o alegere îl închid.
+const meniuMai = (elemente, { text = '', stanga = false } = {}) => `<div class="mai-multe${stanga ? ' stanga' : ''}">
+  <button type="button" class="mai-btn${text ? ' text' : ''}" aria-haspopup="menu" aria-expanded="false"${text ? '' : ' title="Mai multe" aria-label="Mai multe"'}>${text || icoana('mai')}</button>
+  <div class="mai-lista" role="menu" hidden>${elemente}</div></div>`;
+// ce intră în „⋯": retipărirea, taskul, tichetul şi, la capăt, după o linie, anularea
+const maiMulte = (c, cerere, printari) => `${c.tip === 'comanda' && !c.anulat && printari.length
+    ? `<button type="button" role="menuitem" data-print="toate" title="Toate fişele comenzii — întâi întrebarea, cu cine şi când s-au printat">Printează din nou</button>` : ''}
+  <a role="menuitem" href="/taskuri?comanda=${c.id}" title="Un task / reminder legat de comanda asta">+ Task</a>
+  <a role="menuitem" href="/tichete?comanda=${c.id}" title="Un tichet pentru administrator despre comanda asta">+ Tichet</a>
+  ${c.anulat || cerere?.stare === 'deschisa' ? '' : '<hr><button type="button" role="menuitem" class="periculos" data-anuleaza title="Cere anularea — o aprobă conducerea">Anulează…</button>'}`;
+// „Vezi fişa"; la mai multe produse un singur buton „Fişe (n)" cu lista lor. `cls` — clasa pe care o leagă pagina
+const butonFise = (pozitii, fise, cls) => (pozitii.length > 1
+  ? meniuMai(pozitii.map((p, k) => `<button type="button" role="menuitem" class="${cls}" data-poz="${k}" title="${esc(p.eticheta)}">Vezi ${esc(numeFisa(fise, k))}</button>`).join(''),
+      { text: `Fişe (${pozitii.length}) ▾`, stanga: true })
+  : `<button type="button" class="${cls}" data-poz="0" title="Vezi fişa (previzualizare)">Vezi fişa</button>`);
+// Butoanele la vedere — aceleaşi pe card şi pe pagina comenzii (`pagina`: id-ul / clasa de acolo). La ofertă şi la
+// „aşteaptă plata" întâi trecerea (plină), apoi fişa şi modificarea; la comandă fişa, modificarea, adăugarea, apoi
+// „Marchează finalizată" (plin doar când e pasul următor).
+function actiuniComanda(c, pozitii, fise, urmator, pagina = false) {
+  const eComanda = c.tip === 'comanda';
+  const modifica = (c.tip === 'oferta' || eComanda && !c.finalizat_la) && !c.anulat
+    ? `<button type="button" id="${pagina ? 'modifica' : 'ccModifica'}" title="${eComanda ? MODIFICA_COMANDA : 'Deschide oferta în configurator'}">Modifică ${eComanda ? 'comanda' : 'oferta'}</button>` : '';
+  const adauga = eComanda && !c.finalizat_la && !c.anulat ? '<button type="button" data-adauga-la>+ Adaugă la comandă</button>' : '';
+  const treceri = butoaneTreceri(c, minuteInapoi(c), urmator);
+  const fiseB = butonFise(pozitii, fise, pagina ? 'fisa-poz' : 'cc-fisa');
+  return eComanda ? fiseB + modifica + adauga + treceri : treceri + fiseB + modifica;
+}
+const inchideMeniuri = (inafara = null) => document.querySelectorAll('.mai-lista:not([hidden])').forEach(l => {
+  if (l === inafara) return;
+  l.hidden = true;
+  l.previousElementSibling?.setAttribute('aria-expanded', 'false');
+});
+document.addEventListener('click', e => {
+  const b = e.target.closest('.mai-btn');
+  if (!b) return inchideMeniuri();   // o alegere din meniu sau un clic în altă parte
+  const l = b.nextElementSibling;
+  inchideMeniuri(l);
+  l.hidden = !l.hidden;
+  b.setAttribute('aria-expanded', String(!l.hidden));
+  if (!l.hidden) l.querySelector('[role="menuitem"]')?.focus();
+});
+// Esc închide întâi meniul (nu cardul / fereastra); ↑ ↓ trec prin elementele lui
+document.addEventListener('keydown', e => {
+  const l = document.querySelector('.mai-lista:not([hidden])');
+  if (!l) return;
+  if (e.key === 'Escape') {
+    e.stopImmediatePropagation();
+    inchideMeniuri();
+    l.previousElementSibling?.focus();
+  } else if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && l.contains(document.activeElement)) {
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    const el = [...l.querySelectorAll('[role="menuitem"]')], i = el.indexOf(document.activeElement);
+    el[(i + (e.key === 'ArrowDown' ? 1 : el.length - 1)) % el.length]?.focus();
+  }
+}, true);
+// leagă butoanele de print ([data-print] — din drum şi din „⋯"); `dupa` — redesenează (starea fişelor s-a schimbat)
 function leagaPrint(root, id, printari, n, dupa) {
   root.querySelectorAll('[data-print]').forEach(b => b.addEventListener('click', async () => {
     if (b.dataset.print === 'toate') await printeazaDinNou(id, n, b);
@@ -366,18 +441,6 @@ function leagaPrint(root, id, printari, n, dupa) {
     dupa?.();
   }));
 }
-// „Fişa printată 13/10/2026 14:20 · Ana · încă 2 ori, ultima 15/10/2026 09:10 · Ion" — în cardul
-// comenzii şi în pagina ei; prima printare rămâne, retipăririle se numără (fise = /api/comenzi/:id)
-function fisaPrintata(fise = [], n = 1, nume = []) {
-  if (!fise.length) return '<div class="fisa-printata">🖶 Fişa nu s-a printat încă</div>';
-  const noi = neprintate(fise, n);
-  const lipsa = noi.length ? `<div class="fisa-printata neprintata">⚠ Nu s-a printat încă: ${esc(noi.map(k => numeFisa(nume, k)).join(', '))}</div>` : '';
-  const cine = f => `${dataOra(f.la)}${f.de_nume ? ` · ${esc(f.de_nume)}` : ''}`;
-  const alte = fise.length - 1;
-  return `<div class="fisa-printata" title="${esc(fise.map(f => `${dataOra(f.la)} ${f.de_nume ?? ''}`).join('\n'))}">🖶 Fişa printată ${cine(fise[0])}${
-    alte ? ` · <b>retipărită ${alte === 1 ? 'o dată' : `de ${alte} ori`}</b>, ultima ${cine(fise.at(-1))}` : ''}</div>${lipsa}`;
-}
-
 const statusHtml = st => st
   ? `<strong>${esc(st.operatie)}</strong> <span class="dim mic">· ${dataOra(st.moment)} · ${esc(st.cine)}</span>`
   : '<span class="dim">—</span>';
@@ -412,74 +475,37 @@ const TABURI = [['oferta', 'Oferte'], ['plata', 'Aşteaptă plata'], ['comanda',
 // fără diacritice şi litere mari: „şerban" găseşte „Serban"
 const normal = t => String(t ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
-// Sus pe pagina principală (redesign 2026-10-12, a doua trecere — userul): întâi
-// butoanele „Ofertă nouă" (o gamă = un buton, din game.json), dedesubt cele patru
-// stări pe un singur rând — ELE sunt taburile listei. Construite o singură dată,
-// în afara conţinutului; pe pagina unei comenzi se ascund (nou.css) — stările
-// rămân în meniul din stânga. Fiecare stare cu iconiţa ei (bara.js).
-const ICOANA_TAB = { oferta: 'oferta', plata: 'plata', comanda: 'lucru', finalizata: 'gata' };
-// pe plăcile înguste, numele din meniul din stânga (cel întreg rămâne în title)
+// Cele patru stări = taburile listei: un rând de taburi joase, pe rândul căutării (userul, 2026-10-26 — înainte
+// plăci mari, cu 6 butoane „Ofertă nouă" deasupra; acum „Ofertă nouă" e doar butonul din meniu, cu ciornele în
+// fereastra lui). Se construiesc odată cu bara listei (asiguraBaraLista); pe pagina unei comenzi nu sunt — acolo
+// stările rămân în meniul din stânga. Punctul colorat = culoarea stării, ca pe eticheta ei (.stare-pastila).
 const NUME_SCURT = { oferta: 'Oferte', plata: 'Aşteaptă plata', comanda: 'În lucru', finalizata: 'Finalizate' };
-
-// Plăcile „Ofertă nouă" + ciornele: ofertele lăsate ca ciornă la plecarea din configurator stau DOAR
-// în browserul ăsta, cel mult 48 de ore (configurator_usi/js/ciorna.js, localStorage „ciorne"); aici doar
-// ale contului logat. O ciornă apare în dreapta plăcii gamei ei: clic acolo = o continui; în rest = ofertă nouă.
-let game = null;
-function puneGame() {
-  const el = $('placiGame');
-  if (!el || !game) return;
-  let ciorne = [];
-  try { ciorne = JSON.parse(localStorage.getItem('ciorne') || '[]').filter(c => c.uid === eu?.id && Date.now() - c.la < 48 * 3600e3); } catch { /* fără */ }
-  const sem = JSON.stringify(ciorne.map(c => [c.id, c.la]));   // se cheamă la fiecare randare — refăcute doar la schimbare
-  if (el.dataset.sem === sem) return;
-  el.dataset.sem = sem;
-  el.innerHTML = game.map(x => {
-    const nou = `href="/configurator/?gama=${encodeURIComponent(x.id)}" title="Ofertă nouă — ${esc(x.label)}: ${esc(subGama(x))} · ${esc(x.descriere ?? '')}">
-      ${icoana(x.id)}<span>${esc(x.id === 'amanunt' ? 'Amănunt' : x.label)}</span>`;
-    const ale = ciorne.filter(c => c.gama === x.id);
-    return !ale.length ? `<a class="gama-btn" ${nou}</a>` : `
-      <div class="gama-btn cu-ciorne"><a class="gama-nou" ${nou}</a><span class="gama-ciorne">${ale.map(c => `
-        <a class="ciorna-chip" href="/configurator/?ciorna=${encodeURIComponent(c.id)}"
-           title="Continuă ciorna: ${esc(c.titlu)} · salvată ${dataOra(new Date(c.la))} · se şterge după 48 de ore">
-          <small>✎</small><span>${esc(c.client || 'Continuă')}</span></a>`).join('')}</span></div>`;
-  }).join('') || '<p class="dim mic">Configuratorul nu e construit (cd configurator_usi && node build.js).</p>';
+const taburiHtml = () => `<div class="taburi-lista" id="taburiLista">${TABURI.map(([t, n]) => `
+  <button type="button" data-tab="${t}" class="tab-stare ton-${t}" title="${n}"><span class="punct"></span><span class="tab-nume">${
+    NUME_SCURT[t]}</span><span class="tab-cate" data-cate="${t}"></span></button>`).join('')}</div>`;
+function leagaTaburi() {
+  document.querySelectorAll('#taburiLista button').forEach(b => b.addEventListener('click', () => {
+    tabCurent = b.dataset.tab;
+    if (pesteTot) cautare = '';   // din rezultatele „în toate": tabul întreg, fără căutare
+    if ($('cauta')) $('cauta').value = cautare;
+    // pe listă: înlocuim hash-ul fără să declanşăm hashchange
+    history.replaceState(null, '', HASH_TAB[tabCurent]);
+    renderLista();
+  }));
 }
-window.addEventListener('storage', e => { if (e.key === 'ciorne') puneGame(); });   // salvată din alt tab
-
+// tabul activ, starea arătată în meniul din stânga şi numerele
 function asiguraTaburi() {
-  if (!$('taburiSus').children.length) {
-    $('taburiSus').innerHTML = `
-      <div class="eticheta-sus">Ofertă nouă</div>
-      <div class="placi-game" id="placiGame"></div>
-      <div class="taburi">${TABURI.map(([t, n]) => `
-        <button data-tab="${t}" class="placa ton-${t}" title="${n}">
-          <span class="placa-ic">${icoana(ICOANA_TAB[t])}</span><span class="tab-nume">${NUME_SCURT[t]}</span><span class="tab-cate" data-cate="${t}"></span>
-        </button>`).join('')}</div>`;
-    incarcaGame().then(g => { game = g?.game ?? []; puneGame(); });
-    document.querySelectorAll('#taburiSus .taburi button').forEach(b =>
-      b.addEventListener('click', () => {
-        tabCurent = b.dataset.tab;
-        if (pesteTot) cautare = '';   // din rezultatele „în toate": tabul întreg, fără căutare
-        if ($('cauta')) $('cauta').value = cautare;
-        // de pe pagina unei comenzi: înapoi la listă prin hash (ruteaza)
-        if (location.hash.startsWith('#comanda/')) { location.hash = HASH_TAB[tabCurent]; return; }
-        // pe listă: înlocuim hash-ul fără să declanşăm hashchange
-        history.replaceState(null, '', HASH_TAB[tabCurent]);
-        renderLista();
-      }));
-  }
-  puneGame();
   const toate = ceLista() === 'toate';
-  document.querySelectorAll('#taburiSus .taburi button').forEach(b => b.classList.toggle('activ', b.dataset.tab === tabCurent && !toate));
-  // în meniul din stânga: starea arătată acum
+  document.querySelectorAll('#taburiLista button').forEach(b => b.classList.toggle('activ', b.dataset.tab === tabCurent && !toate));
   document.querySelectorAll('#meniu [data-tab]').forEach(a => a.classList.toggle('curent', a.dataset.tab === tabCurent && !toate));
   puneCate();
 }
 const numeTab = () => TABURI.find(([t]) => t === tabCurent)[1];
-// stările din meniul din stânga = plăcile de aici (click pe placă: goleşte căutarea „în toate", iese din comandă)
+// stările din meniul din stânga = taburile de aici (click: goleşte căutarea „în toate"); din pagina unei comenzi
+// (fără taburi) linkul duce la listă prin hash
 document.addEventListener('click', e => {
   const a = e.target.closest('#meniu a[data-tab]');
-  const b = a && document.querySelector(`#taburiSus button[data-tab="${a.dataset.tab}"]`);
+  const b = a && document.querySelector(`#taburiLista button[data-tab="${a.dataset.tab}"]`);
   if (!b || e.ctrlKey || e.metaKey || e.shiftKey) return;
   e.preventDefault();
   b.click();
@@ -490,12 +516,12 @@ document.addEventListener('click', e => {
 // Căutarea stă chiar deasupra listei (userul, 2026-10-12: fără bară sus).
 let focusCauta = false;   // Ctrl K din pagina unei comenzi: căutarea primeşte focusul după ce apare lista
 function asiguraBaraLista() {
-  asiguraTaburi();
   if (!$('tabelLista')) {
     $('continut').innerHTML = `
       <div class="lucru">
         <section class="lucru-lista">
-          <div class="cauta-lista">
+          <div class="bara-sus">
+            ${taburiHtml()}
             <label class="camp-cauta" title="Caută (Ctrl K sau /)">${icoana('cauta')}
               <input id="cauta" type="search" placeholder="Caută client, telefon, sistem, nr. ofertă, factură…" autocomplete="off">
               <kbd>Ctrl K</kbd></label>
@@ -509,6 +535,7 @@ function asiguraBaraLista() {
           <div id="tabelLista"></div>
         </section>
       </div>`;
+    leagaTaburi();
     $('cauta').value = cautare;
     $('cauta').addEventListener('input', cautaSchimbat);
     $('cauta').addEventListener('keydown', e => {
@@ -527,6 +554,7 @@ function asiguraBaraLista() {
     incarcaCard();
     incarcaTaskuri();
   }
+  asiguraTaburi();
 }
 
 // ── Taskurile mele, deasupra cardului comenzii (server/taskuri.js; pagina /taskuri) ──
@@ -547,7 +575,9 @@ async function incarcaTaskuri() {
   const deFacut = ale.filter(t => !t.facut_la).length;
   const acum = Date.now();
   const tarziu = t => !t.facut_la && !t.in_asteptare_la && t.scadenta && new Date(t.scadenta.replace(' ', 'T') + 'Z') <= acum;
-  el.hidden = false;
+  // fără taskuri cardul nu mai stă pe ecran cu „Nimic de făcut" (userul, 2026-10-26); taskurile — din meniu
+  el.hidden = !ale.length;
+  if (!ale.length) { el.innerHTML = ''; return; }
   el.innerHTML = `
     <div class="ct-cap"><a class="ct-titlu" href="/taskuri">Taskuri</a>${deFacut ? `<span class="insigna-num">${deFacut}</span>` : ''}
       <span class="spatiu"></span><a class="ct-plus" href="/taskuri" title="Task nou">+</a></div>
@@ -645,7 +675,7 @@ function randeazaTabel() {
   // pe taburi: „2 din 14" cât se caută
   potriviri = totul ? Object.fromEntries(TABURI.map(([t]) => [t, randuri.filter(c => tabRand(c) === t).length])) : null;
   puneCate();
-  const coloane = 7 + cuStatus + cuSticla + 3 * cuFacturare;
+  const coloane = 6 + cuStatus + cuSticla + 3 * cuFacturare;
   // căutare: un rând-titlu înaintea fiecărei stări („Oferte 2")
   const titluGrup = (c, i) => !totul || (i && tabRand(randuri[i - 1]) === tabRand(c)) ? '' : `
         <tr class="grup"><td colspan="${coloane}">${TABURI[ordine(c)][1]}<span class="cate">${
@@ -658,12 +688,12 @@ function randeazaTabel() {
         <th data-c="pin" title="📌 fixează o comandă sus în listă (doar pentru tine)"></th><th data-c="client">Client</th><th data-c="oferta">Nr. ofertă</th><th data-c="sistem">Sistem</th>${
           cuStatus ? '<th data-c="status">Status</th>' : ''}${cuSticla ? '<th data-c="sticla">Sticlă</th>' : ''}${cuFacturare
           ? '<th data-c="plata">Plată</th><th class="num" data-c="avans">Avans</th><th data-c="factura">Facturare</th>' : ''}
-        <th data-c="cine">Creat de</th><th data-c="data">${titluData}</th><th data-c="actiuni"></th>
+        <th data-c="cine">Creat de</th><th data-c="data">${titluData}</th>
       </tr></thead>
       <tbody>${randuri.map((c, i) => `${titluGrup(c, i)}
         <tr data-id="${c.id}" class="${c.fixat ? 'fixat' : ''}${c.id === selectat ? ' selectat' : ''}${c.demo ? ' demo' : ''}">
           <td class="pin" data-c="pin"><button class="btn-pin${c.fixat ? ' activ' : ''}" data-id="${c.id}"
-                title="${c.fixat ? 'Scoate de sus' : 'Fixează sus (doar pentru tine)'}">📌</button></td>
+                title="${c.fixat ? 'Scoate de sus' : 'Fixează sus (doar pentru tine)'}" aria-label="${c.fixat ? 'Scoate de sus' : 'Fixează sus'}">${icoana('pin')}</button></td>
           <td data-c="client">${esc(c.client_nume)}${c.demo ? ` ${DEMO}` : ''}${c.pe_hold ? ' <span class="stare-pastila anulata" title="Anulare cerută — comanda e oprită până decide conducerea">anulare cerută</span>' : ''}${totul && c.client_telefon ? `<div class="nr-mic mono">${esc(c.client_telefon)}</div>` : ''}</td>
           <td class="mono" data-c="oferta">${esc(c.oferta_nr || c.numar)}</td>
           <td data-c="sistem">${esc(c.sistem ?? '—')}</td>
@@ -675,10 +705,6 @@ function randeazaTabel() {
               ? facturareHtml(c) : '<span class="dim">—</span>'}</td>` : ''}
           <td class="dim" data-c="cine">${esc(c.creat_de_nume)}</td>
           <td class="dim mic data" data-c="data">${dataOra(dataRand(c))}</td>
-          <td class="actiuni" data-c="actiuni">${c.nr_pozitii > 1
-            ? `<button class="mic fise" data-id="${c.id}" title="${c.nr_pozitii} produse — fiecare cu fişa lui, în pagina comenzii">👁 Fişe (${c.nr_pozitii})</button>`
-            : `<button class="mic fisa" data-id="${c.id}" title="Vezi fişa (previzualizare)">👁 Fişă</button>`}${tabRand(c) === 'oferta'
-            ? ` <button class="mic modifica" data-id="${c.id}">Modifică oferta</button>` : ''}</td>
         </tr>`).join('')}</tbody>
     </table>` : q ? `
     <div class="card gol"><h2>Nimic nu se potriveşte cu „${esc(cautare.trim())}"</h2>
@@ -694,21 +720,18 @@ function randeazaTabel() {
     </div>`;
 
   $('cautaToate')?.addEventListener('click', () => cautaUnde(true));
-  // un click ALEGE comanda (detaliile în cardul din dreapta); dublu-click o deschide
+  // un click ALEGE comanda (detaliile în cardul din dreapta); dublu-click o deschide. Doar lista (zonă îngustă,
+  // fără loc pentru card): clicul o deschide direct
   document.querySelectorAll('table.lista tbody tr[data-id]').forEach(tr => {
-    tr.addEventListener('click', () => { if (+tr.dataset.id !== selectat) noteazaVazut('A ales comanda în listă (cardul din dreapta)', +tr.dataset.id); selecteaza(+tr.dataset.id); });
+    tr.addEventListener('click', () => {
+      if ($('acasa').classList.contains('mod-lista')) { location.hash = '#comanda/' + tr.dataset.id; return; }
+      if (+tr.dataset.id !== selectat) noteazaVazut('A ales comanda în listă (cardul din dreapta)', +tr.dataset.id);
+      selecteaza(+tr.dataset.id);
+    });
     tr.addEventListener('dblclick', () => { location.hash = '#comanda/' + tr.dataset.id; });
   });
   // comanda aleasă nu mai e în listă (alt tab, căutare) → cardul revine la „Azi"
   if (selectat && !randuri.some(c => c.id === selectat)) selecteaza(null);
-  // „Modifică oferta" — redeschide configuratorul cu configuraţia salvată
-  document.querySelectorAll('button.fisa').forEach(b =>
-    b.addEventListener('click', e => { e.stopPropagation(); veziFisa(b.dataset.id, b); }));
-  // mai multe produse: fişele lor sunt în pagina comenzii (câte un buton pe produs)
-  document.querySelectorAll('button.fise').forEach(b =>
-    b.addEventListener('click', e => { e.stopPropagation(); location.hash = '#comanda/' + b.dataset.id; }));
-  document.querySelectorAll('button.modifica').forEach(b =>
-    b.addEventListener('click', e => { e.stopPropagation(); location.href = '/configurator/?oferta=' + b.dataset.id; }));
   // pin — per utilizator; se schimbă local imediat, apoi se salvează
   document.querySelectorAll('button.btn-pin').forEach(b =>
     b.addEventListener('click', async e => {
@@ -729,6 +752,7 @@ let selectat = null;
 const ZI_RO = new Intl.DateTimeFormat('ro-RO', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/Bucharest' });
 function selecteaza(id) {
   selectat = id;
+  $('acasa').classList.toggle('cu-selectie', !!id);   // pe jumătate de ecran cardul (panoul) apare doar cu o comandă aleasă
   document.querySelectorAll('#tabelLista tr[data-id]').forEach(tr => tr.classList.toggle('selectat', +tr.dataset.id === id));
   incarcaCard();
 }
@@ -756,10 +780,10 @@ const DEMO = '<span class="stare-pastila demo" title="Făcută sau schimbată î
 // adresa se verifică (judeţ + localitate din listă, /adresa.js) doar când chiar se livrează
 const deVerificat = c => c.livrare && c.livrare !== 'Ridicare personala' ? ' data-verifica-adresa' : '';
 
-// Cardul comenzii alese (dreapta), ca pagina comenzii în mic. Sus două rânduri de butoane:
-// întâi ce faci CU comanda (deschizi, printezi, modifici / adaugi), apoi unde o MUŢI (trecerile
-// colorate; „Anulează…" la capăt). Task / Tichet stau mici lângă ×. În „Drumul comenzii", pasul
-// la care eşti are butonul lui chiar pe rând (factura, sticla, fişa), fără să cauţi în altă parte.
+// Cardul comenzii alese (dreapta), ca pagina comenzii în mic (userul, 2026-10-26: mai puţin la vedere). Sus
+// numele (link spre pagină), „⋯" cu ce se foloseşte rar (Printează din nou, + Task, + Tichet, Anulează…) şi ×;
+// un singur rând de butoane (actiuniComanda), cu un singur buton plin: pasul următor (pasUrmator). În „Drumul
+// comenzii" pasul la care eşti are butonul lui chiar pe rând (fişa, factura, sticla).
 function cardDetalii({ comanda: c, cerere, cerereFactura, pozitii, sticlaLinii = [], fise: printari = [] }, fise) {
   const eOferta = c.tip === 'oferta', ePlata = c.tip === 'plata', eComanda = c.tip === 'comanda';
   const [cls, stare] = eOferta ? ['oferta', 'Ofertă'] : ePlata ? ['plata', 'Aşteaptă plata']
@@ -767,31 +791,15 @@ function cardDetalii({ comanda: c, cerere, cerereFactura, pozitii, sticlaLinii =
   const comandate = sticlaLinii.filter(l => l.comandat_la);
   const sticla = sticlaLinii.length ? { total: sticlaLinii.length, comandate: comandate.length } : null;
   const activa = !c.anulat && cerere?.stare !== 'deschisa';
-  const treceri = butoaneTreceri(c, minuteInapoi(c)).trim() + butonAnulare(c, cerere);
-  const noi = printari.length ? neprintate(printari, pozitii.length) : [];
-  const fisa = noi.length && activa
-    ? pas('acum', 'Fişă', `<span class="urmeaza">neprintată: ${esc(noi.map(k => numeFisa(fise, k)).join(', '))}</span>`)
-    : printari.length
-    ? pas('gata', 'Fişă', `printată ${deCine(printari[0].de_nume, printari[0].la)}${printari.length > 1
-      ? ` · <span class="dim">retipărită ${printari.length === 2 ? 'o dată' : `de ${printari.length - 1} ori`}</span>` : ''}`)
-    : pas(activa ? 'acum' : 'viitor', 'Fişă', '<span class="urmeaza">neprintată</span>');
+  const urmator = pasUrmator(c, printari, pozitii.length, sticla, activa);
   return `
-    <div class="cc-titlu"><h2>${esc(c.client_nume)}</h2>
-      <a class="cc-mic" href="/taskuri?comanda=${c.id}" title="Un task / reminder legat de comanda asta">+ Task</a>
-      <a class="cc-mic" href="/tichete?comanda=${c.id}" title="Un tichet pentru administrator despre comanda asta">+ Tichet</a>
+    <div class="cc-titlu"><h2><a href="#comanda/${c.id}" title="Deschide pagina comenzii (dublu-click sau Enter pe rând)">${esc(c.client_nume)}</a></h2>
+      ${meniuMai(maiMulte(c, cerere, printari))}
       <button class="cc-inchide" id="ccInchide" title="Închide (Esc)" aria-label="Închide">${icoana('inchide')}</button></div>
-    <div class="cc-nr"><span class="mono">${esc(c.oferta_nr || c.numar)}</span><span class="stare-pastila ${c.anulat ? 'anulata' : cls}">${c.anulat ? 'Anulată' : stare}</span>${c.demo ? DEMO : ''}</div>
+    <div class="cc-nr"><span class="mono">${esc(c.oferta_nr || c.numar)}</span><span class="stare-pastila ${c.anulat ? 'anulata' : cls}">${c.anulat ? 'Anulată' : stare}</span>${c.demo ? DEMO : ''}
+      <span class="spatiu"></span><a class="cc-deschide" href="#comanda/${c.id}" title="Pagina comenzii (dublu-click sau Enter pe rând)">Deschide pagina →</a></div>
     ${blocAnulare(c, cerere)}
-    <div class="cc-butoane">
-      <button class="primar" id="ccDeschide" title="Pagina comenzii (dublu-click sau Enter pe rând)">Deschide comanda</button>
-      ${pozitii.length > 1
-        ? pozitii.map((p, k) => `<button class="cc-fisa" data-poz="${k}" title="Vezi fişa produsului ${k + 1}: ${esc(p.eticheta)}">👁 Fişa ${esc(fise[k])}</button>`).join('')
-        : '<button class="cc-fisa" data-poz="0" title="Vezi fişa (previzualizare)">👁 Vezi fişa</button>'}
-      ${butoanePrint(c, printari, pozitii.length, fise)}
-      ${(eOferta || eComanda && !c.finalizat_la) && !c.anulat ? `<button id="ccModifica" title="${eComanda ? MODIFICA_COMANDA : 'Deschide oferta în configurator'}">Modifică ${eComanda ? 'comanda' : 'oferta'}</button>` : ''}
-      ${eComanda && !c.finalizat_la && !c.anulat ? '<button data-adauga-la>+ Adaugă la comandă</button>' : ''}
-    </div>
-    ${treceri ? `<div class="cc-butoane cc-treceri">${treceri}</div>` : ''}
+    <div class="cc-butoane">${actiuniComanda(c, pozitii, fise, urmator)}</div>
     <dl class="cc-perechi">
       ${c.client_telefon ? `<dt>Telefon</dt><dd>${esc(c.client_telefon)}</dd>` : ''}
       ${c.client_adresa ? `<dt>Adresă</dt><dd${deVerificat(c)}>${esc(c.client_adresa)}</dd>` : ''}
@@ -805,15 +813,16 @@ function cardDetalii({ comanda: c, cerere, cerereFactura, pozitii, sticlaLinii =
       ${pas('gata', 'Ofertat', deCine(c.creat_de_nume, c.creat_la))}
       ${c.confirmat_la ? pas('gata', 'Acceptat', deCine(c.confirmat_de_nume, c.confirmat_la))
         : pas(c.anulat ? 'viitor' : 'acum', 'Acceptat', c.anulat ? '' : `<span class="urmeaza">urmează „${ePlata ? 'Plată primită şi printează' : 'Acceptă comanda şi printează'}"</span>`)}
+      ${eComanda ? pasFisa(c, printari, pozitii.length, fise, activa, urmator) : ''}
       ${!eComanda ? pas('viitor', 'Facturat', '')
         : c.factura_nr ? pas('gata', 'Facturat', `<strong class="mono">${esc(c.factura_nr)}</strong> · ${deCine(c.facturat_de_nume, c.facturat_la)}${schimbareFactura(c, cerereFactura)}`)
-        : pas(activa ? 'acum' : 'viitor', 'Facturat', activa ? formFactura(c) : '<span class="nefacturat">nefacturat</span>', 'facturare')}
+        : pas(urmator === 'factura' ? 'acum' : 'viitor', 'Facturat', activa ? formFactura(c, urmator === 'factura') : '<span class="nefacturat">nefacturat</span>', 'facturare')}
       ${!eComanda ? '' : !sticla ? pas('info', 'Sticlă', '<span class="dim">fără sticlă</span>')
         : sticla.comandate === sticla.total ? pas('gata', 'Sticlă', `comandată ${deCine(comandate.at(-1)?.comandat_de_nume, comandate.map(l => l.comandat_la).sort().at(-1))}`)
-        : pas(activa ? 'acum' : 'viitor', 'Sticlă', `${sticlaHtml(sticla)}${activa ? ` <a class="cc-link" href="#comanda/${c.id}" title="Sticla se comandă din pagina comenzii, pe furnizori">Comandă sticla</a>` : ''}`)}
-      ${eComanda ? fisa : ''}
+        : pas(urmator === 'sticla' ? 'acum' : 'viitor', 'Sticlă', `${sticlaHtml(sticla)}${activa ? ` <a class="${urmator === 'sticla' ? 'btn mic primar' : 'cc-link'}" href="#comanda/${c.id}" title="Sticla se comandă din pagina comenzii, pe furnizori">Comandă sticla</a>` : ''}`)}
       ${c.finalizat_la ? pas('gata', 'Finalizat', deCine(c.finalizat_de_nume, c.finalizat_la))
-        : pas('viitor', 'Finalizat', eComanda && activa ? '<span class="dim">cu „Marchează finalizată" de sus</span>' : '')}
+        : pas(urmator === 'finalizeaza' ? 'acum' : 'viitor', 'Finalizat', !eComanda || !activa ? ''
+          : urmator === 'finalizeaza' ? '<span class="urmeaza">totul e gata — „Marchează finalizată” de sus</span>' : '<span class="dim">cu „Marchează finalizată” de sus</span>')}
     </dl>
     <div class="cc-eticheta">${pozitii.length === 1 ? 'Produs' : `Produse <span class="cate">${pozitii.length}</span>`}</div>
     <ul class="cc-produse">${pozitii.map(p => `<li><b>${esc(p.eticheta)}</b><span>${esc(rezumatProdus(p))}</span></li>`).join('')}</ul>
@@ -837,7 +846,6 @@ async function incarcaCard() {
   leagaTreceri(el, d.comanda, () => mergiLa(id), d.pozitii.length);
   leagaFacturare(el, () => mergiLa(id));
   $('ccInchide').addEventListener('click', () => selecteaza(null));
-  $('ccDeschide').addEventListener('click', () => { location.hash = '#comanda/' + id; });
   $('ccModifica')?.addEventListener('click', () => { location.href = '/configurator/?oferta=' + id; });
   el.querySelectorAll('button.cc-fisa').forEach(b => b.addEventListener('click', () => veziFisa(id, b, +b.dataset.poz)));
   leagaPrint(el, id, d.fise ?? [], d.pozitii.length, () => mergiLa(id));
@@ -865,18 +873,22 @@ document.addEventListener('keydown', e => {
 // „Înapoi în ofertă": cât nu s-a lucrat pe ea (serverul verifică oricum; aici doar nu arătăm butonul degeaba)
 const msInapoi = c => (c.tip_schimbat_la && !c.factura_nr && !c.finalizat_la ? 10 * 60e3 - c.secunde_schimbat * 1000 : 0);
 const minuteInapoi = c => (msInapoi(c) > 0 ? Math.ceil(msInapoi(c) / 60e3) : 0);
-function butoaneTreceri(c, minute) {
+// Un singur buton plin (userul, 2026-10-26): verde = duce comanda înainte (Acceptă / Plată primită; „Marchează
+// finalizată" doar când e pasul următor — `urmator`, din pasUrmator); celelalte neutre. Primul vine cel plin.
+function butoaneTreceri(c, minute, urmator = null) {
   if (c.anulat) return '';   // o comandă anulată nu mai merge nicăieri
   const eOferta = c.tip === 'oferta', ePlata = c.tip === 'plata', eComanda = c.tip === 'comanda';
-  return `${minute > 0 ? `<button class="rosu" data-trecere="inapoi-oferta" title="Greşeală? O mai poţi întoarce în oferte ${minute} ${minute === 1 ? 'minut' : 'minute'}">↩ Înapoi în ofertă</button>` : ''}
-    ${eOferta ? `<button class="galben-contur" data-trecere="asteapta-plata">Aşteaptă plata</button>
-                 <button class="verde" data-trecere="accepta" title="Oferta devine comandă: se printează fişa, apoi „Ai printat?"">Acceptă comanda şi printează</button>` : ''}
+  const gata = urmator === 'finalizeaza';
+  return `${eOferta ? `<button class="verde" data-trecere="accepta" title="Oferta devine comandă: se printează fişa, apoi „Ai printat?"">Acceptă comanda şi printează</button>
+                 <button data-trecere="asteapta-plata">Aşteaptă plata</button>` : ''}
     ${ePlata ? '<button class="verde" data-trecere="accepta" title="Comanda intră în lucru: se printează fişa, apoi „Ai printat?"">Plată primită şi printează</button>' : ''}
-    ${eComanda && !c.finalizat_la ? '<button class="verde-contur" data-trecere="finalizeaza">Marchează finalizată</button>' : ''}
-    ${c.finalizat_la ? '<button class="galben-contur" data-trecere="redeschide">Redeschide</button>' : ''}`;
+    ${eComanda && !c.finalizat_la ? `<button${gata ? ' class="verde"' : ''} data-trecere="finalizeaza"${gata ? ''
+      : ' title="Se poate şi acum, dar în „Drumul comenzii” mai e un pas de făcut"'}>Marchează finalizată</button>` : ''}
+    ${c.finalizat_la ? '<button data-trecere="redeschide">Redeschide</button>' : ''}
+    ${minute > 0 ? `<button data-trecere="inapoi-oferta" title="Greşeală? O mai poţi întoarce în oferte ${minute} ${minute === 1 ? 'minut' : 'minute'}">↩ Înapoi în ofertă</button>` : ''}`;
 }
 // ── Anularea: o cere oricine, cu motivul; o decide conducerea (pagina /cereri, server/cereri.js) ──
-// Pe pagina comenzii şi în card: starea cererii (sau a anulării) + butonul „Anulează…".
+// Pe pagina comenzii şi în card: starea cererii (sau a anulării); „Anulează…" e în „⋯" (maiMulte).
 function blocAnulare(c, r) {
   const decis = r && `${r.stare === 'aprobata' ? 'aprobată' : 'respinsă'} de ${esc(r.decis_de_nume)} · ${dataOra(r.decis_la)}${r.raspuns ? ` — „${esc(r.raspuns)}"` : ''}`;
   if (c.anulat) return `<div class="anulare-info anulata"><b>Comandă anulată</b>${r ? ` · motiv: „${esc(r.motiv)}" (cerută de ${esc(r.creat_de_nume)}) · ${decis}` : ''}</div>`;
@@ -885,7 +897,6 @@ function blocAnulare(c, r) {
   if (r?.stare === 'respinsa') return `<div class="anulare-info"><b>Cererea de anulare</b> a fost ${decis}.</div>`;
   return '';
 }
-const butonAnulare = (c, r) => (c.anulat || r?.stare === 'deschisa' ? '' : '<button class="rosu-contur" data-anuleaza title="Cere anularea — o aprobă conducerea">Anulează…</button>');
 // „Pe hold" (userul, 2026-10-14): cât cererea de anulare aşteaptă decizia, de pe comandă dispar
 // toate operaţiile (fişa, treceri, facturare, sticlă, livrare, modificări); rămân doar vederea şi
 // taskurile. Serverul le refuză oricum (index.js) — aici doar nu le arătăm degeaba.
@@ -1015,7 +1026,7 @@ function specUsi(p) {
                 <dt>Nr. uşi</dt><dd class="mono">${p.nr_usi}</dd>`}</dl>`;
 }
 
-function blocTaburi(pozitii, total) {
+function blocTaburi(pozitii, total, c) {
   const cell = (l, areCod) => `<tr>
     ${areCod ? `<td class="cod">${esc(l.cod ?? '—')}</td>` : ''}<td>${esc(l.denumire)}</td>
     <td class="num">${virgula(l.cantitate)}${l.um && l.um !== 'buc' ? ' ' + esc(l.um) : ''}</td>
@@ -1033,9 +1044,17 @@ function blocTaburi(pozitii, total) {
     spec: pePozitii(specPoz),
     necesar: pePozitii(p => (p.linii.necesar.length ? tabel(['Cod', 'Reper', 'Cant.', 'Debitare'], p.linii.necesar.map(l => cell(l, true)).join('')) : '')),
     client:  pePozitii(p => (p.linii.client.length ? tabel(['Reper', 'Cant.', 'Debitare'], p.linii.client.map(l => cell(l, false)).join('')) : '')),
+    // Facturarea în NeoManager, în ordinea în care se face (userul, 2026-10-26 — NeoManager stă des în cealaltă
+    // jumătate a ecranului): codurile, cantităţile, apoi numărul facturii — acelaşi câmp ca în drum, aici la îndemână
     facturare: `${tabel(['Cod', 'Denumire', 'Cant.'], total.map(l => cell({ ...l, debitare: undefined }, true)).join(''))}
-      <div class="butoane"><button id="copCod" class="primar">Copiază coduri</button><button id="copCant" class="primar">Copiază cantităţi</button></div>
-      <p class="dim mic" style="margin-top:8px">Paste pe coloană în grila NeoManager: întâi celula de start din „Cod", apoi cea din „Cantitate".</p>`,
+      <div class="pasi-facturare">
+        <div class="pf"><span class="nr">1</span><span class="ce">Codurile<small>în NeoManager: clic pe prima celulă din coloana „Cod”, apoi lipeşti</small></span>
+          <button type="button" id="copCod">Copiază codurile</button></div>
+        <div class="pf"><span class="nr">2</span><span class="ce">Cantităţile<small>prima celulă din coloana „Cantitate”, apoi lipeşti</small></span>
+          <button type="button" id="copCant">Copiază cantităţile</button></div>
+        ${c.tip === 'comanda' ? `<div class="pf${c.factura_nr ? ' facut' : ''}"><span class="nr">3</span><span class="ce">Numărul facturii<small>din NeoManager, după ce o emiţi</small></span>
+          ${c.factura_nr ? `<span class="facturat">✓ <strong class="mono">${esc(c.factura_nr)}</strong></span>` : formFactura(c)}</div>` : ''}
+      </div>`,
   };
   const TAB = [['spec', 'Specificaţie'], ['necesar', 'Necesar'], ['client', 'Necesar client'], ['facturare', 'Facturare']].filter(([k]) => panouri[k]);
   if (!panouri[tabDetaliu]) tabDetaliu = 'facturare';
@@ -1092,39 +1111,32 @@ async function renderDetaliu(id) {
   const eOferta = c.tip === 'oferta';
   const ePlata  = c.tip === 'plata';     // aşteaptă plata — încă nu e comandă în lucru
   const eComanda = c.tip === 'comanda';
-  // „Înapoi în ofertă": 10 minute după ce a ieşit din oferte, cât nu s-a lucrat pe ea
-  // (serverul verifică oricum; aici doar nu arătăm butonul degeaba)
+  const activa = !c.anulat && cerere?.stare !== 'deschisa';
+  const sticlaComandata = sticlaLinii.filter(l => l.comandat_la).length;
+  const urmator = pasUrmator(c, printari, pozitii.length,
+    sticlaLinii.length ? { total: sticlaLinii.length, comandate: sticlaComandata } : null, activa);
 
+  // antetul rămâne sus la derulare (userul, 2026-10-26 — pe jumătate de ecran pagina e lungă): numele, nr., starea,
+  // acelaşi rând de butoane ca în card (actiuniComanda) şi „⋯"
   $('continut').innerHTML = `
     <button class="inapoi" id="inapoi">${icoana('inapoi')} Înapoi la ${cautare.trim() ? 'rezultatele căutării' : 'listă'}</button>
 
     <div class="antet">
-      <div>
+      <div class="antet-titlu">
         <h1>${esc(c.client_nume)}</h1>
-        <div class="mono nr-comanda">${esc(c.oferta_nr || c.numar)}</div>
-        <div class="dim mic">${c.anulat ? '<span class="stare-pastila anulata">Anulată</span>' : `<span class="stare-pastila ${eOferta ? 'oferta' : ePlata ? 'plata' : c.finalizat_la ? 'gata' : 'lucru'}">${eOferta ? 'Ofertă'
+        <div class="nr-stare"><span class="mono nr-comanda">${esc(c.oferta_nr || c.numar)}</span>${c.anulat ? '<span class="stare-pastila anulata">Anulată</span>'
+          : `<span class="stare-pastila ${eOferta ? 'oferta' : ePlata ? 'plata' : c.finalizat_la ? 'gata' : 'lucru'}">${eOferta ? 'Ofertă'
           : ePlata ? 'Aşteaptă plata' : c.finalizat_la ? 'Comandă finalizată' : 'Comandă în lucru'}</span>`}${c.demo ? DEMO : ''}</div>
-        ${fisaPrintata(printari, pozitii.length, fise)}
       </div>
       <div class="spatiu"></div>
-      ${pozitii.length > 1
-        ? pozitii.map((p, k) => `<button class="fisa-poz" data-poz="${k}" title="Vezi fişa produsului ${k + 1}: ${esc(p.eticheta)}">👁 Fişa ${esc(fise[k])}</button>`).join('')
-        : '<button id="fisaDetaliu" title="Vezi fişa (previzualizare)">👁 Vezi fişa</button>'}
-      ${butoanePrint(c, printari, pozitii.length, fise)}
-      ${(eOferta || eComanda && !c.finalizat_la) && !c.anulat ? `<button id="modifica" title="${eComanda ? MODIFICA_COMANDA : 'Deschide oferta în configurator'}">Modifică ${eComanda ? 'comanda' : 'oferta'}</button>` : ''}
-      ${eComanda && !c.finalizat_la && !c.anulat ? '<button class="primar" data-adauga-la>+ Adaugă la comandă</button>' : ''}
-      ${butoaneTreceri(c, minuteInapoi(c))}
-      <button id="taskNou" title="Un task / reminder legat de comanda asta">+ Task</button>
-      <button id="tichetNou" title="Un tichet pentru administrator despre comanda asta">+ Tichet</button>
-      ${butonAnulare(c, cerere)}
+      <div class="antet-butoane">${actiuniComanda(c, pozitii, fise, urmator, true)}${meniuMai(maiMulte(c, cerere, printari))}</div>
     </div>
     ${blocAnulare(c, cerere)}
 
-    <!-- stânga: datele clientului; dreapta: paşii comenzii (cine şi când) -->
+    <!-- stânga: datele clientului (numele e în titlu); dreapta: paşii comenzii (cine şi când) -->
     <div class="card info-comanda" data-z="info">
       <div class="info-client">
         <div class="info-titlu">Client</div>
-        <div class="info-nume">${esc(c.client_nume)}</div>
         <dl class="perechi">
           ${c.client_telefon ? `<dt>${c.client_adresa ? 'Telefon' : 'Telefon / adresă'}</dt><dd>${esc(c.client_telefon)}</dd>` : ''}
           ${c.client_adresa ? `<dt>Adresă</dt><dd${deVerificat(c)}>${esc(c.client_adresa)}</dd>` : ''}
@@ -1144,13 +1156,16 @@ async function renderDetaliu(id) {
         ${c.confirmat_la ? pas('gata', 'Acceptat', `${deCine(c.confirmat_de_nume, c.confirmat_la)}
           <div class="dim mic">${esc(PLATI[c.plata] ?? 'plată nealeasă')} · ${c.avans > 0 ? `avans <strong>${virgulaLei(c.avans)} lei</strong>` : 'fără avans'}</div>`)
           : pas(c.anulat ? 'viitor' : 'acum', 'Acceptat', c.anulat ? '' : `<span class="urmeaza">Urmează: „${ePlata ? 'Plată primită şi printează' : 'Acceptă comanda şi printează'}"</span>`)}
-        ${eComanda ? pas(c.factura_nr ? 'gata' : 'acum', 'Facturat', c.factura_nr
-          ? `<strong class="mono">${esc(c.factura_nr)}</strong> · ${deCine(c.facturat_de_nume, c.facturat_la)}${poateAnulaFactura() ? ' <button class="mic rosu-contur" id="anuleazaFactura">Anulează</button>'
+        ${eComanda ? pasFisa(c, printari, pozitii.length, fise, activa, urmator) : ''}
+        ${eComanda ? pas(c.factura_nr ? 'gata' : urmator === 'factura' ? 'acum' : 'viitor', 'Facturat', c.factura_nr
+          ? `<strong class="mono">${esc(c.factura_nr)}</strong> · ${deCine(c.facturat_de_nume, c.facturat_la)}${poateAnulaFactura() ? ' <button class="mic" id="anuleazaFactura">Anulează</button>'
             : cerereFactura?.stare === 'deschisa' || c.anulat ? '' : ' <button class="mic" id="cereFactura" title="Numărul nou îl aprobă conducerea">Cere schimbarea…</button>'}${schimbareFactura(c, cerereFactura)}`
-          : formFactura(c), 'facturare') : pas('viitor', 'Facturat', '')}
-        ${eComanda ? pas('info', 'Sticlă', sticlaLinii.length ? blocSticla(sticlaLinii) : '<span class="dim">— fără sticlă de comandat</span>') : ''}
+          : formFactura(c, urmator === 'factura'), 'facturare') : pas('viitor', 'Facturat', '')}
+        ${eComanda ? pas(!sticlaLinii.length ? 'info' : sticlaComandata === sticlaLinii.length ? 'gata' : urmator === 'sticla' ? 'acum' : 'viitor', 'Sticlă',
+          sticlaLinii.length ? blocSticla(sticlaLinii, urmator === 'sticla') : '<span class="dim">— fără sticlă de comandat</span>') : ''}
         ${c.finalizat_la ? pas('gata', 'Finalizat', deCine(c.finalizat_de_nume, c.finalizat_la))
-          : pas('viitor', 'Finalizat', eComanda ? '<span class="dim">după „Marchează finalizată"</span>' : '')}
+          : pas(urmator === 'finalizeaza' ? 'acum' : 'viitor', 'Finalizat', !eComanda ? ''
+            : urmator === 'finalizeaza' ? '<span class="urmeaza">totul e gata — „Marchează finalizată” sus</span>' : '<span class="dim">după „Marchează finalizată”</span>')}
       </dl>
     </div>
 
@@ -1159,7 +1174,7 @@ async function renderDetaliu(id) {
       <span class="dim">AWB-ul se va genera şi printa direct de aici.</span>
       <button disabled title="În curând">Generează AWB</button></div>` : ''}
 
-    ${blocTaburi(pozitii, total)}
+    ${blocTaburi(pozitii, total, c)}
 
     ${scanari ? `<div class="sectiune" data-z="atelier">
       <h2>Atelier</h2>
@@ -1233,14 +1248,12 @@ async function renderDetaliu(id) {
   });
   leagaCopiere($('copCod'),  total.map(l => l.cod));
   leagaCopiere($('copCant'), total.map(l => qtyText(l.cantitate)));
-  $('copCod')?.addEventListener('click', () => noteazaVazut('A copiat codurile (NeoManager)', id));
-  $('copCant')?.addEventListener('click', () => noteazaVazut('A copiat cantităţile (NeoManager)', id));
+  // facturarea în paşi: pasul copiat se bifează (până la următoarea redesenare)
+  $('copCod')?.addEventListener('click', () => { $('copCod').closest('.pf')?.classList.add('facut'); noteazaVazut('A copiat codurile (NeoManager)', id); });
+  $('copCant')?.addEventListener('click', () => { $('copCant').closest('.pf')?.classList.add('facut'); noteazaVazut('A copiat cantităţile (NeoManager)', id); });
   incarcaActivitate(id);
 
-  $('fisaDetaliu')?.addEventListener('click', e => veziFisa(id, e.currentTarget));
   leagaPrint(document, id, printari, pozitii.length, () => renderDetaliu(id));
-  $('taskNou').addEventListener('click', () => { location.href = `/taskuri?comanda=${id}`; });
-  $('tichetNou').addEventListener('click', () => { location.href = `/tichete?comanda=${id}`; });
   document.querySelectorAll('button.fisa-poz').forEach(b => b.addEventListener('click', () => veziFisa(id, b, +b.dataset.poz)));
 
 }
@@ -1291,18 +1304,38 @@ window.addEventListener('hashchange', ruteaza);
 
 // ── Ofertă nouă — alegerea gamei ─────────────────────────────────────────────
 // `adauga` = { id, numar }: „Adaugă la comandă" (comandă în lucru) — produsele i se adaugă ei
+// Ciornele (ofertele lăsate nesalvate în configurator — configurator_usi/js/ciorna.js: doar în browserul ăsta,
+// 48 de ore, aici doar ale contului logat) stau pe placa gamei lor: clic pe una o continui (userul, 2026-10-26 —
+// înainte pe plăcile din pagina principală). La „Adaugă la comandă" nu apar.
+const ciorneleMele = () => {
+  try { return JSON.parse(localStorage.getItem('ciorne') || '[]').filter(c => c.uid === eu?.id && Date.now() - c.la < 48 * 3600e3); }
+  catch { return []; }
+};
+let alegereAdauga = null;   // ce arată fereastra acum — refăcută dacă se schimbă ciornele din alt tab
 async function deschideAlegereGama(adauga = null) {
+  alegereAdauga = adauga;
   $('titluGama').textContent = adauga ? `Adaugă la comanda ${adauga.numar} — alege gama` : 'Ofertă nouă — alege gama';
-  {
-    const g = await incarcaGame();
-    $('listaGame').innerHTML = (g?.game ?? []).map(x => `
-      <a href="/configurator/?gama=${encodeURIComponent(x.id)}${adauga ? `&adauga=${adauga.id}` : ''}">
-        <span class="titlu">${esc(x.label)}</span>
+  const g = await incarcaGame();
+  const ciorne = adauga ? [] : ciorneleMele();
+  $('notaCiorne').hidden = !ciorne.length;
+  $('listaGame').innerHTML = (g?.game ?? []).map(x => {
+    const ale = ciorne.filter(c => c.gama === x.id);
+    return `<div class="gama-placa">
+      <a class="gama-nou" href="/configurator/?gama=${encodeURIComponent(x.id)}${adauga ? `&adauga=${adauga.id}` : ''}">
+        <span class="titlu">${icoana(x.id)}${esc(x.label)}</span>
         <span class="sub">${nrModele(x) ? `${subGama(x)} · ` : ''}${esc(x.descriere ?? '')}</span>
-      </a>`).join('') || '<p class="dim">Configuratorul nu e construit (cd configurator_usi && node build.js).</p>';
-  }
+      </a>${ale.length ? `
+      <div class="gama-ciorne">${ale.map(c => `
+        <a class="ciorna-chip" href="/configurator/?ciorna=${encodeURIComponent(c.id)}"
+           title="Continuă ciorna: ${esc(c.titlu)} · lăsată ${dataOra(new Date(c.la))} · se şterge după 48 de ore">
+          ${icoana('creion')}<span>${esc(c.client || 'Continuă ciorna')}</span><small>${dataOra(new Date(c.la))}</small></a>`).join('')}</div>` : ''}
+    </div>`;
+  }).join('') || '<p class="dim">Configuratorul nu e construit (cd configurator_usi && node build.js).</p>';
   $('alegeGama').hidden = false;
 }
+window.addEventListener('storage', e => {   // ciornă lăsată / continuată din alt tab
+  if (e.key === 'ciorne' && !$('alegeGama').hidden) deschideAlegereGama(alegereAdauga);
+});
 const nrModele = x => (x.tabel ? x.modele.flat() : x.modele).length;
 const subGama = x => (nrModele(x) ? `${nrModele(x)} ${nrModele(x) === 1 ? 'model' : 'modele'}` : 'produse la bucată');
 const inchideAlegereGama = () => { $('alegeGama').hidden = true; };
@@ -1381,6 +1414,17 @@ function asculta() {
     programeaza();
   });
 }
+
+// Aşezarea după lăţimea zonei de lângă meniu (userul, 2026-10-26 — colegii lucrează şi pe jumătate de ecran,
+// 960 px dintr-un monitor de 1920): de la 1000 px lista şi cardul alături (cardul mai îngust sub 1220); 700–999
+// cardul comenzii alese vine ca panou peste partea dreaptă a listei (mod-panou); sub 700 doar lista, iar clicul pe
+// un rând deschide pagina comenzii (mod-lista). Ca în ghidurile listă–detaliu (Material, Microsoft).
+new ResizeObserver(([e]) => {
+  const w = e.contentRect.width, el = $('acasa');
+  el.classList.toggle('card-ingust', w >= 1000 && w < 1220);
+  el.classList.toggle('mod-panou', w >= 700 && w < 1000);
+  el.classList.toggle('mod-lista', w < 700);
+}).observe($('acasa'));
 
 (async () => {
   const r = await api('/api/eu');
