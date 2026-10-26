@@ -149,6 +149,9 @@ const PLATI = ['oferta', 'proforma', 'proforma_amanunt', 'fiscala', 'bon', 'avan
 // documente fiscale: numărul lor, odată trecut, îl schimbă doar conducerea / adminul — biroul cere (cereri.js, tip
 // 'numar'). Restul (ofertă, proformă) îl schimbă liber cel care a făcut oferta (userul, 2026-10-26).
 const NUMAR_FISCAL = ['fiscala', 'bon', 'avans'];
+// Metodele de încasare (userul, 2026-10-26) — aceleaşi coduri ca INCASARI din configurator (lib/comun/comanda.js).
+// Obligatorii la salvare (configuratorul) şi la acceptare (aici); ofertele / comenzile de dinainte nu le au.
+const INCASARI = ['op_avans', 'op_termen', 'bo_termen', 'bo_ramburs', 'cash_ramburs', 'cash_bf', 'cash_bf_sofer', 'cash_ch_sofer', 'card'];
 const DECID = ['admin', 'conducere'];
 function plataNumarului(id) {
   const p = db().prepare('SELECT config_json FROM pozitie WHERE comanda_id = ? ORDER BY idx LIMIT 1').get(id);
@@ -166,6 +169,7 @@ const campuriClient = (client, detalii = {}, ofertaNr) => [
   text(detalii?.facturare, 60),   // tip_facturare — doar ofertele vechi îl mai trimit
   text(ofertaNr, 40),
   PLATI.includes(detalii?.plata) ? detalii.plata : null,
+  INCASARI.includes(detalii?.incasare) ? detalii.incasare : null,
 ];
 
 // ── Creare ───────────────────────────────────────────────────────────────────
@@ -183,8 +187,8 @@ async function creeaza(ctx) {
     const numar = urmatorulNumar(d, an);
 
     const comandaId = Number(d.prepare(`
-      INSERT INTO comanda (numar, client_nume, client_telefon, client_email, client_adresa, livrare, agent, tip_facturare, oferta_nr, plata, observatii, creat_de, creat_la)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${ACUM()})
+      INSERT INTO comanda (numar, client_nume, client_telefon, client_email, client_adresa, livrare, agent, tip_facturare, oferta_nr, plata, incasare, observatii, creat_de, creat_la)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${ACUM()})
     `).run(
       `OF-${an}-${numar}`,
       ...campuriClient(corp.client, corp.detalii, corp.ofertaNr),
@@ -246,10 +250,11 @@ async function modifica(ctx) {
 
   const rezultat = tranzactie(d => {
     d.prepare(`UPDATE comanda SET client_nume = ?, client_telefon = ?, client_email = ?, client_adresa = ?,
-                 livrare = ?, agent = ?, tip_facturare = ?, oferta_nr = ?, plata = ? WHERE id = ?`)
+                 livrare = ?, agent = ?, tip_facturare = ?, oferta_nr = ?, plata = ?, incasare = ? WHERE id = ?`)
       .run(...campuriClient(corp.client, corp.detalii, corp.ofertaNr), id);
-    // la o comandă plata rămâne cea aleasă la acceptare dacă din configurator nu vine alta
+    // la o comandă plata rămâne cea aleasă la acceptare dacă din configurator nu vine alta; la fel încasarea
     if (eComanda && (!PLATI.includes(corp.detalii?.plata) || corp.detalii.plata === 'oferta')) d.prepare('UPDATE comanda SET plata = ? WHERE id = ?').run(c.plata, id);
+    if (!INCASARI.includes(corp.detalii?.incasare)) d.prepare('UPDATE comanda SET incasare = ? WHERE id = ?').run(c.incasare, id);
     // livrarea / adresa schimbate pe o comandă — ca la „Modifică livrarea": fişele printate deja se completează de mână
     const nou = d.prepare('SELECT livrare, client_adresa FROM comanda WHERE id = ?').get(id);
     if (eComanda && (nou.livrare !== c.livrare || nou.client_adresa !== c.client_adresa)) {
@@ -400,7 +405,7 @@ function listeaza(ctx) {
 
   const randuri = db().prepare(`
     SELECT c.id, c.numar, c.oferta_nr, c.tip, c.client_nume, c.client_telefon, c.creat_la, c.confirmat_la, c.finalizat_la, c.tip_schimbat_la,
-           c.factura_nr, c.facturat_la, c.plata, c.avans, c.achitat_la,
+           c.factura_nr, c.facturat_la, c.plata, c.incasare, c.avans, c.achitat_la,
            u.nume AS creat_de_nume,
            -- toate produsele ofertei, în ordine: „Ramă 820 + Confort Gamma + Ofertă cu amănuntul"
            (SELECT GROUP_CONCAT(eticheta, ' + ') FROM (SELECT p.eticheta FROM pozitie p WHERE p.comanda_id = c.id ORDER BY p.idx)) AS sistem,
@@ -543,7 +548,8 @@ function asteaptaPlata(ctx) {
 
 // Acceptarea unei oferte (sau „Plată primită" din aşteaptă plata): acelaşi rând,
 // alt tip, acelaşi număr (de ofertă) — etichetele deja tipărite rămân valabile.
-// Cere obligatoriu modalitatea de plată; avansul (lei) e opţional, implicit 0.
+// Cere obligatoriu modalitatea de plată (documentul, „Facturare") şi încasarea (cea de pe ofertă sau aleasă
+// acum); avansul (lei) e opţional, implicit 0.
 // Din „Aşteaptă plata" (userul, 2026-10-26): suma încasată e obligatorie, peste 0, iar comanda
 // rămâne marcată achitată (achitat_la) — suma stă tot în `avans`.
 async function accepta(ctx) {
@@ -555,8 +561,10 @@ async function accepta(ctx) {
   if (c.anulat)            return eroare(ctx.res, 400, 'Oferta e anulată.');
   if (c.tip === 'comanda') return eroare(ctx.res, 409, 'Oferta e deja comandă în lucru.');
 
-  if (!PLATI.includes(corp.plata)) return eroare(ctx.res, 400, 'Alege modalitatea de plată: ofertă, factură proformă, proformă cu amănuntul, factură fiscală, bon fiscal sau factură de avans.');
+  if (!PLATI.includes(corp.plata)) return eroare(ctx.res, 400, 'Alege facturarea: ofertă, factură proformă, proformă cu amănuntul, factură fiscală, bon fiscal sau factură de avans.');
   const avans = corp.avans == null || String(corp.avans).trim() === '' ? 0 : Number(String(corp.avans).replace(',', '.'));
+  const incasare = INCASARI.includes(corp.incasare) ? corp.incasare : c.incasare;
+  if (!incasare) return eroare(ctx.res, 400, 'Alege metoda de încasare.');
   const achitat = c.tip === 'plata';
   if (achitat && !(avans > 0)) return eroare(ctx.res, 400, 'Scrie suma încasată (mai mare de 0) — comanda aştepta plata.');
   if (!Number.isFinite(avans) || avans < 0) return eroare(ctx.res, 400, 'Avansul trebuie să fie un număr (0 = fără avans).');
@@ -568,9 +576,9 @@ async function accepta(ctx) {
   db().prepare(`
     UPDATE comanda SET tip = 'comanda', confirmat_la = ${ACUM()}, confirmat_de = ?, plata = ?, avans = ?,
                        tip_schimbat_la = ${ACUM()}, client_telefon = ?, client_adresa = ?,
-                       achitat_la = ${achitat ? ACUM() : 'NULL'}
+                       achitat_la = ${achitat ? ACUM() : 'NULL'}, incasare = ?
      WHERE id = ?
-  `).run(ctx.utilizator.id, corp.plata, Math.round(avans * 100) / 100, telefon, adresa, id);
+  `).run(ctx.utilizator.id, corp.plata, Math.round(avans * 100) / 100, telefon, adresa, incasare, id);
 
   anunta({ comanda: id });
   json(ctx.res, 200, { comanda: db().prepare('SELECT * FROM comanda WHERE id = ?').get(id) });

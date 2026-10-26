@@ -157,12 +157,13 @@ body.ui-nou .nefacturat, body.ui-nou .sticla-nu { color: var(--danger); border-c
 body.ui-nou .sticla-partial { color: #d4a24c; border-color: rgba(212, 162, 76, .45); background: rgba(212, 162, 76, .1); }
 body.ui-nou .gol.card { border-radius: 12px; }
 
+/* facturarea: documentul + factura dedesubt; încasarea: metoda + avansul / „achitat" dedesubt (2026-10-26) */
+table.lista td .sub { margin-top: 4px; }
 /* lista lângă card: nicio coloană nu iese (userul, 2026-10-26: „mai ales avansul") — când nu încap,
-   facturarea şi avansul trec sub plată, data sub cine a creat-o (.stivuit, în aceeaşi celulă) */
+   data trece sub cine a creat-o (.stivuit, în aceeaşi celulă) */
 table.lista .stivuit { display: none; }
 body.ui-nou table.lista .facturat, body.ui-nou table.lista .nefacturat { white-space: nowrap; }
 @container lista (max-width: 1060px) {
-  body.ui-nou table.lista [data-c="avans"], body.ui-nou table.lista [data-c="factura"],
   body.ui-nou table.lista [data-c="data"] { display: none; }
   body.ui-nou table.lista td .stivuit { display: block; margin-top: 4px; }
   body.ui-nou table.lista th, body.ui-nou table.lista td { padding-left: 8px; padding-right: 8px; }

@@ -73,7 +73,7 @@ export function initNou() {
   for (const id of ['ofertaUI', 'ofertaMesaj']) { const el = $(id); if (el) actiuni.querySelector('.nou-mesaje').appendChild(el); }
   // câmpurile clientului cu eticheta deasupra (până acum doar placeholder)
   for (const [id, text] of [['clientNume', 'Nume client'], ['clientTelefon', 'Telefon'], ['clientAdresa', 'Adresă'],
-    ['comandaLivrare', 'Mod de livrare'], ['comandaPlata', 'Metodă de plată'], ['comandaAgent', 'Agent'], ['ofertaNr', 'Număr ofertă']]) {
+    ['comandaLivrare', 'Mod de livrare'], ['comandaPlata', 'Facturare'], ['comandaIncasare', 'Încasare'], ['comandaAgent', 'Agent'], ['ofertaNr', 'Număr ofertă']]) {
     const el = $(id);
     if (!el) continue;
     const l = document.createElement('label');

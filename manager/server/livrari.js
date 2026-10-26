@@ -62,7 +62,7 @@ function produse(ids) {
 }
 
 const CAMPURI = `c.id, COALESCE(c.oferta_nr, c.numar) AS numar, c.client_nume, c.client_telefon, c.client_adresa,
-  c.creat_la, c.confirmat_la, c.finalizat_la, c.plata, c.avans, c.achitat_la, c.factura_nr, c.observatii_livrare,
+  c.creat_la, c.confirmat_la, c.finalizat_la, c.plata, c.incasare, c.avans, c.achitat_la, c.factura_nr, c.observatii_livrare,
   c.judet AS judet_ales, c.de_incasat, c.coloana_borderou, c.lat, c.lon, c.geo_adresa`;
 
 function cuDetalii(randuri) {

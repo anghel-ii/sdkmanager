@@ -16,7 +16,7 @@ import { confirma } from './intrebari.js';
 //  de uşi (index.html) şi oferta cu amănuntul (amanunt.html).
 //
 //  cos = { pozitii: [{ gama, pozitie }], curent: indexul de pe ecran | null (produs nou),
-//          client: { nume, telefon, adresa }, ofertaNr, comanda: { livrare, plata, agent },
+//          client: { nume, telefon, adresa }, ofertaNr, comanda: { livrare, plata, incasare, agent },
 //          ofertaEditata: id | null, numar, adaugaLa: { id, numar } | null }
 //  adaugaLa = „Adaugă la comandă" din manager: produsele se ADAUGĂ la o comandă în lucru.
 //  comandaEditata = „Modifică comanda" (o comandă în lucru, nu o ofertă): { facturata: nr. facturii | null }.
@@ -62,7 +62,7 @@ export async function dinAdauga(id, incarca, gama) {
   if (c.tip !== 'comanda' || c.finalizat_la) return { eroare: `${c.oferta_nr || c.numar} nu e o comandă în lucru — nu i se mai adaugă produse.` };
   scrie({ ...gol(), adaugaLa: { id: c.id, numar: c.oferta_nr || c.numar },
           client: { nume: c.client_nume, telefon: c.client_telefon ?? '', adresa: c.client_adresa ?? '' },
-          ofertaNr: c.oferta_nr ?? '', comanda: { livrare: c.livrare, plata: c.plata, agent: c.agent } });
+          ofertaNr: c.oferta_nr ?? '', comanda: { livrare: c.livrare, plata: c.plata, incasare: c.incasare, agent: c.agent } });
   location.replace(url(gama));
   return {};
 }
@@ -134,7 +134,8 @@ export function dinOferta(o, gamaDin) {
     pozitii: o.pozitii.map(p => ({ gama: gamaDin(p), pozitie: dinManager(p) })),
     client: { nume: o.comanda.client_nume ?? '', telefon: o.comanda.client_telefon ?? '', adresa: o.comanda.client_adresa ?? '' },
     ofertaNr: o.comanda.oferta_nr ?? '',
-    comanda: { livrare: o.comanda.livrare ?? null, plata: o.comanda.plata ?? null, agent: o.comanda.agent ?? null },
+    comanda: { livrare: o.comanda.livrare ?? null, plata: o.comanda.plata ?? null, incasare: o.comanda.incasare ?? null,
+               agent: o.comanda.agent ?? null },
     ofertaEditata: o.comanda.id, numar: o.comanda.oferta_nr || o.comanda.numar,
     comandaEditata: o.comanda.tip === 'comanda' ? { facturata: o.comanda.factura_nr ?? null } : null };
 }

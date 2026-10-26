@@ -110,7 +110,7 @@ server.once('listening', async () => {
     // Accept first 4 orders
     const plati = ['fiscala', 'bon', 'proforma', 'avans'];
     for (let i = 0; i < 4; i++) {
-      await cer('POST', `/api/comenzi/${comenziIds[i]}/accepta`, {
+      await cer('POST', `/api/comenzi/${comenziIds[i]}/accepta`, { incasare: 'card',
         plata: plati[i],
         avans: i === 3 ? 1200 : undefined,
         telefon: clienti[i].telefon,

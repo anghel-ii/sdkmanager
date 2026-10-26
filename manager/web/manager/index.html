@@ -146,7 +146,7 @@
 <dialog id="dialogAccepta" class="fereastra" aria-labelledby="titluAccepta">
   <form method="dialog" id="formAccepta">
     <div class="fereastra-cap"><h2 id="titluAccepta">Acceptă comanda</h2></div>
-    <label class="camp">Modalitate de plată
+    <label class="camp">Facturare
       <select id="accPlata" required>
         <option value="" selected disabled>Alege…</option>
 <option value="oferta">Ofertă</option>
@@ -156,6 +156,9 @@
         <option value="bon">Bon fiscal</option>
         <option value="avans">Factură de avans</option>
       </select>
+    </label>
+    <label class="camp">Încasare
+      <select id="accIncasare" required></select>
     </label>
     <!-- telefonul şi adresa se cer la acceptare — apar doar dacă oferta nu le are -->
     <label class="camp" id="accTelefonCamp">Telefonul clientului
@@ -326,9 +329,12 @@ const FARA_TRANSPORT = ['Ridicare personala', 'Curier fara costuri'];
 const PLATI = { oferta: 'Ofertă', proforma: 'Factură proformă', proforma_amanunt: 'Factură proformă cu amănuntul', fiscala: 'Factură fiscală',
                 bon: 'Bon fiscal', avans: 'Factură de avans', op: 'OP (ordin de plată)', factura: 'Factură' };
 const PLATI_SCURT = { ...PLATI, proforma_amanunt: 'Proformă amănunt', op: 'OP' };   // în coloana din listă
+// metoda de încasare (userul, 2026-10-26) — aceleaşi coduri ca INCASARI din server/api/comenzi.js
+const INCASARI = { op_avans: 'OP avans', op_termen: 'OP la termen', bo_termen: 'BO la termen', bo_ramburs: 'BO ramburs', cash_ramburs: 'Cash ramburs',
+                   cash_bf: 'Cash BF', cash_bf_sofer: 'Cash BF la sofer', cash_ch_sofer: 'Cash CH la sofer', card: 'Card' };
 // achitată = trecută prin „Aşteaptă plata" şi „Plată primită" (achitat_la); suma încasată e în `avans`
 const achitatHtml = c => `<span class="facturat" title="Plată primită ${dataOra(c.achitat_la)}">✓ achitat${c.avans > 0 ? ` ${virgulaLei(c.avans)} lei` : ''}</span>`;
-const avansHtml = c => (c.achitat_la ? achitatHtml(c) : c.avans > 0 ? `${virgulaLei(c.avans)} lei` : '<span class="dim">—</span>');
+const avansHtml = c => (c.achitat_la ? achitatHtml(c) : c.avans > 0 ? `avans <strong>${virgulaLei(c.avans)} lei</strong>` : '<span class="dim">fără avans</span>');
 const virgulaLei = n => Number(n).toLocaleString('ro-RO', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 
 // Fişele (userul, 2026-10-21): „Vezi fişa" = previzualizare în aplicaţie, oricând; printul — doar când
@@ -686,7 +692,7 @@ function randeazaTabel() {
   // pe taburi: „2 din 14" cât se caută
   potriviri = totul ? Object.fromEntries(TABURI.map(([t]) => [t, randuri.filter(c => tabRand(c) === t).length])) : null;
   puneCate();
-  const coloane = 7 + cuStatus + cuSticla + 3 * cuFacturare;
+  const coloane = 7 + cuStatus + cuSticla + 2 * cuFacturare;
   const facturaCel = c => (tabRand(c) === 'comanda' || tabRand(c) === 'finalizata' ? facturareHtml(c) : '<span class="dim">—</span>');
   // căutare: un rând-titlu înaintea fiecărei stări („Oferte 2")
   const titluGrup = (c, i) => !totul || (i && tabRand(randuri[i - 1]) === tabRand(c)) ? '' : `
@@ -699,7 +705,7 @@ function randeazaTabel() {
       <thead><tr>
         <th data-c="pin" title="📌 fixează o comandă sus în listă (doar pentru tine)"></th><th data-c="client">Client</th><th data-c="oferta">Nr. ofertă</th><th data-c="sistem">Sistem</th>${
           cuStatus ? '<th data-c="status">Status</th>' : ''}${cuSticla ? '<th data-c="sticla">Sticlă</th>' : ''}${cuFacturare
-          ? '<th data-c="plata">Plată<span class="stivuit">Facturare · Avans</span></th><th class="num" data-c="avans">Avans</th><th data-c="factura">Facturare</th>' : ''}
+          ? '<th data-c="factura">Facturare</th><th data-c="incasare">Încasare</th>' : ''}
         <th data-c="cine">Creat de<span class="stivuit">${titluData}</span></th><th data-c="data">${titluData}</th><th data-c="actiuni"></th>
       </tr></thead>
       <tbody>${randuri.map((c, i) => `${titluGrup(c, i)}
@@ -711,11 +717,8 @@ function randeazaTabel() {
           <td data-c="sistem">${esc(c.sistem ?? '—')}</td>
           ${cuStatus ? `<td data-c="status">${statusHtml(c.status)}</td>` : ''}
           ${cuSticla ? `<td class="facturare" data-c="sticla">${sticlaHtml(c.sticla)}</td>` : ''}
-          ${cuFacturare ? `<td data-c="plata">${esc(PLATI_SCURT[c.plata] ?? '—')}
-              <div class="stivuit facturare">${facturaCel(c)}</div>
-              <div class="stivuit">${c.achitat_la ? achitatHtml(c) : c.avans > 0 ? `avans <strong>${virgulaLei(c.avans)} lei</strong>` : '<span class="dim">fără avans</span>'}</div></td>
-            <td class="num" data-c="avans">${avansHtml(c)}</td>
-            <td class="facturare" data-c="factura">${facturaCel(c)}</td>` : ''}
+          ${cuFacturare ? `<td class="facturare" data-c="factura">${esc(PLATI_SCURT[c.plata] ?? '—')}<div class="sub">${facturaCel(c)}</div></td>
+            <td data-c="incasare">${esc(INCASARI[c.incasare] ?? '—')}<div class="sub">${avansHtml(c)}</div></td>` : ''}
           <td class="dim" data-c="cine">${esc(c.creat_de_nume)}<div class="stivuit mic data">${dataOra(dataRand(c))}</div></td>
           <td class="dim mic data" data-c="data">${dataOra(dataRand(c))}</td>
           <td class="actiuni" data-c="actiuni">${c.nr_pozitii > 1
@@ -840,7 +843,8 @@ function cardDetalii({ comanda: c, cerere, cerereFactura, cerereNumar, plataNuma
       ${c.client_adresa ? `<dt>Adresă</dt><dd${deVerificat(c)}>${esc(c.client_adresa)}</dd>` : ''}
       ${c.client_email ? `<dt>E-mail</dt><dd>${esc(c.client_email)}</dd>` : ''}
       <dt>Livrare</dt><dd>${esc(c.livrare ?? '—')}</dd>
-      <dt>Plată</dt><dd>${esc(PLATI[c.plata] ?? '—')}${c.achitat_la ? ` · ${achitatHtml(c)}` : c.avans > 0 ? ` · avans <strong>${virgulaLei(c.avans)} lei</strong>` : ''}</dd>
+      <dt>Facturare</dt><dd>${esc(PLATI[c.plata] ?? '—')}</dd>
+      <dt>Încasare</dt><dd>${esc(INCASARI[c.incasare] ?? '—')}${c.achitat_la ? ` · ${achitatHtml(c)}` : c.avans > 0 ? ` · avans <strong>${virgulaLei(c.avans)} lei</strong>` : ''}</dd>
       <dt>Agent</dt><dd>${esc(c.agent ?? '—')}</dd>
     </dl>
     <div class="cc-eticheta">Drumul comenzii</div>
@@ -988,6 +992,10 @@ function leagaTreceri(root, c, dupa, nrFise = 1) {
     $('accAvans').min = ePlata ? '0.01' : '0';
     // metoda aleasă deja în configurator (dacă e una din cele actuale)
     if (c.plata && $('accPlata').querySelector(`option[value="${c.plata}"]`)) $('accPlata').value = c.plata;
+    // încasarea de pe ofertă (ofertele de dinainte de 2026-10-26 n-o au — se alege aici)
+    $('accIncasare').innerHTML = '<option value="" disabled>Alege…</option>'
+      + Object.entries(INCASARI).map(([cod, t]) => `<option value="${cod}">${t}</option>`).join('');
+    $('accIncasare').value = INCASARI[c.incasare] ? c.incasare : '';
     for (const [camp, inp, are] of [['accTelefonCamp', 'accTelefon', c.client_telefon], ['accAdresaCamp', 'accAdresa', c.client_adresa]]) {
       $(camp).hidden = !!are;
       $(inp).required = !are;
@@ -1001,11 +1009,11 @@ function leagaTreceri(root, c, dupa, nrFise = 1) {
       dlg.close();
       // plata (şi telefonul / adresa) se salvează abia după print — fişa le primeşte direct de aici
       if (!(await Fise.printeazaToate(id, nrFise, null,
-          { plata: $('accPlata').value, telefon: $('accTelefon').value.trim(), adresa: $('accAdresa').value.trim() }))) {
+          { plata: $('accPlata').value, incasare: $('accIncasare').value, telefon: $('accTelefon').value.trim(), adresa: $('accAdresa').value.trim() }))) {
         return alerta(`${ePlata ? 'Plata nu s-a confirmat' : 'Comanda nu s-a acceptat'} — fişa nu s-a printat. Rămâne ${ePlata ? 'la „Aşteaptă plata"' : 'ofertă'}.`);
       }
       const rr = await api(`/api/comenzi/${id}/accepta`, { method: 'POST',
-        body: JSON.stringify({ plata: $('accPlata').value, avans: $('accAvans').value,
+        body: JSON.stringify({ plata: $('accPlata').value, incasare: $('accIncasare').value, avans: $('accAvans').value,
                                telefon: $('accTelefon').value, adresa: $('accAdresa').value }) });
       if (!rr) return;
       if (!rr.ok) {
@@ -1180,7 +1188,8 @@ async function renderDetaliu(id) {
         ${c.livrare || c.agent || c.tip_facturare || c.plata ? `<dl class="perechi info-detalii">
           <dt>Livrare</dt><dd id="livrareDd">${esc(c.livrare ?? '—')}${(eComanda || ePlata) && !c.finalizat_la
             ? ' <button class="mic" id="schimbaLivrare" title="Schimbă modul de livrare şi / sau adresa">Modifică livrarea / adresa</button>' : ''}</dd>
-          <dt>Metodă de plată</dt><dd>${esc(PLATI[c.plata] ?? '—')}</dd>
+          <dt>Facturare</dt><dd>${esc(PLATI[c.plata] ?? '—')}</dd>
+          <dt>Încasare</dt><dd>${esc(INCASARI[c.incasare] ?? '—')}</dd>
           ${c.tip_facturare ? `<dt>Tip factură</dt><dd>${esc(c.tip_facturare)}</dd>` : ''}
           <dt>Agent</dt><dd>${esc(c.agent ?? '—')}</dd></dl>` : ''}
         ${c.observatii ? `<div class="info-obs"><span class="dim">Observaţii:</span> ${esc(c.observatii)}</div>` : ''}
@@ -1189,7 +1198,7 @@ async function renderDetaliu(id) {
       <dl class="info-pasi">
         ${pas('gata', 'Ofertat', deCine(c.creat_de_nume, c.creat_la))}
         ${c.confirmat_la ? pas('gata', 'Acceptat', `${deCine(c.confirmat_de_nume, c.confirmat_la)}
-          <div class="dim mic">${esc(PLATI[c.plata] ?? 'plată nealeasă')} · ${c.achitat_la ? achitatHtml(c) : c.avans > 0 ? `avans <strong>${virgulaLei(c.avans)} lei</strong>` : 'fără avans'}</div>`)
+          <div class="dim mic">${esc([PLATI[c.plata] ?? 'facturare nealeasă', INCASARI[c.incasare]].filter(Boolean).join(' · '))} · ${c.achitat_la ? achitatHtml(c) : c.avans > 0 ? `avans <strong>${virgulaLei(c.avans)} lei</strong>` : 'fără avans'}</div>`)
           : pas(c.anulat ? 'viitor' : 'acum', 'Acceptat', c.anulat ? '' : `<span class="urmeaza">Urmează: „${ePlata ? 'Plată primită şi printează' : 'Acceptă comanda şi printează'}"</span>`)}
         ${eComanda ? pas(c.factura_nr ? 'gata' : 'acum', 'Facturat', c.factura_nr
           ? `<strong class="mono">${esc(c.factura_nr)}</strong> · ${deCine(c.facturat_de_nume, c.facturat_la)}${poateAnulaFactura() ? ' <button class="mic rosu-contur" id="anuleazaFactura">Anulează</button>'

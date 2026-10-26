@@ -126,7 +126,7 @@ async function main() {
         workerCreatedIds.push(cId);
 
         // Accept order
-        const rAccept = await request('POST', `/api/comenzi/${cId}/accepta`, {
+        const rAccept = await request('POST', `/api/comenzi/${cId}/accepta`, { incasare: 'card',
           plata: 'fiscala',
           telefon: '0722123456',
           adresa: 'Adresa confirmata'
@@ -171,8 +171,8 @@ async function main() {
     const raceId = rOf.data.comanda.id;
     // Launch 2 simultaneous accept requests
     const [accA, accB] = await Promise.all([
-      request('POST', `/api/comenzi/${raceId}/accepta`, { plata: 'fiscala', telefon: '0722000111', adresa: 'Str. Cursei' }, cookieMaria),
-      request('POST', `/api/comenzi/${raceId}/accepta`, { plata: 'bon', telefon: '0722000111', adresa: 'Str. Cursei' }, cookieIon)
+      request('POST', `/api/comenzi/${raceId}/accepta`, { incasare: 'card', plata: 'fiscala', telefon: '0722000111', adresa: 'Str. Cursei' }, cookieMaria),
+      request('POST', `/api/comenzi/${raceId}/accepta`, { incasare: 'card', plata: 'bon', telefon: '0722000111', adresa: 'Str. Cursei' }, cookieIon)
     ]);
 
     const statuses = [accA.status, accB.status].sort();

@@ -3,7 +3,7 @@ import * as manager from './manager.js';
 import * as cosul from './cos.js';
 import { cautator, laBara, arie, rotunjeste, textMod, sePoatePeJumatate } from './amanunt-calcul.js';
 import { initSugestiiClienti } from './sugestii-clienti.js';
-import { LIVRARE, AGENTI, PLATI, plataText, numarText, detaliiDinManager, dinAcceptare, liniaTransport, campuriLipsa, focusCamp, etichetaNumar, marcheazaDeCompletat, opritDePlata } from './lib/comun/comanda.js';
+import { LIVRARE, AGENTI, PLATI, INCASARI, plataText, incasareText, numarText, detaliiDinManager, dinAcceptare, liniaTransport, campuriLipsa, focusCamp, etichetaNumar, marcheazaDeCompletat, opritDePlata } from './lib/comun/comanda.js';
 import { copyRows } from './lib/comun/clipboard.js';
 import { qtyText } from './lib/comun/num.js';
 import { dataRo } from './ora.js';
@@ -59,7 +59,7 @@ const umHtml = l => {
   return `${esc(l?.um ?? '')}${t ? `<div class="regula">${esc(t)}</div>` : ''}`;
 };
 // livrare / plată / agent — aceeaşi formă ca state.comanda din configurator
-const comanda = { livrare: null, agent: null, plata: null };
+const comanda = { livrare: null, agent: null, plata: null, incasare: null };
 // coşul ofertei (js/cos.js): produsele deja adăugate + oferta deschisă din manager, dacă e
 const cos = cosul.citeste();
 let modFisa = null;         // ?fisa=<id>&poz=<k> — doar tipar: { numar, debitare }
@@ -180,7 +180,7 @@ function pasi() {
     : lipsa.length ? `Mai completează: ${lipsa.map(x => x.text).join(', ')}` : 'Gata de salvat';
 }
 // starea se schimbă la datele clientului şi la nr. ofertei
-for (const id of ['clientNume', 'clientTelefon', 'clientAdresa', 'comandaLivrare', 'comandaPlata', 'comandaAgent', 'ofertaNr'])
+for (const id of ['clientNume', 'clientTelefon', 'clientAdresa', 'comandaLivrare', 'comandaPlata', 'comandaIncasare', 'comandaAgent', 'ofertaNr'])
   for (const ev of ['input', 'change']) $(id).addEventListener(ev, pasi);
 // Goleşte pagina — ca în configurator: produsul de pe ecran de la zero (coşul rămâne)
 // cu produse deja puse, întâi o întrebare — butonul e lângă „Salvează" şi şterge tot ce nu e salvat
@@ -412,10 +412,10 @@ $('btnCopyCod').addEventListener('click', e =>
 $('btnCopyCant').addEventListener('click', e =>
   copyRows(deCopiat().map(l => [qtyText(l.cantitate)])).then(ok => flash(e.target, ok ? '✓ copiat' : '⚠ eroare')));
 
-// ── Client: livrare / plată / agent ─────────────────────────────────────────
+// ── Client: livrare / facturare / încasare / agent ──────────────────────────
 
-for (const [id, valori, alege] of [['comandaLivrare', LIVRARE, 'Mod de livrare'],
-                                   ['comandaPlata', PLATI, 'Metodă de plată'], ['comandaAgent', AGENTI, 'Agent']]) {
+for (const [id, valori, alege] of [['comandaLivrare', LIVRARE, 'Mod de livrare'], ['comandaPlata', PLATI, 'Facturare'],
+                                   ['comandaIncasare', INCASARI, 'Încasare'], ['comandaAgent', AGENTI, 'Agent']]) {
   const sel = $(id);
   sel.innerHTML = `<option value="" selected disabled>${alege}</option>` + valori.map(v => {
     const [cod, text] = Array.isArray(v) ? v : [v, v];
@@ -614,7 +614,7 @@ function tipareste({ vezi = false } = {}) {
       <div class="dreapta">${configuratDe() ? `<div>Configurat de <b>${esc(configuratDe())}</b></div>` : ''}<div>${dataRo()}</div></div></div>
     <table class="perechi">
       ${$('clientNume').value.trim() ? `<tr class="client"><td>Client</td><td>${esc($('clientNume').value.trim())}</td></tr>` : ''}${rand('Telefon', $('clientTelefon').value)}${rand('Adresă', $('clientAdresa').value)}
-      ${rand('Mod de livrare', comanda.livrare)}${rand('Metodă de plată', plataText(comanda.plata))}${rand('Agent', comanda.agent)}
+      ${rand('Mod de livrare', comanda.livrare)}${rand('Facturare', plataText(comanda.plata))}${rand('Încasare', incasareText(comanda.incasare))}${rand('Agent', comanda.agent)}
       ${rand(modFisa?.etNumar ?? numarText(comanda.plata), $('ofertaNr').value.trim())}${rand('Observaţii', $('observatii').value.trim())}
     </table>
     <table>
@@ -646,7 +646,7 @@ const configuratDe = () => (modFisa ? modFisa.configurat : manager.stareOferta()
 
 const puneClientul = (client, ofertaNr, detalii) => {
   Object.assign(comanda, detalii);
-  for (const [k, sel] of [['livrare', 'comandaLivrare'], ['plata', 'comandaPlata'], ['agent', 'comandaAgent']]) if (comanda[k]) $(sel).value = comanda[k];
+  for (const [k, sel] of [['livrare', 'comandaLivrare'], ['plata', 'comandaPlata'], ['incasare', 'comandaIncasare'], ['agent', 'comandaAgent']]) if (comanda[k]) $(sel).value = comanda[k];
   $('clientNume').value = client.nume ?? '';
   $('clientTelefon').value = client.telefon ?? '';
   $('clientAdresa').value = client.adresa ?? '';

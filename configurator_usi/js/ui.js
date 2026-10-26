@@ -13,7 +13,7 @@ import { geamPermisLux } from './lib/lux/index.js';
 import gameJson from './systems/game.json';
 import { renderRame, syncRame, refreshRame } from './ui_rame.js';
 import { activeazaCampuri } from './campuri.js';
-import { LIVRARE, AGENTI, PLATI, numarText, detaliiComanda, detaliiDinManager, dinAcceptare, liniaTransport, campuriLipsa, focusCamp, etichetaNumar, opritDePlata } from './lib/comun/comanda.js';
+import { LIVRARE, AGENTI, PLATI, INCASARI, numarText, detaliiComanda, detaliiDinManager, dinAcceptare, liniaTransport, campuriLipsa, focusCamp, etichetaNumar, opritDePlata } from './lib/comun/comanda.js';
 import { stareRameGoala } from './lib/rame/rame.js';
 import { renderUtil } from './ui_util.js';
 import { initSugestiiClienti } from './sugestii-clienti.js';
@@ -972,15 +972,15 @@ function aplicaGama() {
   if (eUtil) renderUtil($('utilUI'), { rebuild });
 }
 
-// ── Detaliile comenzii (livrare / metodă de plată / agent) — la toate gamele ─
+// ── Detaliile comenzii (livrare / facturare / încasare / agent) — la toate gamele ─
 // Pornesc pe „Alege…"; la rame sunt obligatorii (blochează facturarea, ca în
 // formularul Excel), la celelalte game doar se trec pe ofertă şi pe fişă.
 function initDetaliiComanda() {
   const det = detaliiComanda(state);   // ofertele vechi de rame le aveau în state.rame
   state.comanda = { ...det };
-  // lista: valori simple sau perechi [cod, text] (metodele de plată)
-  for (const [id, lista, alege] of [['comandaLivrare', LIVRARE, 'Mod de livrare'],
-                                    ['comandaPlata', PLATI, 'Metodă de plată'], ['comandaAgent', AGENTI, 'Agent']]) {
+  // lista: valori simple sau perechi [cod, text] (facturarea, încasarea)
+  for (const [id, lista, alege] of [['comandaLivrare', LIVRARE, 'Mod de livrare'], ['comandaPlata', PLATI, 'Facturare'],
+                                    ['comandaIncasare', INCASARI, 'Încasare'], ['comandaAgent', AGENTI, 'Agent']]) {
     const sel = $(id);
     if (!sel) continue;
     const ales = state.comanda[sel.dataset.c];
@@ -1439,7 +1439,7 @@ export async function initUI() {
         numar:  `${o.comanda.oferta_nr || o.comanda.numar}${n > 1 ? ` · produsul ${k + 1} din ${n}` : ''}`,
         configurat: o.comanda.creat_de_nume ?? null,   // pe fişă: pe cine întreabă atelierul
         // eticheta nr. („Număr ofertă" …) după plata de la salvare — plata aleasă la acceptare schimbă doar
-        // rândul „Metodă de plată" (userul, 2026-10-23)
+        // rândul „Facturare" (userul, 2026-10-23)
         etNumar: numarText(detaliiComanda(poz.config).plata),
         coduri: (o.coduri ?? []).map(cod_bare => ({ cod_bare })),
         client: o.comanda.client_nume ?? '',

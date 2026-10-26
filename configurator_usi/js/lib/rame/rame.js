@@ -358,7 +358,7 @@ export function specRame(model, state) {
   const det = detaliiComanda(state);
   if (!det.livrare) erori.push('alege modul de livrare');
   if (!det.agent) erori.push('alege agentul');
-  if (!det.plata) erori.push('alege metoda de plată');
+  if (!det.plata) erori.push('alege facturarea');
 
   const maxH = Math.max(0, ...pline.map(x => x.h)), maxL = Math.max(0, ...pline.map(x => x.l));
   return {

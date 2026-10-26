@@ -16,7 +16,7 @@ function asamblareRame(rame) {
     .filter(rd => +rd.lungime > 0 && +rd.buc > 0).map(rd => rd.model ?? rame.maner.model).filter(Boolean));
   return modele.size ? `${text} CU MANER ${[...modele].map(m => MODELE_MANER.find(([v]) => v === m)?.[1] ?? m).join(' + ')}` : text;
 }
-import { detaliiComanda, plataText, numarText } from './lib/comun/comanda.js';
+import { detaliiComanda, plataText, incasareText, numarText } from './lib/comun/comanda.js';
 import { stareOferta } from './manager.js';
 import JsBarcode from 'jsbarcode';
 import { arataPrevizualizare } from './previzualizare.js';
@@ -582,7 +582,8 @@ export function deschideFisa(client, oferta = null, salvate = null, { vezi = fal
     ['Vopsire cod RAL',   rame.ral || null],
     // detaliile comenzii — la rame în acelaşi tabel (userul, 2026-10-02), ca fişa să fie mai compactă
     ['Mod de livrare',    detaliiComanda(state).livrare ?? '—'],
-    ['Metodă de plată',   plataText(detaliiComanda(state).plata) ?? '—'],
+    ['Facturare',         plataText(detaliiComanda(state).plata) ?? '—'],
+    ['Încasare',          incasareText(detaliiComanda(state).incasare) ?? '—'],
     ['Agent',             detaliiComanda(state).agent ?? '—'],
     [etNumar,             nrOferta],
   ], 'cote') : tabelMic([
@@ -606,9 +607,10 @@ export function deschideFisa(client, oferta = null, salvate = null, { vezi = fal
 
   const nrNoi    = (state.assembly ?? []).filter(a => a === 'noi').length;
   const nrClient = (state.assembly ?? []).filter(a => a === 'client').length;
-  // detaliile comenzii (toate gamele) — livrare / metodă de plată / agent
+  // detaliile comenzii (toate gamele) — livrare / facturare / încasare / agent
   const det = detaliiComanda(state);
-  const detalii = tabelMic([['Mod de livrare', det.livrare ?? '—'], ['Metodă de plată', plataText(det.plata) ?? '—'], ['Agent', det.agent ?? '—'],
+  const detalii = tabelMic([['Mod de livrare', det.livrare ?? '—'], ['Facturare', plataText(det.plata) ?? '—'],
+    ['Încasare', incasareText(det.incasare) ?? '—'], ['Agent', det.agent ?? '—'],
     [etNumar, nrOferta]]);
   const montaj = util ? tabelMic([
     ['Asamblăm noi',        `${nrNoi} uşi`],

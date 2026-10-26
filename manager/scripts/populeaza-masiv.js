@@ -240,7 +240,7 @@ async function main() {
       await cer('POST', `/api/comenzi/${cId}/asteapta-plata`, { oferta_nr: cDef.ofertaNr }, cookie);
       console.log(`    ↳ trecută în 'Așteaptă plata'`);
     } else if (['accepta', 'finalizeaza', 'factura'].includes(cDef.actiune)) {
-      await cer('POST', `/api/comenzi/${cId}/accepta`, {
+      await cer('POST', `/api/comenzi/${cId}/accepta`, { incasare: 'card',
         plata: cDef.detalii.plata,
         avans: cDef.detalii.plata === 'avans' ? 1500 : undefined,
         telefon: client.telefon,

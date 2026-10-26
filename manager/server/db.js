@@ -569,6 +569,9 @@ const MIGRATII = [
                                            AND o.la >= p.la AND o.la <= comanda.confirmat_la))`)
       .run({ plata: op('asteapta-plata'), oferta: op('inapoi-oferta') });
   },
+  // v34 → v35 (2026-10-26): metoda de încasare (userul) — „plata" rămâne documentul (afişat „Facturare"), încasarea
+  // (OP avans, Cash BF la sofer, Card…) e câmp separat, obligatoriu la salvare; comenzile vechi rămân fără (NULL).
+  d => d.exec('ALTER TABLE comanda ADD COLUMN incasare TEXT'),
 ];
 
 // Exportată pt. test.

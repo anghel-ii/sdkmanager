@@ -117,7 +117,7 @@ const oferta = (nume, nr) => ({ client: { nume, telefon: '0700', adresa: 'Str. L
   detalii: { livrare: 'Cu masina noastra', agent: 'Birou' }, ofertaNr: nr, pozitii: [pozitie()] });
 const comanda = async (cine, nume, nr) => {
   const o = (await cer(cine, 'POST', '/api/comenzi', oferta(nume, nr))).date.comanda;
-  await cer(cine, 'POST', `/api/comenzi/${o.id}/accepta`, { plata: 'bon', avans: 0, telefon: '0700', adresa: 'Str. Lunga 3, Cluj-Napoca, Cluj' });
+  await cer(cine, 'POST', `/api/comenzi/${o.id}/accepta`, { incasare: 'card', plata: 'bon', avans: 0, telefon: '0700', adresa: 'Str. Lunga 3, Cluj-Napoca, Cluj' });
   return o.id;
 };
 const lista = async (cine, tip = 'toate') => (await cer(cine, 'GET', `/api/comenzi?tip=${tip}`)).date.comenzi;
@@ -164,7 +164,7 @@ async function main() {
   await actiune('ana: modifică oferta ei', () => cer('ana', 'PUT', `/api/comenzi/${idA}`, oferta('Demo Ana Modificat', 'D-1')), { birou: C, admin: C });
   await actiune('ana: modifică oferta REALĂ', () => cer('ana', 'PUT', `/api/comenzi/${idR1}`, oferta('Real Unu MODIFICAT ÎN DEMO', 'R-1')), { birou: C, admin: C });
   await actiune('ana: ofertă reală → aşteaptă plata', () => cer('ana', 'POST', `/api/comenzi/${idR1}/asteapta-plata`), { birou: C, admin: C });
-  await actiune('ana: ofertă reală → acceptată', () => cer('ana', 'POST', `/api/comenzi/${idR1}/accepta`, { plata: 'bon', avans: 10, telefon: '0711', adresa: 'X, Iași' }), { birou: C, admin: C });
+  await actiune('ana: ofertă reală → acceptată', () => cer('ana', 'POST', `/api/comenzi/${idR1}/accepta`, { incasare: 'card', plata: 'bon', avans: 10, telefon: '0711', adresa: 'X, Iași' }), { birou: C, admin: C });
   await actiune('ana: factură pe comanda reală', () => cer('ana', 'POST', `/api/comenzi/${idR2}/factura`, { numar: 'F-DEMO' }), { birou: C, admin: C });
   await actiune('ana: finalizează comanda reală', () => cer('ana', 'POST', `/api/comenzi/${idR2}/finalizeaza`), { birou: C, admin: C });
   await actiune('ana: redeschide', () => cer('ana', 'POST', `/api/comenzi/${idR2}/redeschide`), { birou: C, admin: C });
@@ -217,7 +217,7 @@ async function main() {
   const oAd = await actiune('admin: ofertă nouă', () => cer('admin', 'POST', '/api/comenzi', oferta('Demo Admin', 'AD-1')), { birou: NIMIC, admin: C });
   const idAd = oAd.date.comanda.id;
   verifica('admin: id ≥ 2e9, număr 9501+', idAd >= 2e9 && +oAd.date.comanda.numar.slice(-4) > 9500, JSON.stringify(oAd.date.comanda));
-  await actiune('admin: acceptă oferta lui', () => cer('admin', 'POST', `/api/comenzi/${idAd}/accepta`, { plata: 'bon', avans: 0, telefon: '1', adresa: 'X, Cluj' }), { birou: NIMIC, admin: C });
+  await actiune('admin: acceptă oferta lui', () => cer('admin', 'POST', `/api/comenzi/${idAd}/accepta`, { incasare: 'card', plata: 'bon', avans: 0, telefon: '1', adresa: 'X, Cluj' }), { birou: NIMIC, admin: C });
   await actiune('admin: finalizează comanda reală R-3', () => cer('admin', 'POST', `/api/comenzi/${idR3}/finalizeaza`), { birou: NIMIC, admin: C });
   await actiune('admin: modifică oferta anei', () => cer('admin', 'PUT', `/api/comenzi/${idA}`, oferta('Ana modificat de admin', 'D-1')), { birou: NIMIC, admin: C });
   await actiune('admin: sticla R-2 comandată', async () => {

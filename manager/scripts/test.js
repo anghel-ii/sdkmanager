@@ -325,16 +325,19 @@ async function main() {
   ]) verifica(`acceptare respinsă: ${ce} → 400`, (await cer('POST', `/api/comenzi/${id}/accepta`, corp)).stare === 400);
   verifica('… şi oferta a rămas ofertă', db2().prepare('SELECT tip FROM comanda WHERE id = ?').get(id).tip === 'oferta');
 
-  verifica('acceptare fără telefon / adresă → 400', (await cer('POST', `/api/comenzi/${id}/accepta`, { plata: 'fiscala' })).stare === 400);
-  const acc = await cer('POST', `/api/comenzi/${id}/accepta`, { plata: 'fiscala', avans: '1500.5', telefon: '0722 000 111', adresa: 'Str. Test 1' });
+  // încasarea (2026-10-26): obligatorie — din ofertă sau din fereastra de acceptare
+  for (const [incasare, ce] of [[undefined, 'fără încasare'], ['cec', 'încasare necunoscută']]) verifica(`acceptare respinsă: ${ce} → 400`,
+    (await cer('POST', `/api/comenzi/${id}/accepta`, { incasare, plata: 'fiscala', telefon: '0700', adresa: 'X' })).stare === 400);
+  verifica('acceptare fără telefon / adresă → 400', (await cer('POST', `/api/comenzi/${id}/accepta`, { incasare: 'card', plata: 'fiscala' })).stare === 400);
+  const acc = await cer('POST', `/api/comenzi/${id}/accepta`, { incasare: 'card', plata: 'fiscala', avans: '1500.5', telefon: '0722 000 111', adresa: 'Str. Test 1' });
   verifica('telefonul şi adresa din fereastra de acceptare se salvează', acc.date.comanda?.client_telefon === '0722 000 111' && acc.date.comanda?.client_adresa === 'Str. Test 1');
   verifica('acceptare → 200', acc.stare === 200);
-  verifica('se salvează plata şi avansul', acc.date.comanda?.plata === 'fiscala' && acc.date.comanda?.avans === 1500.5,
+  verifica('se salvează plata, încasarea şi avansul', acc.date.comanda?.plata === 'fiscala' && acc.date.comanda?.incasare === 'card' && acc.date.comanda?.avans === 1500.5,
     JSON.stringify({ plata: acc.date.comanda?.plata, avans: acc.date.comanda?.avans }));
   verifica('acceptată: acelaşi număr, fără CMD- (userul, 2026-10-05)',
     acc.date.comanda?.numar === oferta.date.comanda.numar && acc.date.comanda?.numar_comanda == null,
     acc.date.comanda?.numar_comanda);
-  verifica('acceptată de două ori → 409', (await cer('POST', `/api/comenzi/${id}/accepta`, { plata: 'bon' })).stare === 409);
+  verifica('acceptată de două ori → 409', (await cer('POST', `/api/comenzi/${id}/accepta`, { incasare: 'card', plata: 'bon' })).stare === 409);
   verifica('a trecut în tabul Comenzi',
     (await cer('GET', '/api/comenzi?tip=comanda')).date.comenzi.length === 1);
   verifica('nu mai e în Oferte', (await cer('GET', '/api/comenzi')).date.comenzi.length === 1);
@@ -486,7 +489,7 @@ async function main() {
     const idVechi = Number(db2().prepare("INSERT INTO utilizator (nume, user, parola_hash, parola_salt, rol) VALUES ('Vechi', 'vechi', 'x', 'x', 'operator')").run().lastInsertRowid);
     require('../server/db.js').roluriNoi(db2());
     verifica('migraţie: operator → birou', db2().prepare('SELECT rol FROM utilizator WHERE id = ?').get(idVechi).rol === 'birou');
-    verifica('schema la versiunea 34', db2().prepare('PRAGMA user_version').get().user_version === 34);
+    verifica('schema la versiunea 35', db2().prepare('PRAGMA user_version').get().user_version === 35);
   }
 
   console.log('\nFixare şi sortare — per utilizator');
@@ -568,7 +571,7 @@ async function main() {
     ] } }] });
   const ofS = (await cer('POST', '/api/comenzi', cuSticla('Client Sticla'))).date.comanda;
   verifica('oferta neacceptată NU apare la sticlă', (await cer('GET', '/api/sticla')).date.linii.length === 0);
-  const accS = await cer('POST', `/api/comenzi/${ofS.id}/accepta`, { plata: 'bon', telefon: '0700', adresa: 'X' });
+  const accS = await cer('POST', `/api/comenzi/${ofS.id}/accepta`, { incasare: 'card', plata: 'bon', telefon: '0700', adresa: 'X' });
   verifica('acceptare fără avans → avans 0', accS.date.comanda?.avans === 0, accS.date.comanda?.avans);
   const st = (await cer('GET', '/api/sticla')).date.linii;
   verifica('comanda acceptată → 3 linii de sticlă', st.length === 3, st.length);
@@ -713,15 +716,16 @@ async function main() {
   console.log('\nAşteaptă plata + nr. de ofertă scris de mână');
   {
     const o = await cer('POST', '/api/comenzi', { client: { nume: 'Client Plata' }, ofertaNr: ' NM-77 ',
-      detalii: { plata: 'proforma_amanunt' }, pozitii: [pozitie('confortGamma', 'Confort Gamma', 2, 2000)] });
+      detalii: { plata: 'proforma_amanunt', incasare: 'cash_bf_sofer' }, pozitii: [pozitie('confortGamma', 'Confort Gamma', 2, 2000)] });
     const pid = o.date.comanda.id;
+    verifica('încasarea din configurator se salvează pe ofertă', db2().prepare('SELECT incasare FROM comanda WHERE id = ?').get(pid).incasare === 'cash_bf_sofer');
     verifica('nr. de ofertă se salvează (tăiat)', db2().prepare('SELECT oferta_nr FROM comanda WHERE id = ?').get(pid).oferta_nr === 'NM-77');
     verifica('metoda de plată din configurator se salvează pe ofertă',
       db2().prepare('SELECT plata FROM comanda WHERE id = ?').get(pid).plata === 'proforma_amanunt');
-    const oc = await cer('POST', '/api/comenzi', { client: { nume: 'Plata ciudata' }, detalii: { plata: 'card' },
+    const oc = await cer('POST', '/api/comenzi', { client: { nume: 'Plata ciudata' }, detalii: { plata: 'card', incasare: 'cec' },
       pozitii: [pozitie('confortGamma', 'Confort Gamma', 1, 1200)] });
-    verifica('metodă de plată necunoscută → ignorată (NULL)',
-      db2().prepare('SELECT plata FROM comanda WHERE id = ?').get(oc.date.comanda.id).plata === null);
+    verifica('metodă de plată / încasare necunoscută → ignorată (NULL)',
+      Object.values(db2().prepare('SELECT plata, incasare FROM comanda WHERE id = ?').get(oc.date.comanda.id)).every(v => v === null));
     const sumarInainte = (await cer('GET', '/api/sumar')).date;
     verifica('ofertă → aşteaptă plata → 200', (await cer('POST', `/api/comenzi/${pid}/asteapta-plata`)).stare === 200);
     verifica('a doua oară → 409', (await cer('POST', `/api/comenzi/${pid}/asteapta-plata`)).stare === 409);
@@ -733,8 +737,9 @@ async function main() {
       client: { nume: 'Y' }, pozitii: [pozitie('confortGamma', 'G', 1, 1200)] })).stare === 409);
     verifica('nu se facturează cât aşteaptă plata', (await cer('POST', `/api/comenzi/${pid}/factura`, { numar: 'F1' })).stare === 409);
     for (const avans of [0, '', '-5', 'abc']) verifica(`plată primită cu suma ${JSON.stringify(avans)} → 400`,
-      (await cer('POST', `/api/comenzi/${pid}/accepta`, { plata: 'proforma', avans, telefon: '0700', adresa: 'X' })).stare === 400);
+      (await cer('POST', `/api/comenzi/${pid}/accepta`, { incasare: 'card', plata: 'proforma', avans, telefon: '0700', adresa: 'X' })).stare === 400);
     const pl = await cer('POST', `/api/comenzi/${pid}/accepta`, { plata: 'proforma', avans: '2500', telefon: '0700', adresa: 'X' });
+    verifica('… încasarea rămâne cea de pe ofertă', pl.date.comanda?.incasare === 'cash_bf_sofer');
     verifica('plată primită → comandă în lucru', pl.stare === 200 && pl.date.comanda.tip === 'comanda' && pl.date.comanda.numar_comanda == null);
     verifica('… achitată, cu suma încasată', !!pl.date.comanda.achitat_la && pl.date.comanda.avans === 2500, JSON.stringify(pl.date.comanda));
     verifica('… şi lista o arată achitată', !!(await cer('GET', '/api/comenzi?tip=comanda')).date.comenzi.find(c => c.id === pid)?.achitat_la);
@@ -746,7 +751,7 @@ async function main() {
     verifica('înapoi a doua oară → 409', (await cer('POST', `/api/comenzi/${pid}/inapoi-oferta`)).stare === 409);
     verifica('aşteaptă plata → înapoi în ofertă → 200', (await cer('POST', `/api/comenzi/${pid}/asteapta-plata`)).stare === 200
       && (await cer('POST', `/api/comenzi/${pid}/inapoi-oferta`)).stare === 200);
-    const re = await cer('POST', `/api/comenzi/${pid}/accepta`, { plata: 'proforma', avans: 0, telefon: '0700', adresa: 'X' });
+    const re = await cer('POST', `/api/comenzi/${pid}/accepta`, { incasare: 'card', plata: 'proforma', avans: 0, telefon: '0700', adresa: 'X' });
     verifica('reacceptată: acelaşi nr. de ofertă', re.stare === 200 && re.date.comanda.oferta_nr === 'NM-77');
     verifica('… direct din ofertă: avans 0 merge, nu e achitată', re.date.comanda.achitat_la === null);
     db2().prepare("UPDATE comanda SET tip_schimbat_la = datetime('now', '-11 minutes') WHERE id = ?").run(pid);
@@ -989,7 +994,7 @@ async function main() {
     const curier = await noua('Livr Curier', 'Curier ramburs', 'Str. X, Iasi');
     const faraJ = await noua('Livr FaraJudet', 'Cu masina noastra', 'Strada Florilor 1');
     const oferta = await noua('Livr Oferta', 'Cu masina noastra', 'Str. Y, Iasi');   // rămâne ofertă
-    for (const id of [iasi, vaslui, curier, faraJ]) await cer('POST', `/api/comenzi/${id}/accepta`, { plata: 'proforma', avans: 0 });
+    for (const id of [iasi, vaslui, curier, faraJ]) await cer('POST', `/api/comenzi/${id}/accepta`, { incasare: 'card', plata: 'proforma', avans: 0 });
     const cand = async () => (await cer('GET', '/api/livrari/candidati')).date.comenzi;
     let c = await cand();
     const id = x => c.find(k => k.id === x);
@@ -1048,7 +1053,7 @@ async function main() {
     const o = (await cer('POST', '/api/comenzi', { client: { nume: 'Client Adaugă', telefon: '0700', adresa: 'X' }, detalii: { livrare: 'Curier ramburs' },
       ofertaNr: 'AD-1', pozitii: [cuTransport(pozitie('confortGamma', 'Confort Gamma', 2, 2000))] })).date.comanda.id;
     verifica('adaugă: la o ofertă → 409', (await cer('POST', `/api/comenzi/${o}/adauga`, { pozitii: [pozitie('confortGamma', 'Confort Gamma', 1, 1200)] })).stare === 409);
-    await cer('POST', `/api/comenzi/${o}/accepta`, { plata: 'proforma', avans: 0 });
+    await cer('POST', `/api/comenzi/${o}/accepta`, { incasare: 'card', plata: 'proforma', avans: 0 });
     verifica('adaugă: fără produse → 400', (await cer('POST', `/api/comenzi/${o}/adauga`, { pozitii: [] })).stare === 400);
     verifica('adaugă: produs invalid → 400', (await cer('POST', `/api/comenzi/${o}/adauga`, { pozitii: [{ sistem: '' }] })).stare === 400);
     const a = await cer('POST', `/api/comenzi/${o}/adauga`, { pozitii: [cuTransport(pozitie('confortGamma', 'Confort Gamma', 1, 1200))] });
@@ -1085,7 +1090,7 @@ async function main() {
     verifica('aprobare → 200', (await cer('POST', `/api/cereri/${ra.id}/aproba`, { raspuns: 'OK' })).stare === 200);
     verifica('… comanda e anulată şi iese din oferte', !(await cer('GET', '/api/comenzi?tip=oferta')).date.comenzi.some(c => c.id === a)
       && db2().prepare('SELECT anulat FROM comanda WHERE id = ?').get(a).anulat === 1);
-    verifica('… o anulată nu mai poate fi acceptată', (await cer('POST', `/api/comenzi/${a}/accepta`, { plata: 'proforma' })).stare === 400);
+    verifica('… o anulată nu mai poate fi acceptată', (await cer('POST', `/api/comenzi/${a}/accepta`, { incasare: 'card', plata: 'proforma' })).stare === 400);
     verifica('a doua decizie → 409', (await cer('POST', `/api/cereri/${ra.id}/respinge`)).stare === 409);
     verifica('respingere → comanda rămâne', (await cer('POST', `/api/cereri/${rb.id}/respinge`, { raspuns: 'Mai vorbim' })).stare === 200
       && (await cer('GET', '/api/comenzi?tip=oferta')).date.comenzi.some(c => c.id === b));
@@ -1113,7 +1118,7 @@ async function main() {
     const corp = pozitii => ({ client: { nume: 'Client Modific', telefon: '0700', adresa: 'X' }, detalii: { livrare: 'Ridicare personala' },
       ofertaNr: 'MC-1', pozitii });
     const id = (await cer('POST', '/api/comenzi', corp([cuSticla(1200), cuSticla(1500)]))).date.comanda.id;
-    await cer('POST', `/api/comenzi/${id}/accepta`, { plata: 'fiscala', telefon: '0700', adresa: 'X' });
+    await cer('POST', `/api/comenzi/${id}/accepta`, { incasare: 'card', plata: 'fiscala', telefon: '0700', adresa: 'X' });
     const pozitii = () => db2().prepare('SELECT id, idx, latime FROM pozitie WHERE comanda_id = ? ORDER BY idx').all(id);
     const sticla = () => db2().prepare(`SELECT l.cod, l.comandat_la, p.idx FROM pozitie_linie l JOIN pozitie p ON p.id = l.pozitie_id
       WHERE p.comanda_id = ? AND l.lista = 'sticla' ORDER BY p.idx`).all(id);
@@ -1177,7 +1182,7 @@ async function main() {
     const r = await cer('POST', '/api/comenzi', { client: { nume: 'Client Factura', telefon: '0700', adresa: 'X' }, ofertaNr: 'FN-1',
       pozitii: [pozitie('confortGamma', 'Confort Gamma', 1, 1200)] });
     const id = r.date.comanda.id;
-    await cer('POST', `/api/comenzi/${id}/accepta`, { plata: 'proforma', telefon: '0700', adresa: 'X' });
+    await cer('POST', `/api/comenzi/${id}/accepta`, { incasare: 'card', plata: 'proforma', telefon: '0700', adresa: 'X' });
     const caMaria = async fn => { const k = cookie; cookie = null; await cer('POST', '/api/login', { user: 'maria', parola: 'parola-maria-1' });
       try { return await fn(); } finally { cookie = k; } };
     const cere = corp => cer('POST', `/api/comenzi/${id}/schimba-factura`, corp);
@@ -1253,7 +1258,7 @@ async function main() {
       pozitii: [{ ...pozitie('confortGamma', 'Confort Gamma', 1, 1200), linii: { facturare: [{ cod: 'X', denumire: 'X', cantitate: 1 }],
         sticla: [{ cod: 'GG004', denumire: 'Geam float 4mm GG004', um: 'buc', cantitate: 1, debitare: '1000 × 500 mm' }] } }] });
     const id = r.date.comanda.id;
-    await cer('POST', `/api/comenzi/${id}/accepta`, { plata: 'proforma', telefon: '0700', adresa });
+    await cer('POST', `/api/comenzi/${id}/accepta`, { incasare: 'card', plata: 'proforma', telefon: '0700', adresa });
     const laSticla = async () => (await cer('GET', '/api/sticla')).date.linii.some(l => l.comanda_id === id);
     const laLivrari = async () => (await cer('GET', '/api/livrari/candidati')).date.comenzi.some(c => c.id === id);
     verifica('înainte de cerere: apare la sticlă şi la livrări', await laSticla() && await laLivrari());
@@ -1483,7 +1488,7 @@ async function main() {
     const creat = Date.parse(db2().prepare('SELECT creat_la FROM comanda WHERE id = ?').get(o.date.comanda.id).creat_la.replace(' ', 'T') + 'Z');
     verifica('oferta nouă: ora exactă, nu a ceasului serverului', Math.abs(creat - (Date.now() + 5 * 60e3)) < 5000,
       new Date(creat).toISOString());
-    const acc = await cer('POST', `/api/comenzi/${o.date.comanda.id}/accepta`, { plata: 'proforma', avans: 0, telefon: '0700', adresa: 'X' });
+    const acc = await cer('POST', `/api/comenzi/${o.date.comanda.id}/accepta`, { incasare: 'card', plata: 'proforma', avans: 0, telefon: '0700', adresa: 'X' });
     const conf = Date.parse(acc.date.comanda.confirmat_la.replace(' ', 'T') + 'Z');
     verifica('acceptarea: ora exactă', Math.abs(conf - (Date.now() + 5 * 60e3)) < 5000);
     verifica('/api/ora dă ora exactă', Math.abs((await cer('GET', '/api/ora')).date.acum - (Date.now() + 5 * 60e3)) < 2000);
@@ -1530,7 +1535,7 @@ async function main() {
       && pePeBune("SELECT comanda_id FROM tichet WHERE text = 'pe oferta de test'")[0]?.comanda_id === t.date.comanda.id);
 
     await cer('POST', '/api/login', { user: 'admin', parola: 'parola-admin-1' });
-    await cer('POST', `/api/comenzi/${reala.date.comanda.id}/accepta`, { plata: 'proforma', avans: 0, telefon: '0700', adresa: 'Str. Reala 1' });
+    await cer('POST', `/api/comenzi/${reala.date.comanda.id}/accepta`, { incasare: 'card', plata: 'proforma', avans: 0, telefon: '0700', adresa: 'Str. Reala 1' });
     const r2 = await cer('POST', '/api/comenzi', { client: { nume: 'Client Real MT 2' }, ofertaNr: 'MT-R2', pozitii: [pozitie('confortGamma', 'Confort Gamma', 2, 1600)] });
     verifica('ce se face pe bune ajunge în copie (acceptarea, oferta nouă cu id-ul ei)',
       inCopie(`SELECT tip FROM comanda WHERE id = ${reala.date.comanda.id}`)[0]?.tip === 'comanda'

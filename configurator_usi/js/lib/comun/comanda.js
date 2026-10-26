@@ -16,6 +16,12 @@ export const AGENTI = ['Birou', 'Site', 'Serban Dragos', 'Bondrea Oliver', 'Coro
 export const PLATI = [['oferta', 'Ofertă'], ['proforma', 'Factură proformă'], ['proforma_amanunt', 'Factură proformă cu amănuntul'],
                       ['fiscala', 'Factură fiscală'], ['bon', 'Bon fiscal'], ['avans', 'Factură de avans']];
 export const plataText = id => PLATI.find(p => p[0] === id)?.[1] ?? null;
+// Metodele de încasare (userul, 2026-10-26: „metoda de plată" a devenit „Facturare" — documentul —, iar
+// încasarea e câmp separat, obligatoriu la orice salvare). Aceleaşi coduri ca INCASARI din manager/server/api/comenzi.js.
+export const INCASARI = [['op_avans', 'OP avans'], ['op_termen', 'OP la termen'], ['bo_termen', 'BO la termen'],
+                         ['bo_ramburs', 'BO ramburs'], ['cash_ramburs', 'Cash ramburs'], ['cash_bf', 'Cash BF'],
+                         ['cash_bf_sofer', 'Cash BF la sofer'], ['cash_ch_sofer', 'Cash CH la sofer'], ['card', 'Card']];
+export const incasareText = id => INCASARI.find(p => p[0] === id)?.[1] ?? null;
 // Numărul scris de mână (câmpul ofertaNr, în DB oferta_nr) e al documentului din NeoManager —
 // eticheta lui urmează metoda de plată (userul, 2026-10-22); fără metodă aleasă rămâne „Număr ofertă".
 // [eticheta, „numărul …" din mesajul de câmp lipsă]
@@ -29,18 +35,20 @@ export const detaliiComanda = state => ({
   livrare:   state.comanda?.livrare   ?? state.rame?.livrare   ?? null,
   agent:     state.comanda?.agent     ?? state.rame?.agent     ?? null,
   plata:     state.comanda?.plata     ?? state.rame?.plata     ?? null,
+  incasare:  state.comanda?.incasare  ?? null,
 });
 
 // Fişa unei comenzi deschise din manager: livrarea / plata / agentul din COMANDĂ (la acceptare plata se poate
 // alege din nou), peste cele din configuraţia salvată; plăţile vechi (op, factura) nu le înlocuiesc.
-export const detaliiDinManager = c => Object.fromEntries(['livrare', 'plata', 'agent']
-  .filter(k => c?.[k] && (k !== 'plata' || plataText(c.plata))).map(k => [k, c[k]]));
+export const detaliiDinManager = c => Object.fromEntries(['livrare', 'plata', 'incasare', 'agent']
+  .filter(k => c?.[k] && (k !== 'plata' || plataText(c.plata)) && (k !== 'incasare' || incasareText(c.incasare))).map(k => [k, c[k]]));
 // La „Acceptă comanda / Plată primită … şi printează" fişa se printează ÎNAINTE ca serverul să primească
 // plata, telefonul şi adresa din dialog (fără fişă printată oferta nu intră în lucru) — managerul le trimite
 // în adresa fişei (&plata=&telefon=&adresa=), ca fişa să aibă plata aleasă (userul, 2026-10-23).
 // → câmpurile de pus peste comanda încărcată.
 export const dinAcceptare = params => ({
   ...(plataText(params.get('plata')) && { plata: params.get('plata') }),
+  ...(incasareText(params.get('incasare')) && { incasare: params.get('incasare') }),
   ...(params.get('telefon') && { client_telefon: params.get('telefon') }),
   ...(params.get('adresa') && { client_adresa: params.get('adresa') }),
 });
@@ -54,14 +62,14 @@ export const liniaTransport = state => {
 };
 
 // Ce mai trebuie completat ca oferta să se poată salva (userul, 2026-10-05): numele
-// clientului, modul de livrare, agentul şi nr. ofertei; la acceptarea pe loc
+// clientului, modul de livrare, încasarea (2026-10-26), agentul şi nr. ofertei; la acceptarea pe loc
 // („Salvează comanda") şi telefonul + adresa (în manager le cere fereastra de
 // acceptare). → [{ id, text }], în ordinea câmpurilor din pagină. Doar în browser.
 export function campuriLipsa({ laAcceptare = false } = {}) {
   const v = id => /** @type {HTMLInputElement | null} */ (document.getElementById(id))?.value?.trim();
   return [['clientNume', 'numele clientului'],
           ...(laAcceptare ? [['clientTelefon', 'telefonul'], ['clientAdresa', 'adresa']] : []),
-          ['comandaLivrare', 'modul de livrare'], ['comandaAgent', 'agentul'],
+          ['comandaLivrare', 'modul de livrare'], ['comandaIncasare', 'metoda de încasare'], ['comandaAgent', 'agentul'],
           ['ofertaNr', `numărul ${document_(v('comandaPlata'))[1]}`]]
     .filter(([id]) => !v(id)).map(([id, text]) => ({ id, text }));
 }
@@ -80,8 +88,8 @@ export function etichetaNumar() {
 // „Ofertă" (userul). → textul de pus în title când butonul e oprit, altfel null.
 export function opritDePlata(buton, plata) {
   plata ||= 'oferta';
-  if (buton === 'comanda' && plata === 'oferta') return 'Metoda de plată e „Ofertă" (sau nealeasă) — se salvează ca ofertă';
-  if (buton === 'oferta' && plata !== 'oferta') return 'Metoda de plată nu e „Ofertă" — salvează comanda sau aşteaptă plata';
+  if (buton === 'comanda' && plata === 'oferta') return 'Facturarea e „Ofertă" (sau nealeasă) — se salvează ca ofertă';
+  if (buton === 'oferta' && plata !== 'oferta') return 'Facturarea nu e „Ofertă" — salvează comanda sau aşteaptă plata';
   return null;
 }
 // câmpul pe care-l vede omul (la meniul căutabil — caseta lui, <select>-ul e ascuns)

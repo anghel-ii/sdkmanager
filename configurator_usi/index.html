@@ -164,7 +164,8 @@
       <!-- detaliile comenzii, la toate gamele (js/lib/comun/comanda.js) -->
       <div class="oferta-client comanda-detalii">
         <select id="comandaLivrare" data-c="livrare" aria-label="Mod de livrare"></select>
-        <select id="comandaPlata" data-c="plata" aria-label="Metodă de plată"></select>
+        <select id="comandaPlata" data-c="plata" aria-label="Facturare"></select>
+        <select id="comandaIncasare" data-c="incasare" aria-label="Încasare"></select>
         <select id="comandaAgent" data-c="agent" aria-label="Agent"></select>
         <!-- nr. de ofertă scris de mână (ex. din NeoManager) — obligatoriu la „Salvează oferta" -->
         <input type="text" id="ofertaNr" placeholder="Nr. ofertă" autocomplete="off" style="display:none">
@@ -183,7 +184,7 @@
     <dialog id="dialogPlata" class="dialog-plata">
       <form method="dialog" id="formPlata">
         <h3>Salvează comanda</h3>
-        <label>Modalitate de plată
+        <label>Facturare
           <select id="plataMod" required>
             <option value="" selected disabled>Alege…</option>
 <option value="oferta">Ofertă</option>

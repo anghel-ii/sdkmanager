@@ -82,7 +82,7 @@ async function main() {
       const id = r.data.comanda.id;
       sticlaIds.push(id);
       // Accept it so it becomes comanda activa si intra in sticla
-      await cer('POST', `/api/comenzi/${id}/accepta`, {
+      await cer('POST', `/api/comenzi/${id}/accepta`, { incasare: 'card',
         plata: cs.detalii.plata, telefon: cs.client.telefon, adresa: cs.client.adresa
       }, cookie);
       console.log(`[+] Comandă sticlă acceptată: ${id} (${cs.ofertaNr})`);
@@ -128,7 +128,7 @@ async function main() {
     }]
   }, cookie);
   const idCancel1 = rOfCancel1.data?.comanda?.id;
-  await cer('POST', `/api/comenzi/${idCancel1}/accepta`, { plata: 'fiscala', telefon: '0755333444', adresa: 'Str. Victoriei 100, Brașov' }, cookie);
+  await cer('POST', `/api/comenzi/${idCancel1}/accepta`, { incasare: 'card', plata: 'fiscala', telefon: '0755333444', adresa: 'Str. Victoriei 100, Brașov' }, cookie);
   
   // Maria trimite cererea de anulare
   const rLoginMaria = await cer('POST', '/api/login', { user: 'maria', parola: 'parola-maria-1' });
@@ -150,7 +150,7 @@ async function main() {
     }]
   }, cookie);
   const idCancel2 = rOfCancel2.data?.comanda?.id;
-  await cer('POST', `/api/comenzi/${idCancel2}/accepta`, { plata: 'bon', telefon: '0766444555', adresa: 'Str. Mihai Viteazul 12, Ploiești, Prahova' }, cookie);
+  await cer('POST', `/api/comenzi/${idCancel2}/accepta`, { incasare: 'card', plata: 'bon', telefon: '0766444555', adresa: 'Str. Mihai Viteazul 12, Ploiești, Prahova' }, cookie);
   const rReq2 = await cer('POST', `/api/comenzi/${idCancel2}/anulare`, {
     motiv: 'S-au modificat cotele de gol cu mai mult de 400mm; se reface comanda de la zero.'
   }, cookieMaria);

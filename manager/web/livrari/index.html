@@ -177,6 +177,8 @@ const pret = c => Number(c.de_incasat) || 0;
 const numerar = cs => cs.reduce((s, c) => s + (['bon', 'factura'].includes(c.coloana_borderou) ? pret(c) : 0), 0);
 const faraColoana = c => c.de_incasat != null && !c.coloana_borderou;
 const data = s => dataOra(s).slice(0, 10);
+const INCASARI = { op_avans: 'OP avans', op_termen: 'OP la termen', bo_termen: 'BO la termen', bo_ramburs: 'BO ramburs', cash_ramburs: 'Cash ramburs',
+                   cash_bf: 'Cash BF', cash_bf_sofer: 'Cash BF la sofer', cash_ch_sofer: 'Cash CH la sofer', card: 'Card' };
 const PLATI = { oferta: 'Ofertă', proforma: 'Proformă', proforma_amanunt: 'Proformă amănunt', fiscala: 'Factură fiscală', bon: 'Bon fiscal', avans: 'Factură de avans' };
 
 async function api(cale, optiuni = {}) {
@@ -272,7 +274,7 @@ function randeazaPlan() {
             <div><select class="coloana${faraColoana(c) ? ' lipsa' : ''}" title="Unde ajunge preţul pe borderou">
               <option value=""${c.coloana_borderou ? '' : ' selected'}>Pe borderou la…</option>
               ${Object.entries(COLOANE).map(([k, t]) => `<option value="${k}"${k === c.coloana_borderou ? ' selected' : ''}>${t}</option>`).join('')}</select></div>
-            <div class="mic-dim">${esc(PLATI[c.plata] ?? '')}${c.achitat_la ? ` · achitată${c.avans > 0 ? ` ${lei(c.avans)}` : ''}` : c.avans > 0 ? ` · avans ${lei(c.avans)}` : ''}</div></td>
+            <div class="mic-dim">${esc([PLATI[c.plata], INCASARI[c.incasare]].filter(Boolean).join(' · '))}${c.achitat_la ? ` · achitată${c.avans > 0 ? ` ${lei(c.avans)}` : ''}` : c.avans > 0 ? ` · avans ${lei(c.avans)}` : ''}</div></td>
       </tr>`; }).join('')}</tbody></table>`;
 
   $('toate').addEventListener('change', e => { v.forEach(c => (e.target.checked ? debifate.delete(c.id) : debifate.add(c.id))); randeazaPlan(); });
