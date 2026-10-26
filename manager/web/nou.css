@@ -168,7 +168,9 @@ body.ui-nou table.lista .facturat, body.ui-nou table.lista .nefacturat { white-s
   body.ui-nou table.lista td .stivuit { display: block; margin-top: 4px; }
   body.ui-nou table.lista th, body.ui-nou table.lista td { padding-left: 8px; padding-right: 8px; }
   body.ui-nou table.lista th .stivuit { display: block; margin-top: 2px; }
-  body.ui-nou table.lista td.actiuni button { display: block; margin: 0 0 4px auto; white-space: nowrap; }
+  body.ui-nou table.lista td.actiuni button { display: block; margin: 0 0 4px auto; }
+  /* nr. ofertei se rupe la cratimă (OF-2026- / UTIL-ROMA) — altfel căutarea în toate secţiunile iese de sub card */
+  body.ui-nou table.lista td.mono[data-c="oferta"] { white-space: normal; }
 }
 /* listă îngustă: fiecare comandă pe două rânduri — client, sistem, dată / apoi
    nr. ofertă şi stările. Ordinea vine din data-c; ::before rupe rândul. */
