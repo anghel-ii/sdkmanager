@@ -611,11 +611,11 @@ function tipareste({ vezi = false } = {}) {
   const rand = (et, v) => (v ? `<tr><td>${et}</td><td>${esc(v)}</td></tr>` : '');
   $('tipar').innerHTML = `
     <div class="cap"><div><h1>Ofertă cu amănuntul</h1>${modFisa?.numar ? `<strong>${esc(modFisa.numar)}</strong>` : ''}</div>
-      <div>${dataRo()}</div></div>
+      <div class="dreapta">${configuratDe() ? `<div>Configurat de <b>${esc(configuratDe())}</b></div>` : ''}<div>${dataRo()}</div></div></div>
     <table class="perechi">
       ${$('clientNume').value.trim() ? `<tr class="client"><td>Client</td><td>${esc($('clientNume').value.trim())}</td></tr>` : ''}${rand('Telefon', $('clientTelefon').value)}${rand('Adresă', $('clientAdresa').value)}
       ${rand('Mod de livrare', comanda.livrare)}${rand('Metodă de plată', plataText(comanda.plata))}${rand('Agent', comanda.agent)}
-      ${rand(modFisa?.etNumar ?? numarText(comanda.plata), $('ofertaNr').value.trim())}${rand('Configurat de', configuratDe())}${rand('Observaţii', $('observatii').value.trim())}
+      ${rand(modFisa?.etNumar ?? numarText(comanda.plata), $('ofertaNr').value.trim())}${rand('Observaţii', $('observatii').value.trim())}
     </table>
     <table>
       <thead><tr class="margine"><td colspan="6"></td></tr><tr><th>#</th><th>Cod</th><th>Produs</th><th>Debitare</th><th>Cant.</th><th>✓</th></tr></thead>

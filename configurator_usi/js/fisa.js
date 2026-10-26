@@ -540,7 +540,8 @@ export function deschideFisa(client, oferta = null, salvate = null, { vezi = fal
   // …cu eticheta documentului după metoda de plată: Număr ofertă / proformă / factură / bon (userul, 2026-10-22)
   // (fişa unei comenzi din manager: după plata de la salvare — vezi etNumar în ui.js)
   const etNumar = oferta?.etNumar ?? numarText(detaliiComanda(state).plata);
-  // cine a configurat — atelierul ştie pe cine întreabă (userul, 2026-10-22): la fişa unei comenzi cel care a
+  // cine a configurat — atelierul ştie pe cine întreabă (userul, 2026-10-22; sus în dreapta, lângă nr. ofertei —
+  // 2026-10-26, nu în tabel): la fişa unei comenzi cel care a
   // făcut oferta (din manager), altfel cel conectat acum
   const configurat = (oferta && 'configurat' in oferta ? oferta.configurat : stareOferta().utilizator?.nume) || '—';
   // observaţiile produsului (pasul „Observaţii" din configurator) — pe faţă, sub cap, la toate gamele
@@ -584,7 +585,6 @@ export function deschideFisa(client, oferta = null, salvate = null, { vezi = fal
     ['Metodă de plată',   plataText(detaliiComanda(state).plata) ?? '—'],
     ['Agent',             detaliiComanda(state).agent ?? '—'],
     [etNumar,             nrOferta],
-    ['Configurat de',     configurat],
   ], 'cote') : tabelMic([
     ['H gol',                `${spec.opening.h} mm`],
     ['L gol',                `${spec.opening.w} mm`],
@@ -609,7 +609,7 @@ export function deschideFisa(client, oferta = null, salvate = null, { vezi = fal
   // detaliile comenzii (toate gamele) — livrare / metodă de plată / agent
   const det = detaliiComanda(state);
   const detalii = tabelMic([['Mod de livrare', det.livrare ?? '—'], ['Metodă de plată', plataText(det.plata) ?? '—'], ['Agent', det.agent ?? '—'],
-    [etNumar, nrOferta], ['Configurat de', configurat]]);
+    [etNumar, nrOferta]]);
   const montaj = util ? tabelMic([
     ['Asamblăm noi',        `${nrNoi} uşi`],
     ['Asamblează clientul', `${nrClient} uşi`],
@@ -822,6 +822,7 @@ export function deschideFisa(client, oferta = null, salvate = null, { vezi = fal
      aliniată la dreapta; restul feţei rămâne aşezat exact ca înainte */
   .bara-cod { display: flex; justify-content: flex-end; align-items: center; gap: 4mm; margin: -2mm 0 2mm; }
   .numar-oferta { font-size: 15px; font-weight: 700; font-family: monospace; letter-spacing: .03em; }
+  .bara-cod .configurat { font-size: 13px; }
 
   /* schiţa de găurire pt. CNC (verso, rame) */
   .gaur-lista { display: grid; gap: 3mm; margin-bottom: 4mm; }
@@ -848,7 +849,8 @@ export function deschideFisa(client, oferta = null, salvate = null, { vezi = fal
 <body>
 
   <div class="fata">
-  ${oferta ? `<div class="bara-cod"><span class="numar-oferta">${esc(oferta.numar)}</span>${blocCod(oferta)}</div>` : ''}
+  ${oferta || configurat !== '—' ? `<div class="bara-cod">${configurat !== '—' ? `<span class="configurat">Configurat de <b>${esc(configurat)}</b></span>` : ''}${
+    oferta ? `<span class="numar-oferta">${esc(oferta.numar)}</span>${blocCod(oferta)}` : ''}</div>` : ''}
   <div class="cap">
     <div class="stanga">
       <div class="model-linie">${esc(modelScurt)} — ${esc(finisajLabel)}</div>
