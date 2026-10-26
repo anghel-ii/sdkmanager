@@ -122,6 +122,39 @@ function cereNumarSiText(text, { trimite = 'Trimite', numar = '', loc = '', min 
   });
 }
 
+// O valoare scurtă (ex. numărul unei oferte): un câmp, completat cu ce e acum, Enter trimite.
+// → textul scris (fără spaţii la capete, nu gol) sau null la Renunţă / Esc.
+function cereValoare(text, { trimite = 'Salvează', valoare = '', loc = '', max = 40 } = {}) {
+  return new Promise(rezolva => {
+    const d = document.createElement('dialog');
+    d.className = 'mesaj-dialog';
+    const p = document.createElement('p');
+    p.textContent = text;
+    const camp = document.createElement('input');
+    camp.value = valoare; camp.placeholder = loc; camp.maxLength = max; camp.autocomplete = 'off';
+    camp.style.cssText = 'width:100%;margin:10px 0 0';
+    const bara = document.createElement('div');
+    bara.className = 'butoane';
+    const renunta = document.createElement('button'), ok = document.createElement('button');
+    renunta.type = ok.type = 'button';
+    renunta.textContent = 'Renunţă'; ok.textContent = trimite; ok.className = 'primar';
+    const verifica = () => { ok.disabled = !camp.value.trim() || camp.value.trim() === String(valoare).trim(); };
+    verifica();
+    camp.addEventListener('input', verifica);
+    let gata = null;
+    renunta.onclick = () => d.close();
+    ok.onclick = () => { gata = camp.value.trim(); d.close(); };
+    camp.addEventListener('keydown', e => { if (e.key === 'Enter' && !ok.disabled) { e.preventDefault(); ok.click(); } });
+    bara.append(renunta, ok);
+    d.append(p, camp, bara);
+    d.addEventListener('close', () => { d.remove(); rezolva(gata); });
+    document.body.append(d);
+    d.showModal();
+    camp.focus();
+    camp.select();
+  });
+}
+
 const alerta   = text => fereastraMesaj(text, [['OK', undefined, true]]);
 const confirma = (text, da = 'Da') => fereastraMesaj(text, [['Renunţă', false], [da, true, true]]);
 const intreabaObligatoriu = (text, da, nu) => fereastraMesaj(text, [[nu, false], [da, true, true]], true);
@@ -134,4 +167,4 @@ const confirmaMailTrimis = (furnizor, buc) => intreabaObligatoriu(
   'Da, am trimis — marchează comandată', 'Nu, n-am trimis');
 
 // şi pt. configurator (module ES): `const` de aici nu ajunge singur pe `window`
-Object.assign(window, { alerta, confirma, intreabaObligatoriu, cereText });
+Object.assign(window, { alerta, confirma, intreabaObligatoriu, cereText, cereValoare });

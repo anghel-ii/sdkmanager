@@ -62,6 +62,8 @@ const OPERATII = {
   'POST /api/comenzi/:id/fisa':              ['Fişa printată', S, b => (b.poz > 0 ? `produsul ${+b.poz + 1}` : null)],
   'POST /api/comenzi/:id/anulare':           ['Anulare cerută', S, b => scurt(b.motiv)],
   'POST /api/comenzi/:id/schimba-factura':   ['Schimbarea facturii cerută', S, b => lista(b.numar && `nr. nou: ${scurt(b.numar, 40)}`, scurt(b.motiv))],
+  'POST /api/comenzi/:id/numar':             ['Numărul documentului schimbat', S, b => scurt(b.numar, 40) || null],
+  'POST /api/comenzi/:id/schimba-numar':     ['Schimbarea numărului cerută', S, b => lista(b.numar && `nr. nou: ${scurt(b.numar, 40)}`, scurt(b.motiv))],
   'PUT /api/preferinte':                     ['Setări personale', V, b => lista(...Object.entries(b).map(([k, v]) => `${k}: ${v}`))],
 
   'POST /api/sticla/comanda':                ['Sticlă comandată', S, b => `${(b.ids ?? []).length} ${(b.ids ?? []).length === 1 ? 'linie' : 'linii'}`,

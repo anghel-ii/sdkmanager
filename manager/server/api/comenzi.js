@@ -144,6 +144,17 @@ const text = (v, max = 200) => (v == null || String(v).trim() === '' ? null : St
 // pe ofertă) şi / sau la acceptare. Comenzile mai vechi pot avea 'op' / 'factura'
 // — rămân în DB şi se afişează, dar nu se mai pot alege.
 const PLATI = ['oferta', 'proforma', 'proforma_amanunt', 'fiscala', 'bon', 'avans'];   // oferta: userul, 2026-10-22
+// Numărul documentului din NeoManager (oferta_nr, scris de mână) e al documentului ales la salvarea ofertei — metoda
+// de plată din configuraţia primului produs (ca eticheta lui de pe fişă). Factura, bonul şi factura de avans sunt
+// documente fiscale: numărul lor, odată trecut, îl schimbă doar conducerea / adminul — biroul cere (cereri.js, tip
+// 'numar'). Restul (ofertă, proformă) îl schimbă liber cel care a făcut oferta (userul, 2026-10-26).
+const NUMAR_FISCAL = ['fiscala', 'bon', 'avans'];
+const DECID = ['admin', 'conducere'];
+function plataNumarului(id) {
+  const p = db().prepare('SELECT config_json FROM pozitie WHERE comanda_id = ? ORDER BY idx LIMIT 1').get(id);
+  try { const k = JSON.parse(p?.config_json ?? '{}'); return k.comanda?.plata ?? k.rame?.plata ?? null; } catch { return null; }
+}
+const numarFiscal = id => NUMAR_FISCAL.includes(plataNumarului(id));
 
 const campuriClient = (client, detalii = {}, ofertaNr) => [
   String(client.nume).trim(),
@@ -228,6 +239,10 @@ async function modifica(ctx) {
 
   const v = validează(corp);
   if (v.gresit) return eroare(ctx.res, 400, v.gresit);
+  // nr. unei facturi / al unui bon nu se schimbă nici din „Modifică comanda" fără aprobare
+  if (c.oferta_nr && (text(corp.ofertaNr, 40) ?? null) !== c.oferta_nr && !DECID.includes(ctx.utilizator.rol) && numarFiscal(id)) {
+    return eroare(ctx.res, 409, `${c.oferta_nr} e numărul unui document fiscal (factură / bon) — se schimbă doar cu aprobarea conducerii: „Cere schimbarea" din pagina comenzii.`);
+  }
 
   const rezultat = tranzactie(d => {
     d.prepare(`UPDATE comanda SET client_nume = ?, client_telefon = ?, client_email = ?, client_adresa = ?,
@@ -448,6 +463,8 @@ function detaliu(ctx) {
     comanda,
     cerere: require('../cereri.js').cerereComenzii(id),   // anularea cerută / decisă (tichetele conducerii)
     cerereFactura: require('../cereri.js').cerereFactura(id),   // schimbarea nr. facturii cerută / decisă
+    cerereNumar: require('../cereri.js').cerereNumar(id),       // schimbarea nr. documentului (factură / bon) cerută / decisă
+    plataNumar: plataNumarului(id),  // al cărui document e numărul (oferta_nr): 'fiscala' / 'bon' / 'avans' = fiscal
     sticla,                          // null = comanda n-are sticlă de comandat
     sticlaLinii: require('../sticla.js').sticlaComenzii(id),   // pe furnizor: mail + bifă
     fise: fiseComenzii(id),          // printările fişei (prima + retipăririle)
@@ -596,6 +613,25 @@ function schimbaFinalizare(finalizata) {
   };
 }
 
+// Numărul documentului (oferta_nr) schimbat direct: de cel care a făcut oferta sau de conducere / admin. Al unei
+// facturi / al unui bon — de birou doar cu aprobare (POST /api/comenzi/:id/schimba-numar, cereri.js).
+async function numar(ctx) {
+  const id = Number(ctx.params.id);
+  const nou = String((await corpJson(ctx.req)).numar ?? '').trim().slice(0, 40);
+  const c = db().prepare('SELECT * FROM comanda WHERE id = ?').get(id);
+  if (!c)        return eroare(ctx.res, 404, 'Comandă inexistentă.');
+  if (c.anulat)  return eroare(ctx.res, 409, 'Comanda e anulată.');
+  const decide = DECID.includes(ctx.utilizator.rol);
+  if (c.creat_de !== ctx.utilizator.id && !decide) return eroare(ctx.res, 403, 'Numărul îl schimbă cel care a făcut oferta (sau conducerea).');
+  if (numarFiscal(id) && !decide) {
+    return eroare(ctx.res, 403, 'E numărul unui document fiscal (factură / bon) — se schimbă doar cu aprobarea conducerii: „Cere schimbarea".');
+  }
+  if (!nou) return eroare(ctx.res, 400, 'Scrie numărul.');
+  db().prepare('UPDATE comanda SET oferta_nr = ? WHERE id = ?').run(nou, id);
+  anunta({ comanda: id });
+  json(ctx.res, 200, { comanda: db().prepare('SELECT * FROM comanda WHERE id = ?').get(id) });
+}
+
 // Facturare: nr. facturii se trece de mână (vine din NeoManager). Fără număr
 // comanda NU se poate marca facturată; `numar` gol = anulează facturarea.
 async function factura(ctx) {
@@ -723,6 +759,7 @@ module.exports = {
     ['POST', '/api/comenzi/:id/finalizeaza', { handler: schimbaFinalizare(true) }],
     ['POST', '/api/comenzi/:id/redeschide',  { handler: schimbaFinalizare(false) }],
     ['POST', '/api/comenzi/:id/factura',     { handler: factura }],
+    ['POST', '/api/comenzi/:id/numar',       { handler: numar }],
     ['POST', '/api/comenzi/:id/fixare',      { handler: fixeaza }],
     ['POST', '/api/comenzi/:id/fisa',        { handler: fisaPrintata }],
     ['GET',  '/api/comenzi/:id/fise',        { handler: fise }],

@@ -72,6 +72,9 @@
   table.lista tbody tr { cursor: pointer; }
   table.lista tbody tr:hover { background: var(--panel-2); }
   .num { text-align: right; }
+  /* ✎ lângă numărul documentului: îl schimbă cine a făcut oferta (factura / bonul — cu aprobare) */
+  .link-numar { padding: 0 5px; margin-left: 4px; border: none; background: none; color: var(--text-dim); font-size: 13px; cursor: pointer; }
+  .link-numar:hover:not(:disabled) { color: var(--accent); background: none; border: none; }
 
   .gol { padding: 48px 24px; text-align: center; }
 
@@ -407,6 +410,37 @@ const schimbareFactura = (c, r) => (r?.stare === 'deschisa'
       poateAnulaFactura() ? ' — <a href="/cereri">decide în Cereri</a>' : ', aşteaptă conducerea'}</span>`
   : r?.stare === 'respinsa' && r.decis_la > (c.facturat_la ?? '')
   ? ` · <span class="dim">schimbarea în ${esc(r.numar_nou)} respinsă de ${esc(r.decis_de_nume)}${r.raspuns ? ` — „${esc(r.raspuns)}"` : ''}</span>` : '');
+
+// Numărul documentului (oferta_nr — al ofertei, proformei, facturii, bonului…, după metoda de plată cu care s-a salvat
+// oferta; userul 2026-10-26): îl schimbă direct cine a făcut oferta (şi conducerea / adminul); al unei facturi / al unui
+// bon — biroul doar cu aprobarea conducerii (cerere în Cereri). `plataNumar` vine din /api/comenzi/:id.
+const AL_DOCUMENTULUI = { oferta: 'ofertei', proforma: 'proformei', proforma_amanunt: 'proformei', fiscala: 'facturii', bon: 'bonului fiscal',
+                          avans: 'facturii de avans' };
+const NUMAR_FISCAL = ['fiscala', 'bon', 'avans'];
+const butonNumar = c => (!c.anulat && (c.creat_de === eu?.id || poateAnulaFactura())
+  ? '<button type="button" class="link-numar" data-numar title="Schimbă numărul">✎</button>' : '');
+const cerereNumarText = r => (r?.stare === 'deschisa' ? ` <span class="urmeaza mic">→ ${esc(r.numar_nou)} cerut, aşteaptă conducerea</span>`
+  : r?.stare === 'respinsa' ? ` <span class="dim mic">(schimbarea în ${esc(r.numar_nou)} respinsă de ${esc(r.decis_de_nume)})</span>` : '');
+function leagaNumar(root, c, plataNumar, cerereNumar, dupa) {
+  root.querySelector('[data-numar]')?.addEventListener('click', async e => {
+    e.stopPropagation();
+    const nr = c.oferta_nr || c.numar, al = AL_DOCUMENTULUI[plataNumar] ?? 'ofertei';
+    let rr;
+    if (NUMAR_FISCAL.includes(plataNumar) && !poateAnulaFactura()) {
+      if (cerereNumar?.stare === 'deschisa') return alerta(`Ai cerut deja schimbarea în ${cerereNumar.numar_nou} — aşteaptă decizia conducerii (Cereri).`);
+      const r = await cereNumarSiText(`Schimbi numărul ${al} ${nr}?\n\nE un document fiscal: scrie numărul nou şi de ce se schimbă. `
+        + 'Cererea merge la conducere; la aprobare, numărul se schimbă singur.', { trimite: 'Trimite cererea', numar: 'numărul nou', loc: 'ex. bonul a fost anulat şi refăcut' });
+      if (!r) return;
+      rr = await api(`/api/comenzi/${c.id}/schimba-numar`, { method: 'POST', body: JSON.stringify({ numar: r.numar, motiv: r.text }) });
+    } else {
+      const nou = await cereValoare(`Numărul ${al} — scrie-l cum e în NeoManager.`, { valoare: c.oferta_nr ?? '', loc: 'nr. document' });
+      if (!nou) return;
+      rr = await api(`/api/comenzi/${c.id}/numar`, { method: 'POST', body: JSON.stringify({ numar: nou }) });
+    }
+    if (rr && !rr.ok) return alerta((await rr.json().catch(() => ({}))).eroare || 'Operaţia a eşuat.');
+    dupa();
+  });
+}
 
 const TABURI = [['oferta', 'Oferte'], ['plata', 'Aşteaptă plata'], ['comanda', 'Comenzi în lucru'], ['finalizata', 'Comenzi finalizate']];
 
@@ -763,7 +797,7 @@ const deVerificat = c => c.livrare && c.livrare !== 'Ridicare personala' ? ' dat
 // întâi ce faci CU comanda (deschizi, printezi, modifici / adaugi), apoi unde o MUŢI (trecerile
 // colorate; „Anulează…" la capăt). Task / Tichet stau mici lângă ×. În „Drumul comenzii", pasul
 // la care eşti are butonul lui chiar pe rând (factura, sticla, fişa), fără să cauţi în altă parte.
-function cardDetalii({ comanda: c, cerere, cerereFactura, pozitii, sticlaLinii = [], fise: printari = [] }, fise) {
+function cardDetalii({ comanda: c, cerere, cerereFactura, cerereNumar, pozitii, sticlaLinii = [], fise: printari = [] }, fise) {
   const eOferta = c.tip === 'oferta', ePlata = c.tip === 'plata', eComanda = c.tip === 'comanda';
   const [cls, stare] = eOferta ? ['oferta', 'Ofertă'] : ePlata ? ['plata', 'Aşteaptă plata']
     : c.finalizat_la ? ['gata', 'Comandă finalizată'] : ['lucru', 'Comandă în lucru'];
@@ -783,7 +817,7 @@ function cardDetalii({ comanda: c, cerere, cerereFactura, pozitii, sticlaLinii =
       <a class="cc-mic" href="/taskuri?comanda=${c.id}" title="Un task / reminder legat de comanda asta">+ Task</a>
       <a class="cc-mic" href="/tichete?comanda=${c.id}" title="Un tichet pentru administrator despre comanda asta">+ Tichet</a>
       <button class="cc-inchide" id="ccInchide" title="Închide (Esc)" aria-label="Închide">${icoana('inchide')}</button></div>
-    <div class="cc-nr"><span class="mono">${esc(c.oferta_nr || c.numar)}</span><span class="stare-pastila ${c.anulat ? 'anulata' : cls}">${c.anulat ? 'Anulată' : stare}</span>${c.demo ? DEMO : ''}</div>
+    <div class="cc-nr"><span class="mono">${esc(c.oferta_nr || c.numar)}${butonNumar(c)}${cerereNumarText(cerereNumar)}</span><span class="stare-pastila ${c.anulat ? 'anulata' : cls}">${c.anulat ? 'Anulată' : stare}</span>${c.demo ? DEMO : ''}</div>
     ${blocAnulare(c, cerere)}
     <div class="cc-butoane">
       <button class="primar" id="ccDeschide" title="Pagina comenzii (dublu-click sau Enter pe rând)">Deschide comanda</button>
@@ -839,6 +873,7 @@ async function incarcaCard() {
   opresteActiuni(el, d.cerere);
   leagaTreceri(el, d.comanda, () => mergiLa(id), d.pozitii.length);
   leagaFacturare(el, () => mergiLa(id));
+  leagaNumar(el, d.comanda, d.plataNumar, d.cerereNumar, () => mergiLa(id));
   $('ccInchide').addEventListener('click', () => selecteaza(null));
   $('ccDeschide').addEventListener('click', () => { location.hash = '#comanda/' + id; });
   $('ccModifica')?.addEventListener('click', () => { location.href = '/configurator/?oferta=' + id; });
@@ -893,7 +928,7 @@ const butonAnulare = (c, r) => (c.anulat || r?.stare === 'deschisa' ? '' : '<but
 // toate operaţiile (fişa, treceri, facturare, sticlă, livrare, modificări); rămân doar vederea şi
 // taskurile. Serverul le refuză oricum (index.js) — aici doar nu le arătăm degeaba.
 // „Vezi fişa" rămâne — e doar de văzut; printul nu
-const ACTIUNI = '[data-trecere], [data-adauga-la], #modifica, #ccModifica, [data-print], '
+const ACTIUNI = '[data-trecere], [data-adauga-la], #modifica, #ccModifica, [data-print], [data-numar], '
   + '#schimbaLivrare, .factura-form, #anuleazaFactura, #cereFactura, .sticla-comanda, .sticla-anuleaza, .sticla-da';
 const opresteActiuni = (el, cerere) => { if (cerere?.stare === 'deschisa') el.querySelectorAll(ACTIUNI).forEach(b => b.remove()); };
 
@@ -1089,7 +1124,7 @@ async function renderDetaliu(id) {
   if (!r) return;
   if (!r.ok) { $('continut').innerHTML = '<div class="mesaj eroare">Comanda nu există.</div>'; return; }
 
-  const { comanda: c, cerere, cerereFactura, pozitii, coduri, scanari, sticlaLinii = [], fise: printari = [] } = await r.json();
+  const { comanda: c, cerere, cerereFactura, cerereNumar, plataNumar, pozitii, coduri, scanari, sticlaLinii = [], fise: printari = [] } = await r.json();
   const fise = pozitii.length > 1 ? numeFise(pozitii, await incarcaGame()) : [];
   const total = facturareTotala(pozitii);
   const eOferta = c.tip === 'oferta';
@@ -1104,7 +1139,7 @@ async function renderDetaliu(id) {
     <div class="antet">
       <div>
         <h1>${esc(c.client_nume)}</h1>
-        <div class="mono nr-comanda">${esc(c.oferta_nr || c.numar)}</div>
+        <div class="mono nr-comanda">${esc(c.oferta_nr || c.numar)}${butonNumar(c)}${cerereNumarText(cerereNumar)}</div>
         <div class="dim mic">${c.anulat ? '<span class="stare-pastila anulata">Anulată</span>' : `<span class="stare-pastila ${eOferta ? 'oferta' : ePlata ? 'plata' : c.finalizat_la ? 'gata' : 'lucru'}">${eOferta ? 'Ofertă'
           : ePlata ? 'Aşteaptă plata' : c.finalizat_la ? 'Comandă finalizată' : 'Comandă în lucru'}</span>`}${c.demo ? DEMO : ''}</div>
         ${fisaPrintata(printari, pozitii.length, fise)}
@@ -1218,6 +1253,7 @@ async function renderDetaliu(id) {
     dlg.showModal();
   });
   leagaFacturare($('continut'), () => renderDetaliu(id));
+  leagaNumar($('continut'), c, plataNumar, cerereNumar, () => renderDetaliu(id));
   leagaSticla(sticlaLinii, () => renderDetaliu(id));
   $('anuleazaFactura')?.addEventListener('click', async () => {
     if (!(await confirma('Anulezi facturarea (se şterge nr. facturii)?'))) return;

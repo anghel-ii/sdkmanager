@@ -1209,6 +1209,37 @@ async function main() {
       && act.some(x => x.operatie === 'Anulare respinsă'), JSON.stringify(act.map(x => [x.operatie, x.detalii])));
   }
 
+  // Numărul documentului (oferta_nr — userul, 2026-10-26): ofertă / proformă — liber, de cine a făcut oferta; factură / bon
+  // (metoda de plată din configuraţia salvată) — biroul doar cu aprobarea conducerii, nici din „Modifică comanda"
+  console.log('\nNumărul documentului: ofertă / proformă liber, factură / bon cu aprobare');
+  {
+    const caMaria = async fn => { const k = cookie; cookie = null; await cer('POST', '/api/login', { user: 'maria', parola: 'parola-maria-1' });
+      try { return await fn(); } finally { cookie = k; } };
+    const cuPlata = plata => ({ ...pozitie('confortGamma', 'Confort Gamma', 1, 1200), config: { system: 'confortGamma', comanda: { plata } } });
+    const noua = (nr, plata) => cer('POST', '/api/comenzi', { client: { nume: 'Client Numar', telefon: '0700', adresa: 'X' }, ofertaNr: nr,
+      detalii: { plata }, pozitii: [cuPlata(plata)] });
+    const deMaria = await caMaria(async () => [(await noua('OF-55', 'oferta')).date.comanda.id, (await noua('BON-7', 'bon')).date.comanda.id]);
+    const [oId, bId] = deMaria;
+    const nr = async id => (await cer('GET', `/api/comenzi/${id}`)).date.comanda.oferta_nr;
+    verifica('cine a făcut oferta îi schimbă liber numărul (ofertă)', (await caMaria(() => cer('POST', `/api/comenzi/${oId}/numar`, { numar: ' OF-56 ' }))).stare === 200
+      && await nr(oId) === 'OF-56');
+    verifica('… gol → 400', (await caMaria(() => cer('POST', `/api/comenzi/${oId}/numar`, { numar: ' ' }))).stare === 400);
+    const ionNu = await (async () => { const k = cookie; cookie = null; await cer('POST', '/api/login', { user: 'ion', parola: 'parola-noua-1' });
+      try { return (await cer('POST', `/api/comenzi/${oId}/numar`, { numar: 'X' })).stare; } finally { cookie = k; } })();
+    verifica('conducerea (alt om) îl poate schimba şi ea', ionNu === 200);
+    verifica('detaliul spune al cărui document e numărul', (await cer('GET', `/api/comenzi/${bId}`)).date.plataNumar === 'bon');
+    verifica('nr. de bon: biroul nu-l schimbă direct → 403', (await caMaria(() => cer('POST', `/api/comenzi/${bId}/numar`, { numar: 'BON-8' }))).stare === 403
+      && await nr(bId) === 'BON-7');
+    const corpPut = numar => ({ client: { nume: 'Client Numar', telefon: '0700', adresa: 'X' }, ofertaNr: numar, detalii: { plata: 'bon' }, pozitii: [cuPlata('bon')] });
+    verifica('… nici din „Modifică oferta" → 409', (await caMaria(() => cer('PUT', `/api/comenzi/${bId}`, corpPut('BON-8')))).stare === 409 && await nr(bId) === 'BON-7');
+    verifica('… dar „Modifică oferta" cu acelaşi număr merge', (await caMaria(() => cer('PUT', `/api/comenzi/${bId}`, corpPut('BON-7')))).stare === 200);
+    verifica('biroul cere schimbarea nr. bonului → 201', (await caMaria(() => cer('POST', `/api/comenzi/${bId}/schimba-numar`, { numar: 'BON-8', motiv: 'bon refăcut' }))).stare === 201);
+    const cn = (await cer('GET', `/api/comenzi/${bId}`)).date.cerereNumar;
+    verifica('… se vede pe comandă şi se aprobă → numărul nou', cn?.stare === 'deschisa' && cn.numar_nou === 'BON-8'
+      && (await cer('POST', `/api/cereri/${cn.id}/aproba`)).stare === 200 && await nr(bId) === 'BON-8');
+    verifica('adminul schimbă direct şi un nr. de bon', (await cer('POST', `/api/comenzi/${bId}/numar`, { numar: 'BON-9' })).stare === 200 && await nr(bId) === 'BON-9');
+  }
+
   console.log('\nAnulare cerută → comanda „pe hold" până decide conducerea');
   {
     const adresa = 'Str. Lunga 1, Pascani, Iasi';

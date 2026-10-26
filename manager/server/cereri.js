@@ -9,6 +9,8 @@ const { anunta } = require('./evenimente.js');
 //  livrări) ori o respinge, cu un răspuns. Pagina /cereri.
 //  Schimbarea nr. facturii (userul, 2026-10-23): biroul nu schimbă singur un număr
 //  deja trecut — cere, cu numărul nou şi motivul; la aprobare numărul se schimbă.
+//  La fel numărul documentului (oferta_nr) când e al unei facturi / al unui bon (userul,
+//  2026-10-26; tip 'numar') — ofertele şi proformele le schimbă liber cine le-a făcut.
 // ═══════════════════════════════════════════════════════════════════════════
 
 const DECID = ['admin', 'conducere'];
@@ -22,6 +24,7 @@ const ultimaCerere = tip => id => db().prepare(`SELECT ${CAMPURI} ${DIN} WHERE r
   ORDER BY r.id DESC LIMIT 1`).get(id, tip) ?? null;
 const cerereComenzii = ultimaCerere('anulare');
 const cerereFactura = ultimaCerere('factura');
+const cerereNumar = ultimaCerere('numar');
 // „Pe hold" (userul, 2026-10-14): o comandă cu cerere de anulare nedecisă nu mai apare la
 // sticlă şi la livrări, iar operaţiile pe ea sunt refuzate (index.js) — până decide conducerea.
 // FARA_CERERE se pune în WHERE-ul unei interogări cu comanda ca alias `c`.
@@ -74,6 +77,30 @@ async function cereFactura(ctx) {
   }
 }
 
+// Biroul: numărul documentului (oferta_nr) al unei facturi / al unui bon se schimbă doar cu aprobarea conducerii
+// (comenzi.js refuză schimbarea directă) — la aprobare comanda primeşte numărul nou.
+async function cereNumar(ctx) {
+  const id = Number(ctx.params.id);
+  const corp = await corpJson(ctx.req);
+  const numar = String(corp.numar ?? '').trim().slice(0, 40);
+  const motiv = String(corp.motiv ?? '').trim().slice(0, 1000);
+  const c = db().prepare('SELECT * FROM comanda WHERE id = ?').get(id);
+  if (!c) return eroare(ctx.res, 404, 'Comanda nu există.');
+  if (c.anulat) return eroare(ctx.res, 409, 'Comanda e anulată.');
+  if (!numar) return eroare(ctx.res, 400, 'Scrie numărul nou.');
+  if (numar === c.oferta_nr) return eroare(ctx.res, 400, `Are deja numărul ${numar}.`);
+  if (motiv.length < 3) return eroare(ctx.res, 400, 'Scrie de ce se schimbă numărul.');
+  try {
+    db().prepare(`INSERT INTO cerere (tip, comanda_id, motiv, numar_nou, creat_de, creat_la) VALUES ('numar', ?, ?, ?, ?, ${ACUM()})`)
+      .run(id, motiv, numar, ctx.utilizator.id);
+    anunta({ comanda: id });
+    json(ctx.res, 201, { cerere: cerereNumar(id) });
+  } catch (e) {
+    if (/UNIQUE/i.test(e.message)) return eroare(ctx.res, 409, 'Există deja o cerere de schimbare a numărului pentru comanda asta, aşteaptă decizia conducerii.');
+    throw e;
+  }
+}
+
 // conducerea / adminul: toate (deschise primele, apoi cele decise în ultimele 60 de zile); ceilalţi: ale lor
 function lista(ctx) {
   const toate = DECID.includes(ctx.utilizator.rol);
@@ -97,6 +124,7 @@ const decide = aproba => async ctx => {
       d.prepare('UPDATE comanda SET anulat = 1 WHERE id = ?').run(r.comanda_id);
       d.prepare('DELETE FROM livrare_comanda WHERE comanda_id = ?').run(r.comanda_id);
     }
+    if (aproba && r.tip === 'numar' && r.comanda_id) d.prepare('UPDATE comanda SET oferta_nr = ? WHERE id = ?').run(r.numar_nou, r.comanda_id);
     if (aproba && r.tip === 'factura' && r.comanda_id) {
       d.prepare(`UPDATE comanda SET factura_nr = ?, facturat_la = ${ACUM()}, facturat_de = ? WHERE id = ?`)
         .run(r.numar_nou, r.creat_de, r.comanda_id);
@@ -107,10 +135,11 @@ const decide = aproba => async ctx => {
 };
 
 module.exports = {
-  cerereComenzii, cerereFactura, nrDeschise, FARA_CERERE, peHold,
+  cerereComenzii, cerereFactura, cerereNumar, nrDeschise, FARA_CERERE, peHold,
   rute: [
     ['POST', '/api/comenzi/:id/anulare',     { handler: cereAnulare }],
     ['POST', '/api/comenzi/:id/schimba-factura', { handler: cereFactura }],
+    ['POST', '/api/comenzi/:id/schimba-numar',   { handler: cereNumar }],
     ['GET',  '/api/cereri',                  { handler: lista }],
     ['POST', '/api/cereri/:id/aproba',       { handler: decide(true), rol: DECID }],
     ['POST', '/api/cereri/:id/respinge',     { handler: decide(false), rol: DECID }],
