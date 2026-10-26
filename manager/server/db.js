@@ -520,16 +520,20 @@ const MIGRATII = [
   // pus pe comandă la aprobare
   d => d.exec('ALTER TABLE cerere ADD COLUMN numar_nou TEXT'),
   // v32 → v33 (2026-10-26): un task poate fi dat mai multor oameni (userul) — task_destinatar; task.pentru rămâne
-  // primul dintre ei. „Necitit" se ţine pe fiecare om (task_citit: ultimul mesaj văzut), în locul lui
-  // task_mesaj.citit, care mergea doar cu doi oameni pe task — citirile de până acum se păstrează.
+  // primul dintre ei. Fiecare îşi bifează partea (userul: „dacă cineva face taskul nu trebuie să apară făcut
+  // pentru toţi") şi o pune în aşteptare — facut_la / in_asteptare_la pe destinatar; task.facut_la = când l-au
+  // făcut toţi. „Necitit" se ţine pe fiecare om (task_citit: ultimul mesaj văzut), în locul lui task_mesaj.citit,
+  // care mergea doar cu doi oameni pe task — stările şi citirile de până acum se păstrează.
   d => d.exec(`
     CREATE TABLE task_destinatar (
-      task_id       INTEGER NOT NULL REFERENCES task(id) ON DELETE CASCADE,
-      utilizator_id INTEGER NOT NULL REFERENCES utilizator(id),
+      task_id         INTEGER NOT NULL REFERENCES task(id) ON DELETE CASCADE,
+      utilizator_id   INTEGER NOT NULL REFERENCES utilizator(id),
+      facut_la        TEXT,                     -- şi-a făcut partea
+      in_asteptare_la TEXT,                     -- partea lui e în aşteptare: fără reminder până o reia
       PRIMARY KEY (task_id, utilizator_id)
     );
     CREATE INDEX task_destinatar_om ON task_destinatar (utilizator_id);
-    INSERT INTO task_destinatar (task_id, utilizator_id) SELECT id, pentru FROM task;
+    INSERT INTO task_destinatar (task_id, utilizator_id, facut_la, in_asteptare_la) SELECT id, pentru, facut_la, in_asteptare_la FROM task;
     CREATE TABLE task_citit (
       task_id       INTEGER NOT NULL REFERENCES task(id) ON DELETE CASCADE,
       utilizator_id INTEGER NOT NULL REFERENCES utilizator(id),

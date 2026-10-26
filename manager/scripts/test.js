@@ -1383,8 +1383,8 @@ async function main() {
       && (await cer('GET', '/api/taskuri/scadente')).date.necitite === 0);
     verifica('cel care l-a dat îl şterge', (await cer('DELETE', `/api/taskuri/${t1.date.id}`)).stare === 200);
 
-    // mai mulţi destinatari (userul, 2026-10-26): toţi îl văd şi îl bifează (făcut o dată pentru toţi), reminder la
-    // fiecare, „necitit" pe fiecare om; cui e dat îl schimbă doar cel care l-a dat
+    // mai mulţi destinatari (userul, 2026-10-26): toţi îl văd, reminder la fiecare, fiecare îşi bifează PARTEA (făcut
+    // pentru toţi abia când l-au făcut toţi), „necitit" pe fiecare om; cui e dat îl schimbă doar cel care l-a dat
     const ion = db2().prepare("SELECT id FROM utilizator WHERE user = 'ion'").get().id;
     const ca = async (user, parola, fn) => {
       const k2 = cookie; cookie = null;
@@ -1408,13 +1408,21 @@ async function main() {
     verifica('răspunsul Mariei e necitit şi la Ion, şi la admin', await necititeIon() === 1 && (await alTau(t3)).necitite === 1);
     verifica('Ion îl deschide → citit doar la Ion', await caIon(() => cer('POST', `/api/taskuri/${t3}/citit`)).then(r => r.stare === 200)
       && await necititeIon() === 0 && (await alTau(t3)).necitite === 1);
-    verifica('Ion îl bifează făcut → e făcut şi la Maria, fără reminder',
-      (await caIon(() => cer('PATCH', `/api/taskuri/${t3}`, { facut: true }))).stare === 200
-      && await caMaria(async () => !!(await alTau(t3))?.facut_la && !(await cer('GET', '/api/taskuri/scadente')).date.taskuri.some(t => t.id === t3)));
+    verifica('adminul (doar l-a dat) nu-l bifează el → 403', (await cer('PATCH', `/api/taskuri/${t3}`, { facut: true })).stare === 403);
+    verifica('Ion îşi bifează partea → la Ion e făcut', (await caIon(() => cer('PATCH', `/api/taskuri/${t3}`, { facut: true }))).stare === 200
+      && await caIon(async () => !!(await alTau(t3))?.facut_la));
+    verifica('… la Maria nu: e tot de făcut, cu reminder', await caMaria(async () => !(await alTau(t3))?.facut_la
+      && (await cer('GET', '/api/taskuri/scadente')).date.taskuri.some(t => t.id === t3)));
+    const laAdmin = await alTau(t3);
+    verifica('… la admin: nefăcut încă — Ion ✓, Maria nu', !laAdmin.facut_la && !!laAdmin.destinatari.find(d => d.id === ion)?.facut_la
+      && !laAdmin.destinatari.find(d => d.id === maria)?.facut_la, JSON.stringify(laAdmin.destinatari));
+    verifica('Maria îşi face şi ea partea → la admin taskul e făcut (de toţi)',
+      (await caMaria(() => cer('PATCH', `/api/taskuri/${t3}`, { facut: true }))).stare === 200 && !!(await alTau(t3)).facut_la);
     verifica('Maria nu schimbă cui e dat (nu l-a dat ea) → 403', (await caMaria(() => cer('PATCH', `/api/taskuri/${t3}`, { pentru: [maria] }))).stare === 403);
-    verifica('adminul îl dă doar lui Ion → Maria nu-l mai vede; schimbarea apare în conversaţie',
-      (await cer('PATCH', `/api/taskuri/${t3}`, { pentru: [ion] })).stare === 200 && await caMaria(async () => !(await alTau(t3)))
-      && (await alTau(t3)).mesaje.some(m => m.eveniment === 'destinatari' && m.text === 'Ion Conducere'));
+    const doarIon = (await cer('PATCH', `/api/taskuri/${t3}`, { pentru: [ion] })).stare === 200 && await alTau(t3);
+    verifica('adminul îl dă doar lui Ion → Maria nu-l mai vede, Ion îşi păstrează partea făcută, schimbarea apare în conversaţie',
+      !!doarIon && await caMaria(async () => !(await alTau(t3))) && doarIon.destinatari.length === 1 && !!doarIon.destinatari[0].facut_la
+      && doarIon.mesaje.some(m => m.eveniment === 'destinatari' && m.text === 'Ion Conducere'), JSON.stringify(doarIon));
     verifica('şters → pleacă şi destinatarii, şi citirile', (await cer('DELETE', `/api/taskuri/${t3}`)).stare === 200
       && db2().prepare('SELECT (SELECT COUNT(*) FROM task_destinatar WHERE task_id = ?) + (SELECT COUNT(*) FROM task_citit WHERE task_id = ?) AS n').get(t3, t3).n === 0);
 

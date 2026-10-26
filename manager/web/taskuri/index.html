@@ -46,6 +46,13 @@
   .alege-oameni input { width: 16px; height: 16px; margin: 0; flex: none; }
   .alege-oameni .nota { padding: 4px 8px 2px; font-size: .74rem; color: var(--text-dim); }
   .props .alege-oameni .alege-btn { height: auto; padding: 4px 10px; font-size: .82rem; }
+  .alege-oameni .alege-btn.gol { border-color: rgba(212, 162, 76, .6); color: var(--cald); }   /* nimeni bifat: nu se salvează */
+  /* fiecare destinatar cu partea lui: ✓ făcută, ⏸ în aşteptare */
+  .om-parte { display: inline-flex; align-items: center; gap: 4px; }
+  .stare-om { font-size: .78rem; font-weight: 700; color: var(--verde-text); }
+  .stare-om.pauza { color: var(--cald); }
+  .nota-parte { margin: 10px 0 0; font-size: .78rem; color: var(--text-dim); }
+  .bifa-loc { width: 16px; flex: none; }
   .legat { padding: 6px 12px; font-size: .82rem; color: var(--text-dim); border-bottom: 1px solid var(--line); }
   .legat a { color: var(--accent); }
 
@@ -179,12 +186,28 @@ let comanda = Number(params.get('comanda')) || null;
 let ales = Number(params.get('task')) || null;
 const ciorne = new Map();   // răspunsul început, pe task — rămâne la actualizarea live
 
-const EVENIMENT = { asteptare: 'a pus taskul în aşteptare', reluat: 'a reluat taskul', facut: 'a bifat taskul făcut', redeschis: 'a redeschis taskul',
-  destinatari: 'a schimbat cui e dat taskul' };
+// ce s-a întâmplat cu taskul, în conversaţie: [despre altcineva, despre tine]. La un task dat mai multor oameni
+// făcut / aşteptare sunt ale fiecăruia (userul, 2026-10-26): „şi-a făcut partea".
+const EVENIMENT = {
+  asteptare: ['a pus taskul în aşteptare', 'Ai pus taskul în aşteptare'], reluat: ['a reluat taskul', 'Ai reluat taskul'],
+  facut: ['a bifat taskul făcut', 'Ai bifat taskul făcut'], redeschis: ['a redeschis taskul', 'Ai redeschis taskul'],
+  destinatari: ['a schimbat cui e dat taskul', 'Ai schimbat cui e dat taskul'],
+};
+const EVENIMENT_PARTE = {
+  asteptare: ['şi-a pus partea în aşteptare', 'Ţi-ai pus partea în aşteptare'], reluat: ['şi-a reluat partea', 'Ţi-ai reluat partea'],
+  facut: ['şi-a făcut partea', 'Ţi-ai făcut partea'], redeschis: ['şi-a redeschis partea', 'Ţi-ai redeschis partea'],
+};
+const textEveniment = (m, t) => {
+  const [el, tu] = (t.destinatari.length > 1 && EVENIMENT_PARTE[m.eveniment]) || EVENIMENT[m.eveniment] || [m.eveniment, m.eveniment];
+  return m.autor === eu.id ? tu : `${esc(m.autor_nume)} ${el}`;
+};
 // participanţii: cel care l-a dat + destinatarii — [{ id, nume }], fără dubluri
 const participanti = t => [{ id: t.creat_de, nume: t.creat_de_nume }, ...t.destinatari.filter(d => d.id !== t.creat_de)];
 const cuConversatie = t => participanti(t).length > 1;
 const pentruMine = t => t.destinatari.some(d => d.id === eu.id);
+// fiecare destinatar îşi bifează partea; facut_la / in_asteptare_la ale taskului (de la server) sunt ale mele —
+// la unul dat de mine altora, făcut = şi-au făcut partea toţi
+const facutDe = t => t.destinatari.filter(d => d.facut_la).length;
 // lista: trei secţiuni una sub alta
 const SECTIUNI = [
   ['mie', 'Pentru mine', 'Nimic de făcut. 🎉'],
@@ -203,18 +226,22 @@ function meta(t, lung) {
   const altii = t.destinatari.filter(d => d.id !== eu.id);
   const cine = !pentruMine(t) ? `pentru ${esc(nume(t.destinatari))}`
     : [t.creat_de !== eu.id && `de la ${esc(t.creat_de_nume)}`, altii.length && `împreună cu ${esc(nume(altii))}`].filter(Boolean).join(' · ');
+  // la mai mulţi: câţi şi-au făcut partea, cât încă nu toţi
+  const progres = t.destinatari.length > 1 && facutDe(t) < t.destinatari.length && `${facutDe(t)} din ${t.destinatari.length} au făcut`;
   return [
     t.in_asteptare_la && !t.facut_la && `<span class="pauza">⏸ în aşteptare</span>`,
     t.scadenta && !t.facut_la && `<span class="${tarziu(t) ? 'tarziu' : ''}">⏰ ${cand(t.scadenta)}</span>`,
     t.facut_la && `✓ ${cand(t.facut_la)}`,
     cine,
+    progres,
     t.comanda_id && (lung ? `<a href="/#comanda/${t.comanda_id}">${esc(t.comanda_nr)} · ${esc(t.client_nume)}</a>` : esc(t.comanda_nr)),
   ].filter(Boolean).map(x => x.startsWith('<') ? x : `<span>${x}</span>`).join('');
 }
 
 function randLista(t) {
   return `<div class="rand cat-${categorie(t)}${t.id === ales ? ' ales' : ''}${t.facut_la ? ' facut' : ''}${t.in_asteptare_la ? ' asteapta' : ''}" data-id="${t.id}">
-    <input type="checkbox" class="bifa" title="${t.facut_la ? 'Nu e făcut' : 'Făcut'}"${t.facut_la ? ' checked' : ''}>
+    ${pentruMine(t) ? `<input type="checkbox" class="bifa" title="${t.facut_la ? 'Nu e făcut' : 'Făcut'}${t.destinatari.length > 1 ? ' (partea ta)' : ''}"${t.facut_la ? ' checked' : ''}>`
+      : '<span class="bifa-loc" title="Îl bifează cei cărora le e dat"></span>'}
     <div class="corp"><div class="text" title="${esc(t.text)}">${esc(t.text)}</div><div class="meta">${meta(t, false)}</div></div>
     <div class="dreapta">${t.necitite ? `<span class="punct" title="Răspunsuri noi">${t.necitite}</span>`
       : cuConversatie(t) && t.mesaje.some(m => !m.eveniment) ? `💬 ${t.mesaje.filter(m => !m.eveniment).length}` : ''}</div>
@@ -232,7 +259,7 @@ function randeazaLista() {
   $('lista').querySelectorAll('.rand').forEach(el => {
     const id = +el.dataset.id;
     el.addEventListener('click', e => { if (!e.target.matches('input')) alege(id); });
-    el.querySelector('.bifa').addEventListener('change', e => schimba(id, { facut: e.target.checked }));
+    el.querySelector('.bifa')?.addEventListener('change', e => schimba(id, { facut: e.target.checked }));
   });
 }
 
@@ -243,8 +270,7 @@ function randeazaDetaliu() {
   const ceilalti = nume(participanti(t).filter(o => o.id !== eu.id));   // cu cine vorbeşti în conversaţie
   const om = (id, nume) => `<span class="om">${avatar(id, nume)}${id === eu.id ? 'Tu' : esc(nume)}</span>`;
   const mesaje = t.mesaje.map(m => m.eveniment
-    ? `<div class="ev"><span>${m.autor === eu.id ? 'Ai' : esc(m.autor_nume)} ${(EVENIMENT[m.eveniment] ?? m.eveniment).replace(/^a /, m.autor === eu.id ? '' : 'a ')}${
-        m.text ? `: „${esc(m.text)}”` : ''} · ${cand(m.creat_la)}</span></div>`
+    ? `<div class="ev"><span>${textEveniment(m, t)}${m.text ? `: „${esc(m.text)}”` : ''} · ${cand(m.creat_la)}</span></div>`
     : `<div class="msg${m.autor === eu.id ? ' eu' : ''}">${avatar(m.autor, m.autor_nume)}<div class="bula">
         <div class="cine">${m.autor === eu.id ? 'Tu' : esc(m.autor_nume)} · ${cand(m.creat_la)}</div><div class="txt">${esc(m.text)}</div></div></div>`).join('');
   const reminder = facut ? '' : `<dt>Reminder</dt><dd id="reminder">${t.scadenta
@@ -259,19 +285,22 @@ function randeazaDetaliu() {
       <div class="titlu">${esc(t.text)}</div>
       <dl class="props">
         <dt>De la</dt><dd>${om(t.creat_de, t.creat_de_nume)}</dd>
-        <dt>Pentru</dt><dd id="pentruDd">${t.destinatari.map(d => om(d.id, d.nume)).join('')}${t.creat_de === eu.id && !facut
-          ? '<button type="button" class="link-mic" data-a="schimbaPentru">schimbă</button>' : ''}</dd>
+        <dt>Pentru</dt><dd id="pentruDd">${t.destinatari.map(d => `<span class="om-parte" title="${d.facut_la ? `şi-a făcut partea ${cand(d.facut_la)}`
+            : d.in_asteptare_la ? `în aşteptare din ${cand(d.in_asteptare_la)}` : 'de făcut'}">${om(d.id, d.nume)}${
+            d.facut_la ? '<span class="stare-om">✓</span>' : d.in_asteptare_la ? '<span class="stare-om pauza">⏸</span>' : ''}</span>`).join('')}${
+          t.creat_de === eu.id && facutDe(t) < t.destinatari.length ? '<button type="button" class="link-mic" data-a="schimbaPentru">schimbă</button>' : ''}</dd>
         ${reminder}
         ${t.comanda_id ? `<dt>Comanda</dt><dd><a href="/#comanda/${t.comanda_id}">${esc(t.comanda_nr)} · ${esc(t.client_nume)}</a></dd>` : ''}
         <dt>Creat</dt><dd class="dim">${cand(t.creat_la)}${facut ? ` · făcut ${cand(t.facut_la)}` : ''}${
           t.in_asteptare_la && !facut ? ` · în aşteptare din ${cand(t.in_asteptare_la)}` : ''}${
           t.creat_de === eu.id ? ' · <button type="button" class="link-mic link-rosu" data-a="sterge">şterge taskul</button>' : ''}</dd>
       </dl>
-      <div class="actiuni">
+      ${pentruMine(t) ? `<div class="actiuni">
         <button type="button" class="${facut ? '' : 'verde'}" data-a="facut">${facut ? '↺ Redeschide' : '✓ Marchează făcut'}</button>
         ${facut ? '' : `<button type="button" data-a="asteptare" title="${t.in_asteptare_la ? 'Reminderul revine' : 'Fără reminder până îl reiei'}">${
           t.in_asteptare_la ? '▶ Reia' : '⏸ Pune în aşteptare'}</button>`}
-      </div>
+      </div>${t.destinatari.length > 1 ? '<p class="nota-parte">Bifezi doar partea ta — fiecare îşi bifează partea. Taskul e gata când l-au făcut toţi.</p>' : ''}`
+      : `<p class="nota-parte">Îl bifează fiecare dintre cei cărora le e dat${t.destinatari.length > 1 ? ` — ${facutDe(t)} din ${t.destinatari.length} au făcut` : ''}.</p>`}
     </div>
     ${cuConversatie(t) ? `
       <div class="conv-cap" title="${esc(t.text)}">Conversaţie cu <b>${esc(ceilalti)}</b> referitor la taskul: „${esc(t.text)}”</div>
@@ -281,7 +310,7 @@ function randeazaDetaliu() {
     : ''}`;
 
   const d = $('detaliu');
-  d.querySelector('[data-a=facut]').addEventListener('click', () => schimba(t.id, { facut: !facut }));
+  d.querySelector('[data-a=facut]')?.addEventListener('click', () => schimba(t.id, { facut: !facut }));
   d.querySelector('[data-a=faraOra]')?.addEventListener('click', () => schimba(t.id, { scadenta: null }));
   // „schimbă": câmpul de dată apare pe loc (cu calendarul deschis), se salvează la alegere
   d.querySelector('[data-a=schimbaOra]')?.addEventListener('click', () => {
@@ -297,8 +326,9 @@ function randeazaDetaliu() {
     const alesi = new Set(t.destinatari.map(x => x.id));
     $('pentruDd').innerHTML = `<div class="alege-oameni" id="pentruSchimba"></div>
       <button type="button" class="mic verde" data-a="salveazaPentru">Salvează</button><button type="button" class="link-mic" data-a="renuntaPentru">renunţă</button>`;
-    alegereOameni($('pentruSchimba'), alesi, true);
-    $('pentruDd').querySelector('[data-a=salveazaPentru]').addEventListener('click', () => schimba(t.id, { pentru: [...alesi] }));
+    const salveaza = $('pentruDd').querySelector('[data-a=salveazaPentru]');
+    alegereOameni($('pentruSchimba'), alesi, true, () => { salveaza.disabled = !alesi.size; });
+    salveaza.addEventListener('click', () => schimba(t.id, { pentru: [...alesi] }));
     $('pentruDd').querySelector('[data-a=renuntaPentru]').addEventListener('click', randeazaDetaliu);
   });
   d.querySelector('[data-a=sterge]')?.addEventListener('click', () => schimba(t.id, null, 'Ştergi taskul?'));
@@ -359,27 +389,31 @@ async function marcheazaCitite() {
 document.addEventListener('visibilitychange', marcheazaCitite);
 
 // ── Pentru cine: unul sau mai mulţi oameni (userul, 2026-10-26) ──
-// Un buton cu alegerea („Pentru mine", „Pentru Ana, Ion", „Pentru mine şi Ana"…) şi sub el lista de bife;
-// măcar unul rămâne bifat. `alesi` = Set de id-uri, schimbat pe loc. Acelaşi lucru la „schimbă" pe un task.
+// Un buton cu alegerea („Pentru mine", „Pentru Ana, Ion", „Pentru mine şi Ana"…) şi sub el lista de bife. Se pot
+// debifa toţi (userul) — doar că atunci nu se salvează: `laSchimbare` opreşte „Adaugă" / „Salvează" cât nu e nimeni.
+// `alesi` = Set de id-uri, schimbat pe loc. Acelaşi lucru la „schimbă" pe un task.
 const pentruText = alesi => {
+  if (!alesi.size) return 'Alege pentru cine';
   const altii = utilizatori.filter(u => alesi.has(u.id) && u.id !== eu.id);
   if (!altii.length) return 'Pentru mine';
   return alesi.has(eu.id) ? `Pentru mine şi ${altii.length > 1 ? `încă ${altii.length}` : esc(altii[0].nume)}` : `Pentru ${esc(nume(altii))}`;
 };
-function alegereOameni(rad, alesi, deschisa = false) {
+function alegereOameni(rad, alesi, deschisa = false, laSchimbare = null) {
   rad.innerHTML = `<button type="button" class="alege-btn" aria-haspopup="true" aria-expanded="${deschisa}"></button>
     <div class="oameni"${deschisa ? '' : ' hidden'}>${utilizatori.map(u => `<label>
       <input type="checkbox" value="${u.id}"${alesi.has(u.id) ? ' checked' : ''}>${avatar(u.id, u.nume)}<span>${u.id === eu.id ? 'Eu' : esc(u.nume)}</span></label>`).join('')}
-      <div class="nota">Bifează unul sau mai mulţi. Oricare îl poate bifa făcut — e făcut pentru toţi.</div></div>`;
+      <div class="nota">Bifează unul sau mai mulţi. Fiecare îşi bifează partea făcută.</div></div>`;
   const btn = rad.querySelector('.alege-btn'), lista = rad.querySelector('.oameni');
-  const scrie = () => { btn.innerHTML = `${pentruText(alesi)} ▾`; btn.title = utilizatori.filter(u => alesi.has(u.id)).map(u => u.nume).join(', '); };
+  const scrie = () => {
+    btn.innerHTML = `${pentruText(alesi)} ▾`;
+    btn.classList.toggle('gol', !alesi.size);
+    btn.title = alesi.size ? utilizatori.filter(u => alesi.has(u.id)).map(u => u.nume).join(', ') : 'Bifează măcar un om — fără niciunul taskul nu se salvează';
+    laSchimbare?.();
+  };
   scrie();
   btn.addEventListener('click', () => { lista.hidden = !lista.hidden; btn.setAttribute('aria-expanded', String(!lista.hidden)); });
   lista.addEventListener('change', e => {
-    const id = +e.target.value;
-    if (e.target.checked) alesi.add(id);
-    else if (alesi.size > 1) alesi.delete(id);
-    else e.target.checked = true;   // măcar unul
+    if (e.target.checked) alesi.add(+e.target.value); else alesi.delete(+e.target.value);
     scrie();
   });
 }
@@ -401,8 +435,11 @@ async function incarca() {
   ({ taskuri, utilizatori } = await r.json());
   pentruNou ??= new Set([eu.id]);
   for (const id of pentruNou) if (!utilizatori.some(u => u.id === id)) pentruNou.delete(id);   // cont dezactivat între timp
-  if (!pentruNou.size) pentruNou.add(eu.id);
-  alegereOameni($('pentruNou'), pentruNou);
+  const adauga = $('formular').querySelector('button[type=submit]');
+  alegereOameni($('pentruNou'), pentruNou, false, () => {
+    adauga.disabled = !pentruNou.size;
+    adauga.title = pentruNou.size ? '' : 'Bifează măcar un om la „Pentru cine"';
+  });
   randeazaLista();
   randeazaDetaliu();
   marcheazaCitite();
@@ -425,6 +462,7 @@ async function arataComanda() {
 $('text').addEventListener('input', () => $('formular').classList.toggle('plin', !!$('text').value));
 $('formular').addEventListener('submit', async e => {
   e.preventDefault();
+  if (!pentruNou.size) return alerta('Bifează măcar un om la „Pentru cine" — fără niciunul taskul nu se salvează.');   // Enter în câmpul de text
   const r = await api('/api/taskuri', { method: 'POST', body: JSON.stringify({
     text: $('text').value, pentru: [...pentruNou], scadenta: $('scadenta').value || null, comanda_id: comanda }) });
   if (r && !r.ok) return alerta(await eroareDin(r));

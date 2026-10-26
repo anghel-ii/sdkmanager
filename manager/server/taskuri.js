@@ -7,12 +7,14 @@ const { anunta, anuntaUtilizator } = require('./evenimente.js');
 //  utilizatori (2026-10-26, task_destinatar), opţional legat de o comandă, cu o
 //  scadenţă la care apare notificarea — la fiecare destinatar. Notificarea o face
 //  browserul: bara.js întreabă din minut în minut /api/taskuri/scadente (web/taskuri).
-//  Participanţii = cel care l-a dat + destinatarii: toţi îl văd, îl pot bifa (făcut o
-//  dată pentru toţi, ca în Planner / Trello) şi scriu în mini-conversaţia lui (userul,
-//  2026-10-15): răspunsuri + ce s-a întâmplat (pus în aşteptare, reluat, făcut). Ce
-//  scrie unul e „necitit” la ceilalţi până deschid conversaţia (task_citit, pe om) —
-//  numărul intră în insigna „Taskuri” din meniu. Un task în aşteptare nu mai dă
-//  reminder până se reia. Cui e dat îl schimbă doar cel care l-a dat.
+//  Fiecare destinatar îşi bifează PARTEA făcută şi o poate pune în aşteptare (fără
+//  reminder până o reia) — userul: „dacă cineva face taskul nu trebuie să apară făcut
+//  pentru toţi"; taskul e făcut (task.facut_la) când şi-au făcut partea toţi.
+//  Participanţii = cel care l-a dat + destinatarii: toţi îl văd şi scriu în
+//  mini-conversaţia lui (userul, 2026-10-15): răspunsuri + ce s-a întâmplat (pus în
+//  aşteptare, reluat, făcut). Ce scrie unul e „necitit” la ceilalţi până deschid
+//  conversaţia (task_citit, pe om) — numărul intră în insigna „Taskuri” din meniu.
+//  Cui e dat îl schimbă doar cel care l-a dat.
 // ═══════════════════════════════════════════════════════════════════════════
 
 // „2026-10-09T09:00" din <input type=datetime-local> = ora ROMÂNIEI (oricare ar fi
@@ -29,49 +31,54 @@ function dinOraRomaniei(t) {
   return new Date(utc).toISOString().slice(0, 19).replace('T', ' ');
 }
 
-const CAMPURI = `t.id, t.text, t.scadenta, t.creat_de, t.comanda_id, t.creat_la, t.facut_la, t.in_asteptare_la,
+// Taskurile se citesc din perspectiva celui care le cere ($eu): e = partea lui, dacă taskul îi e dat. facut_la şi
+// in_asteptare_la din răspuns sunt ale LUI; la un task dat de el altora, făcut = când şi-au făcut partea toţi.
+const DIN = `FROM task t JOIN utilizator uc ON uc.id = t.creat_de LEFT JOIN comanda c ON c.id = t.comanda_id
+  LEFT JOIN task_destinatar e ON e.task_id = t.id AND e.utilizator_id = $eu`;
+const FACUT = '(CASE WHEN e.task_id IS NULL THEN t.facut_la ELSE e.facut_la END)';
+const CAMPURI = `t.id, t.text, t.scadenta, t.creat_de, t.comanda_id, t.creat_la, ${FACUT} AS facut_la, e.in_asteptare_la,
   uc.nume AS creat_de_nume, COALESCE(c.oferta_nr, c.numar) AS comanda_nr, c.client_nume`;
-const DIN = `FROM task t JOIN utilizator uc ON uc.id = t.creat_de LEFT JOIN comanda c ON c.id = t.comanda_id`;
-// eu (?) sunt printre destinatari / sunt participant (l-am dat sau mi-e dat) — parametri: eu, (eu)
-const DESTINATAR = 'EXISTS (SELECT 1 FROM task_destinatar p WHERE p.task_id = t.id AND p.utilizator_id = ?)';
-const PARTICIP = `(t.creat_de = ? OR ${DESTINATAR})`;
-// ce au scris / făcut ceilalţi după ultimul mesaj văzut de mine (?, ?) — şi evenimentele („a bifat făcut"…)
-const NECITITE = `SELECT COUNT(*) FROM task_mesaj m WHERE m.task_id = t.id AND m.autor != ?
-  AND m.id > COALESCE((SELECT pana_la FROM task_citit WHERE task_id = t.id AND utilizator_id = ?), 0)`;
+const PARTICIP = '(t.creat_de = $eu OR e.task_id IS NOT NULL)';   // l-am dat sau mi-e dat
+// ce au scris / făcut ceilalţi după ultimul mesaj văzut de mine — şi evenimentele („şi-a făcut partea"…)
+const NECITITE = `SELECT COUNT(*) FROM task_mesaj m WHERE m.task_id = t.id AND m.autor != $eu
+  AND m.id > COALESCE((SELECT pana_la FROM task_citit WHERE task_id = t.id AND utilizator_id = $eu), 0)`;
 
-// destinatarii, pe fiecare task: destinatari [{ id, nume }] (după nume) + pentru_nume („Ana, Ion")
+// destinatarii, pe fiecare task: destinatari [{ id, nume, facut_la, in_asteptare_la }] (după nume) + pentru_nume („Ana, Ion")
 function cuDestinatari(taskuri) {
   if (!taskuri.length) return taskuri;
-  const pe = Map.groupBy(db().prepare(`SELECT p.task_id, u.id, u.nume FROM task_destinatar p JOIN utilizator u ON u.id = p.utilizator_id
-    WHERE p.task_id IN (${taskuri.map(() => '?').join(', ')}) ORDER BY u.nume`).all(...taskuri.map(t => t.id)), r => r.task_id);
+  const pe = Map.groupBy(db().prepare(`SELECT p.task_id, u.id, u.nume, p.facut_la, p.in_asteptare_la FROM task_destinatar p
+    JOIN utilizator u ON u.id = p.utilizator_id WHERE p.task_id IN (${taskuri.map(() => '?').join(', ')}) ORDER BY u.nume`)
+    .all(...taskuri.map(t => t.id)), r => r.task_id);
   for (const t of taskuri) {
-    t.destinatari = (pe.get(t.id) ?? []).map(({ id, nume }) => ({ id, nume }));
+    t.destinatari = (pe.get(t.id) ?? []).map(({ task_id, ...d }) => d);
     t.pentru_nume = t.destinatari.map(d => d.nume).join(', ');
   }
   return taskuri;
 }
 
 // Ale mele (date mie sau de mine altora): cele nefăcute + cele făcute în ultimele 14 zile, cu conversaţia lor.
-const ALE_MELE = `${PARTICIP} AND (t.facut_la IS NULL OR t.facut_la > datetime(${ACUM()}, '-14 days'))`;
+const ALE_MELE = `${PARTICIP} AND (${FACUT} IS NULL OR ${FACUT} > datetime(${ACUM()}, '-14 days'))`;
 function lista(ctx) {
   const eu = ctx.utilizator.id;
   const taskuri = cuDestinatari(db().prepare(`SELECT ${CAMPURI}, (${NECITITE}) AS necitite ${DIN} WHERE ${ALE_MELE}
-    ORDER BY t.facut_la IS NOT NULL, t.scadenta IS NULL, t.scadenta, t.id`).all(eu, eu, eu, eu));
+    ORDER BY ${FACUT} IS NOT NULL, t.scadenta IS NULL, t.scadenta, t.id`).all({ eu }));
   const mesaje = Map.groupBy(db().prepare(`SELECT m.id, m.task_id, m.autor, u.nume AS autor_nume, m.text, m.eveniment,
       m.creat_la FROM task_mesaj m JOIN utilizator u ON u.id = m.autor JOIN task t ON t.id = m.task_id
-    WHERE ${ALE_MELE} ORDER BY m.creat_la, m.id`).all(eu, eu), m => m.task_id);
+      LEFT JOIN task_destinatar e ON e.task_id = t.id AND e.utilizator_id = $eu
+    WHERE ${ALE_MELE} ORDER BY m.creat_la, m.id`).all({ eu }), m => m.task_id);
   for (const t of taskuri) t.mesaje = mesaje.get(t.id) ?? [];
   json(ctx.res, 200, { taskuri, utilizatori: db().prepare('SELECT id, nume FROM utilizator WHERE activ = 1 ORDER BY nume').all() });
 }
 
-// Pt. bara de sus: ale mele (mi-sunt date), nefăcute, ajunse la scadenţă (nu şi cele în aşteptare) + câte răspunsuri
-// n-am citit, din toate la care particip. de_la_altcineva — reminderul spune „de la X".
+// Pt. bara de sus: ale mele (mi-sunt date), cu partea mea nefăcută şi nu în aşteptare, ajunse la scadenţă + câte
+// răspunsuri n-am citit, din toate la care particip. de_la_altcineva — reminderul spune „de la X".
 function scadente(ctx) {
   const eu = ctx.utilizator.id;
   json(ctx.res, 200, {
-    taskuri: db().prepare(`SELECT ${CAMPURI}, t.creat_de != ? AS de_la_altcineva ${DIN} WHERE ${DESTINATAR} AND t.facut_la IS NULL
-      AND t.in_asteptare_la IS NULL AND t.scadenta <= ${ACUM()} ORDER BY t.scadenta`).all(eu, eu),
-    necitite: db().prepare(`SELECT COALESCE(SUM((${NECITITE})), 0) AS n FROM task t WHERE ${PARTICIP}`).get(eu, eu, eu, eu).n,
+    taskuri: db().prepare(`SELECT ${CAMPURI}, t.creat_de != $eu AS de_la_altcineva ${DIN} WHERE e.task_id IS NOT NULL
+      AND e.facut_la IS NULL AND e.in_asteptare_la IS NULL AND t.scadenta <= ${ACUM()} ORDER BY t.scadenta`).all({ eu }),
+    necitite: db().prepare(`SELECT COALESCE(SUM((${NECITITE})), 0) AS n FROM task t
+      LEFT JOIN task_destinatar e ON e.task_id = t.id AND e.utilizator_id = $eu WHERE ${PARTICIP}`).get({ eu }).n,
   });
 }
 
@@ -103,12 +110,18 @@ function citeste(corp, nou) {
   return { campuri: c };
 }
 
-// cui e dat taskul: lista întreagă (înlocuieşte ce era); task.pentru = primul, pt. compatibilitate
+// taskul e făcut când şi-au făcut partea toţi destinatarii (atunci trece la „Făcute" şi la cel care l-a dat)
+const actualizeazaFacut = (d, id) => d.prepare(`UPDATE task SET facut_la = CASE WHEN EXISTS (SELECT 1 FROM task_destinatar
+  WHERE task_id = $id AND facut_la IS NULL) THEN NULL ELSE (SELECT MAX(facut_la) FROM task_destinatar WHERE task_id = $id) END
+  WHERE id = $id`).run({ id });
+
+// cui e dat taskul: lista întreagă; cei care rămân îşi păstrează partea (făcută / în aşteptare). task.pentru = primul.
 function puneDestinatari(d, id, pentru) {
-  d.prepare('DELETE FROM task_destinatar WHERE task_id = ?').run(id);
-  const pune = d.prepare('INSERT INTO task_destinatar (task_id, utilizator_id) VALUES (?, ?)');
+  d.prepare(`DELETE FROM task_destinatar WHERE task_id = ? AND utilizator_id NOT IN (${pentru.map(() => '?').join(', ')})`).run(id, ...pentru);
+  const pune = d.prepare('INSERT OR IGNORE INTO task_destinatar (task_id, utilizator_id) VALUES (?, ?)');
   for (const om of pentru) pune.run(id, om);
   d.prepare('UPDATE task SET pentru = ? WHERE id = ?').run(pentru[0], id);
+  actualizeazaFacut(d, id);
 }
 
 async function creeaza(ctx) {
@@ -124,9 +137,10 @@ async function creeaza(ctx) {
   json(ctx.res, 201, { id });
 }
 
-// Doar participanţii (cel care l-a dat + destinatarii) îl văd, îl schimbă, îl bifează.
-const alMeu = ctx => db().prepare(`SELECT t.* FROM task t WHERE t.id = ? AND ${PARTICIP}`)
-  .get(Number(ctx.params.id), ctx.utilizator.id, ctx.utilizator.id);
+// Doar participanţii (cel care l-a dat + destinatarii) îl văd şi îl schimbă; `parte` = partea mea, dacă mi-e dat.
+const alMeu = ctx => db().prepare(`SELECT t.*, e.task_id IS NOT NULL AS mi_e_dat, e.facut_la AS facut_meu,
+    e.in_asteptare_la AS asteptare_mea FROM task t LEFT JOIN task_destinatar e ON e.task_id = t.id AND e.utilizator_id = $eu
+  WHERE t.id = $id AND ${PARTICIP}`).get({ eu: ctx.utilizator.id, id: Number(ctx.params.id) });
 
 async function modifica(ctx) {
   const t = alMeu(ctx);
@@ -138,16 +152,26 @@ async function modifica(ctx) {
   const pentru = c.pentru;
   delete c.pentru;
   if (pentru && t.creat_de !== ctx.utilizator.id) return eroare(ctx.res, 403, 'Doar cel care a dat taskul schimbă cui e dat.');
-  const set = Object.keys(c).map(k => `${k} = ?`);
-  // făcut / în aşteptare: doar când chiar se schimbă — fiecare schimbare apare şi în conversaţie
-  const facut = 'facut' in corp && !!corp.facut !== !!t.facut_la ? !!corp.facut : null;
-  const asteapta = 'asteptare' in corp && !!corp.asteptare !== !!t.in_asteptare_la ? !!corp.asteptare : null;
-  if (facut !== null) set.push(`facut_la = ${facut ? ACUM() : 'NULL'}`);
+  // făcut / în aşteptare: partea MEA, doar când chiar se schimbă — fiecare schimbare apare şi în conversaţie
+  if (('facut' in corp || 'asteptare' in corp) && !t.mi_e_dat) {
+    return eroare(ctx.res, 403, 'Taskul nu e dat ţie — fiecare destinatar îşi bifează partea.');
+  }
+  const facut = 'facut' in corp && !!corp.facut !== !!t.facut_meu ? !!corp.facut : null;
+  const asteapta = 'asteptare' in corp && !!corp.asteptare !== !!t.asteptare_mea ? !!corp.asteptare : null;
+  const parte = [];
+  if (facut !== null) parte.push(`facut_la = ${facut ? ACUM() : 'NULL'}`);
   // făcut = nu mai aşteaptă (fără „reluat” în conversaţie — „făcut” spune tot)
-  if (asteapta !== null || (facut && t.in_asteptare_la)) set.push(`in_asteptare_la = ${asteapta ? ACUM() : 'NULL'}`);
-  if (!set.length && !pentru) return 'facut' in corp || 'asteptare' in corp ? json(ctx.res, 200, { ok: true }) : eroare(ctx.res, 400, 'Nimic de modificat.');
+  if (asteapta !== null || (facut && t.asteptare_mea)) parte.push(`in_asteptare_la = ${asteapta ? ACUM() : 'NULL'}`);
+  const set = Object.keys(c).map(k => `${k} = ?`);
+  if (!set.length && !parte.length && !pentru) {
+    return 'facut' in corp || 'asteptare' in corp ? json(ctx.res, 200, { ok: true }) : eroare(ctx.res, 400, 'Nimic de modificat.');
+  }
   tranzactie(d => {
     if (set.length) d.prepare(`UPDATE task SET ${set.join(', ')} WHERE id = ?`).run(...Object.values(c), t.id);
+    if (parte.length) {
+      d.prepare(`UPDATE task_destinatar SET ${parte.join(', ')} WHERE task_id = ? AND utilizator_id = ?`).run(t.id, ctx.utilizator.id);
+      actualizeazaFacut(d, t.id);
+    }
     if (pentru) {
       puneDestinatari(d, t.id, pentru);
       const nume = d.prepare(`SELECT nume FROM utilizator WHERE id IN (${pentru.map(() => '?').join(', ')}) ORDER BY nume`).all(...pentru);
