@@ -1,4 +1,4 @@
-const { db, tranzactie } = require('./db.js');
+const { db, tranzactie, faraDiacritice } = require('./db.js');
 const { json, eroare, corpJson } = require('./http.js');
 const { anunta } = require('./evenimente.js');
 const { config } = require('./config.js');
@@ -64,16 +64,16 @@ const lista = ({ res }) => json(res, 200, {
 });
 
 // Configuratorul: sugestii pt. câmpul „Nume client" (doar propune — se vinde şi
-// celor care nu sunt în bază). Numele care ÎNCEP cu textul vin primele.
-// LIKE din SQLite ignoră majusculele doar la litere fără diacritice.
+// celor care nu sunt în bază). Numele care ÎNCEP cu textul vin primele. Fără
+// diacritice şi majuscule (fara_diacritice din db.js — userul, 2026-10-26).
 function cauta({ req, res }) {
   const q = (new URL(req.url, 'http://x').searchParams.get('q') ?? '').trim();
   if (q.length < 2) return json(res, 200, { clienti: [] });
-  const text = q.replace(/[\\%_]/g, '\\$&');   // % şi _ tastate se caută ca atare
+  const text = faraDiacritice(q).replace(/[\\%_]/g, '\\$&');   // % şi _ tastate se caută ca atare
   json(res, 200, { clienti: db().prepare(`
     SELECT nume, cui, agent, judet, localitate, adresa_sediu, adresa_livrare, telefon_administrator, telefon_delegat
-      FROM client WHERE nume LIKE ? ESCAPE '\\'
-     ORDER BY nume NOT LIKE ? ESCAPE '\\', nume LIMIT 20`).all(`%${text}%`, `${text}%`) });
+      FROM client WHERE fara_diacritice(nume) LIKE ? ESCAPE '\\'
+     ORDER BY fara_diacritice(nume) NOT LIKE ? ESCAPE '\\', nume LIMIT 20`).all(`%${text}%`, `${text}%`) });
 }
 
 async function preiaAcum({ res }) {

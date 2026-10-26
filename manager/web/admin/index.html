@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="/comun.css">
 <link rel="stylesheet" href="/nou.css">
 <script src="/dialog.js"></script>
+<script src="/sugestii.js"></script>
 <script src="/data.js"></script>
 <script src="/copiaza.js"></script>
 <script src="/live.js"></script>
@@ -150,8 +151,7 @@
           <span class="dim mic">intră pe <span class="mono">clienti-agenti.pages.dev</span></span></div>
         <form class="linie" id="formAgent" autocomplete="off" style="margin:0 0 12px">
           <label>Cont nou pentru agentul
-            <input id="agentNume" list="numeAgenti" placeholder="numele, exact ca în coloana Agent" required>
-            <datalist id="numeAgenti"></datalist>
+            <input id="agentNume" placeholder="numele, exact ca în coloana Agent" required>
           </label>
           <button type="submit" class="primar">Creează</button>
         </form>
@@ -212,6 +212,13 @@
 <script>
 const $ = id => document.getElementById(id);
 const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+// numele agenţilor fără cont, propuse la „Cont nou pentru agentul" — fără diacritice (/sugestii.js, userul 2026-10-26)
+let faraCont = [];
+Sugestii.leaga(document.getElementById('agentNume'), {
+  cauta: text => faraCont.filter(a => Sugestii.normal(a.nume).includes(Sugestii.normal(text.trim())))
+    .map(a => ({ text: a.nume, sub: `${a.clienti} clienţi` })),
+  alege: a => { document.getElementById('agentNume').value = a.text; },
+});
 const ROLURI = ['birou', 'conducere', 'admin'];
 let eu = null;
 
@@ -393,7 +400,7 @@ async function incarcaAgenti() {
   $('formAgent').hidden = !date.activ;
   if (!date.activ) { $('agenti').textContent = 'Pune cheia de legătură cu Cloudflare (dreapta, la „Legături") — apoi apar aici conturile agenţilor.'; return; }
   agenti = date.agenti;
-  $('numeAgenti').innerHTML = date.faraCont.map(a => `<option value="${esc(a.nume)}">${a.clienti} clienţi</option>`).join('');
+  faraCont = date.faraCont;   // agenţii din baza de clienţi fără cont — propuşi sub „Cont nou pentru agentul"
   $('agenti').className = 'tabel-lat';
   $('agenti').innerHTML = !agenti.length ? 'Niciun cont de agent.' : `
     <table class="tab">

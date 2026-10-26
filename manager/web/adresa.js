@@ -122,22 +122,38 @@
     const brut = v => (v === undefined ? desc.get.call(input) : desc.set.call(input, v));
     const c = document.createElement('div');
     c.className = 'adresa-campuri';
-    const loc = 'adr' + Math.random().toString(36).slice(2, 8);
     c.innerHTML = `<select class="adr-judet adr-gol" aria-label="Judeţ"><option value="">Judeţ</option></select>
-      <input type="text" class="adr-localitate" placeholder="Localitate" autocomplete="off" list="${loc}" aria-label="Localitate">
-      <datalist id="${loc}"></datalist>
+      <input type="text" class="adr-localitate" placeholder="Localitate" autocomplete="off" aria-label="Localitate">
       <input type="text" class="adr-strada" placeholder="Stradă, nr., bloc, ap." autocomplete="off" aria-label="Stradă şi număr">
       <div class="adr-nota"></div>`;
     input.after(c);
     input.hidden = true;
-    const [j, l, dl, s, nota] = ['.adr-judet', '.adr-localitate', 'datalist', '.adr-strada', '.adr-nota'].map(x => c.querySelector(x));
+    const [j, l, s, nota] = ['.adr-judet', '.adr-localitate', '.adr-strada', '.adr-nota'].map(x => c.querySelector(x));
     let ix = null, lista = null;
 
-    const umple = () => {
-      dl.innerHTML = '';
-      const toate = j.value && lista ? lista.json.judete[j.value] ?? [] : [];
-      dl.append(...toate.map(x => Object.assign(document.createElement('option'), { value: x })));
-    };
+    // Localităţile, fără diacritice (/sugestii.js — userul, 2026-10-26: „ramnicu valcea" → „Râmnicu Vâlcea"):
+    // din judeţul ales sau, fără judeţ, din toate (cu judeţul dedesubt; alegerea îl pune şi pe el). Întâi cele
+    // care încep cu textul, apoi cele cu un cuvânt care începe cu el, apoi restul; cele scurte înainte.
+    window.Sugestii?.leaga(l, {
+      cauta: text => {
+        if (!ix) return [];
+        const q = normal(text).replace(PREFIX_LOC, '');
+        if (!q && !j.value) return [];
+        const gasite = [];
+        for (const jud of j.value ? [j.value] : ix.judete) {
+          for (const [n, nume] of ix.loc.get(jud) ?? []) {
+            const i = q ? n.indexOf(q) : 0;
+            if (i >= 0) gasite.push({ text: nume, judet: jud, sub: j.value ? '' : jud, scor: i === 0 ? 0 : n[i - 1] === ' ' ? 1 : 2 });
+          }
+        }
+        return gasite.sort((a, b) => a.scor - b.scor || a.text.length - b.text.length || a.text.localeCompare(b.text, 'ro')).slice(0, 300);
+      },
+      alege: g => {
+        j.value = g.judet;
+        l.value = g.text;
+        scrie(); anunta('input'); anunta('change');
+      },
+    });
     const verifica = () => {
       const bun = !l.value.trim() || !ix || (j.value && localitatea(ix, j.value, l.value));
       l.classList.toggle('adr-nerecunoscut', !bun);
@@ -150,7 +166,6 @@
       if (!ix) { brut(text); s.value = text; return; }   // lista încă nu e încărcată: totul la stradă, se desface după
       const a = desface(text, ix);
       j.value = a.judet ?? '';
-      umple();
       l.value = a.localitate ?? '';
       s.value = a.strada;
       scrie();
@@ -167,7 +182,6 @@
     input.focus = () => input._adresa.focus();
 
     j.addEventListener('change', () => {
-      umple();
       if (l.value && ix && !localitatea(ix, j.value, l.value)) l.value = '';
       scrie(); anunta('input'); anunta('change');
     });
@@ -176,7 +190,7 @@
       if (ix) {
         // localitatea scrisă fără judeţ ales: dacă e într-un singur judeţ, îl alege singur
         const unde = !j.value && ix.undeE.get(normal(l.value).replace(PREFIX_LOC, ''));
-        if (unde?.size === 1) { j.value = [...unde][0]; umple(); }
+        if (unde?.size === 1) j.value = [...unde][0];
         const bun = j.value && localitatea(ix, j.value, l.value);
         if (bun) l.value = bun;   // „iasi" → „Iași"
       }

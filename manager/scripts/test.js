@@ -451,6 +451,8 @@ async function main() {
     verifica('pagina mare: intrarea în cont e în jurnal', toate.randuri.some(r => r.operatie === 'A intrat în cont'));
     verifica('pagina mare: numărătoare pe zile pt. grafic', Array.isArray(toate.peZi) && toate.peZi.length > 0 && toate.total > 0);
     verifica('pagina mare: căutare după nr. ofertei / client', (await cer('GET', `/api/activitate?tot=1&cauta=${encodeURIComponent(act[0].comanda_nr)}`)).date.randuri.every(r => r.comanda_nr === act[0].comanda_nr || (r.detalii ?? '').includes(act[0].comanda_nr)));
+    verifica('… căutarea ignoră diacriticele (fara_diacritice în SQLite)', (await cer('GET', `/api/activitate?tot=1&cauta=${encodeURIComponent('comanda')}`)).date.randuri.length
+      === (await cer('GET', `/api/activitate?tot=1&cauta=${encodeURIComponent('COMANDĂ')}`)).date.randuri.length);
     verifica('pagina mare: filtru pe operaţie', (await cer('GET', '/api/activitate?operatie=Facturată')).date.randuri.every(r => r.operatie === 'Facturată'));
   }
 
@@ -888,6 +890,12 @@ async function main() {
     const cauta = async q => (await cer('GET', '/api/clienti/cauta?q=' + encodeURIComponent(q))).date.clienti.map(c => c.nume).join();
     verifica('sugestii configurator: cei care încep cu textul, primii', await cauta('an') === 'Ana SRL,Dan', await cauta('an'));
     verifica('… sub 2 litere sau cu % tastat → nimic', await cauta('a') === '' && await cauta('%%') === '');
+    // fără diacritice (userul, 2026-10-26: „ramnicu valcea" → „Râmnicu Vâlcea")
+    db2().prepare("INSERT INTO client (nume, extern_id, versiune) VALUES ('Şerban Ţăruş Râmnicu SRL', 999, 1)").run();
+    verifica('sugestii: fără diacritice / cu altele (ş-ș, ţ-ț) / majuscule — acelaşi client',
+      await cauta('serban taru') === 'Şerban Ţăruş Râmnicu SRL' && await cauta('ȘERBAN ȚĂRUȘ') === 'Şerban Ţăruş Râmnicu SRL'
+      && await cauta('ramnicu') === 'Şerban Ţăruş Râmnicu SRL', await cauta('serban taru'));
+    db2().prepare('DELETE FROM client WHERE extern_id = 999').run();
     verifica('pagina /clienti se serveşte', (await cer('GET', '/clienti')).stare === 200);
     const ag = await cer('GET', '/api/agenti');
     verifica('admin vede conturile agenţilor (de pe Cloudflare)', ag.stare === 200 && ag.date.agenti[0]?.user === 'ion', JSON.stringify(ag.date));

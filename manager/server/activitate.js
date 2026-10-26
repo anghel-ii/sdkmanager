@@ -1,4 +1,4 @@
-const { db, peBune, esteTest, ACUM } = require('./db.js');
+const { db, peBune, esteTest, ACUM, faraDiacritice } = require('./db.js');
 const { json, eroare, corpJson } = require('./http.js');
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -173,9 +173,10 @@ function getToate(ctx) {
   if (q.get('utilizator')) { cond.push('utilizator_id = ?'); val.push(+q.get('utilizator')); }
   if (q.get('operatie'))   { cond.push('operatie = ?'); val.push(q.get('operatie')); }
   if (q.get('cauta')) {
-    const t = `%${q.get('cauta').trim().toLowerCase()}%`;
-    cond.push(`(lower(operatie) LIKE ? OR lower(IFNULL(detalii, '')) LIKE ? OR lower(IFNULL(comanda_nr, '')) LIKE ?
-                OR lower(IFNULL(client_nume, '')) LIKE ? OR lower(IFNULL(utilizator_nume, '')) LIKE ?)`);
+    // fără diacritice şi majuscule (userul, 2026-10-26)
+    const t = `%${faraDiacritice(q.get('cauta').trim())}%`;
+    cond.push(`(fara_diacritice(operatie) LIKE ? OR fara_diacritice(IFNULL(detalii, '')) LIKE ? OR fara_diacritice(IFNULL(comanda_nr, '')) LIKE ?
+                OR fara_diacritice(IFNULL(client_nume, '')) LIKE ? OR fara_diacritice(IFNULL(utilizator_nume, '')) LIKE ?)`);
     val.push(t, t, t, t, t);
   }
   const unde = cond.join(' AND ') + doarSchimbari(q.get('tot') === '1');

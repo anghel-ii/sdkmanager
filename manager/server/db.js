@@ -57,9 +57,15 @@ function configureaza(d) {
   if (typeof d.function === 'function') {
     d.function('acum', { deterministic: false }, require('./ora.js').acumSql);
     _acum = 'acum()';
+    // căutările ignoră diacriticele şi majusculele (userul, 2026-10-26: „ramnicu valcea" găseşte „Râmnicu Vâlcea"):
+    // WHERE fara_diacritice(nume) LIKE ?, cu textul căutat trecut prin faraDiacritice
+    d.function('fara_diacritice', { deterministic: true }, t => (t == null ? null : faraDiacritice(t)));
   }
   return d;
 }
+
+// fără diacritice (ş/ș, ţ/ț, ă, â, î — şi orice altă literă cu semn), litere mici
+const faraDiacritice = t => String(t).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
 // ── Modul test (userul, 2026-10-14) ──────────────────────────────────────────
 // Un lanţ de copii ale bazei (userul, 2026-10-19): baza reală → DEMO BIROU (copia comună a
@@ -662,5 +668,5 @@ function inchide() {
   if (_db) { _db.close(); _db = null; }
 }
 
-module.exports = { db, deschide, inchide, backup, ultimulBackup, tranzactie, hashSesiuniInClar, roluriNoi, ACUM,
+module.exports = { db, deschide, inchide, backup, ultimulBackup, tranzactie, hashSesiuniInClar, roluriNoi, ACUM, faraDiacritice,
   inTest, esteTest, peBune, copiaLui, copiaCurenta, sincronizeaza, copieTest, refaTest, modTestPosibil, comenziDemo, COPII };
