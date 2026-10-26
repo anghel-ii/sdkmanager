@@ -92,6 +92,16 @@ const [FG, FD, FC, FU, FM] = ['Denumire grupa', 'Denumire', 'Cod', 'UM', 'Mod fa
 const actual = new Map(randuriF.filter(r => String(r[FC] ?? '').trim()).map(r => [String(r[FC]).trim(),
   { grupa: String(r[FG] ?? '').trim(), denumire: String(r[FD] ?? '').trim(), um: String(r[FU] ?? '').trim(), mod: r[FM] }]));
 
+// Produse care nu sunt încă în exporturi — date de user (2026-10-26), denumirea exact ca în NeoManager.
+// Un export nou care le conţine are întâietate.
+const PRODUSE_ADAUGATE = {
+  '20K1301T': 'Mecanism BLUM AVENTOS HK-XS/TIP-ON, FP 500-1200, cod 20K1301T',
+  '956A1004 ALB': 'TIP-ON BLUM pt. usi,versiune lunga cu magnet,alb matase, cod 956A1004 ALB',
+  '20K1501T': 'Mecanism BLUM AVENTOS HK-XS/TIP-ON, FP 800-1600, cod 20K1501T',
+};
+for (const [cod, denumire] of Object.entries(PRODUSE_ADAUGATE))
+  if (!actual.has(cod)) actual.set(cod, { grupa: 'Balamale pentru rame', denumire, um: 'Buc', mod: '' });
+
 // de vânzare: regula exportului (371 + produsele proprii, cu preţ) SAU trecut în fişierul cu modul de facturare
 const dinExport = new Map(randuri.filter(r => String(r[COD] ?? '').trim()).map(r => [String(r[COD]).trim(), r]));
 const deVanzare = r => {
