@@ -973,20 +973,28 @@ export function deschideFisa(client, oferta = null, salvate = null, { vezi = fal
       });
     }
 
+    // cât ocupă conţinutul versoului (nu cutia lui — în previzualizare, „Vezi fişa", are oricum o foaie
+    // întreagă: măsurată cutia, schiţele uşilor ieşeau mereu la minim)
+    var spate = document.querySelector('.spate'), foaieSpate = 297 * PX * 0.98;
+    var ocupa = function () {
+      var sus = spate.getBoundingClientRect().top, jos = sus;
+      Array.prototype.forEach.call(spate.children, function (c) { jos = Math.max(jos, c.getBoundingClientRect().bottom); });
+      return jos - sus + 6 * PX;   // + marginea de jos (padding 6 mm)
+    };
+
     // Verso (uşi): schiţele cât mai mari, dar versoul pe o singură foaie — cea mai mare
     // --hmax care încape, prin înjumătăţire (la mărimi mari coloanele se pot muta pe alt
     // rând, deci nu se poate calcula direct din cât depăşeşte).
     var desene = document.querySelector('.spate .desene');
-    if (desene) {
-      var foaie = 297 * PX * 0.98, sp = document.querySelector('.spate');
+    if (spate && desene) {
       var setH = function (v) { desene.style.setProperty('--hmax', v + 'mm'); };
       var lo = 25, hi = 250;
       setH(hi);
-      if (sp.offsetHeight > foaie) {
+      if (ocupa() > foaieSpate) {
         for (var k = 0; k < 12; k++) {
           var mij = (lo + hi) / 2;
           setH(mij);
-          if (sp.offsetHeight > foaie) hi = mij; else lo = mij;
+          if (ocupa() > foaieSpate) hi = mij; else lo = mij;
         }
         setH(lo);
       }
@@ -995,14 +1003,7 @@ export function deschideFisa(client, oferta = null, salvate = null, { vezi = fal
     // Verso (rame): schiţele de găurire pornesc mari şi se micşorează — prin înjumătăţire,
     // cel mai mare factor cu care încape tot pe o foaie (altfel ce rămâne trece pe o a treia
     // pagină şi strică printul faţă-verso). Cel mult la jumătate, să rămână cotele lizibile.
-    var spate = document.querySelector('.spate'), schite = document.querySelectorAll('.gaur-desen svg');
-    var foaieSpate = 297 * PX * 0.98;
-    // cât ocupă conţinutul versoului (nu cutia lui — în previzualizare are oricum o foaie întreagă)
-    var ocupa = function () {
-      var sus = spate.getBoundingClientRect().top, jos = sus;
-      Array.prototype.forEach.call(spate.children, function (c) { jos = Math.max(jos, c.getBoundingClientRect().bottom); });
-      return jos - sus + 6 * PX;   // + marginea de jos (padding 6 mm)
-    };
+    var schite = document.querySelectorAll('.gaur-desen svg');
     if (spate && schite.length && ocupa() > foaieSpate) {
       var mari = Array.prototype.map.call(schite, function (sv) { return [parseFloat(sv.style.width), parseFloat(sv.style.height)]; });
       // cifrele cotelor nu se micşorează odată cu desenul (pe hârtie rămân ~2,4 mm, nu 1,5)
