@@ -166,7 +166,7 @@ export const titluModificaComanda = cos => (cos.comandaEditata?.plata ? 'Comanda
   : 'Comanda rămâne în lucru; se printează din nou doar fişele produselor schimbate');
 export const mesajModificaComanda = cos => (cos.comandaEditata?.plata
   ? `Modifici comanda <strong>${esc(cos.numar ?? '')}</strong> (aşteaptă plata). Dacă schimbi codurile sau cantităţile,
-  numărul ${esc(documentulText(cos.comanda?.plata))} nu mai e valabil — la salvare ţi se cere numărul nou din NeoManager.`
+  numărul ${esc(documentulText(cos.comanda?.plata))} nu mai e valabil — îl refaci în NeoManager.`
   : `Modifici comanda <strong>${esc(cos.numar ?? '')}</strong> (în lucru) — la salvare se printează din nou
   doar fişele produselor schimbate.${cos.comandaEditata?.facturata ? ` <strong>E facturată (${esc(cos.comandaEditata.facturata)})</strong>.`
     : ` Dacă schimbi codurile sau cantităţile, numărul ${esc(documentulText(cos.comanda?.plata))} nu mai e valabil — îl refaci în NeoManager.`}`);
