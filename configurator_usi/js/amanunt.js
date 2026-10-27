@@ -454,7 +454,7 @@ let card = null;
 const mesaj = (html, fel) => { $('ofertaMesaj').innerHTML = `<div class="oferta-msg ${fel}">${html}</div>`; };
 const BUTOANE = ['btnConfirma', 'btnComanda', 'btnPlata'];
 const TEXT = { btnConfirma: () => (cos.ofertaEditata ? 'Salvează modificările' : 'Salvează oferta'),
-               btnComanda: () => (cos.comandaEditata ? cosul.TEXT_MODIFICA_COMANDA : 'Salvează comanda şi printează'), btnPlata: () => 'Aşteaptă plata' };
+               btnComanda: () => (cos.comandaEditata ? cosul.textModificaComanda(cos) : 'Salvează comanda şi printează'), btnPlata: () => 'Aşteaptă plata' };
 
 function renderOferta() {
   const { stare, utilizator } = manager.stareOferta();
@@ -478,7 +478,7 @@ function renderOferta() {
   $('btnConfirma').textContent = TEXT.btnConfirma();
   $('btnComanda').textContent = TEXT.btnComanda();
   $('btnComanda').dataset.titlu = cos.adaugaLa ? `Produsele se adaugă la comanda ${cos.adaugaLa.numar} (în lucru), apoi se printează fişele lor`
-    : cos.comandaEditata ? 'Comanda rămâne în lucru; se printează din nou doar fişele produselor schimbate' : '';
+    : cos.comandaEditata ? cosul.titluModificaComanda(cos) : '';
   const t = cosul.toate(cos, curenta());
   $('ofertaUI').innerHTML = t.pozitii?.length > 1 ? `<div class="oferta-hint">${t.pozitii.length} produse în ofertă</div>` : '';
   // metoda de plată opreşte „Salvează oferta" / „Salvează comanda" (nu şi „Adaugă la comandă")
@@ -549,17 +549,17 @@ async function trimite(unde) {
 // „Adaugă la comandă": produsele se adaugă la comanda în lucru — fără transport şi fără datele clientului
 // „Modifică comanda": ca în configurator (ui.js) — PUT, apoi doar fişele produselor schimbate
 async function modificaComanda() {
-  const lipsa = campuriLipsa({ laAcceptare: true });
+  const lipsa = campuriLipsa({ laAcceptare: !cos.comandaEditata.plata });
   if (lipsa.length) { focusCamp(lipsa[0].id); return mesaj(`Completează ${lipsa.map(x => x.text).join(', ')}.`, 'eroare'); }
   const tot = cosul.toate(cos, curenta());
   if (tot.eroare) return mesaj(esc(tot.eroare), 'eroare');
-  if (!(await cosul.confirmaModificarea(cos))) return;
+  const pozitii = cosul.transportOData(tot.pozitii, liniaTransport({ comanda })).map(x => x.pozitie);
+  if (!(await cosul.confirmaModificarea(cos, pozitii))) return;
   const b = $('btnComanda');
   b.disabled = true;
   b.textContent = 'Se salvează…';
   const r = await manager.salveaza({
-    ofertaNr: $('ofertaNr').value.trim(), id: cos.ofertaEditata,
-    pozitii: cosul.transportOData(tot.pozitii, liniaTransport({ comanda })).map(x => x.pozitie),
+    ofertaNr: $('ofertaNr').value.trim(), id: cos.ofertaEditata, pozitii,
     nume: $('clientNume').value, telefon: $('clientTelefon').value, adresa: $('clientAdresa').value,
     detalii: { ...comanda }, email: '', observatii: '',
   });

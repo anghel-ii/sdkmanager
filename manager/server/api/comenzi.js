@@ -239,7 +239,8 @@ async function modifica(ctx) {
   if (c.anulat)            return eroare(ctx.res, 400, 'Oferta e anulată.');
   const eComanda = c.tip === 'comanda';
   if (eComanda && c.finalizat_la) return eroare(ctx.res, 409, 'Comanda e finalizată — nu se mai modifică.');
-  if (c.tip !== 'oferta' && !eComanda) return eroare(ctx.res, 409, 'Oferta a fost deja acceptată — nu se mai modifică.');
+  // una care aşteaptă plata se modifică şi ea (userul, 2026-10-27) — ca o ofertă: nimic printat de păstrat
+  if (!['oferta', 'plata'].includes(c.tip) && !eComanda) return eroare(ctx.res, 409, 'Oferta a fost deja acceptată — nu se mai modifică.');
 
   const v = validează(corp);
   if (v.gresit) return eroare(ctx.res, 400, v.gresit);

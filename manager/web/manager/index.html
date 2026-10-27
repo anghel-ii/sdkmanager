@@ -417,6 +417,10 @@ const stareRand = c => (c.tip === 'comanda' ? (c.finalizat_la ? 'finalizata' : '
 let eu = null;
 // „Modifică comanda" (userul, 2026-10-23): o comandă în lucru se redeschide în configurator, ca oferta
 const MODIFICA_COMANDA = 'Deschide comanda în configurator — la salvare se printează din nou doar fişele produselor schimbate';
+// la fel una care aşteaptă plata (userul, 2026-10-27); alte coduri / cantităţi → oferta trimisă clientului nu mai e valabilă
+const MODIFICA_PLATA = 'Deschide comanda în configurator — dacă se schimbă codurile sau cantităţile, oferta trimisă clientului nu mai e valabilă';
+const butonModifica = (c, id) => (c.anulat || c.finalizat_la || !['oferta', 'plata', 'comanda'].includes(c.tip) ? ''
+  : `<button id="${id}" title="${c.tip === 'comanda' ? MODIFICA_COMANDA : c.tip === 'plata' ? MODIFICA_PLATA : 'Deschide oferta în configurator'}">Modifică ${c.tip === 'oferta' ? 'oferta' : 'comanda'}</button>`);
 const poateAnulaFactura = () => eu?.rol === 'admin' || eu?.rol === 'conducere';
 // schimbarea nr. facturii cerută de birou (server/cereri.js) — aşteaptă conducerea / a fost respinsă
 const schimbareFactura = (c, r) => (r?.stare === 'deschisa'
@@ -840,7 +844,7 @@ function cardDetalii({ comanda: c, cerere, cerereFactura, cerereNumar, plataNuma
         ? pozitii.map((p, k) => `<button class="cc-fisa" data-poz="${k}" title="Vezi fişa produsului ${k + 1}: ${esc(p.eticheta)}">👁 Fişa ${esc(fise[k])}</button>`).join('')
         : '<button class="cc-fisa" data-poz="0" title="Vezi fişa (previzualizare)">👁 Vezi fişa</button>'}
       ${butoanePrint(c, printari, pozitii.length, fise)}
-      ${(eOferta || eComanda && !c.finalizat_la) && !c.anulat ? `<button id="ccModifica" title="${eComanda ? MODIFICA_COMANDA : 'Deschide oferta în configurator'}">Modifică ${eComanda ? 'comanda' : 'oferta'}</button>` : ''}
+      ${butonModifica(c, 'ccModifica')}
       ${eComanda && !c.finalizat_la && !c.anulat ? '<button data-adauga-la>+ Adaugă la comandă</button>' : ''}
     </div>
     ${treceri ? `<div class="cc-butoane cc-treceri">${treceri}</div>` : ''}
@@ -1172,7 +1176,7 @@ async function renderDetaliu(id) {
         ? pozitii.map((p, k) => `<button class="fisa-poz" data-poz="${k}" title="Vezi fişa produsului ${k + 1}: ${esc(p.eticheta)}">👁 Fişa ${esc(fise[k])}</button>`).join('')
         : '<button id="fisaDetaliu" title="Vezi fişa (previzualizare)">👁 Vezi fişa</button>'}
       ${butoanePrint(c, printari, pozitii.length, fise)}
-      ${(eOferta || eComanda && !c.finalizat_la) && !c.anulat ? `<button id="modifica" title="${eComanda ? MODIFICA_COMANDA : 'Deschide oferta în configurator'}">Modifică ${eComanda ? 'comanda' : 'oferta'}</button>` : ''}
+      ${butonModifica(c, 'modifica')}
       ${eComanda && !c.finalizat_la && !c.anulat ? '<button class="primar" data-adauga-la>+ Adaugă la comandă</button>' : ''}
       ${butoaneTreceri(c, minuteInapoi(c))}
       <button id="taskNou" title="Un task / reminder legat de comanda asta">+ Task</button>

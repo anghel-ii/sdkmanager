@@ -19,7 +19,8 @@ import { confirma } from './intrebari.js';
 //          client: { nume, telefon, adresa }, ofertaNr, comanda: { livrare, plata, incasare, agent },
 //          ofertaEditata: id | null, numar, adaugaLa: { id, numar } | null }
 //  adaugaLa = „Adaugă la comandă" din manager: produsele se ADAUGĂ la o comandă în lucru.
-//  comandaEditata = „Modifică comanda" (o comandă în lucru, nu o ofertă): { facturata: nr. facturii | null }.
+//  comandaEditata = „Modifică comanda" (o comandă în lucru sau care aşteaptă plata, nu o ofertă):
+//                   { facturata: nr. facturii | null, plata: true dacă aşteaptă plata, facturare: { cod: cantitate } la deschidere }.
 //  ciornaId = ciorna reluată (ciorna.js); modificat = ceva nesalvat pe paginile de dinainte.
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -137,18 +138,48 @@ export function dinOferta(o, gamaDin) {
     comanda: { livrare: o.comanda.livrare ?? null, plata: o.comanda.plata ?? null, incasare: o.comanda.incasare ?? null,
                agent: o.comanda.agent ?? null },
     ofertaEditata: o.comanda.id, numar: o.comanda.oferta_nr || o.comanda.numar,
-    comandaEditata: o.comanda.tip === 'comanda' ? { facturata: o.comanda.factura_nr ?? null } : null };
+    comandaEditata: o.comanda.tip === 'comanda' || o.comanda.tip === 'plata'
+      ? { facturata: o.comanda.factura_nr ?? null, plata: o.comanda.tip === 'plata', facturare: cantitatiFacturare(o.pozitii) } : null };
+}
+
+// Facturarea comasată a produselor, ca { cod: cantitate } — cu ea se vede dacă oferta trimisă clientului
+// (la „Aşteaptă plata") mai e aceeaşi: s-a schimbat un cod sau o cantitate → nu mai e valabilă.
+export function cantitatiFacturare(pozitii) {
+  const t = {};
+  for (const p of pozitii) for (const l of p.linii?.facturare ?? []) if (l.cod) t[l.cod] = Math.round(((t[l.cod] ?? 0) + +l.cantitate) * 1000) / 1000;
+  return t;
+}
+// rândurile schimbate faţă de facturarea de la deschidere: „• COD: 2 → 3" (gol = aceeaşi)
+export function diferenteFacturare(vechi, nou) {
+  return [...new Set([...Object.keys(vechi), ...Object.keys(nou)])].filter(cod => vechi[cod] !== nou[cod])
+    .map(cod => `• ${cod}: ${vechi[cod] == null ? 'nou' : String(vechi[cod])} → ${nou[cod] == null ? 'scos' : String(nou[cod])}`);
 }
 
 // „Modifică comanda" (userul, 2026-10-23) — comanda e deja în lucru: un singur buton, iar la salvare
 // se printează din nou doar fişele produselor schimbate (serverul le spune în `r.pozitii`).
-export const TEXT_MODIFICA_COMANDA = 'Salvează modificările şi printează';
-export const mesajModificaComanda = cos => `Modifici comanda <strong>${esc(cos.numar ?? '')}</strong> (în lucru) — la salvare se printează din nou
-  doar fişele produselor schimbate.${cos.comandaEditata?.facturata ? ` <strong>E facturată (${esc(cos.comandaEditata.facturata)})</strong>.` : ''}`;
-// înainte de salvare: o comandă facturată — modificările nu sunt pe factură
-export const confirmaModificarea = cos => !cos.comandaEditata?.facturata || window.confirma(
-  `Comanda ${cos.numar} e deja facturată (${cos.comandaEditata.facturata}). Modificările NU apar pe factura asta — o corectezi în NeoManager.\n\nSalvezi modificările?`,
-  'Salvez');
+// La fel o comandă care aşteaptă plata (userul, 2026-10-27) — fără fişe de printat (încă nu s-au printat).
+export const textModificaComanda = cos => (cos.comandaEditata?.plata ? 'Salvează modificările' : 'Salvează modificările şi printează');
+export const titluModificaComanda = cos => (cos.comandaEditata?.plata ? 'Comanda rămâne la „Aşteaptă plata"'
+  : 'Comanda rămâne în lucru; se printează din nou doar fişele produselor schimbate');
+export const mesajModificaComanda = cos => (cos.comandaEditata?.plata
+  ? `Modifici comanda <strong>${esc(cos.numar ?? '')}</strong> (aşteaptă plata). Dacă se schimbă codurile sau cantităţile,
+  oferta trimisă clientului nu mai e valabilă.`
+  : `Modifici comanda <strong>${esc(cos.numar ?? '')}</strong> (în lucru) — la salvare se printează din nou
+  doar fişele produselor schimbate.${cos.comandaEditata?.facturata ? ` <strong>E facturată (${esc(cos.comandaEditata.facturata)})</strong>.` : ''}`);
+// înainte de salvare: o comandă facturată — modificările nu sunt pe factură; una care aşteaptă plata, cu
+// alte coduri / cantităţi — oferta trimisă clientului nu mai e valabilă. `pozitii` = cele care se salvează.
+export async function confirmaModificarea(cos, pozitii) {
+  const e = cos.comandaEditata;
+  if (e?.facturata) {
+    return confirma(`Comanda ${cos.numar} e deja facturată (${e.facturata}). Modificările NU apar pe factura asta — o corectezi în NeoManager.\n\nSalvezi modificările?`,
+      'Salvez');
+  }
+  const dif = e?.plata ? diferenteFacturare(e.facturare ?? {}, cantitatiFacturare(pozitii)) : [];
+  if (!dif.length) return true;
+  return confirma(`Atenţie: oferta ${cos.numar} NU mai e valabilă — s-au schimbat codurile sau cantităţile:\n\n${dif.slice(0, 12).join('\n')}${
+    dif.length > 12 ? `\n… şi încă ${dif.length - 12}` : ''}\n\nFă o ofertă nouă în NeoManager şi trimite-o clientului (numărul ei nou îl scrii aici, la număr, sau din pagina comenzii).\n\nSalvezi modificările?`,
+    'Salvez');
+}
 // după salvare: sticla comandată care nu mai e în comandă, fişele de printat din nou, apoi pagina comenzii
 export async function dupaModificare(id, r, buton) {
   gataCiorna();   // salvată de-adevăratelea: fără ciornă, coşul s-a terminat

@@ -1109,9 +1109,9 @@ function cerePlata() {
 const TEXT_BUTON = { oferta: 'Salvează oferta', comanda: 'Salvează comanda şi printează', plata: 'Aşteaptă plata' };
 const textButoane = () => {
   $('btnConfirma').textContent = cos.ofertaEditata ? 'Salvează modificările' : TEXT_BUTON.oferta;
-  $('btnComanda').textContent = cos.comandaEditata ? cosul.TEXT_MODIFICA_COMANDA : TEXT_BUTON.comanda;
+  $('btnComanda').textContent = cos.comandaEditata ? cosul.textModificaComanda(cos) : TEXT_BUTON.comanda;
   $('btnComanda').dataset.titlu = cos.adaugaLa ? `Produsele se adaugă la comanda ${cos.adaugaLa.numar} (în lucru), apoi se printează fişele lor`
-    : cos.comandaEditata ? 'Comanda rămâne în lucru; se printează din nou doar fişele produselor schimbate' : '';
+    : cos.comandaEditata ? cosul.titluModificaComanda(cos) : '';
   $('btnPlata').textContent   = TEXT_BUTON.plata;
 };
 
@@ -1200,23 +1200,23 @@ async function adaugaLaComanda() {
   location.href = '/#comanda/' + id;
 }
 
-// „Modifică comanda": comanda rămâne în lucru (cu plata ei); produsele se salvează (PUT), apoi
+// „Modifică comanda": comanda rămâne în lucru (cu plata ei) sau la „Aşteaptă plata"; produsele se salvează (PUT), apoi
 // se printează din nou doar fişele celor schimbate (cosul.dupaModificare)
 async function modificaComanda() {
-  const lipsa = campuriLipsa({ laAcceptare: true });
+  const lipsa = campuriLipsa({ laAcceptare: !cos.comandaEditata.plata });
   if (lipsa.length) {
     focusCamp(lipsa[0].id);
     return mesajOferta(`Completează ${lipsa.map(x => x.text).join(', ')}.`, 'eroare');
   }
   const tot = cosul.toate(cos, curentaUsi());
   if (tot.eroare) return mesajOferta(esc(tot.eroare), 'eroare');
-  if (!(await cosul.confirmaModificarea(cos))) return;
+  const pozitii = cosul.transportOData(tot.pozitii, liniaTransport(state)).map(x => x.pozitie);
+  if (!(await cosul.confirmaModificarea(cos, pozitii))) return;
   const b = $('btnComanda');
   b.disabled = true;
   b.textContent = 'Se salvează…';
   const r = await oferta.confirma({
-    ofertaNr: $('ofertaNr').value.trim(), id: cos.ofertaEditata,
-    pozitii:  cosul.transportOData(tot.pozitii, liniaTransport(state)).map(x => x.pozitie),
+    ofertaNr: $('ofertaNr').value.trim(), id: cos.ofertaEditata, pozitii,
     nume: $('clientNume').value, telefon: $('clientTelefon').value, adresa: $('clientAdresa').value,
     detalii: detaliiComanda(state), email: '', observatii: '',
   });

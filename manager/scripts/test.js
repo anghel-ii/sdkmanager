@@ -733,8 +733,14 @@ async function main() {
     verifica('apare în tabul Aşteaptă plata, cu nr. de ofertă', tab.length === 1 && tab[0].oferta_nr === 'NM-77', JSON.stringify(tab));
     const sumarDupa = (await cer('GET', '/api/sumar')).date;
     verifica('sumar: plata +1, oferte −1', sumarDupa.plata === 1 && sumarDupa.oferte === sumarInainte.oferte - 1, JSON.stringify(sumarDupa));
-    verifica('nu se modifică din configurator', (await cer('PUT', `/api/comenzi/${pid}`, {
-      client: { nume: 'Y' }, pozitii: [pozitie('confortGamma', 'G', 1, 1200)] })).stare === 409);
+    // se modifică din configurator (userul, 2026-10-27) şi rămâne la „Aşteaptă plata"
+    const mp = await cer('PUT', `/api/comenzi/${pid}`, { client: { nume: 'Client plata' }, detalii: { plata: 'proforma_amanunt', incasare: 'cash_bf_sofer' },
+      ofertaNr: 'NM-77', pozitii: [pozitie('confortGamma', 'G', 1, 1300)] });
+    const dupaMp = db2().prepare('SELECT tip, client_nume FROM comanda WHERE id = ?').get(pid);
+    verifica('se modifică din configurator, rămâne la Aşteaptă plata', mp.stare === 200 && dupaMp.tip === 'plata' && dupaMp.client_nume === 'Client plata'
+      && db2().prepare('SELECT latime FROM pozitie WHERE comanda_id = ?').get(pid).latime === 1300, JSON.stringify([mp, dupaMp]));
+    verifica('… fără fişe de printat din nou (nu s-au printat încă)', !('pozitii' in mp.date));
+    verifica('… jurnal: „Comandă modificată"', ((await cer('GET', `/api/comenzi/${pid}/activitate`)).date.randuri ?? []).some(x => x.operatie === 'Comandă modificată'));
     verifica('nu se facturează cât aşteaptă plata', (await cer('POST', `/api/comenzi/${pid}/factura`, { numar: 'F1' })).stare === 409);
     for (const avans of [0, '', '-5', 'abc']) verifica(`plată primită cu suma ${JSON.stringify(avans)} → 400`,
       (await cer('POST', `/api/comenzi/${pid}/accepta`, { incasare: 'card', plata: 'proforma', avans, telefon: '0700', adresa: 'X' })).stare === 400);
