@@ -168,24 +168,33 @@ export const mesajModificaComanda = cos => (cos.comandaEditata?.plata
   ? `Modifici comanda <strong>${esc(cos.numar ?? '')}</strong> (aşteaptă plata). Dacă schimbi codurile sau cantităţile,
   numărul ${esc(documentulText(cos.comanda?.plata))} nu mai e valabil — la salvare ţi se cere numărul nou din NeoManager.`
   : `Modifici comanda <strong>${esc(cos.numar ?? '')}</strong> (în lucru) — la salvare se printează din nou
-  doar fişele produselor schimbate.${cos.comandaEditata?.facturata ? ` <strong>E facturată (${esc(cos.comandaEditata.facturata)})</strong>.` : ''}`);
-// înainte de salvare: o comandă facturată — modificările nu sunt pe factură; una care aşteaptă plata, cu alte
-// coduri / cantităţi — numărul ofertei / proformei din NeoManager nu mai e valabil (userul, 2026-10-27): se reface
-// documentul în NeoManager şi se cere numărul lui nou, diferit de cel vechi.
+  doar fişele produselor schimbate.${cos.comandaEditata?.facturata ? ` <strong>E facturată (${esc(cos.comandaEditata.facturata)})</strong>.`
+    : ` Dacă schimbi codurile sau cantităţile, numărul ${esc(documentulText(cos.comanda?.plata))} nu mai e valabil — îl refaci în NeoManager.`}`);
+// înainte de salvare: o comandă facturată — modificările nu sunt pe factură. Altfel, la orice comandă modificată
+// (aşteaptă plata sau în lucru — userul, 2026-10-27) cu alte coduri / cantităţi: numărul documentului din NeoManager
+// (ofertă / proformă …) nu mai e valabil — se reface documentul acolo şi se cere numărul lui nou, diferit de cel vechi.
+// Numărul unei facturi / al unui bon nu se schimbă de aici (biroul — doar cu aprobarea conducerii): avertisment, iar
+// numărul se schimbă din pagina comenzii.
 // `pozitii` = cele care se salvează, `ofertaNr` = numărul scris acum în pagină, `plata` = metoda de facturare de acum.
 // → { ofertaNr } cu care se salvează, sau null (renunţă).
+const NUMAR_FISCAL = ['fiscala', 'bon', 'avans'];
 export async function confirmaModificarea(cos, pozitii, ofertaNr, plata) {
   const e = cos.comandaEditata;
   if (e?.facturata) {
     return await confirma(`Comanda ${cos.numar} e deja facturată (${e.facturata}). Modificările NU apar pe factura asta — o corectezi în NeoManager.\n\nSalvezi modificările?`,
       'Salvez') ? { ofertaNr } : null;
   }
-  const dif = e?.plata ? diferenteFacturare(e.facturare ?? {}, cantitatiFacturare(pozitii)) : [];
+  const dif = e ? diferenteFacturare(e.facturare ?? {}, cantitatiFacturare(pozitii)) : [];
   // fără schimbări de coduri / cantităţi, sau numărul e deja altul (scris în pagină) — se salvează aşa
   if (!dif.length || (ofertaNr && ofertaNr !== e.ofertaNr)) return { ofertaNr };
   const al = documentulText(plata);
-  const text = `Ai schimbat codurile sau cantităţile:\n\n${dif.slice(0, 12).join('\n')}${dif.length > 12 ? `\n… şi încă ${dif.length - 12}` : ''}
-\nNumărul ${al}${e.ofertaNr ? ` ${e.ofertaNr}` : ''} nu mai e valabil — refă documentul în NeoManager şi scrie aici numărul nou.`;
+  const schimbat = `Ai schimbat codurile sau cantităţile:\n\n${dif.slice(0, 12).join('\n')}${dif.length > 12 ? `\n… şi încă ${dif.length - 12}` : ''}
+\nNumărul ${al}${e.ofertaNr ? ` ${e.ofertaNr}` : ''} nu mai e valabil — refă documentul în NeoManager`;
+  if (NUMAR_FISCAL.includes(plata)) {
+    return await confirma(`${schimbat}, apoi schimbă-i numărul din pagina comenzii (e document fiscal — cu aprobarea conducerii).\n\nSalvezi modificările?`,
+      'Salvez') ? { ofertaNr } : null;
+  }
+  const text = `${schimbat} şi scrie aici numărul nou.`;
   const nou = window.cereValoare ? await window.cereValoare(text, { trimite: 'Salvează cu numărul nou', valoare: e.ofertaNr ?? '', loc: 'numărul nou din NeoManager' })
     : prompt(text, e.ofertaNr ?? '')?.trim() || null;
   return nou && nou !== e.ofertaNr ? { ofertaNr: nou } : null;

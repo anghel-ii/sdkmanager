@@ -416,7 +416,7 @@ const stareRand = c => (c.tip === 'comanda' ? (c.finalizat_la ? 'finalizata' : '
 // oricum: „birou" nu poate schimba / anula un nr. de factură deja trecut.
 let eu = null;
 // „Modifică comanda" (userul, 2026-10-23): o comandă în lucru se redeschide în configurator, ca oferta
-const MODIFICA_COMANDA = 'Deschide comanda în configurator — la salvare se printează din nou doar fişele produselor schimbate';
+const MODIFICA_COMANDA = 'Deschide comanda în configurator — la salvare se printează din nou doar fişele produselor schimbate; alte coduri / cantităţi → documentul se reface în NeoManager, cu număr nou';
 // la fel una care aşteaptă plata (userul, 2026-10-27); alte coduri / cantităţi → numărul ofertei / proformei nu mai e valabil
 const MODIFICA_PLATA = 'Deschide comanda în configurator — dacă se schimbă codurile sau cantităţile, se reface oferta / proforma în NeoManager, cu număr nou';
 const butonModifica = (c, id) => (c.anulat || c.finalizat_la || !['oferta', 'plata', 'comanda'].includes(c.tip) ? ''
