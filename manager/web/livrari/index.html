@@ -178,7 +178,7 @@ const numerar = cs => cs.reduce((s, c) => s + (['bon', 'factura'].includes(c.col
 const faraColoana = c => c.de_incasat != null && !c.coloana_borderou;
 const data = s => dataOra(s).slice(0, 10);
 const INCASARI = { op_avans: 'OP avans', op_termen: 'OP la termen', bo_termen: 'BO la termen', bo_ramburs: 'BO ramburs', cash_ramburs: 'Cash ramburs',
-                   cash_bf: 'Cash BF', cash_bf_sofer: 'Cash BF la sofer', cash_ch_sofer: 'Cash CH la sofer', card: 'Card' };
+                   cash_bf: 'Cash BF', cash_ch: 'Cash chitanta', cash_bf_sofer: 'Cash BF la sofer', cash_ch_sofer: 'Cash CH la sofer', card: 'Card' };
 const PLATI = { oferta: 'Ofertă', proforma: 'Proformă', proforma_amanunt: 'Proformă amănunt', fiscala: 'Factură fiscală', bon: 'Bon fiscal', avans: 'Factură de avans' };
 
 async function api(cale, optiuni = {}) {

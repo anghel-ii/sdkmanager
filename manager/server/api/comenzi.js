@@ -151,7 +151,7 @@ const PLATI = ['oferta', 'proforma', 'proforma_amanunt', 'fiscala', 'bon', 'avan
 const NUMAR_FISCAL = ['fiscala', 'bon', 'avans'];
 // Metodele de încasare (userul, 2026-10-26) — aceleaşi coduri ca INCASARI din configurator (lib/comun/comanda.js).
 // Obligatorii la salvare (configuratorul) şi la acceptare (aici); ofertele / comenzile de dinainte nu le au.
-const INCASARI = ['op_avans', 'op_termen', 'bo_termen', 'bo_ramburs', 'cash_ramburs', 'cash_bf', 'cash_bf_sofer', 'cash_ch_sofer', 'card'];
+const INCASARI = ['op_avans', 'op_termen', 'bo_termen', 'bo_ramburs', 'cash_ramburs', 'cash_bf', 'cash_ch', 'cash_bf_sofer', 'cash_ch_sofer', 'card'];
 const DECID = ['admin', 'conducere'];
 function plataNumarului(id) {
   const p = db().prepare('SELECT config_json FROM pozitie WHERE comanda_id = ? ORDER BY idx LIMIT 1').get(id);

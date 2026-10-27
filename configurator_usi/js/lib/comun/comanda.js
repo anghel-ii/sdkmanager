@@ -19,7 +19,7 @@ export const plataText = id => PLATI.find(p => p[0] === id)?.[1] ?? null;
 // Metodele de încasare (userul, 2026-10-26: „metoda de plată" a devenit „Facturare" — documentul —, iar
 // încasarea e câmp separat, obligatoriu la orice salvare). Aceleaşi coduri ca INCASARI din manager/server/api/comenzi.js.
 export const INCASARI = [['op_avans', 'OP avans'], ['op_termen', 'OP la termen'], ['bo_termen', 'BO la termen'],
-                         ['bo_ramburs', 'BO ramburs'], ['cash_ramburs', 'Cash ramburs'], ['cash_bf', 'Cash BF'],
+                         ['bo_ramburs', 'BO ramburs'], ['cash_ramburs', 'Cash ramburs'], ['cash_bf', 'Cash BF'], ['cash_ch', 'Cash chitanta'],
                          ['cash_bf_sofer', 'Cash BF la sofer'], ['cash_ch_sofer', 'Cash CH la sofer'], ['card', 'Card']];
 export const incasareText = id => INCASARI.find(p => p[0] === id)?.[1] ?? null;
 // Numărul scris de mână (câmpul ofertaNr, în DB oferta_nr) e al documentului din NeoManager —

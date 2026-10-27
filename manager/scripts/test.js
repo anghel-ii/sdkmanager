@@ -718,6 +718,9 @@ async function main() {
     const o = await cer('POST', '/api/comenzi', { client: { nume: 'Client Plata' }, ofertaNr: ' NM-77 ',
       detalii: { plata: 'proforma_amanunt', incasare: 'cash_bf_sofer' }, pozitii: [pozitie('confortGamma', 'Confort Gamma', 2, 2000)] });
     const pid = o.date.comanda.id;
+    const och = await cer('POST', '/api/comenzi', { client: { nume: 'Cash chitanta' }, detalii: { plata: 'proforma', incasare: 'cash_ch' },
+      pozitii: [pozitie('confortGamma', 'Confort Gamma', 1, 1200)] });
+    verifica('încasarea „Cash chitanta" se salvează', db2().prepare('SELECT incasare FROM comanda WHERE id = ?').get(och.date.comanda.id).incasare === 'cash_ch');
     verifica('încasarea din configurator se salvează pe ofertă', db2().prepare('SELECT incasare FROM comanda WHERE id = ?').get(pid).incasare === 'cash_bf_sofer');
     verifica('nr. de ofertă se salvează (tăiat)', db2().prepare('SELECT oferta_nr FROM comanda WHERE id = ?').get(pid).oferta_nr === 'NM-77');
     verifica('metoda de plată din configurator se salvează pe ofertă',

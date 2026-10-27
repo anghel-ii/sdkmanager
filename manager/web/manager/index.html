@@ -336,7 +336,7 @@ const PLATI = { oferta: 'Ofertă', proforma: 'Factură proformă', proforma_aman
 const PLATI_SCURT = { ...PLATI, proforma_amanunt: 'Proformă amănunt', op: 'OP' };   // în coloana din listă
 // metoda de încasare (userul, 2026-10-26) — aceleaşi coduri ca INCASARI din server/api/comenzi.js
 const INCASARI = { op_avans: 'OP avans', op_termen: 'OP la termen', bo_termen: 'BO la termen', bo_ramburs: 'BO ramburs', cash_ramburs: 'Cash ramburs',
-                   cash_bf: 'Cash BF', cash_bf_sofer: 'Cash BF la sofer', cash_ch_sofer: 'Cash CH la sofer', card: 'Card' };
+                   cash_bf: 'Cash BF', cash_ch: 'Cash chitanta', cash_bf_sofer: 'Cash BF la sofer', cash_ch_sofer: 'Cash CH la sofer', card: 'Card' };
 // achitată = trecută prin „Aşteaptă plata" şi „Plată primită" (achitat_la); suma încasată e în `avans`
 const achitatHtml = c => `<span class="facturat" title="Plată primită ${dataOra(c.achitat_la)}">✓ achitat${c.avans > 0 ? ` ${virgulaLei(c.avans)} lei` : ''}</span>`;
 const avansHtml = c => (c.achitat_la ? achitatHtml(c) : c.avans > 0 ? `avans <strong>${virgulaLei(c.avans)} lei</strong>` : '<span class="dim">fără avans</span>');

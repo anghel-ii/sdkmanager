@@ -23,7 +23,7 @@ const lista = (...x) => x.filter(v => v != null && v !== '' && v !== false).join
 const COLOANE_BORDEROU = { bon: 'Bon', factura: 'Factură + chitanţă', op: 'OP' };
 const PLATI = { oferta: 'ofertă', proforma: 'proformă', proforma_amanunt: 'proformă cu amănuntul', fiscala: 'factură fiscală', bon: 'bon fiscal', avans: 'factură de avans' };
 const INCASARI = { op_avans: 'OP avans', op_termen: 'OP la termen', bo_termen: 'BO la termen', bo_ramburs: 'BO ramburs', cash_ramburs: 'Cash ramburs',
-                   cash_bf: 'Cash BF', cash_bf_sofer: 'Cash BF la sofer', cash_ch_sofer: 'Cash CH la sofer', card: 'Card' };
+                   cash_bf: 'Cash BF', cash_ch: 'Cash chitanta', cash_bf_sofer: 'Cash BF la sofer', cash_ch_sofer: 'Cash CH la sofer', card: 'Card' };
 const ROLURI = { admin: 'administrator', conducere: 'conducere', birou: 'birou' };
 
 // comanda unei linii de sticlă / a unei cereri de anulare / a unui task — pt. operaţiile care n-o au în adresă
