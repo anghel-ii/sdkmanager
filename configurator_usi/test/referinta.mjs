@@ -380,6 +380,13 @@ for (const sys of Object.values(systems).filter(s => s.meta.family === 'suspenda
   verifica(bareManer('L40', 1450, 2) === 1, `L40 2 × 1450 = 2900 utili: aştept 1 bară, am ${bareManer('L40', 1450, 2)}`);
   verifica(bareManer('L32', 1500, 2) === 2, `L32 2 × 1500 > 2900 utili: aştept 2 bare, am ${bareManer('L32', 1500, 2)}`);
   verifica(bareManer('Neo', 1500, 2) === 1, `Neo 2 × 1500 = 3000: aştept 1 bară, am ${bareManer('Neo', 1500, 2)}`);
+  // balamaua: la „de pregătit" (şi în listă) denumirea din vechiul formular, la facturare cea din NeoManager (userul, 2026-10-27)
+  state.rame.balama = '71B3550 NICHEL'; state.rame.placuta = '173H7100 NICHEL'; buildConfig();
+  const nec = cod => currentBom().find(x => x.code === cod)?.label, fact = cod => currentBilling().lines.find(x => x.cod === cod)?.denumire;
+  verifica(nec('71B3550 NICHEL') === '820 BALAMA APLICATA CU AMORTIZARE INCORPORATA FINISAJ NICHEL DESCHIDERE 110 GRADE COD 71B3550 NICHEL', `balama de pregătit: ${nec('71B3550 NICHEL')}`);
+  verifica(nec('173H7100 NICHEL') === '820 PLACUTA IN CRUCE REGLAJ CU EXCENTRIC FINISAJ NICHEL COD 173H7100 NICHEL', `placuta de pregătit: ${nec('173H7100 NICHEL')}`);
+  verifica(/^Balama CLIP TOP usa aplicata BLUMOTION/.test(fact('71B3550 NICHEL') ?? ''), `balama facturată: ${fact('71B3550 NICHEL')}`);
+  state.rame.balama = null; state.rame.placuta = null;
   state.rame.maner = { randuri: [{ model: 'L40', lungime: 2950, buc: 1 }] }; buildConfig();
   verifica(currentSpec().erori.some(e => /2950 mm e mai lungă decât bara de 3000 mm \(2900 mm utili\)/.test(e)), `L40 2950: ${currentSpec().erori}`);
   // schiţa de găurire (verso): cotele de sus, la centrul găurii
@@ -388,7 +395,7 @@ for (const sys of Object.values(systems).filter(s => s.meta.family === 'suspenda
   verifica(c(2000, 3, '100 mm sus/jos si la mijloc') === '[100,1000,1900]', `cote la mijloc: ${c(2000, 3, '100 mm sus/jos si la mijloc')}`);
   verifica(c(1999, 4, '100 mm sus/jos si impartite egal') === '[100,699.7,1299.3,1899]', `cote egale: ${c(1999, 4, '100 mm sus/jos si impartite egal')}`);
   verifica(c(800, 3, 'vezi schita pe spate') === 'null' && c(800, 2, 'Fara gaurire') === '[]', 'schiţa clientului / fără găurire');
-  console.log('✓ rame: 2 găuri la „sus/jos", bare de mâner de 3000 mm (L: 2900 utili), cotele schiţei de găurire');
+  console.log('✓ rame: 2 găuri la „sus/jos", bare de mâner de 3000 mm (L: 2900 utili), balamalele cu denumirea colegilor, cotele schiţei de găurire');
 }
 
 // Cote pe fiecare ramă (userul, 2026-10-12): găurile = cotele scrise sub rând, de sus sau de jos;

@@ -3,7 +3,7 @@ import { systems } from './systems/registry.js';
 import { currentSpec } from './builder.js';
 import {
   MODELE_RAME, ASAMBLARE, GAURIRE_820, GAURIRE_831,
-  BALAMALE, PLACUTE, FARA_BALAMALE, FARA_PLACUTE, FARA_GAURIRE, DOUA_GAURI, COTE_PE_RAMA, BARA_MANER_MM, MODELE_MANER, codManer,
+  BALAMALE, PLACUTE, denumireColegi, FARA_BALAMALE, FARA_PLACUTE, FARA_GAURIRE, DOUA_GAURI, COTE_PE_RAMA, BARA_MANER_MM, MODELE_MANER, codManer,
   stareRameGoala, randGol, randManerGol, cotaGoala, geamPermisRame, SCHITA_CLIENT, schiteRame, MAX_SCHITE,
 } from './lib/rame/rame.js';
 import { findGeam } from './lib/rame/geam.js';
@@ -236,9 +236,9 @@ export function renderRame(box, { rebuild, geamOptionsHtml }) {
     <div class="rame-nota" id="rameManerBare"></div>
 
     ${faraGaurire ? '' : `${camp('Balama', `<select class="rame-sel" data-c="balama">${
-      optiuni([[FARA_BALAMALE, FARA_BALAMALE], ...BALAMALE[model]], x.balama, 'Alege balama')}</select>`)}
+      optiuni([[FARA_BALAMALE, FARA_BALAMALE], ...BALAMALE[model].map(b => [b[0], denumireColegi(b)])], x.balama, 'Alege balama')}</select>`)}
     ${camp('Plăcuţă', `<select class="rame-sel" data-c="placuta">${
-      optiuni([[FARA_PLACUTE, FARA_PLACUTE], ...PLACUTE[model]], x.placuta, 'Alege placuta')}</select>`)}`}
+      optiuni([[FARA_PLACUTE, FARA_PLACUTE], ...PLACUTE[model].map(p => [p[0], denumireColegi(p)])], x.placuta, 'Alege placuta')}</select>`)}`}
     ${camp('Schiţă de găurire', `${x.schite.length ? `<div class="rame-schite">${x.schite.map((s, k) => `<div class="rame-schite-una">
         <img src="${s}" alt="Schiţa ${k + 1}"><button type="button" class="rame-schita-sterge" data-k="${k}" title="Şterge schiţa ${k + 1}">✕</button></div>`).join('')}</div>` : ''}
       ${x.schite.length < MAX_SCHITE ? `<div class="rame-schita" id="rameSchita"><span>${x.schite.length
