@@ -29,6 +29,8 @@ const DOCUMENT = { oferta: ['ofertă', 'ofertei'], proforma: ['proformă', 'prof
                    fiscala: ['factură', 'facturii'], bon: ['bon', 'bonului'], avans: ['factură de avans', 'facturii de avans'] };
 const document_ = plata => DOCUMENT[plata] ?? DOCUMENT.oferta;
 export const numarText = plata => `Număr ${document_(plata)[0]}`;
+// „proformei", „ofertei" … — pt. mesaje („numărul proformei …")
+export const documentulText = plata => document_(plata)[1];
 
 // Ofertele de rame salvate înainte le aveau în state.rame — se citesc şi de acolo.
 export const detaliiComanda = state => ({

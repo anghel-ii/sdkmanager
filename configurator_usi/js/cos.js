@@ -3,6 +3,7 @@ import { copyRows } from './lib/comun/clipboard.js';
 import { qtyText } from './lib/comun/num.js';
 import { pleaca, gata as gataCiorna, goleste as golesteCiorna } from './ciorna.js';
 import { confirma } from './intrebari.js';
+import { documentulText } from './lib/comun/comanda.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  COŞUL OFERTEI — o ofertă poate avea mai multe produse (userul, 2026-10-01):
@@ -20,7 +21,8 @@ import { confirma } from './intrebari.js';
 //          ofertaEditata: id | null, numar, adaugaLa: { id, numar } | null }
 //  adaugaLa = „Adaugă la comandă" din manager: produsele se ADAUGĂ la o comandă în lucru.
 //  comandaEditata = „Modifică comanda" (o comandă în lucru sau care aşteaptă plata, nu o ofertă):
-//                   { facturata: nr. facturii | null, plata: true dacă aşteaptă plata, facturare: { cod: cantitate } la deschidere }.
+//                   { facturata: nr. facturii | null, plata: true dacă aşteaptă plata, facturare: { cod: cantitate } la deschidere,
+//                     ofertaNr: nr. documentului din NeoManager la deschidere }.
 //  ciornaId = ciorna reluată (ciorna.js); modificat = ceva nesalvat pe paginile de dinainte.
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -139,11 +141,12 @@ export function dinOferta(o, gamaDin) {
                agent: o.comanda.agent ?? null },
     ofertaEditata: o.comanda.id, numar: o.comanda.oferta_nr || o.comanda.numar,
     comandaEditata: o.comanda.tip === 'comanda' || o.comanda.tip === 'plata'
-      ? { facturata: o.comanda.factura_nr ?? null, plata: o.comanda.tip === 'plata', facturare: cantitatiFacturare(o.pozitii) } : null };
+      ? { facturata: o.comanda.factura_nr ?? null, plata: o.comanda.tip === 'plata', facturare: cantitatiFacturare(o.pozitii),
+          ofertaNr: o.comanda.oferta_nr ?? '' } : null };
 }
 
 // Facturarea comasată a produselor, ca { cod: cantitate } — cu ea se vede dacă oferta trimisă clientului
-// (la „Aşteaptă plata") mai e aceeaşi: s-a schimbat un cod sau o cantitate → nu mai e valabilă.
+// (la „Aşteaptă plata") mai e aceeaşi: s-a schimbat un cod sau o cantitate → numărul ei nu mai e valabil.
 export function cantitatiFacturare(pozitii) {
   const t = {};
   for (const p of pozitii) for (const l of p.linii?.facturare ?? []) if (l.cod) t[l.cod] = Math.round(((t[l.cod] ?? 0) + +l.cantitate) * 1000) / 1000;
@@ -162,23 +165,30 @@ export const textModificaComanda = cos => (cos.comandaEditata?.plata ? 'Salveaz�
 export const titluModificaComanda = cos => (cos.comandaEditata?.plata ? 'Comanda rămâne la „Aşteaptă plata"'
   : 'Comanda rămâne în lucru; se printează din nou doar fişele produselor schimbate');
 export const mesajModificaComanda = cos => (cos.comandaEditata?.plata
-  ? `Modifici comanda <strong>${esc(cos.numar ?? '')}</strong> (aşteaptă plata). Dacă se schimbă codurile sau cantităţile,
-  oferta trimisă clientului nu mai e valabilă.`
+  ? `Modifici comanda <strong>${esc(cos.numar ?? '')}</strong> (aşteaptă plata). Dacă schimbi codurile sau cantităţile,
+  numărul ${esc(documentulText(cos.comanda?.plata))} nu mai e valabil — la salvare ţi se cere numărul nou din NeoManager.`
   : `Modifici comanda <strong>${esc(cos.numar ?? '')}</strong> (în lucru) — la salvare se printează din nou
   doar fişele produselor schimbate.${cos.comandaEditata?.facturata ? ` <strong>E facturată (${esc(cos.comandaEditata.facturata)})</strong>.` : ''}`);
-// înainte de salvare: o comandă facturată — modificările nu sunt pe factură; una care aşteaptă plata, cu
-// alte coduri / cantităţi — oferta trimisă clientului nu mai e valabilă. `pozitii` = cele care se salvează.
-export async function confirmaModificarea(cos, pozitii) {
+// înainte de salvare: o comandă facturată — modificările nu sunt pe factură; una care aşteaptă plata, cu alte
+// coduri / cantităţi — numărul ofertei / proformei din NeoManager nu mai e valabil (userul, 2026-10-27): se reface
+// documentul în NeoManager şi se cere numărul lui nou, diferit de cel vechi.
+// `pozitii` = cele care se salvează, `ofertaNr` = numărul scris acum în pagină, `plata` = metoda de facturare de acum.
+// → { ofertaNr } cu care se salvează, sau null (renunţă).
+export async function confirmaModificarea(cos, pozitii, ofertaNr, plata) {
   const e = cos.comandaEditata;
   if (e?.facturata) {
-    return confirma(`Comanda ${cos.numar} e deja facturată (${e.facturata}). Modificările NU apar pe factura asta — o corectezi în NeoManager.\n\nSalvezi modificările?`,
-      'Salvez');
+    return await confirma(`Comanda ${cos.numar} e deja facturată (${e.facturata}). Modificările NU apar pe factura asta — o corectezi în NeoManager.\n\nSalvezi modificările?`,
+      'Salvez') ? { ofertaNr } : null;
   }
   const dif = e?.plata ? diferenteFacturare(e.facturare ?? {}, cantitatiFacturare(pozitii)) : [];
-  if (!dif.length) return true;
-  return confirma(`Atenţie: oferta ${cos.numar} NU mai e valabilă — s-au schimbat codurile sau cantităţile:\n\n${dif.slice(0, 12).join('\n')}${
-    dif.length > 12 ? `\n… şi încă ${dif.length - 12}` : ''}\n\nFă o ofertă nouă în NeoManager şi trimite-o clientului (numărul ei nou îl scrii aici, la număr, sau din pagina comenzii).\n\nSalvezi modificările?`,
-    'Salvez');
+  // fără schimbări de coduri / cantităţi, sau numărul e deja altul (scris în pagină) — se salvează aşa
+  if (!dif.length || (ofertaNr && ofertaNr !== e.ofertaNr)) return { ofertaNr };
+  const al = documentulText(plata);
+  const text = `Ai schimbat codurile sau cantităţile:\n\n${dif.slice(0, 12).join('\n')}${dif.length > 12 ? `\n… şi încă ${dif.length - 12}` : ''}
+\nNumărul ${al}${e.ofertaNr ? ` ${e.ofertaNr}` : ''} nu mai e valabil — refă documentul în NeoManager şi scrie aici numărul nou.`;
+  const nou = window.cereValoare ? await window.cereValoare(text, { trimite: 'Salvează cu numărul nou', valoare: e.ofertaNr ?? '', loc: 'numărul nou din NeoManager' })
+    : prompt(text, e.ofertaNr ?? '')?.trim() || null;
+  return nou && nou !== e.ofertaNr ? { ofertaNr: nou } : null;
 }
 // după salvare: sticla comandată care nu mai e în comandă, fişele de printat din nou, apoi pagina comenzii
 export async function dupaModificare(id, r, buton) {

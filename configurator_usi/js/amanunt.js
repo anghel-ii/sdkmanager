@@ -554,12 +554,14 @@ async function modificaComanda() {
   const tot = cosul.toate(cos, curenta());
   if (tot.eroare) return mesaj(esc(tot.eroare), 'eroare');
   const pozitii = cosul.transportOData(tot.pozitii, liniaTransport({ comanda })).map(x => x.pozitie);
-  if (!(await cosul.confirmaModificarea(cos, pozitii))) return;
+  const ok = await cosul.confirmaModificarea(cos, pozitii, $('ofertaNr').value.trim(), comanda.plata);
+  if (!ok) return;
+  $('ofertaNr').value = ok.ofertaNr;
   const b = $('btnComanda');
   b.disabled = true;
   b.textContent = 'Se salvează…';
   const r = await manager.salveaza({
-    ofertaNr: $('ofertaNr').value.trim(), id: cos.ofertaEditata, pozitii,
+    ofertaNr: ok.ofertaNr, id: cos.ofertaEditata, pozitii,
     nume: $('clientNume').value, telefon: $('clientTelefon').value, adresa: $('clientAdresa').value,
     detalii: { ...comanda }, email: '', observatii: '',
   });
