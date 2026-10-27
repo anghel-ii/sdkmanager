@@ -1,4 +1,4 @@
-import { raspuns, clientDinCerere, agentLogat, eManager, vedereAgent } from '../../../lib/comun.js';
+import { raspuns, clientDinCerere, agentLogat, eManager, vedereAgent, scrieDirect, numeAgenti } from '../../../lib/comun.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  GET   manager (Bearer CHEIE_MANAGER): ?dupa=<versiune> → tot ce s-a adăugat
@@ -6,8 +6,9 @@ import { raspuns, clientDinCerere, agentLogat, eManager, vedereAgent } from '../
 //        Şi cei şterşi (sters_la completat) — copia managerului îi scoate.
 //        agent logat: clienţii LUI (agent = numele lui), cu propunerile lui în
 //        aşteptare peste ei + clienţii noi încă neaprobaţi.
+//        cont de conducere: TOŢI clienţii + agenţii pe care îi poate primi un client.
 //  POST  agent logat: client nou, pe numele lui — ca PROPUNERE, până o aprobă cineva
-//        din manager (vezi api/propuneri).
+//        din manager (vezi api/propuneri). Conducerea: direct, cu agentul ales.
 // ═══════════════════════════════════════════════════════════════════════════
 
 export async function onRequestGet({ request, env }) {
@@ -19,6 +20,10 @@ export async function onRequestGet({ request, env }) {
   }
   const agent = await agentLogat(request, env);
   if (!agent) return raspuns(401, { eroare: 'Nu eşti logat.' });
+  if (agent.rol === 'conducere') {
+    const { results } = await env.DB.prepare('SELECT * FROM client WHERE sters_la IS NULL ORDER BY nume COLLATE NOCASE').all();
+    return raspuns(200, { agent: agent.nume, admin: !!agent.admin, conducere: true, agenti: await numeAgenti(env), clienti: results });
+  }
   const [clienti, propuneri] = await env.DB.batch([
     env.DB.prepare('SELECT * FROM client WHERE agent = ? AND sters_la IS NULL ORDER BY nume COLLATE NOCASE').bind(agent.nume),
     env.DB.prepare('SELECT * FROM propunere WHERE agent = ?').bind(agent.nume),
@@ -33,6 +38,10 @@ export async function onRequestGet({ request, env }) {
 export async function onRequestPost({ request, env }) {
   const agent = await agentLogat(request, env);
   if (!agent) return raspuns(401, { eroare: 'Nu eşti logat.' });
+  if (agent.rol === 'conducere') {
+    const r = await scrieDirect(request, env, null);
+    return r.eroare ? raspuns(r.cod, { eroare: r.eroare }) : raspuns(201, { client: r.client });
+  }
   const { v, eroare } = await clientDinCerere(request, true);
   if (eroare) return raspuns(400, { eroare });
   const p = await env.DB.prepare(`INSERT INTO propunere (client_id, agent, date_json, creat_la)

@@ -93,14 +93,17 @@
 <!-- 2. Clienţii agentului, ca un tabel de Excel -->
 <section id="ecranTabel" hidden>
   <div class="cap">
-    <div><h1>Clienţii mei</h1><span class="dim" id="agent"></span></div>
+    <div><h1 id="titlu">Clienţii mei</h1><span class="dim" id="agent"></span></div>
     <span class="spatiu"></span>
     <input id="cauta" type="search" placeholder="Caută nume, CUI, localitate, telefon…">
     <span class="dim" id="numar"></span>
     <button id="iesire">Ieşi</button>
   </div>
   <div id="mesaj" role="status"></div>
-  <p class="dim ajutor">Scrii direct în celule (Enter = rândul de jos). Când ieşi de pe un rând, modificarea se
+  <p class="dim ajutor" id="ajutorConducere" hidden>Cont de conducere: vezi toţi clienţii şi scrii direct în celule — modificarea
+    se salvează imediat, fără aprobare. Schimbi agentul unui client (îl alegi din listă) → clientul trece la noul agent, care îl
+    vede şi îl poate modifica din contul lui. Judeţul şi localitatea se aleg din listă. Reducerile: doar numărul (15 = 15%).</p>
+  <p class="dim ajutor" id="ajutorAgent">Scrii direct în celule (Enter = rândul de jos). Când ieşi de pe un rând, modificarea se
     trimite spre aprobare — până e aprobată, rândul e galben. Client nou: primul rând, cu nume şi un telefon sau e-mail.
     Judeţul şi localitatea se aleg din listă (pt. curier şi livrări). Reducerile: doar numărul (15 = 15%).</p>
   <div class="foaie"><table id="tabel"></table></div>
@@ -115,6 +118,8 @@
 //  coloană pe fiecare gamă de reducere. Ce modifică / adaugă aşteaptă APROBAREA
 //  din manager (pagina Clienţi) — până atunci rândul e galben.
 //  API: functions/api/{login,logout,clienti,propuneri}.
+//  Contul de CONDUCERE (userul, 2026-10-27): toţi clienţii, coloana Agent în plus,
+//  salvare directă (fără aprobare); agentul schimbat = clientul trece la el.
 //
 //  Reducerile stau în baza de date tot în câmpul `discounturi`, ca text
 //  („LUX 15%, CONFORT 15%, …", la fel ca în Excel-ul firmei); aici textul se
@@ -149,6 +154,9 @@ const compuneReduceri = (pe, alte) =>
   [...GAME.filter(g => pe[g]).map(g => `${g} ${pe[g]}%`), ...(alte ? [alte] : [])].join(', ') || '';
 
 let clienti = [];
+let conducere = false, agentiPosibili = [];   // contul de conducere + agenţii pe care îi poate primi un client
+let COL = COLOANE;                            // coloanele afişate: la conducere şi Agent, după nume
+const MAX_RANDURI = 500;                      // la conducere sunt mii — se văd primii, căutarea ajunge la oricare
 // textul unui rând, aşa cum era când a intrat pe ecran — ca să ştim dacă s-a schimbat ceva
 const salvat = new Map();
 const textMesaj = (t, tip) => { $('mesaj').textContent = t; $('mesaj').className = tip || ''; };
@@ -170,6 +178,12 @@ async function incarca() {
   const j = await api('/api/clienti');
   clienti = j.clienti.sort(ordine);
   $('agent').textContent = j.agent;
+  conducere = !!j.conducere;
+  agentiPosibili = j.agenti ?? [];
+  COL = conducere ? [COLOANE[0], ['agent', 'Agent', 170], ...COLOANE.slice(1)] : COLOANE;
+  $('titlu').textContent = conducere ? 'Toţi clienţii' : 'Clienţii mei';
+  $('ajutorConducere').hidden = !conducere;
+  $('ajutorAgent').hidden = conducere;
   $('banda').hidden = !j.admin;
   $('banda').textContent = `Eşti în contul lui ${j.agent}, intrat din manager (admin). Ce modifici aici se vede la agent.`;
   randeaza();
@@ -180,7 +194,7 @@ async function incarca() {
 // `k` = poziţia în `clienti`; rândul gol de sus (client nou, userul 2026-10-02) are k = 'nou'.
 const valoriRand = c => {
   const { pe, alte } = desfaReduceri(c?.discounturi);
-  return { ...Object.fromEntries(COLOANE.map(([k]) => [k, c?.[k] ?? ''])), ...Object.fromEntries(GAME.map(g => [`g:${g}`, pe[g] ?? ''])), alte };
+  return { ...Object.fromEntries(COL.map(([k]) => [k, c?.[k] ?? ''])), ...Object.fromEntries(GAME.map(g => [`g:${g}`, pe[g] ?? ''])), alte };
 };
 const stareHtml = c => !c ? '' : c.inAsteptare
   ? `<span class="pastila astept" title="Trimis ${esc(c.trimis_la ?? '')} — aşteaptă aprobarea">⏳ ${c.inAsteptare === 'nou' ? 'nou' : 'modificat'}</span>` : '';
@@ -189,7 +203,7 @@ function randHtml(c, k) {
   const v = valoriRand(c);
   const celula = (cheie, clasa = '') => `<td contenteditable="plaintext-only" spellcheck="false" data-c="${esc(cheie)}"${clasa ? ` class="${clasa}"` : ''}>${esc(v[cheie])}</td>`;
   return `<tr data-k="${k}" class="${c?.inAsteptare ? 'astept' : k === 'nou' ? 'nou' : ''}">
-    ${COLOANE.map(([cheie]) => celula(cheie, cheie === 'nume' ? 'nume' : '')).join('')}
+    ${COL.map(([cheie]) => celula(cheie, cheie === 'nume' ? 'nume' : '')).join('')}
     ${GAME.map(g => celula(`g:${g}`, 'gama')).join('')}
     ${celula('alte')}
     <td class="stare">${stareHtml(c)}</td>
@@ -198,16 +212,18 @@ function randHtml(c, k) {
 
 function randeaza() {
   const q = normal($('cauta').value.trim());
-  const arataK = clienti.map((c, k) => k).filter(k => !q || normal(Object.values(clienti[k]).join(' ')).includes(q));
-  $('numar').textContent = `${arataK.length} ${arataK.length === 1 ? 'client' : 'clienţi'}`;
-  const latime = [...COLOANE.map(c => c[2]), ...GAME.map(() => 74), 160, 110];
+  const gasiti = clienti.map((c, k) => k).filter(k => !q || normal(Object.values(clienti[k]).join(' ')).includes(q));
+  const arataK = gasiti.slice(0, MAX_RANDURI);
+  $('numar').textContent = `${gasiti.length} ${gasiti.length === 1 ? 'client' : 'clienţi'}${
+    gasiti.length > arataK.length ? ` — se văd primii ${arataK.length}, caută ca să-l găseşti pe cel dorit` : ''}`;
+  const latime = [...COL.map(c => c[2]), ...GAME.map(() => 74), 160, 110];
   $('tabel').style.width = `${latime.reduce((a, w) => a + w, 0)}px`;
   $('tabel').innerHTML = `
     <colgroup>${latime.map(w => `<col style="width:${w}px">`).join('')}</colgroup>
     <thead>
-      <tr class="grup"><th class="nume"></th><th colspan="${COLOANE.length - 1}"></th>
+      <tr class="grup"><th class="nume"></th><th colspan="${COL.length - 1}"></th>
         <th colspan="${GAME.length + 1}">REDUCERI PE GAME (%)</th><th></th></tr>
-      <tr class="coloane">${COLOANE.map(([k, t]) => `<th${k === 'nume' ? ' class="nume"' : ''}>${t}</th>`).join('')}
+      <tr class="coloane">${COL.map(([k, t]) => `<th${k === 'nume' ? ' class="nume"' : ''}>${t}</th>`).join('')}
         ${GAME.map(g => `<th class="gama">${g}</th>`).join('')}<th>Alte</th><th>Stare</th></tr>
     </thead>
     <tbody>${randHtml(null, 'nou')}${arataK.map(k => randHtml(clienti[k], k)).join('')}</tbody>`;
@@ -228,7 +244,8 @@ async function salveazaRand(tr) {
   if (gresita) return arataEroare(tr, `Reducerea la ${gresita} trebuie să fie un număr (ex. 15).`);
   const adresa = adresaGresita(v, salvat.has(k) ? JSON.parse(salvat.get(k)) : null);
   if (adresa) return arataEroare(tr, adresa);
-  const date = { ...Object.fromEntries(COLOANE.map(([cheie]) => [cheie, v[cheie]])), discounturi: compuneReduceri(reduceri, v.alte) };
+  if (conducere && v.agent && !agentiPosibili.includes(v.agent)) return arataEroare(tr, `Agentul „${v.agent}" nu există — alege-l din listă.`);
+  const date = { ...Object.fromEntries(COL.map(([cheie]) => [cheie, v[cheie]])), discounturi: compuneReduceri(reduceri, v.alte) };
   if (!c?.id && ![date.telefon_administrator, date.telefon_delegat, date.email].some(Boolean)) {
     return arataEroare(tr, 'Client nou: completează cel puţin un telefon sau e-mailul.');
   }
@@ -240,15 +257,18 @@ async function salveazaRand(tr) {
     const { client } = await api(cale, { method: c ? 'PUT' : 'POST', body: JSON.stringify(date) });
     if (c) clienti[+k] = client; else clienti.push(client);
     tr.classList.remove('greseala');
+    // conducerea salvează direct; agentul schimbat = clientul a trecut la el
+    const gata = !conducere ? 'trimis spre aprobare.'
+      : c && client.agent !== c.agent ? `salvat — trecut la ${client.agent || 'niciun agent'}.` : 'salvat.';
     if (!c) {   // rândul nou a devenit client — tabelul se reface (apare alt rând gol)
       randeaza();
-      textMesaj(`✓ ${client.nume} — trimis spre aprobare.`, 'ok');
+      textMesaj(`✓ ${client.nume} — ${gata}`, 'ok');
       return;
     }
     salvat.set(k, JSON.stringify(citesteRand(tr)));
-    tr.className = 'astept';
-    stare.innerHTML = stareHtml(client);
-    textMesaj(`✓ ${client.nume} — trimis spre aprobare.`, 'ok');
+    tr.className = conducere ? '' : 'astept';
+    stare.innerHTML = conducere ? '<span class="pastila ok">✓ salvat</span>' : stareHtml(client);
+    textMesaj(`✓ ${client.nume} — ${gata}`, 'ok');
   } catch (err) {
     arataEroare(tr, textEroare(err));
   }
@@ -295,11 +315,14 @@ const celula = (tr, c) => tr.querySelector(`td[data-c="${c}"]`);
 // lista de sugestii sub celula activă
 let sug = { td: null, valori: [], activ: 0 };
 function arataSugestii(td) {
-  if (!LOC) return;
   const q = fara(td.textContent);
   const tr = td.closest('tr');
   let valori;
-  if (td.dataset.c === 'judet') {
+  if (td.dataset.c === 'agent') {
+    valori = agentiPosibili.filter(a => !q || fara(a).includes(q)).map(a => ({ agent: a }));
+  } else if (!LOC) {
+    return;
+  } else if (td.dataset.c === 'judet') {
     valori = Object.keys(LOC.judete).filter(j => !q || fara(j).includes(q)).map(j => ({ judet: j }));
   } else {
     if (!q) return ascundeSugestii();
@@ -316,7 +339,7 @@ function arataSugestii(td) {
   if (!valori.length) return ascundeSugestii();
   sug = { td, valori, activ: 0 };
   const el = $('sugestii');
-  el.innerHTML = valori.map((v, i) => `<div data-i="${i}"${i ? '' : ' class="activ"'}>${esc(v.localitate ?? v.judet)}${
+  el.innerHTML = valori.map((v, i) => `<div data-i="${i}"${i ? '' : ' class="activ"'}>${esc(v.agent ?? v.localitate ?? v.judet)}${
     v.localitate && td.dataset.c === 'localitate' && !judetDin(celula(tr, 'judet').textContent) ? `<span class="jud">${esc(v.judet)}</span>` : ''}</div>`).join('');
   el.hidden = false;
   aseazaSugestii();
@@ -333,7 +356,9 @@ function alegeSugestia(i) {
   const v = sug.valori[i], td = sug.td;
   if (!v || !td) return;
   const tr = td.closest('tr');
-  if (td.dataset.c === 'judet') {
+  if (td.dataset.c === 'agent') {
+    td.textContent = v.agent;
+  } else if (td.dataset.c === 'judet') {
     td.textContent = v.judet;
     const l = celula(tr, 'localitate');
     if (l.textContent.trim() && !localitateDin(v.judet, l.textContent)) l.textContent = '';   // localitatea din alt judeţ
@@ -350,8 +375,10 @@ $('sugestii').addEventListener('mousedown', e => {
   if (d) alegeSugestia(+d.dataset.i);
 });
 $('tabel').addEventListener('input', e => {
-  if (e.target.matches('td[data-c="judet"], td[data-c="localitate"]')) arataSugestii(e.target);
+  if (e.target.matches('td[data-c="judet"], td[data-c="localitate"], td[data-c="agent"]')) arataSugestii(e.target);
 });
+$('tabel').addEventListener('focusin', e => { if (e.target.matches('td[data-c="agent"]')) arataSugestii(e.target); });
+$('tabel').addEventListener('focusout', e => { if (sug.td === e.target && e.target.dataset.c === 'agent') ascundeSugestii(); }, true);
 const laIntrare = new WeakMap();   // textul celulei când ai intrat în ea — corectăm doar ce s-a scris
 $('tabel').addEventListener('focusin', e => {
   if (!e.target.matches('td[data-c="judet"], td[data-c="localitate"]')) return;

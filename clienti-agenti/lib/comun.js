@@ -97,11 +97,11 @@ export const stergeCookie = `${COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Stri
 
 const tokenDin = request => request.headers.get('Cookie')?.match(new RegExp(`(?:^|;\\s*)${COOKIE}=([^;]+)`))?.[1];
 
-// agentul logat ({ id, nume, admin }) sau null — admin = 1 dacă e adminul intrat în contul lui
+// agentul logat ({ id, nume, admin, rol }) sau null — admin = 1 dacă e adminul intrat în contul lui
 export async function agentLogat(request, env) {
   const token = tokenDin(request);
   if (!token) return null;
-  return env.DB.prepare(`SELECT a.id, a.nume, s.admin FROM sesiune s JOIN agent a ON a.id = s.agent_id
+  return env.DB.prepare(`SELECT a.id, a.nume, a.rol, s.admin FROM sesiune s JOIN agent a ON a.id = s.agent_id
     WHERE s.token_hash = ? AND s.expira_la > datetime('now') AND a.activ = 1`).bind(await sha256(token)).first();
 }
 
@@ -136,6 +136,47 @@ export async function nuEAdmin(request, env) {
 
 // următoarea versiune — la fiecare adăugare/modificare; managerul cere „după versiunea X"
 export const VERSIUNE_NOUA = '(SELECT COALESCE(MAX(versiune), 0) + 1 FROM client)';
+
+// ── Scriere DIRECTĂ, fără aprobare: managerul (pagina Clienţi) şi conturile de conducere ──
+// Agentul unui client = numele unui cont de agent sau o valoare care e deja în coloana AGENT
+// (BIROU, SITE…) — altfel o greşeală de scriere ar lăsa clientul fără nimeni care să-l vadă.
+// Agenţii pe care îi poate primi un client: conturile de agent + ce e deja în coloana AGENT
+export async function numeAgenti(env) {
+  const { results } = await env.DB.prepare(`SELECT nume FROM agent WHERE rol = 'agent'
+    UNION SELECT agent FROM client WHERE agent IS NOT NULL AND sters_la IS NULL ORDER BY 1`).all();
+  return results.map(r => r.nume);
+}
+const agentGresit = async (env, nume) => nume && !(await numeAgenti(env)).includes(nume)
+  && `Agentul „${nume}" nu există — alege-l din listă.`;
+
+// clientul (neşters) cu id-ul ăsta, sau null
+export const clientul = (env, id) => env.DB.prepare('SELECT * FROM client WHERE id = ? AND sters_la IS NULL').bind(+id || 0).first();
+
+// Câmpurile din cerere (+ agent) → client modificat (id) sau nou (id null). Clientul care
+// schimbă agentul trece la cel nou; modificarea în aşteptare a celui vechi pe el se pierde.
+// → { client } sau { cod, eroare }
+export async function scrieDirect(request, env, id) {
+  const { v, eroare } = await clientDinCerere(request.clone(), !id);
+  if (eroare) return { cod: 400, eroare };
+  const agent = text((await request.json()).agent, 120);
+  const gresit = await agentGresit(env, agent);
+  if (gresit) return { cod: 400, eroare: gresit };
+  const col = Object.keys(CAMPURI);
+  if (!id) {
+    const c = await env.DB.prepare(`INSERT INTO client (agent, ${col.join(', ')}, creat_la, modificat_la, versiune)
+      VALUES (?${', ?'.repeat(col.length)}, datetime('now'), datetime('now'), ${VERSIUNE_NOUA}) RETURNING *`)
+      .bind(agent, ...col.map(k => v[k])).first();
+    return { client: c };
+  }
+  const vechi = await clientul(env, id);
+  if (!vechi) return { cod: 404, eroare: 'Clientul nu mai există — l-a şters cineva între timp.' };
+  await env.DB.batch([
+    env.DB.prepare(`UPDATE client SET agent = ?, ${col.map(k => `${k} = ?`).join(', ')}, modificat_la = datetime('now'),
+        versiune = ${VERSIUNE_NOUA} WHERE id = ?`).bind(agent, ...col.map(k => v[k]), vechi.id),
+    ...(agent === vechi.agent ? [] : [env.DB.prepare('DELETE FROM propunere WHERE client_id = ?').bind(vechi.id)]),
+  ]);
+  return { client: await clientul(env, id) };
+}
 
 // O propunere (client nou / modificare în aşteptarea aprobării) aşa cum o vede agentul:
 // clientul cu valorile propuse peste cele de acum + cum se recunoaşte.

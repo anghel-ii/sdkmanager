@@ -943,6 +943,10 @@ async function main() {
       && primitAgent?.metoda === 'POST' && primitAgent.nume === 'Maria', JSON.stringify(creat));
     verifica('admin: dezactivare ajunge la Cloudflare', (await cer('PATCH', '/api/agenti', { nume: 'Ion', activ: false })).stare === 200
       && primitAgent.metoda === 'PATCH' && primitAgent.activ === false);
+    verifica('admin: tipul contului (agent → conducere) ajunge la Cloudflare', (await cer('PATCH', '/api/agenti', { nume: 'Ion', rol: 'conducere' })).stare === 200
+      && primitAgent.metoda === 'PATCH' && primitAgent.rol === 'conducere');
+    verifica('admin: cont nou de conducere — tipul trece prin server', (await cer('POST', '/api/agenti', { nume: 'Sef', rol: 'conducere' })).stare === 200
+      && primitAgent.rol === 'conducere');
     const intra = await cer('POST', '/api/agenti/intra', { nume: 'Ion' });
     verifica('admin: „Intră ca agent" → linkul de intrare', intra.stare === 200 && intra.date.url.includes('/api/intra?t='), JSON.stringify(intra.date));
 

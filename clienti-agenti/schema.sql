@@ -10,7 +10,11 @@ CREATE TABLE IF NOT EXISTS agent (
   user        TEXT NOT NULL UNIQUE,
   nume        TEXT NOT NULL UNIQUE,   -- exact ca în coloana AGENT din Excel
   parola_hash TEXT NOT NULL,          -- pbkdf2$<iteraţii>$<sare>$<hash>, vezi lib/comun.js
-  activ       INTEGER NOT NULL DEFAULT 1
+  activ       INTEGER NOT NULL DEFAULT 1,
+  -- 'agent' = îşi vede clienţii, modificările aşteaptă aprobarea; 'conducere' (userul, 2026-10-27) = vede şi
+  -- modifică direct TOŢI clienţii, inclusiv agentul lor (clientul trece la noul agent). Pe baza veche (remote):
+  --   ALTER TABLE agent ADD COLUMN rol TEXT NOT NULL DEFAULT 'agent';
+  rol         TEXT NOT NULL DEFAULT 'agent'
 );
 
 CREATE TABLE IF NOT EXISTS sesiune (

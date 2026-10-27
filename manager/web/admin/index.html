@@ -147,11 +147,16 @@
 
       <!-- Conturile agenţilor de vânzări — stau pe Cloudflare (clienti-agenti/) -->
       <section class="card">
-        <div class="card-cap"><h2>Agenţi de vânzări</h2><span class="spatiu"></span>
+        <div class="card-cap"><h2>Agenţi de vânzări şi conducere</h2><span class="spatiu"></span>
           <span class="dim mic">intră pe <span class="mono">clienti-agenti.pages.dev</span></span></div>
         <form class="linie" id="formAgent" autocomplete="off" style="margin:0 0 12px">
-          <label>Cont nou pentru agentul
-            <input id="agentNume" placeholder="numele, exact ca în coloana Agent" required>
+          <label>Cont nou pentru
+            <input id="agentNume" placeholder="agent: numele exact ca în coloana Agent" required>
+          </label>
+          <label>Tip cont
+            <select id="agentRol" title="Agent: îşi vede clienţii, modificările aşteaptă aprobarea. Conducere: vede şi modifică direct toţi clienţii, inclusiv agentul lor.">
+              <option value="agent">Agent</option><option value="conducere">Conducere</option>
+            </select>
           </label>
           <button type="submit" class="primar">Creează</button>
         </form>
@@ -404,11 +409,14 @@ async function incarcaAgenti() {
   $('agenti').className = 'tabel-lat';
   $('agenti').innerHTML = !agenti.length ? 'Niciun cont de agent.' : `
     <table class="tab">
-      <thead><tr><th>Nume</th><th>Utilizator</th><th class="num">Clienţi</th><th>Logat acum</th><th></th></tr></thead>
+      <thead><tr><th>Nume</th><th>Utilizator</th><th>Tip cont</th><th class="num">Clienţi</th><th>Logat acum</th><th></th></tr></thead>
       <tbody>${agenti.map((a, i) => `<tr data-i="${i}"${a.activ ? '' : ' class="dim"'}>
         <td>${esc(a.nume)}${a.activ ? '' : '<small class="stare-dezactivat">dezactivat</small>'}</td>
         <td class="mono">${esc(a.user)}</td>
-        <td class="num">${a.clienti}</td>
+        <td><select class="rol mic" title="Conducere: vede şi modifică direct toţi clienţii, inclusiv agentul lor">
+          <option value="agent"${a.rol === 'conducere' ? '' : ' selected'}>Agent</option>
+          <option value="conducere"${a.rol === 'conducere' ? ' selected' : ''}>Conducere</option></select></td>
+        <td class="num">${a.rol === 'conducere' ? '<span class="dim">toţi</span>' : a.clienti}</td>
         <td>${a.sesiuni ? `<span class="punct acum"></span>da${a.sesiuni > 1 ? `, pe ${a.sesiuni} dispozitive` : ''}` : '<span class="dim">nu</span>'}</td>
         <td class="actiuni">
           ${a.activ ? '<button class="mic intra" title="Deschide site-ul agenţilor în contul lui, fără să-i schimbi parola">Intră ca agent</button>' : ''}
@@ -420,8 +428,8 @@ async function incarcaAgenti() {
 }
 
 // cont nou sau parolă nouă → parola se arată o singură dată, cu buton de copiere
-async function parolaAgent(nume) {
-  const r = await api('/api/agenti', { method: 'POST', body: JSON.stringify({ nume }) });
+async function parolaAgent(nume, rol) {
+  const r = await api('/api/agenti', { method: 'POST', body: JSON.stringify({ nume, rol }) });
   if (!r) return;
   if (!r.ok) { $('mesajAgent').innerHTML = `<div class="mesaj eroare">${esc(await eroareDin(r))}</div>`; return; }
   const a = await r.json();
@@ -430,7 +438,8 @@ async function parolaAgent(nume) {
     ${a.nou ? 'Cont creat' : 'Parolă nouă (agentul a fost delogat de peste tot)'} pentru <strong>${esc(a.nume)}</strong>:<br>
     user <strong class="mono">${esc(a.user)}</strong> · parolă <strong class="mono parola">${esc(a.parola)}</strong>
     <button class="mic" id="copiazaAgent" type="button">Copiază pentru agent</button>
-    ${a.clienti ? `<div class="mic" style="margin-top:6px">Vede ${a.clienti} clienţi.</div>`
+    ${a.rol === 'conducere' ? '<div class="mic" style="margin-top:6px">Cont de conducere: vede şi modifică toţi clienţii.</div>'
+      : a.clienti ? `<div class="mic" style="margin-top:6px">Vede ${a.clienti} clienţi.</div>`
       : `<div class="mic" style="margin-top:6px">⚠ Niciun client pe numele „${esc(a.nume)}" — verifică să fie scris exact ca în coloana Agent.</div>`}
   </div>`;
   $('copiazaAgent').addEventListener('click', async e => { e.target.textContent = await copiazaText(text) ? '✓ Copiat' : 'Nu s-a putut copia'; });
@@ -451,8 +460,22 @@ $('formAgent').addEventListener('submit', async e => {
   e.preventDefault();
   const nume = $('agentNume').value.trim();
   if (agenti.some(a => a.nume === nume)) return alerta(`${nume} are deja cont — foloseşte „Parolă nouă" din tabel.`);
-  await parolaAgent(nume);
+  await parolaAgent(nume, $('agentRol').value);
   $('formAgent').reset();
+});
+// tipul contului: agent ↔ conducere (contul e delogat, ca să reintre cu drepturile noi)
+$('agenti').addEventListener('change', async e => {
+  const a = agenti[e.target.closest('tr')?.dataset.i];
+  if (!a || !e.target.classList.contains('rol')) return;
+  const rol = e.target.value;
+  const text = rol === 'conducere'
+    ? `${a.nume} devine cont de CONDUCERE: vede şi modifică direct toţi clienţii, inclusiv agentul lor.\n\nE delogat şi intră din nou cu aceeaşi parolă.`
+    : `${a.nume} devine cont de AGENT: vede doar clienţii cu numele lui, modificările aşteaptă aprobarea.\n\nE delogat şi intră din nou cu aceeaşi parolă.`;
+  if (await confirma(text, 'Schimbă')) {
+    const r = await api('/api/agenti', { method: 'PATCH', body: JSON.stringify({ nume: a.nume, rol }) });
+    if (r && !r.ok) await alerta(await eroareDin(r));
+  }
+  incarcaAgenti();
 });
 $('agenti').addEventListener('click', async e => {
   const a = agenti[e.target.closest('tr')?.dataset.i];
@@ -466,7 +489,7 @@ $('agenti').addEventListener('click', async e => {
     if (w) w.location = url; else location.href = url;
   } else if (e.target.classList.contains('parola-noua')) {
     if (await confirma(`Parolă nouă pentru ${a.nume}?\n\nCea veche nu mai merge şi agentul e delogat de pe toate telefoanele.`, 'Parolă nouă'))
-      parolaAgent(a.nume);
+      parolaAgent(a.nume, a.rol);
   } else if (e.target.classList.contains('activ')) {
     const text = a.activ ? `Dezactivezi contul lui ${a.nume}? Nu mai poate intra, e delogat imediat.` : `Reactivezi contul lui ${a.nume}?`;
     if (!await confirma(text, a.activ ? 'Dezactivează' : 'Reactivează')) return;
