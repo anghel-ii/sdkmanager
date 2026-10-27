@@ -14,7 +14,10 @@ CREATE TABLE IF NOT EXISTS agent (
   -- 'agent' = îşi vede clienţii, modificările aşteaptă aprobarea; 'conducere' (userul, 2026-10-27) = vede şi
   -- modifică direct TOŢI clienţii, inclusiv agentul lor (clientul trece la noul agent). Pe baza veche (remote):
   --   ALTER TABLE agent ADD COLUMN rol TEXT NOT NULL DEFAULT 'agent';
-  rol         TEXT NOT NULL DEFAULT 'agent'
+  rol         TEXT NOT NULL DEFAULT 'agent',
+  -- parolele greşite din ultimele 15 minute (JSON, ms); 10 → contul blocat 15 minute (userul, 2026-10-27).
+  --   ALTER TABLE agent ADD COLUMN esecuri TEXT;
+  esecuri     TEXT
 );
 
 CREATE TABLE IF NOT EXISTS sesiune (
@@ -54,7 +57,10 @@ CREATE TABLE IF NOT EXISTS client (
   -- şters din manager (conducerea, 2026-10-27): rândul rămâne, cu versiune nouă, ca ştergerea
   -- să ajungă şi în copiile managerului; agenţii nu-l mai văd. Pe baza veche (remote):
   --   ALTER TABLE client ADD COLUMN sters_la TEXT;
-  sters_la              TEXT
+  sters_la              TEXT,
+  -- cine a făcut ultima modificare (userul, 2026-10-27): contul de conducere, omul din manager,
+  -- sau agentul + cine i-a aprobat-o.   ALTER TABLE client ADD COLUMN modificat_de TEXT;
+  modificat_de          TEXT
 );
 CREATE INDEX IF NOT EXISTS client_versiune ON client(versiune);
 CREATE INDEX IF NOT EXISTS client_agent    ON client(agent);

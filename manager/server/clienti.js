@@ -17,7 +17,7 @@ const { config } = require('./config.js');
 
 // coloanele din Excel-ul de clienţi (+ agent) — aceleaşi pe Cloudflare
 const CAMPURI = ['agent', 'nume', 'cui', 'judet', 'localitate', 'adresa_sediu', 'adresa_livrare', 'administrator',
-  'telefon_administrator', 'email', 'delegat', 'telefon_delegat', 'discounturi', 'creat_la', 'modificat_la', 'versiune', 'sters_la'];
+  'telefon_administrator', 'email', 'delegat', 'telefon_delegat', 'discounturi', 'creat_la', 'modificat_la', 'versiune', 'sters_la', 'modificat_de'];
 
 // cheia managerului: din mediu, altfel cea lipită în /admin
 const cheie = () => config.clientiCheie
@@ -90,11 +90,13 @@ async function preiaAcum({ res }) {
 // pagina /admin le vede şi le administrează prin serverul ăsta, cu cheia
 // managerului. Nimic nu se ţine aici — parola nouă trece doar în răspuns.
 // O cerere la Cloudflare cu cheia managerului → { stare, date } sau { eroare: [cod, mesaj] }.
-async function laCF(metoda, cale, corp) {
+// `de` = omul din manager care scrie — ajunge în client.modificat_de.
+async function laCF(metoda, cale, corp, de) {
   let r;
   try {
     r = await fetch(`${config.clientiUrl}${cale}`, { method: metoda, body: corp,
-      headers: { Authorization: `Bearer ${cheie()}`, 'Content-Type': 'application/json' },
+      headers: { Authorization: `Bearer ${cheie()}`, 'Content-Type': 'application/json',
+        ...(de ? { 'X-Modificat-De': encodeURIComponent(de) } : {}) },
       signal: AbortSignal.timeout(15000) });
   } catch (e) {
     return { eroare: [502, `Cloudflare nu răspunde: ${e.message}`] };
@@ -141,10 +143,12 @@ async function propuneri({ res }) {
   if (Date.now() - deAprobat.la > 15 * 1000) await reimprospateazaPropuneri();
   json(res, 200, { activ: true, propuneri: deAprobat.propuneri });
 }
-async function decide({ res, params }) {
+const numele = u => u?.nume || u?.user;
+
+async function decide({ res, params, utilizator }) {
   if (!['aproba', 'respinge'].includes(params.actiune)) return eroare(res, 404, 'Acţiune necunoscută.');
   if (!activ()) return eroare(res, 409, 'Legătura cu Cloudflare nu e configurată.');
-  const r = await laCF('POST', `/api/propuneri/${encodeURIComponent(params.id)}/${params.actiune}`);
+  const r = await laCF('POST', `/api/propuneri/${encodeURIComponent(params.id)}/${params.actiune}`, undefined, numele(utilizator));
   if (r.eroare) return eroare(res, ...r.eroare);
   if (r.stare === 200 && params.actiune === 'aproba') await preia();   // intră imediat şi în copia de aici
   await reimprospateazaPropuneri();   // insigna scade la toţi
@@ -152,10 +156,11 @@ async function decide({ res, params }) {
 }
 // Conducerea modifică (direct, fără aprobare) sau şterge un client — :id = id-ul de pe
 // Cloudflare (extern_id). Copia de aici se ia de acolo imediat după, ca la aprobare.
-async function modificaSauSterge({ req, res, params }) {
+async function modificaSauSterge({ req, res, params, utilizator }) {
   if (!/^\d+$/.test(params.id)) return eroare(res, 404, 'Client necunoscut.');
   if (!activ()) return eroare(res, 409, 'Legătura cu Cloudflare nu e configurată.');
-  const r = await laCF(req.method, `/api/clienti/${params.id}`, req.method === 'PUT' ? JSON.stringify(await corpJson(req)) : undefined);
+  const r = await laCF(req.method, `/api/clienti/${params.id}`, req.method === 'PUT' ? JSON.stringify(await corpJson(req)) : undefined,
+    numele(utilizator));
   if (r.eroare) return eroare(res, ...r.eroare);
   if (r.stare === 200) await preia();
   json(res, r.stare, r.date);

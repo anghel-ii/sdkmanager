@@ -197,7 +197,9 @@ const valoriRand = c => {
   return { ...Object.fromEntries(COL.map(([k]) => [k, c?.[k] ?? ''])), ...Object.fromEntries(GAME.map(g => [`g:${g}`, pe[g] ?? ''])), alte };
 };
 const stareHtml = c => !c ? '' : c.inAsteptare
-  ? `<span class="pastila astept" title="Trimis ${esc(c.trimis_la ?? '')} — aşteaptă aprobarea">⏳ ${c.inAsteptare === 'nou' ? 'nou' : 'modificat'}</span>` : '';
+  ? `<span class="pastila astept" title="Trimis ${esc(c.trimis_la ?? '')} — aşteaptă aprobarea">⏳ ${c.inAsteptare === 'nou' ? 'nou' : 'modificat'}</span>`
+  // conducerea: cine a modificat ultima dată (şi când, la mouse)
+  : conducere && c.modificat_de ? `<span class="dim" title="Modificat ${esc(c.modificat_la ?? '')} de ${esc(c.modificat_de)}">${esc(c.modificat_de)}</span>` : '';
 
 function randHtml(c, k) {
   const v = valoriRand(c);
@@ -216,7 +218,7 @@ function randeaza() {
   const arataK = gasiti.slice(0, MAX_RANDURI);
   $('numar').textContent = `${gasiti.length} ${gasiti.length === 1 ? 'client' : 'clienţi'}${
     gasiti.length > arataK.length ? ` — se văd primii ${arataK.length}, caută ca să-l găseşti pe cel dorit` : ''}`;
-  const latime = [...COL.map(c => c[2]), ...GAME.map(() => 74), 160, 110];
+  const latime = [...COL.map(c => c[2]), ...GAME.map(() => 74), 160, conducere ? 190 : 110];
   $('tabel').style.width = `${latime.reduce((a, w) => a + w, 0)}px`;
   $('tabel').innerHTML = `
     <colgroup>${latime.map(w => `<col style="width:${w}px">`).join('')}</colgroup>
@@ -224,7 +226,7 @@ function randeaza() {
       <tr class="grup"><th class="nume"></th><th colspan="${COL.length - 1}"></th>
         <th colspan="${GAME.length + 1}">REDUCERI PE GAME (%)</th><th></th></tr>
       <tr class="coloane">${COL.map(([k, t]) => `<th${k === 'nume' ? ' class="nume"' : ''}>${t}</th>`).join('')}
-        ${GAME.map(g => `<th class="gama">${g}</th>`).join('')}<th>Alte</th><th>Stare</th></tr>
+        ${GAME.map(g => `<th class="gama">${g}</th>`).join('')}<th>Alte</th><th>${conducere ? 'Modificat de' : 'Stare'}</th></tr>
     </thead>
     <tbody>${randHtml(null, 'nou')}${arataK.map(k => randHtml(clienti[k], k)).join('')}</tbody>`;
   salvat.clear();
@@ -267,7 +269,7 @@ async function salveazaRand(tr) {
     }
     salvat.set(k, JSON.stringify(citesteRand(tr)));
     tr.className = conducere ? '' : 'astept';
-    stare.innerHTML = conducere ? '<span class="pastila ok">✓ salvat</span>' : stareHtml(client);
+    stare.innerHTML = stareHtml(client);
     textMesaj(`✓ ${client.nume} — ${gata}`, 'ok');
   } catch (err) {
     arataEroare(tr, textEroare(err));

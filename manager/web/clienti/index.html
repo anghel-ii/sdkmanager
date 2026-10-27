@@ -170,7 +170,7 @@ function randeaza() {
     <thead><tr><th>Client</th><th>Agent</th><th>Judeţ / localitate</th><th>Sediu / livrare</th><th>Administrator</th><th>E-mail</th><th>Delegat</th><th>Discounturi</th>${poateAproba() ? '<th></th>' : ''}</tr></thead>
     <tbody>${arata.map(c => `<tr data-id="${c.extern_id}">
       <td><b>${esc(c.nume)}</b><br><span class="dim mic">${esc(c.cui)}</span></td>
-      <td>${esc(c.agent)}${c.modificat_la ? `<br><span class="dim mic" title="ultima modificare de la agent">${dataOra(c.modificat_la)}</span>` : ''}</td>
+      <td>${esc(c.agent)}${c.modificat_la ? `<br><span class="dim mic" title="ultima modificare">${dataOra(c.modificat_la)}${c.modificat_de ? ` · ${esc(c.modificat_de)}` : ''}</span>` : ''}</td>
       <td>${doua(esc(c.judet), esc(c.localitate))}</td>
       <td>${doua(esc(c.adresa_sediu), c.adresa_livrare ? 'Livrare: ' + esc(c.adresa_livrare) : '')}</td>
       <td>${doua(esc(c.administrator), tel(c.telefon_administrator))}</td>

@@ -6,6 +6,11 @@ singur schimbările la 5 minute (`manager/server/clienti.js`).
 
 - Agentul intră cu user + parolă şi vede doar clienţii cu numele lui în coloana AGENT;
   îi poate modifica şi poate adăuga clienţi noi (pe numele lui). Nu poate şterge.
+- Login: 10 parole greşite în 15 minute → contul blocat 15 minute (`agent.esecuri`); „Parolă nouă" îl deblochează.
+- `client.modificat_de` = cine a făcut ultima modificare: contul de conducere, omul din manager (antetul
+  X-Modificat-De), „Agent, aprobat de X" la propuneri, cine a şters. Pe baza remote, o singură dată, ÎNAINTE de publicare:
+  `npx wrangler d1 execute clienti-agenti --remote --command="ALTER TABLE agent ADD COLUMN esecuri TEXT"` şi
+  `npx wrangler d1 execute clienti-agenti --remote --command="ALTER TABLE client ADD COLUMN modificat_de TEXT"`.
 - Conturi de CONDUCERE (`agent.rol = 'conducere'`, alese din /admin al managerului: „Tip cont"): văd TOŢI clienţii,
   cu coloana Agent în plus, şi scriu direct, fără aprobare (şi clienţi noi). Agentul schimbat = clientul trece la noul
   agent (îl vede şi îl modifică din contul lui); modificarea în aşteptare a celui vechi pe el se pierde. Agentul trebuie

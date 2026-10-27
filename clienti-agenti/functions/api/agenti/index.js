@@ -44,7 +44,7 @@ export async function onRequestPost({ request, env }) {
   let user = exista?.user;
   if (exista) {
     await env.DB.batch([
-      env.DB.prepare('UPDATE agent SET parola_hash = ?, activ = 1 WHERE nume = ?').bind(hash, nume),
+      env.DB.prepare('UPDATE agent SET parola_hash = ?, activ = 1, esecuri = NULL WHERE nume = ?').bind(hash, nume),   // şi deblocat
       delogheaza(env, nume),
     ]);
   } else {

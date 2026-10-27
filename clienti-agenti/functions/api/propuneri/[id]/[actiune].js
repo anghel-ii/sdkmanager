@@ -1,4 +1,4 @@
-import { raspuns, eManager, CAMPURI, VERSIUNE_NOUA } from '../../../../lib/comun.js';
+import { raspuns, eManager, CAMPURI, VERSIUNE_NOUA, deCine } from '../../../../lib/comun.js';
 
 // POST /api/propuneri/:id/aproba   — DOAR managerul: propunerea intră în `client`
 //      (client nou sau modificat, cu versiune nouă → managerul o preia), apoi dispare.
@@ -12,12 +12,13 @@ export async function onRequestPost({ request, env, params }) {
   if (params.actiune === 'respinge') { await sterge.run(); return raspuns(200, { ok: true }); }
 
   const v = JSON.parse(p.date_json), col = Object.keys(CAMPURI);
+  const aprobator = deCine(request, null), de = aprobator ? `${p.agent}, aprobat de ${aprobator}` : p.agent;
   const scrie = p.client_id
     ? env.DB.prepare(`UPDATE client SET ${col.map(k => `${k} = ?`).join(', ')}, modificat_la = datetime('now'),
-        versiune = ${VERSIUNE_NOUA} WHERE id = ?`).bind(...col.map(k => v[k] ?? null), p.client_id)
-    : env.DB.prepare(`INSERT INTO client (agent, ${col.join(', ')}, creat_la, modificat_la, versiune)
-        VALUES (?${', ?'.repeat(col.length)}, ?, datetime('now'), ${VERSIUNE_NOUA})`)
-        .bind(p.agent, ...col.map(k => v[k] ?? null), p.creat_la);
+        modificat_de = ?, versiune = ${VERSIUNE_NOUA} WHERE id = ?`).bind(...col.map(k => v[k] ?? null), de, p.client_id)
+    : env.DB.prepare(`INSERT INTO client (agent, ${col.join(', ')}, creat_la, modificat_la, modificat_de, versiune)
+        VALUES (?${', ?'.repeat(col.length)}, ?, datetime('now'), ?, ${VERSIUNE_NOUA})`)
+        .bind(p.agent, ...col.map(k => v[k] ?? null), p.creat_la, de);
   await env.DB.batch([scrie, sterge]);   // amândouă sau niciuna
   return raspuns(200, { ok: true });
 }

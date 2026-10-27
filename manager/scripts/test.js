@@ -489,7 +489,7 @@ async function main() {
     const idVechi = Number(db2().prepare("INSERT INTO utilizator (nume, user, parola_hash, parola_salt, rol) VALUES ('Vechi', 'vechi', 'x', 'x', 'operator')").run().lastInsertRowid);
     require('../server/db.js').roluriNoi(db2());
     verifica('migraţie: operator → birou', db2().prepare('SELECT rol FROM utilizator WHERE id = ?').get(idVechi).rol === 'birou');
-    verifica('schema la versiunea 37', db2().prepare('PRAGMA user_version').get().user_version === 37);
+    verifica('schema la versiunea 38', db2().prepare('PRAGMA user_version').get().user_version === 38);
   }
 
   console.log('\nFixare şi sortare — per utilizator');
@@ -894,8 +894,10 @@ async function main() {
         const id = +cl[1];
         if (!externi.has(id) || externi.get(id).sters_la) { r.writeHead(404); return r.end(JSON.stringify({ eroare: 'Clientul nu mai există.' })); }
         let corp = ''; q.on('data', b => corp += b);
+        const modificat_de = decodeURIComponent(q.headers['x-modificat-de'] ?? '');
         return q.on('end', () => {
-          schimba(q.method === 'PUT' ? { id, ...JSON.parse(corp), modificat_la: '2026-10-27 10:00:00' } : { id, sters_la: '2026-10-27 10:05:00' });
+          schimba(q.method === 'PUT' ? { id, ...JSON.parse(corp), modificat_la: '2026-10-27 10:00:00', modificat_de }
+            : { id, sters_la: '2026-10-27 10:05:00', modificat_de });
           r.end(JSON.stringify({ ok: true }));
         });
       }
@@ -979,6 +981,7 @@ async function main() {
     const dan2 = db2().prepare('SELECT * FROM client WHERE extern_id = 2').get();
     verifica('conducerea modifică un client → imediat în copia de aici, cu agentul nou', mod.stare === 200
       && dan2.nume === 'Dan Modificat' && dan2.agent === 'Maria' && dan2.judet === 'VASLUI', JSON.stringify(dan2));
+    verifica('… cu numele omului din manager la „modificat de"', dan2.modificat_de === 'Ion Conducere', JSON.stringify(dan2.modificat_de));
     verifica('… şi apare în jurnalul de activitate', !!db2().prepare("SELECT 1 FROM activitate WHERE operatie = 'Client modificat' AND detalii LIKE 'Dan Modificat%'").get());
     const st = await cer('DELETE', '/api/clienti/3');
     verifica('conducerea şterge un client → dispare din listă şi din sugestii', st.stare === 200

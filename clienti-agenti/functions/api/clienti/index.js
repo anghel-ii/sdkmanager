@@ -1,4 +1,4 @@
-import { raspuns, clientDinCerere, agentLogat, eManager, vedereAgent, scrieDirect, numeAgenti } from '../../../lib/comun.js';
+import { raspuns, clientDinCerere, agentLogat, eManager, vedereAgent, scrieDirect, numeAgenti, deCine } from '../../../lib/comun.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  GET   manager (Bearer CHEIE_MANAGER): ?dupa=<versiune> → tot ce s-a adăugat
@@ -39,7 +39,7 @@ export async function onRequestPost({ request, env }) {
   const agent = await agentLogat(request, env);
   if (!agent) return raspuns(401, { eroare: 'Nu eşti logat.' });
   if (agent.rol === 'conducere') {
-    const r = await scrieDirect(request, env, null);
+    const r = await scrieDirect(request, env, null, deCine(request, agent));
     return r.eroare ? raspuns(r.cod, { eroare: r.eroare }) : raspuns(201, { client: r.client });
   }
   const { v, eroare } = await clientDinCerere(request, true);

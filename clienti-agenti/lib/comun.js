@@ -149,13 +149,22 @@ export async function numeAgenti(env) {
 const agentGresit = async (env, nume) => nume && !(await numeAgenti(env)).includes(nume)
   && `Agentul „${nume}" nu există — alege-l din listă.`;
 
+// Cine scrie — pt. client.modificat_de. Managerul trimite numele omului în antetul
+// X-Modificat-De (encodeURIComponent); pe site, contul logat (+ „admin" dacă e adminul intrat în el).
+export function deCine(request, agent) {
+  if (!agent) {
+    try { return text(decodeURIComponent(request.headers.get('X-Modificat-De') || ''), 120); } catch { return null; }
+  }
+  return agent.admin ? `${agent.nume} (admin)` : agent.nume;
+}
+
 // clientul (neşters) cu id-ul ăsta, sau null
 export const clientul = (env, id) => env.DB.prepare('SELECT * FROM client WHERE id = ? AND sters_la IS NULL').bind(+id || 0).first();
 
 // Câmpurile din cerere (+ agent) → client modificat (id) sau nou (id null). Clientul care
 // schimbă agentul trece la cel nou; modificarea în aşteptare a celui vechi pe el se pierde.
-// → { client } sau { cod, eroare }
-export async function scrieDirect(request, env, id) {
+// `de` = cine scrie (deCine). → { client } sau { cod, eroare }
+export async function scrieDirect(request, env, id, de) {
   const { v, eroare } = await clientDinCerere(request.clone(), !id);
   if (eroare) return { cod: 400, eroare };
   const agent = text((await request.json()).agent, 120);
@@ -163,16 +172,16 @@ export async function scrieDirect(request, env, id) {
   if (gresit) return { cod: 400, eroare: gresit };
   const col = Object.keys(CAMPURI);
   if (!id) {
-    const c = await env.DB.prepare(`INSERT INTO client (agent, ${col.join(', ')}, creat_la, modificat_la, versiune)
-      VALUES (?${', ?'.repeat(col.length)}, datetime('now'), datetime('now'), ${VERSIUNE_NOUA}) RETURNING *`)
-      .bind(agent, ...col.map(k => v[k])).first();
+    const c = await env.DB.prepare(`INSERT INTO client (agent, ${col.join(', ')}, creat_la, modificat_la, modificat_de, versiune)
+      VALUES (?${', ?'.repeat(col.length)}, datetime('now'), datetime('now'), ?, ${VERSIUNE_NOUA}) RETURNING *`)
+      .bind(agent, ...col.map(k => v[k]), de).first();
     return { client: c };
   }
   const vechi = await clientul(env, id);
   if (!vechi) return { cod: 404, eroare: 'Clientul nu mai există — l-a şters cineva între timp.' };
   await env.DB.batch([
     env.DB.prepare(`UPDATE client SET agent = ?, ${col.map(k => `${k} = ?`).join(', ')}, modificat_la = datetime('now'),
-        versiune = ${VERSIUNE_NOUA} WHERE id = ?`).bind(agent, ...col.map(k => v[k]), vechi.id),
+        modificat_de = ?, versiune = ${VERSIUNE_NOUA} WHERE id = ?`).bind(agent, ...col.map(k => v[k]), de, vechi.id),
     ...(agent === vechi.agent ? [] : [env.DB.prepare('DELETE FROM propunere WHERE client_id = ?').bind(vechi.id)]),
   ]);
   return { client: await clientul(env, id) };
