@@ -984,12 +984,12 @@ export function deschideFisa(client, oferta = null, salvate = null, { vezi = fal
 
     // Verso (uşi): schiţele cât mai mari, dar versoul pe o singură foaie — cea mai mare
     // --hmax care încape, prin înjumătăţire (la mărimi mari coloanele se pot muta pe alt
-    // rând, deci nu se poate calcula direct din cât depăşeşte). Cel mult 100 mm înălţime — mai mari
-    // ocupau toată foaia (userul, 2026-10-27: „nici chiar aşa mare").
+    // rând, deci nu se poate calcula direct din cât depăşeşte). Cel mult 150 mm înălţime — mai mari
+    // ocupau toată foaia (userul, 2026-10-27: „nici chiar aşa mare", „maxim 15" cm).
     var desene = document.querySelector('.spate .desene');
     if (spate && desene) {
       var setH = function (v) { desene.style.setProperty('--hmax', v + 'mm'); };
-      var lo = 25, hi = 100;
+      var lo = 25, hi = 150;
       setH(hi);
       if (ocupa() > foaieSpate) {
         for (var k = 0; k < 12; k++) {
