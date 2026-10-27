@@ -1389,9 +1389,9 @@ export async function initUI() {
   if (params.get('oferta')) {
     const o = await oferta.incarcaOferta(params.get('oferta'));
     if (o.eroare || !o.pozitii?.length) eroareIncarcare = o.eroare || 'Oferta n-are configuraţie.';
-    // o comandă în lucru se modifică şi ea (userul, 2026-10-23); finalizată / aşteaptă plata — nu
+    // o comandă în lucru se modifică şi ea (userul, 2026-10-23), la fel una care aşteaptă plata (2026-10-27); finalizată — nu
     else if (o.comanda.tip === 'comanda' && o.comanda.finalizat_la) eroareIncarcare = `${o.comanda.oferta_nr || o.comanda.numar} e finalizată — nu se mai modifică.`;
-    else if (o.comanda.tip !== 'oferta' && o.comanda.tip !== 'comanda') eroareIncarcare = `${o.comanda.oferta_nr || o.comanda.numar} a fost acceptată — nu se mai modifică.`;
+    else if (!['oferta', 'plata', 'comanda'].includes(o.comanda.tip)) eroareIncarcare = `${o.comanda.oferta_nr || o.comanda.numar} a fost acceptată — nu se mai modifică.`;
     else {
       cos = cosul.dinOferta(o, p => (p.sistem === 'amanunt' ? 'amanunt' : systems[p.sistem]?.meta.family));
       cosul.scrie(cos);
