@@ -61,7 +61,7 @@ function geamModelLabel(i) {
 
 // ── Schiţele uşilor — pe VERSO, sub facturare, cât încap (userul, 2026-10-08: pe faţă
 // erau înghesuite; acolo stă acum tabelul Sticlă / PAL). Alb-negru (tuşul color e
-// scump), la scară: cotele uşii (L sus, H în stânga), pe fiecare panou PAL/OGL şi
+// scump), la scară: cotele uşii (L sus, H în stânga), pe fiecare panou PAL / denumirea geamului şi
 // cota de debitare, divizările aplicate ca linii întrerupte (legenda sub desen);
 // deasupra NOI / CLIENTUL, dedesubt geamul, amortizările, mânerul aplicat.
 // SVG în mm reali (+ marginile cotelor şi, la bară H, eticheta „H" în dreapta).
@@ -97,6 +97,25 @@ function liniiAplicate(da, x, y, w, h, linie) {
 const textPanou = (x, y, font, t, bold = false) =>
   `<text x="${x}" y="${y}" font-size="${font}"${bold ? ' font-weight="700"' : ''} text-anchor="middle"
     paint-order="stroke" stroke="#fff" stroke-width="${font * 0.22}" stroke-linejoin="round">${t}</text>`;
+
+// Denumirea geamului pe panou (userul, 2026-10-27: „OGL" nu spune ce se montează) — ruptă pe rânduri cât
+// lăţimea panoului, cu litera cea mai mare care încape (cel mult 4 rânduri, cam jumătate din înălţime).
+function randuriPanou(text, w, h, font) {
+  const cuvinte = String(text).split(/\s+/).filter(Boolean);
+  for (let f = font; ; f *= 0.9) {
+    const max = Math.max(1, Math.floor(w * 0.9 / (f * 0.6)));   // litere pe rând (bold ≈ 0,6 din înălţime)
+    const r = [];
+    for (const c of cuvinte) if (r.length && `${r.at(-1)} ${c}`.length <= max) r[r.length - 1] += ` ${c}`; else r.push(c);
+    if ((r.length <= 4 && r.length * f * 1.15 <= h * 0.55 && r.every(t => t.length <= max)) || f < font * 0.2) return { r, f };
+  }
+}
+// pe panou: denumirea (sau „PAL") deasupra, cota de debitare dedesubt — blocul centrat pe (cx, cy)
+function textePanou(cx, cy, w, h, font, nume, cota) {
+  const { r, f } = nume === 'PAL' ? { r: [nume], f: font } : randuriPanou(nume, w, h, font);
+  const dy = ((r.length - 1) * f * 1.15 + f - font) / 2;   // cât e blocul mai înalt decât un rând de „PAL"
+  return [...r.map((t, k) => textPanou(cx, cy - font * 0.15 + dy - (r.length - 1 - k) * f * 1.15, f, esc(t), true)),
+    textPanou(cx, cy + font * 0.95 + dy, font * 0.8, cota)];
+}
 
 // Pe ce parte are uşa amortizare — doar la uşile asamblate DE NOI (userul, 2026-10-02):
 // Confort / UTIL = amortizările alese pe uşă; suspendate = rola cu amortizor.
@@ -189,8 +208,7 @@ function desenUsa(sys, spec, i, margH = 0) {
       ...liniiAplicate(state.divAplicate?.[i], mont, Y(y + h), innerW, h, linie));
     const font = Math.min(innerW * 0.15, h * 0.26);
     const cx = mont + innerW / 2, cy = Y(y + h / 2);
-    el.push(textPanou(cx, cy - font * 0.15, font, pal ? 'PAL' : 'OGL', true),
-      textPanou(cx, cy + font * 0.95, font * 0.8, `${Math.round(p.heights[k])}×${latime}`));
+    el.push(...textePanou(cx, cy, innerW, h, font, pal ? 'PAL' : geamModelLabel(i), `${Math.round(p.heights[k])}×${latime}`));
     y += h;
     if (k < p.heights.length - 1) {
       const s = slot(k);
