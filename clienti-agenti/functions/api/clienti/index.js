@@ -3,6 +3,7 @@ import { raspuns, clientDinCerere, agentLogat, eManager, vedereAgent } from '../
 // ═══════════════════════════════════════════════════════════════════════════
 //  GET   manager (Bearer CHEIE_MANAGER): ?dupa=<versiune> → tot ce s-a adăugat
 //        sau modificat după ea, câte 500, în ordinea versiunii — DOAR ce s-a aprobat.
+//        Şi cei şterşi (sters_la completat) — copia managerului îi scoate.
 //        agent logat: clienţii LUI (agent = numele lui), cu propunerile lui în
 //        aşteptare peste ei + clienţii noi încă neaprobaţi.
 //  POST  agent logat: client nou, pe numele lui — ca PROPUNERE, până o aprobă cineva
@@ -19,7 +20,7 @@ export async function onRequestGet({ request, env }) {
   const agent = await agentLogat(request, env);
   if (!agent) return raspuns(401, { eroare: 'Nu eşti logat.' });
   const [clienti, propuneri] = await env.DB.batch([
-    env.DB.prepare('SELECT * FROM client WHERE agent = ? ORDER BY nume COLLATE NOCASE').bind(agent.nume),
+    env.DB.prepare('SELECT * FROM client WHERE agent = ? AND sters_la IS NULL ORDER BY nume COLLATE NOCASE').bind(agent.nume),
     env.DB.prepare('SELECT * FROM propunere WHERE agent = ?').bind(agent.nume),
   ]);
   const pe = new Map(propuneri.results.filter(p => p.client_id).map(p => [p.client_id, p]));

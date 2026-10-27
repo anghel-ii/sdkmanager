@@ -16,11 +16,11 @@ export async function onRequestGet({ request, env }) {
   if (!eManager(request, env)) return interzis();
   const [agenti, faraCont] = await env.DB.batch([
     env.DB.prepare(`SELECT a.user, a.nume, a.activ,
-        (SELECT COUNT(*) FROM client c WHERE c.agent = a.nume) AS clienti,
+        (SELECT COUNT(*) FROM client c WHERE c.agent = a.nume AND c.sters_la IS NULL) AS clienti,
         (SELECT COUNT(*) FROM sesiune s WHERE s.agent_id = a.id AND s.expira_la > datetime('now') AND s.admin = 0) AS sesiuni
       FROM agent a ORDER BY a.activ DESC, a.nume`),
     env.DB.prepare(`SELECT agent AS nume, COUNT(*) AS clienti FROM client
-      WHERE agent IS NOT NULL AND agent NOT IN (SELECT nume FROM agent) GROUP BY agent ORDER BY clienti DESC`),
+      WHERE agent IS NOT NULL AND sters_la IS NULL AND agent NOT IN (SELECT nume FROM agent) GROUP BY agent ORDER BY clienti DESC`),
   ]);
   return raspuns(200, { agenti: agenti.results, faraCont: faraCont.results });
 }
@@ -51,7 +51,7 @@ export async function onRequestPost({ request, env }) {
     }
     await env.DB.prepare('INSERT INTO agent (user, nume, parola_hash) VALUES (?, ?, ?)').bind(user, nume, hash).run();
   }
-  const { n } = await env.DB.prepare('SELECT COUNT(*) AS n FROM client WHERE agent = ?').bind(nume).first();
+  const { n } = await env.DB.prepare('SELECT COUNT(*) AS n FROM client WHERE agent = ? AND sters_la IS NULL').bind(nume).first();
   return raspuns(exista ? 200 : 201, { user, nume, parola, clienti: n, nou: !exista });
 }
 

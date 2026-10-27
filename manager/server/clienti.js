@@ -10,11 +10,14 @@ const { config } = require('./config.js');
 //  internet: el TRAGE tot ce s-a schimbat (GET ?dupa=<cea mai mare versiune
 //  de aici>) la pornire, la fiecare 5 minute şi la butonul „Preia acum".
 //  Oprit cât lipseşte cheia (se lipeşte o dată în /admin; sau MANAGER_CLIENTI_CHEIE).
+//  Conducerea modifică / şterge clienţi din pagina Clienţi: cererea merge la
+//  Cloudflare şi se preia imediat înapoi (userul, 2026-10-27). Cei şterşi rămân
+//  aici cu sters_la (vin aşa de acolo) şi nu se mai arată nicăieri.
 // ═══════════════════════════════════════════════════════════════════════════
 
 // coloanele din Excel-ul de clienţi (+ agent) — aceleaşi pe Cloudflare
 const CAMPURI = ['agent', 'nume', 'cui', 'judet', 'localitate', 'adresa_sediu', 'adresa_livrare', 'administrator',
-  'telefon_administrator', 'email', 'delegat', 'telefon_delegat', 'discounturi', 'creat_la', 'modificat_la', 'versiune'];
+  'telefon_administrator', 'email', 'delegat', 'telefon_delegat', 'discounturi', 'creat_la', 'modificat_la', 'versiune', 'sters_la'];
 
 // cheia managerului: din mediu, altfel cea lipită în /admin
 const cheie = () => config.clientiCheie
@@ -60,7 +63,7 @@ function porneste() {
 
 const lista = ({ res }) => json(res, 200, {
   activ: activ(), ultimaPreluare,
-  clienti: db().prepare('SELECT * FROM client ORDER BY modificat_la IS NULL, modificat_la DESC, nume').all(),
+  clienti: db().prepare('SELECT * FROM client WHERE sters_la IS NULL ORDER BY modificat_la IS NULL, modificat_la DESC, nume').all(),
 });
 
 // Configuratorul: sugestii pt. câmpul „Nume client" (doar propune — se vinde şi
@@ -72,7 +75,7 @@ function cauta({ req, res }) {
   const text = faraDiacritice(q).replace(/[\\%_]/g, '\\$&');   // % şi _ tastate se caută ca atare
   json(res, 200, { clienti: db().prepare(`
     SELECT nume, cui, agent, judet, localitate, adresa_sediu, adresa_livrare, telefon_administrator, telefon_delegat
-      FROM client WHERE fara_diacritice(nume) LIKE ? ESCAPE '\\'
+      FROM client WHERE sters_la IS NULL AND fara_diacritice(nume) LIKE ? ESCAPE '\\'
      ORDER BY fara_diacritice(nume) NOT LIKE ? ESCAPE '\\', nume LIMIT 20`).all(`%${text}%`, `${text}%`) });
 }
 
@@ -147,6 +150,17 @@ async function decide({ res, params }) {
   await reimprospateazaPropuneri();   // insigna scade la toţi
   json(res, r.stare, r.date);
 }
+// Conducerea modifică (direct, fără aprobare) sau şterge un client — :id = id-ul de pe
+// Cloudflare (extern_id). Copia de aici se ia de acolo imediat după, ca la aprobare.
+async function modificaSauSterge({ req, res, params }) {
+  if (!/^\d+$/.test(params.id)) return eroare(res, 404, 'Client necunoscut.');
+  if (!activ()) return eroare(res, 409, 'Legătura cu Cloudflare nu e configurată.');
+  const r = await laCF(req.method, `/api/clienti/${params.id}`, req.method === 'PUT' ? JSON.stringify(await corpJson(req)) : undefined);
+  if (r.eroare) return eroare(res, ...r.eroare);
+  if (r.stare === 200) await preia();
+  json(res, r.stare, r.date);
+}
+
 // „Intră ca acest agent": link de o folosinţă (60 s) spre site-ul agenţilor
 const intraCaAgent = laCloudflare('/api/agenti/intra');
 
@@ -179,6 +193,8 @@ module.exports = {
     ['GET',  '/api/clienti/propuneri', { handler: propuneri, rol: CLIENTI }],
     ['POST', '/api/clienti/propuneri/:id/:actiune', { handler: decide, rol: APROBA }],
     ['PUT',   '/api/clienti/cheie', { handler: puneCheie, rol: 'admin' }],
+    ['PUT',    '/api/clienti/:id',  { handler: modificaSauSterge, rol: APROBA }],
+    ['DELETE', '/api/clienti/:id',  { handler: modificaSauSterge, rol: APROBA }],
     ['GET',   '/api/agenti',       { handler: agenti, rol: 'admin' }],
     ['POST',  '/api/agenti',       { handler: agenti, rol: 'admin' }],
     ['PATCH', '/api/agenti',       { handler: agenti, rol: 'admin' }],

@@ -41,6 +41,16 @@
   .propunere td:first-child { color: var(--text-dim); width: 190px; }
   .propunere .vechi { color: var(--danger); text-decoration: line-through; }
   .propunere .nou { color: var(--ok); }
+
+  /* conducerea modifică / şterge un client (userul, 2026-10-27) */
+  table.clienti td.actiuni { min-width: 0; white-space: nowrap; text-align: right; }
+  table.clienti td.actiuni button + button { margin-left: 6px; }
+  dialog.modifica-client { width: min(760px, calc(100% - 32px)); }
+  .modifica-client .campuri { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; margin-top: 12px; }
+  .modifica-client label { display: flex; flex-direction: column; gap: 4px; font-size: .78rem; color: var(--text-dim); }
+  .modifica-client label.lat { grid-column: 1 / -1; }
+  .modifica-client input, .modifica-client textarea { width: 100%; font-size: .9rem; padding: 7px 10px; }
+  .modifica-client .eroare { color: var(--danger); margin-top: 10px; }
 </style>
 </head>
 <body>
@@ -51,7 +61,7 @@
 <div id="continut">
   <header class="pagina-cap">
     <h1>Clienţi</h1>
-    <p>Copia bazei de clienţi a agenţilor de vânzări — se actualizează singură. Ce trimit agenţii aşteaptă întâi la „De aprobat".</p>
+    <p>Copia bazei de clienţi a agenţilor de vânzări — se actualizează singură. Ce trimit agenţii aşteaptă întâi la „De aprobat". Conducerea poate modifica sau şterge un client direct din listă.</p>
   </header>
   <section id="deAprobat" hidden>
     <h2>De aprobat <span class="cate" id="nrPropuneri"></span>
@@ -157,8 +167,8 @@ function randeaza() {
   const doua = (a, b) => [a, b].filter(Boolean).join('<br>');
   $('lista').innerHTML = `<p class="dim mic" style="margin-bottom:10px">${cl.length} clienţi${cl.length > arata.length ? ` — se văd primii ${arata.length}, caută ca să-l găseşti pe cel dorit` : ''}</p>
     <table class="clienti">
-    <thead><tr><th>Client</th><th>Agent</th><th>Judeţ / localitate</th><th>Sediu / livrare</th><th>Administrator</th><th>E-mail</th><th>Delegat</th><th>Discounturi</th></tr></thead>
-    <tbody>${arata.map(c => `<tr>
+    <thead><tr><th>Client</th><th>Agent</th><th>Judeţ / localitate</th><th>Sediu / livrare</th><th>Administrator</th><th>E-mail</th><th>Delegat</th><th>Discounturi</th>${poateAproba() ? '<th></th>' : ''}</tr></thead>
+    <tbody>${arata.map(c => `<tr data-id="${c.extern_id}">
       <td><b>${esc(c.nume)}</b><br><span class="dim mic">${esc(c.cui)}</span></td>
       <td>${esc(c.agent)}${c.modificat_la ? `<br><span class="dim mic" title="ultima modificare de la agent">${dataOra(c.modificat_la)}</span>` : ''}</td>
       <td>${doua(esc(c.judet), esc(c.localitate))}</td>
@@ -167,7 +177,63 @@ function randeaza() {
       <td>${c.email ? `<a href="mailto:${esc(c.email)}">${esc(c.email)}</a>` : ''}</td>
       <td>${doua(esc(c.delegat), tel(c.telefon_delegat))}</td>
       <td class="mic">${esc(c.discounturi)}</td>
+      ${poateAproba() ? `<td class="actiuni"><button class="mic" data-fa="modifica">Modifică</button><button class="mic rosu-contur" data-fa="sterge">Şterge</button></td>` : ''}
     </tr>`).join('')}</tbody></table>`;
+  $('lista').querySelectorAll('button[data-fa]').forEach(b => b.addEventListener('click', () => {
+    const c = date.clienti.find(x => x.extern_id === +b.closest('tr').dataset.id);
+    if (c) (b.dataset.fa === 'modifica' ? modifica : sterge)(c);
+  }));
+}
+
+// ── Conducerea / adminul: modifică direct (fără aprobare) sau şterge un client ──
+// Se scrie în originalul de pe Cloudflare, apoi serverul îl preia imediat înapoi.
+const LUNGIMI = { agent: 120, nume: 120, cui: 20, judet: 40, localitate: 80, adresa_sediu: 300, adresa_livrare: 300,
+  administrator: 120, telefon_administrator: 40, email: 120, delegat: 120, telefon_delegat: 40, discounturi: 500 };
+const LATE = ['adresa_sediu', 'adresa_livrare', 'discounturi'];
+// ordinea din fereastră: perechile stau pe acelaşi rând
+const ORDINE = ['nume', 'agent', 'cui', 'email', 'judet', 'localitate', 'adresa_sediu', 'adresa_livrare',
+  'administrator', 'telefon_administrator', 'delegat', 'telefon_delegat', 'discounturi'];
+
+function modifica(c) {
+  const d = document.createElement('dialog');
+  d.className = 'mesaj-dialog modifica-client';
+  const agenti = [...new Set(date.clienti.map(x => x.agent).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'ro'));
+  const camp = (k, et) => `<label class="${LATE.includes(k) ? 'lat' : ''}">${et}${k === 'discounturi'
+    ? `<textarea name="${k}" rows="2" maxlength="${LUNGIMI[k]}">${esc(c[k])}</textarea>`
+    : `<input name="${k}" value="${esc(c[k])}" maxlength="${LUNGIMI[k]}" autocomplete="off"${k === 'agent' ? ' list="agentiCunoscuti"' : ''}>`}</label>`;
+  const inAsteptare = propuneri.some(p => p.actual?.id === c.extern_id);
+  d.innerHTML = `<b>Modifică clientul</b>
+    <p class="dim mic">Se salvează direct în baza de clienţi, fără aprobare — agentul vede imediat datele noi.${inAsteptare
+      ? '\n⚠ Agentul are o modificare în aşteptare pe acest client (sus, la „De aprobat"): dacă o aprobi după, o scrie peste ce salvezi acum.' : ''}</p>
+    <div class="campuri">${ORDINE.map(k => camp(k, k === 'nume' ? 'Nume client *' : ETICHETE[k] ?? 'Agent')).join('')}</div>
+    <datalist id="agentiCunoscuti">${agenti.map(a => `<option value="${esc(a)}">`).join('')}</datalist>
+    <p class="eroare mic" hidden></p>
+    <div class="butoane"><button type="button" data-b="renunta">Renunţă</button><button type="button" class="primar" data-b="salveaza">Salvează</button></div>`;
+  const ok = d.querySelector('[data-b=salveaza]'), err = d.querySelector('.eroare');
+  d.querySelector('[data-b=renunta]').onclick = () => d.close();
+  ok.onclick = async () => {
+    const corp = Object.fromEntries([...d.querySelectorAll('[name]')].map(x => [x.name, x.value.trim()]));
+    if (!corp.nume) { err.textContent = 'Numele clientului e obligatoriu.'; err.hidden = false; return; }
+    ok.disabled = true;
+    const r = await api(`/api/clienti/${c.extern_id}`, { method: 'PUT', body: JSON.stringify(corp) });
+    ok.disabled = false;
+    if (!r) return;
+    if (!r.ok) { err.textContent = (await r.json().catch(() => ({}))).eroare || 'Salvarea a eşuat.'; err.hidden = false; return; }
+    d.close();
+    incarca();
+  };
+  d.addEventListener('close', () => d.remove());
+  document.body.append(d);
+  d.showModal();
+  d.querySelector('[name=nume]').focus();
+}
+
+async function sterge(c) {
+  if (!(await confirma(`Ştergi clientul „${c.nume}"${c.agent ? ` (agent ${c.agent})` : ''}?\n\nDispare din baza de clienţi, din sugestiile configuratorului şi din lista agentului. Ofertele şi comenzile făcute deja pe el rămân neschimbate.`, 'Şterge'))) return;
+  const r = await api(`/api/clienti/${c.extern_id}`, { method: 'DELETE' });
+  if (r && !r.ok) alerta((await r.json().catch(() => ({}))).eroare || 'Ştergerea a eşuat.');
+  incarca();
+  incarcaPropuneri();
 }
 
 $('cauta').addEventListener('input', randeaza);

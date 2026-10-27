@@ -489,7 +489,7 @@ async function main() {
     const idVechi = Number(db2().prepare("INSERT INTO utilizator (nume, user, parola_hash, parola_salt, rol) VALUES ('Vechi', 'vechi', 'x', 'x', 'operator')").run().lastInsertRowid);
     require('../server/db.js').roluriNoi(db2());
     verifica('migraţie: operator → birou', db2().prepare('SELECT rol FROM utilizator WHERE id = ?').get(idVechi).rol === 'birou');
-    verifica('schema la versiunea 36', db2().prepare('PRAGMA user_version').get().user_version === 36);
+    verifica('schema la versiunea 37', db2().prepare('PRAGMA user_version').get().user_version === 37);
   }
 
   console.log('\nFixare şi sortare — per utilizator');
@@ -885,6 +885,17 @@ async function main() {
         return q.on('end', () => { primitAgent = { metoda: q.method, ...JSON.parse(corp) };
           r.end(JSON.stringify(q.method === 'POST' ? { user: 'maria', nume: primitAgent.nume, parola: 'p4r0la', clienti: 2, nou: true } : {})); });
       }
+      // conducerea modifică / şterge din manager (functions/api/clienti/[id].js): direct, cu versiune nouă
+      const cl = q.url.match(/^\/api\/clienti\/(\d+)$/);
+      if (cl && ['PUT', 'DELETE'].includes(q.method)) {
+        const id = +cl[1];
+        if (!externi.has(id) || externi.get(id).sters_la) { r.writeHead(404); return r.end(JSON.stringify({ eroare: 'Clientul nu mai există.' })); }
+        let corp = ''; q.on('data', b => corp += b);
+        return q.on('end', () => {
+          schimba(q.method === 'PUT' ? { id, ...JSON.parse(corp), modificat_la: '2026-10-27 10:00:00' } : { id, sters_la: '2026-10-27 10:05:00' });
+          r.end(JSON.stringify({ ok: true }));
+        });
+      }
       const dupa = +new URL(q.url, 'http://x').searchParams.get('dupa');
       r.end(JSON.stringify({ clienti: [...externi.values()].filter(c => c.versiune > dupa)
         .sort((a, b) => a.versiune - b.versiune).slice(0, pagina) }));
@@ -944,7 +955,8 @@ async function main() {
     await cer('POST', '/api/login', { user: 'maria', parola: 'parola-maria-1' });
     verifica('biroul n-are pagina Clienţi: nici lista, nici propunerile, nici aprobarea (403)',
       (await cer('GET', '/api/clienti')).stare === 403 && (await cer('GET', '/api/clienti/propuneri')).stare === 403
-      && (await cer('POST', '/api/clienti/preia')).stare === 403 && (await cer('POST', '/api/clienti/propuneri/7/aproba')).stare === 403);
+      && (await cer('POST', '/api/clienti/preia')).stare === 403 && (await cer('POST', '/api/clienti/propuneri/7/aproba')).stare === 403
+      && (await cer('PUT', '/api/clienti/2', { nume: 'Birou' })).stare === 403 && (await cer('DELETE', '/api/clienti/2')).stare === 403);
     verifica('… dar are sugestiile din configurator', (await cer('GET', '/api/clienti/cauta?q=an')).stare === 200);
     cookie = null;
     await cer('POST', '/api/login', { user: 'ion', parola: 'parola-noua-1' });
@@ -954,6 +966,22 @@ async function main() {
     verifica('respinge → nu ajunge în copie', (await cer('POST', '/api/clienti/propuneri/8/respinge')).stare === 200
       && !db2().prepare("SELECT 1 FROM client WHERE nume = 'Respins SRL'").get() && !(await cer('GET', '/api/clienti/propuneri')).date.propuneri.length);
     verifica('a doua oară → 404 de acolo', (await cer('POST', '/api/clienti/propuneri/7/aproba')).stare === 404);
+
+    // conducerea modifică / şterge direct din pagina Clienţi (userul, 2026-10-27)
+    const mod = await cer('PUT', '/api/clienti/2', { nume: 'Dan Modificat', agent: 'Maria', judet: 'VASLUI' });
+    const dan2 = db2().prepare('SELECT * FROM client WHERE extern_id = 2').get();
+    verifica('conducerea modifică un client → imediat în copia de aici, cu agentul nou', mod.stare === 200
+      && dan2.nume === 'Dan Modificat' && dan2.agent === 'Maria' && dan2.judet === 'VASLUI', JSON.stringify(dan2));
+    verifica('… şi apare în jurnalul de activitate', !!db2().prepare("SELECT 1 FROM activitate WHERE operatie = 'Client modificat' AND detalii LIKE 'Dan Modificat%'").get());
+    const st = await cer('DELETE', '/api/clienti/3');
+    verifica('conducerea şterge un client → dispare din listă şi din sugestii', st.stare === 200
+      && db2().prepare('SELECT sters_la FROM client WHERE extern_id = 3').get()?.sters_la
+      && !(await cer('GET', '/api/clienti')).date.clienti.some(c => c.extern_id === 3) && await cauta('vlad') === '', JSON.stringify(st));
+    verifica('… cu numele lui în jurnal', !!db2().prepare("SELECT 1 FROM activitate WHERE operatie = 'Client şters' AND detalii = 'Vlad'").get());
+    verifica('… a doua oară → 404 de acolo', (await cer('DELETE', '/api/clienti/3')).stare === 404);
+    verifica('… şi preluarea nu-l readuce', (await cer('POST', '/api/clienti/preia')).date.noi === 0
+      && !(await cer('GET', '/api/clienti')).date.clienti.some(c => c.extern_id === 3));
+    verifica('id care nu e număr → 404', (await cer('DELETE', '/api/clienti/abc')).stare === 404);
     verifica('insigna scade la 0 după aprobare / respingere', (await cer('GET', '/api/sumar')).date.deAprobat === 0);
     cookie = null;
     await cer('POST', '/api/login', { user: 'admin', parola: 'parola-admin-1' });

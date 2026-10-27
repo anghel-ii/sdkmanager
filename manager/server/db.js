@@ -576,6 +576,9 @@ const MIGRATII = [
   // — cele facturate dar rămase în lucru trec la finalizate, cu data şi omul facturării.
   d => d.exec(`UPDATE comanda SET finalizat_la = COALESCE(facturat_la, datetime('now')), finalizat_de = facturat_de
                 WHERE tip = 'comanda' AND factura_nr IS NOT NULL AND finalizat_la IS NULL`),
+  // v36 → v37 (2026-10-27): conducerea şterge clienţi din pagina Clienţi (userul). Pe Cloudflare rândul rămâne,
+  // marcat şters, cu versiune nouă — aşa ajunge ştergerea în copie; aici rămâne şi el (MAX(versiune) nu scade).
+  d => d.exec('ALTER TABLE client ADD COLUMN sters_la TEXT'),
 ];
 
 // Exportată pt. test.

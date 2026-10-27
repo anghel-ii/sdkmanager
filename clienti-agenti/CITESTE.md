@@ -6,6 +6,10 @@ singur schimbările la 5 minute (`manager/server/clienti.js`).
 
 - Agentul intră cu user + parolă şi vede doar clienţii cu numele lui în coloana AGENT;
   îi poate modifica şi poate adăuga clienţi noi (pe numele lui). Nu poate şterge.
+- Conducerea / adminul, din pagina Clienţi a managerului: modifică direct (fără aprobare, şi agentul) şi
+  şterge clienţi (`PUT` / `DELETE /api/clienti/:id` cu cheia managerului). Şters = `sters_la` + versiune
+  nouă: rândul rămâne, ca ştergerea să ajungă în copiile managerului; agentul nu-l mai vede.
+  Pe baza remote, o singură dată: `npx wrangler d1 execute clienti-agenti --remote --command="ALTER TABLE client ADD COLUMN sters_la TEXT"`.
 - Conturile agenţilor se fac din manager: `/admin` → „Conturi agenţi de vânzări" (cont nou, parolă nouă,
   dezactivare, „Intră ca agent" = link de o folosinţă, 60 s → sesiune de 8 ore în contul agentului, cu bandă
   galbenă; nu-i schimbă parola şi nu apare la „Logat acum"). Tabelele `sesiune.admin` + `bilet`. Aceleaşi operaţii şi din linia de comandă, pe laptop, din folderul ăsta:

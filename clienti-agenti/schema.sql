@@ -46,7 +46,11 @@ CREATE TABLE IF NOT EXISTS client (
   creat_la              TEXT,            -- NULL la cei importaţi din Excel
   modificat_la          TEXT,
   -- creşte la FIECARE adăugare/modificare (MAX + 1); managerul cere „după versiunea X"
-  versiune              INTEGER NOT NULL
+  versiune              INTEGER NOT NULL,
+  -- şters din manager (conducerea, 2026-10-27): rândul rămâne, cu versiune nouă, ca ştergerea
+  -- să ajungă şi în copiile managerului; agenţii nu-l mai văd. Pe baza veche (remote):
+  --   ALTER TABLE client ADD COLUMN sters_la TEXT;
+  sters_la              TEXT
 );
 CREATE INDEX IF NOT EXISTS client_versiune ON client(versiune);
 CREATE INDEX IF NOT EXISTS client_agent    ON client(agent);

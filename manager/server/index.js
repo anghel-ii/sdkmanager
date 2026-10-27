@@ -92,6 +92,7 @@ async function trateaza(req, res) {
     return repetare.oSinguraData(req, res, utilizator?.id, async () => {
       if (utilizator?.mod_test && !peBune) {
         if (cale.startsWith('/api/clienti/propuneri/')) return eroare(res, 403, 'În modul test nu se aprobă clienţi — aprobarea ar ajunge pe bune.');
+        if (/^\/api\/clienti\/\d+$/.test(cale)) return eroare(res, 403, 'În modul test nu se modifică / şterg clienţi — ar ajunge pe bune.');
         // întâi lanţul la zi (ce a scris biroul în demo ajunge acum, nu la timer, în demo admin)
         sincronizeaza();
         return inTest(async () => {   // adminul pe copia lui

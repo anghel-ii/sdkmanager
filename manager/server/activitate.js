@@ -31,6 +31,7 @@ const comandaLiniei = id => db().prepare('SELECT p.comanda_id AS c FROM pozitie_
 const comandaCererii = id => db().prepare('SELECT comanda_id AS c FROM cerere WHERE id = ?').get(id)?.c;
 const cererea = id => db().prepare('SELECT tip, numar_nou FROM cerere WHERE id = ?').get(id);
 const decizie = da => (b, p) => (cererea(p.id)?.tip === 'factura' ? `Schimbarea facturii ${da ? 'aprobată' : 'respinsă'}` : `Anulare ${da ? 'aprobată' : 'respinsă'}`);
+const numeClient = id => db().prepare('SELECT nume, cui FROM client WHERE extern_id = ?').get(id)?.nume ?? `client #${id}`;
 const comandaTaskului = id => db().prepare('SELECT comanda_id AS c FROM task WHERE id = ?').get(id)?.c;
 
 // „METODĂ /cale" → [operaţie, fel, detalii(corp, răspuns, params), comenzi(corp, răspuns, params)]
@@ -108,6 +109,8 @@ const OPERATII = {
   'POST /api/clienti/preia':                 ['Clienţii aduşi din Cloudflare', S],
   'POST /api/clienti/propuneri/:id/:actiune':[(b, p) => `Client propus de agent: ${p.actiune === 'aproba' ? 'aprobat' : p.actiune === 'respinge' ? 'respins' : p.actiune}`, S],
   'PUT /api/clienti/cheie':                  ['Cheia Cloudflare schimbată', S],
+  'PUT /api/clienti/:id':                    ['Client modificat', S, b => lista(b.nume, b.agent && `agent: ${b.agent}`)],
+  'DELETE /api/clienti/:id':                 ['Client şters', S, (b, r, p) => numeClient(p.id)],
   'POST /api/agenti':                        ['Agent nou', S, b => scurt(b.nume)],
   'PATCH /api/agenti':                       ['Agent modificat', S, b => scurt(b.nume)],
   'POST /api/agenti/intra':                  ['A intrat ca agent', S],
