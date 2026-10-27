@@ -1,7 +1,7 @@
 import produse from './catalog/amanunt.json';
 import * as manager from './manager.js';
 import * as cosul from './cos.js';
-import { cautator, laBara, arie, rotunjeste, textMod, sePoatePeJumatate } from './amanunt-calcul.js';
+import { cautator, laBara, arie, rotunjeste, textMod, sePoatePeJumatate, lungimeUtila } from './amanunt-calcul.js';
 import { initSugestiiClienti } from './sugestii-clienti.js';
 import { LIVRARE, AGENTI, PLATI, INCASARI, plataText, incasareText, numarText, detaliiDinManager, dinAcceptare, liniaTransport, campuriLipsa, focusCamp, etichetaNumar, marcheazaDeCompletat, opritDePlata } from './lib/comun/comanda.js';
 import { copyRows } from './lib/comun/clipboard.js';
@@ -42,7 +42,10 @@ const cuBucati = l => !!(l?.bara || mod(l)?.arie);
 // Produsele vândute şi pe jumătate de bară — pe rând, „Dă bara întreagă" (l.intreaga): clientul ia
 // şi restul barei → bare întregi (userul, 2026-10-14).
 const PE_JUMATATE = new Set(produse.filter(sePoatePeJumatate).map(p => p.cod));
-const deb = l => (l?.bara ? laBara(mod(l), l.debitare, l.bara, TAIERE_MM, l.intreaga) : mod(l)?.arie ? arie(l.debitare) : null);
+// la Gola C / J şi mânerul L se calculează cu lungimea utilă (fără capete), în text rămâne şi cea a barei
+const utila = l => lungimeUtila(l?.denumire, l?.bara);
+const deb = l => (l?.bara ? laBara(mod(l), l.debitare, utila(l), TAIERE_MM, l.intreaga) : mod(l)?.arie ? arie(l.debitare) : null);
+const textBara = l => `${l.bara} mm${utila(l) !== l.bara ? ` (${utila(l)} mm utili)` : ''}`;
 // la fişă: cantităţile îngheţate la salvare, aşa cum au fost
 const cantitate = l => (modFisa ? l.cantitate : deb(l)?.nr ?? rotunjeste(mod(l), l.cantitate));
 const textDebitare = l => {
@@ -51,7 +54,7 @@ const textDebitare = l => {
   const peArie = mod(l)?.arie;
   const piese = (l.debitare ?? []).filter(p => +p.l > 0 && +p.buc > 0 && (!peArie || +p.h > 0));
   if (peArie) return `${piese.map(p => `${p.buc} × ${p.h} × ${p.l} mm`).join(', ')} → ${virgula(d.nr)} mp`;
-  return `${piese.map(p => `${p.buc} × ${p.l} mm`).join(', ')} → ${virgula(d.nr)} ${d.nr === 1 ? 'bară' : 'bare'} de ${l.bara} mm${l.intreaga ? ' (ia şi restul barei)' : ''}`;
+  return `${piese.map(p => `${p.buc} × ${p.l} mm`).join(', ')} → ${virgula(d.nr)} ${d.nr === 1 ? 'bară' : 'bare'} de ${textBara(l)}${l.intreaga ? ' (ia şi restul barei)' : ''}`;
 };
 // UM-ul şi, dedesubt, cum se facturează produsul (nimic la bucăţile întregi)
 const umHtml = l => {
@@ -72,7 +75,7 @@ function facturare() {
     if (!l.cod && !String(l.denumire).trim()) return;
     const d = deb(l);
     if (!l.cod) errors.push(`Rândul ${i + 1}: alege produsul din listă („${l.denumire}" nu e în NeoManager).`);
-    else if (d?.preaLungi.length) errors.push(`Rândul ${i + 1}: bucata de ${d.preaLungi.join(' / ')} mm e mai lungă decât bara de ${l.bara} mm.`);
+    else if (d?.preaLungi.length) errors.push(`Rândul ${i + 1}: bucata de ${d.preaLungi.join(' / ')} mm e mai lungă decât bara de ${textBara(l)}.`);
     else if (!(cantitate(l) > 0)) errors.push(`Rândul ${i + 1}: completează cantitatea.`);
     else lines.push({ cod: l.cod, denumire: l.denumire, um: l.um, cantitate: cantitate(l) });
   });
@@ -107,7 +110,7 @@ const randHtml = (l, i) => {
 const debitareHtml = (l, i) => {
   const piese = l.debitare ?? [], peArie = !!mod(l)?.arie;
   return `<tr class="debitare" data-i="${i}"><td></td><td colspan="5"><div class="deb">
-    <span class="deb-titlu">${peArie ? 'Arie <span class="dim">· înălţime × lăţime × bucăţi</span>' : `Debitare <span class="dim">· bară de ${l.bara} mm</span>`}</span>
+    <span class="deb-titlu">${peArie ? 'Arie <span class="dim">· înălţime × lăţime × bucăţi</span>' : `Debitare <span class="dim">· bară de ${textBara(l)}</span>`}</span>
     ${PE_JUMATATE.has(l.cod) ? `<button class="deb-intreaga${l.intreaga ? ' activ' : ''}" type="button" aria-pressed="${!!l.intreaga}"
       title="Clientul ia şi restul barei — se facturează bare întregi, nu jumătăţi">${l.intreaga ? '✓ Bara întreagă' : 'Dă bara întreagă'}</button>` : ''}
     ${[...piese, { l: '', buc: '' }].map((p, k) => piesaHtml(p, k, k < piese.length, peArie)).join('')}
@@ -125,7 +128,7 @@ const rezultatHtml = l => {
   const d = deb(l), f = mod(l);
   if (!d) return `<span class="dim">${f?.arie ? 'scrie înălţimea, lăţimea şi nr. de bucăţi — se calculează aria'
     : 'scrie lungimea şi nr. de bucăţi — se calculează din câte bare ies'}</span>`;
-  if (d.preaLungi.length) return `<span class="avert">⚠ ${d.preaLungi.join(' / ')} mm nu încape într-o bară de ${l.bara} mm</span>`;
+  if (d.preaLungi.length) return `<span class="avert">⚠ ${d.preaLungi.join(' / ')} mm nu încape într-o bară de ${textBara(l)}</span>`;
   if (f?.arie) return `→ <strong>${virgula(d.nr)} mp</strong> <span class="dim">· ${d.bucati} buc</span>`;
   if (f?.procent) return `→ <strong>${virgula(d.nr)} ${d.nr === 1 ? 'bară' : 'bare'}</strong> <span class="dim">· ${d.bucati} buc · ${d.total} mm + ${Math.round((f.procent - 1) * 100)} %, în sus la jumătate</span>`;
   if (f?.trepte) return `→ <strong>${virgula(d.nr)} ${d.nr === 1 ? 'bară' : 'bare'}</strong> <span class="dim">· ${d.bucati} buc, fiecare după lungimea ei</span>`;
@@ -596,7 +599,7 @@ $('btnPlata').addEventListener('click', () => trimite('plata'));
 function bucatiDebitare(text) {
   if (!text) return null;
   const [bucati, bare] = String(text).split(' → ');
-  return { bucati: bucati.split(', ').filter(Boolean), bara: bare?.match(/de (\d+) mm/)?.[1] ?? null };
+  return { bucati: bucati.split(', ').filter(Boolean), bara: bare?.match(/de (\d+ mm(?: \(\d+ mm utili\))?)/)?.[1] ?? null };
 }
 
 // Stilul foii (din @media print al paginii) — şi pt. previzualizare, ca să arate la fel
@@ -624,7 +627,7 @@ function tipareste({ vezi = false } = {}) {
       <tfoot><tr class="margine"><td colspan="6"></td></tr></tfoot>
       <tbody>${lines.map((l, k) => { const d = bucatiDebitare(peCod.get(l.cod)); return `<tr><td>${k + 1}</td><td>${esc(l.cod)}</td>
         <td class="produs">${esc(l.denumire)}</td>
-        <td class="deb-col">${d ? d.bucati.map(b => `<div>${esc(b)}</div>`).join('') + (d.bara ? `<div class="bara-de">din bare de ${d.bara} mm</div>` : '') : ''}</td>
+        <td class="deb-col">${d ? d.bucati.map(b => `<div>${esc(b)}</div>`).join('') + (d.bara ? `<div class="bara-de">din bare de ${esc(d.bara)}</div>` : '') : ''}</td>
         <td class="num">${virgula(l.cantitate)} ${d?.bara ? (+l.cantitate === 1 ? 'bară' : 'bare') : esc(l.um)}</td><td class="bifa"></td></tr>`; }).join('')}</tbody>
     </table>`;
   if (vezi) {

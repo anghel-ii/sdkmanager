@@ -205,6 +205,8 @@ export const MANERE = [
 ];
 export const FARA_MANER = 'Fara profil maner';
 export const BARA_MANER_MM = 3000;
+// la mânerele L câte 5 cm de la fiecare capăt nu se folosesc (userul, 2026-10-27): bucăţile se aşază pe 2900 mm
+const CAPETE_MANER_MM = { L32: 100, L40: 100 };
 
 // Mânerul (secţiunea lui, cu rânduri lungime × buc): se alege doar MODELUL —
 // codul vine în culoarea ramei. L 40 negru există doar negru MAT (781): merge şi
@@ -260,12 +262,12 @@ const codRamaIndex = new Map((catalog.rame ?? []).map(a => [a.cod.toUpperCase(),
 export const gasesteRama = cod => codRamaIndex.get(String(cod).toUpperCase()) ?? null;
 
 // Bucăţi (mm) pe bare (First Fit Decreasing) — ca macro-ul CalculeazaNrBare.
-function bareNecesare(bucati, bara) {
-  const bare = [];
+function bareNecesare(bucati, bara, capete = 0) {
+  const bare = [], utila = bara - capete;
   for (const L of [...bucati].sort((a, b) => b - a)) {
-    if (L > bara) return { nr: null, eroare: `profil mâner: bucata de ${L} mm e mai lungă decât bara de ${bara} mm` };
+    if (L > utila) return { nr: null, eroare: `profil mâner: bucata de ${L} mm e mai lungă decât bara de ${bara} mm${capete ? ` (${utila} mm utili)` : ''}` };
     const i = bare.findIndex(rest => rest >= L);
-    if (i >= 0) bare[i] -= L; else bare.push(bara - L);
+    if (i >= 0) bare[i] -= L; else bare.push(utila - L);
   }
   return { nr: bare.length };
 }
@@ -334,13 +336,14 @@ export function specRame(model, state) {
       if (!model) { erori.push(`mânerul de pe rândul ${i + 1}: alege modelul`); return; }
       const cod = codManer(model, state.finish);
       if (!cod) { if (fin) erori.push(`mânerul ${model} (rândul ${i + 1}) nu există în culoarea ${fin.label}`); return; }
-      const e = peCod.get(cod) ?? { cod, bucati: [] };
+      const e = peCod.get(cod) ?? { cod, model, bucati: [] };
       e.bucati.push(...Array(buc).fill(L));
       peCod.set(cod, e);
     });
     for (const e of peCod.values()) {
-      const b = bareNecesare(e.bucati, BARA_MANER_MM);
-      if (b.eroare) erori.push(b.eroare); else manere.push({ ...e, bare: b.nr });
+      const { model, ...rest } = e;
+      const b = bareNecesare(e.bucati, BARA_MANER_MM, CAPETE_MANER_MM[model] ?? 0);
+      if (b.eroare) erori.push(b.eroare); else manere.push({ ...rest, bare: b.nr });
     }
   }
 

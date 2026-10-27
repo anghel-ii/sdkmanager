@@ -363,7 +363,8 @@ for (const sys of Object.values(systems).filter(s => s.meta.family === 'suspenda
 }
 
 // Rame (userul, 2026-09-25): „100 mm de margini sus/jos" = mereu 2 găuri pe ramă,
-// oricât scrie pe rând; mânerul se aşază pe bare de 3000 mm (2 × 1400 = o bară).
+// oricât scrie pe rând; mânerul se aşază pe bare de 3000 mm (2 × 1400 = o bară). La mânerele L câte 5 cm
+// de la fiecare capăt nu se folosesc (userul, 2026-10-27): 2900 utili — 2 × 1450 încap, 2 × 1500 nu; Neo rămâne la 3000.
 {
   const sys = systems.rama820;
   state.system = sys.meta.id;
@@ -375,13 +376,19 @@ for (const sys of Object.values(systems).filter(s => s.meta.family === 'suspenda
   const verifica = (ok, mesaj) => { if (!ok) { console.error('✗ rame: ' + mesaj); process.exit(1); } };
   verifica(s.nrGauri === 6, `sus/jos: aştept 3 rame × 2 găuri = 6, am ${s.nrGauri}`);
   verifica(s.manere[0]?.bare === 1, `mâner 2 × 1400 mm: aştept 1 bară de 3000, am ${s.manere[0]?.bare}`);
+  const bareManer = (model, lungime, buc) => { state.rame.maner = { randuri: [{ model, lungime, buc }] }; buildConfig(); return currentSpec().manere[0]?.bare; };
+  verifica(bareManer('L40', 1450, 2) === 1, `L40 2 × 1450 = 2900 utili: aştept 1 bară, am ${bareManer('L40', 1450, 2)}`);
+  verifica(bareManer('L32', 1500, 2) === 2, `L32 2 × 1500 > 2900 utili: aştept 2 bare, am ${bareManer('L32', 1500, 2)}`);
+  verifica(bareManer('Neo', 1500, 2) === 1, `Neo 2 × 1500 = 3000: aştept 1 bară, am ${bareManer('Neo', 1500, 2)}`);
+  state.rame.maner = { randuri: [{ model: 'L40', lungime: 2950, buc: 1 }] }; buildConfig();
+  verifica(currentSpec().erori.some(e => /2950 mm e mai lungă decât bara de 3000 mm \(2900 mm utili\)/.test(e)), `L40 2950: ${currentSpec().erori}`);
   // schiţa de găurire (verso): cotele de sus, la centrul găurii
   const c = (h, n, g) => JSON.stringify(cotaGauri(h, n, g));
   verifica(c(600, 2, '100 mm de margini sus/jos') === '[100,500]', `cote sus/jos 600: ${c(600, 2, '100 mm de margini sus/jos')}`);
   verifica(c(2000, 3, '100 mm sus/jos si la mijloc') === '[100,1000,1900]', `cote la mijloc: ${c(2000, 3, '100 mm sus/jos si la mijloc')}`);
   verifica(c(1999, 4, '100 mm sus/jos si impartite egal') === '[100,699.7,1299.3,1899]', `cote egale: ${c(1999, 4, '100 mm sus/jos si impartite egal')}`);
   verifica(c(800, 3, 'vezi schita pe spate') === 'null' && c(800, 2, 'Fara gaurire') === '[]', 'schiţa clientului / fără găurire');
-  console.log('✓ rame: 2 găuri la „sus/jos", bare de mâner de 3000 mm, cotele schiţei de găurire');
+  console.log('✓ rame: 2 găuri la „sus/jos", bare de mâner de 3000 mm (L: 2900 utili), cotele schiţei de găurire');
 }
 
 // Cote pe fiecare ramă (userul, 2026-10-12): găurile = cotele scrise sub rând, de sus sau de jos;

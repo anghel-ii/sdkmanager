@@ -1,7 +1,7 @@
 // node test/amanunt.test.mjs — produsele ofertei cu amănuntul + căutarea din pagină
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { cautator, normal, debitare, sePoatePeJumatate, laBara, arie, rotunjeste } from '../js/amanunt-calcul.js';
+import { cautator, normal, debitare, sePoatePeJumatate, laBara, arie, rotunjeste, lungimeUtila } from '../js/amanunt-calcul.js';
 import { liniaTransport, LIVRARE } from '../js/lib/comun/comanda.js';
 
 const produse = JSON.parse(fs.readFileSync(new URL('../js/catalog/amanunt.json', import.meta.url)));
@@ -10,6 +10,15 @@ assert.ok(produse.every(p => p.cod && p.denumire && p.um), 'fiecare produs are c
 assert.equal(new Set(produse.map(p => p.cod)).size, produse.length, 'coduri unice');
 
 const cauta = cautator(produse);
+
+// Gola C / J şi mânerul L: 5 cm la fiecare capăt nu se folosesc → se calculează cu bara − 100 mm (userul, 2026-10-27)
+const util = cod => { const p = produse.find(x => x.cod === cod); return lungimeUtila(p.denumire, p.bara); };
+for (const [cod, mm] of [['522', 4100], ['510', 4100], ['544', 3400], ['732A', 4100], ['731N', 4100], ['780', 2900], ['771', 2900],
+                         ['400', 4200], ['733A', 4750], ['302', 5500], ['211', 5500]]) assert.equal(util(cod), mm, `lungimea utilă la ${cod}`);
+assert.ok(produse.filter(p => p.bara).filter(p => /^gola\s*(''|")\s*[cj]/i.test(p.denumire) || /^profil maner l /i.test(p.denumire)).every(p => util(p.cod) === p.bara - 100),
+  'toate Gola C / J şi mânerele L');
+assert.equal(debitare([{ l: 2100, buc: 2 }], util('522')).nr, 2, 'Gola C: 2 × 2100 nu mai încap într-o bară de 4200');
+assert.equal(debitare([{ l: 2050, buc: 1 }], util('522'), 0, true).nr, 0.5, 'Gola C: jumătatea = 2050 mm');
 const gasite = cauta('maner auriu');
 assert.ok(gasite.length > 0 && gasite.every(p => ['maner', 'auriu'].every(c => normal(p.denumire + ' ' + p.cod).includes(c))),
   'toate cuvintele, în orice ordine');
