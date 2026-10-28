@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reclamaţii</title>
+<link rel="stylesheet" href="/comun.css">
+<link rel="stylesheet" href="/nou.css">
+<script src="/dialog.js"></script>
+<script src="/data.js"></script>
+<script src="/live.js"></script>
+<style>
+  /* Reclamaţiile (userul, 2026-10-28) — conducere + admin: sus produsele folosite la remedieri (cod + cantitate,
+     adunate pe perioada aleasă), dedesubt fiecare reclamaţie cu motivul şi produsele ei. */
+  #continut { max-width: 1100px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+  .titlu-card { font-size: .74rem; text-transform: uppercase; letter-spacing: .05em; color: var(--text-dim); margin-bottom: 8px;
+                display: flex; align-items: center; gap: 10px; }
+  .titlu-card .spatiu { flex: 1; }
+  .filtre { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; }
+  .filtre .segmented { width: auto; }
+  .filtre .segmented button { padding: 6px 11px; }
+  .filtre input[type=search], .filtre input[type=date] { width: auto; padding: 7px 10px; font-size: 13.5px; }
+  .filtre input[type=search] { flex: 1 1 200px; min-width: 180px; }
+  table.produse { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  table.produse th { text-align: left; font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; color: var(--text-dim);
+                     font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+  table.produse td { padding: 7px 8px; border-bottom: 1px solid var(--line); }
+  table.produse td.num, table.produse th.num { text-align: right; white-space: nowrap; }
+  table.produse td.cod { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12.5px; }
+  .recl { padding: 12px 4px; border-bottom: 1px solid var(--line); }
+  .recl:last-child { border-bottom: none; }
+  .recl .cap { font-weight: 600; }
+  .recl .cap a { color: var(--accent); }
+  .recl .motiv { white-space: pre-wrap; word-break: break-word; margin-top: 3px; }
+  .recl .info { color: var(--text-dim); font-size: .82rem; margin-top: 3px; }
+  .recl ul { margin: 6px 0 0 18px; font-size: 13px; }
+  .recl ul .mono { font-size: 12px; }
+  .pastila { display: inline-block; padding: 1px 9px; border-radius: 999px; border: 1px solid; font-size: .76rem; font-weight: 600; margin-left: 6px; }
+  .pastila.lucru { color: #2a1f00; border-color: #e5b45a; background: #e5b45a; }
+  .pastila.neprintata { color: var(--cald); border-color: rgba(212, 162, 76, .5); }
+  .pastila.rezolvata { color: var(--ok); border-color: rgba(107, 155, 122, .45); background: rgba(107, 155, 122, .1); }
+  .gol { text-align: center; padding: 22px; color: var(--text-dim); }
+</style>
+</head>
+<body class="ui-nou">
+
+<div id="bara"></div>
+<script src="/bara.js"></script>
+
+<div id="continut">
+  <header class="pagina-cap">
+    <h1>Reclamaţii</h1>
+    <p>Reclamaţiile deschise la comenzile finalizate şi produsele folosite ca să fie remediate.</p>
+  </header>
+
+  <div class="card filtre" role="search">
+    <div class="segmented mini" id="perioada" aria-label="Perioada">
+      <button data-p="30">30 de zile</button><button data-p="luna">Luna asta</button><button data-p="an">Anul ăsta</button>
+      <button data-p="tot" class="active">Tot</button><button data-p="interval">Interval</button>
+    </div>
+    <span id="interval" hidden><input type="date" id="de" aria-label="De la"> — <input type="date" id="pana" aria-label="Până la"></span>
+    <input type="search" id="cauta" placeholder="Caută: nr. ofertă, client, motiv, cod produs…" autocomplete="off">
+  </div>
+
+  <div class="card">
+    <div class="titlu-card">Produse folosite la remedieri<span class="spatiu"></span><span id="total"></span></div>
+    <div id="produse">Se încarcă…</div>
+  </div>
+  <div class="card">
+    <div class="titlu-card">Reclamaţii</div>
+    <div id="lista"></div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const virgula = n => String(Math.round(n * 1000) / 1000).replace('.', ',');
+const normal = t => String(t ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+async function api(cale) {
+  const r = await fetch(cale, { headers: { 'Content-Type': 'application/json' } });
+  if (r.status === 401) { location.href = '/login?redirect=' + encodeURIComponent(location.pathname); return null; }
+  return r;
+}
+
+let perioada = 'tot', reclamatii = [];
+// ziua în ora calculatorului, ca „AAAA-LL-ZZ"
+const zi = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+function limite() {
+  const azi = new Date();
+  switch (perioada) {
+    case '30':       return [zi(new Date(azi.getFullYear(), azi.getMonth(), azi.getDate() - 29)), ''];
+    case 'luna':     return [zi(new Date(azi.getFullYear(), azi.getMonth(), 1)), ''];
+    case 'an':       return [`${azi.getFullYear()}-01-01`, ''];
+    case 'interval': return [$('de').value, $('pana').value];
+    default:         return ['', ''];
+  }
+}
+
+async function incarca() {
+  const [de, pana] = limite();
+  const r = await api(`/api/reclamatii?${new URLSearchParams({ ...(de && { de }), ...(pana && { pana }) })}`);
+  if (!r) return;
+  if (!r.ok) { $('produse').innerHTML = `<div class="gol">${esc((await r.json().catch(() => ({}))).eroare || 'Nu s-au putut citi reclamaţiile.')}</div>`; $('lista').innerHTML = ''; return; }
+  reclamatii = (await r.json()).reclamatii;
+  randeaza();
+}
+
+const stare = r => (r.rezolvata_la ? '<span class="pastila rezolvata">Rezolvată</span>'
+  : r.fisa_printata_la ? '<span class="pastila lucru">În lucru</span>' : '<span class="pastila neprintata">Fişa neprintată</span>');
+
+function randeaza() {
+  const q = normal($('cauta').value.trim());
+  const rs = reclamatii.filter(r => q.split(/\s+/).every(cuv => !cuv ||
+    [r.comanda_nr, r.client_nume, r.motiv, r.explicatii, r.factura_nr, r.creat_de_nume, ...r.linii.flatMap(l => [l.cod, l.denumire])]
+      .some(v => normal(v).includes(cuv))));
+  // produsele, adunate pe cod (şi UM) — cele mai multe întâi
+  const pe = new Map();
+  for (const r of rs) for (const l of r.linii) {
+    const k = `${l.cod}|${l.um ?? ''}`;
+    const x = pe.get(k) ?? pe.set(k, { cod: l.cod, denumire: l.denumire, um: l.um, cantitate: 0, reclamatii: new Set() }).get(k);
+    x.cantitate += l.cantitate;
+    x.reclamatii.add(r.id);
+  }
+  const produse = [...pe.values()].sort((a, b) => b.reclamatii.size - a.reclamatii.size || a.cod.localeCompare(b.cod));
+  $('total').textContent = rs.length ? `${rs.length} ${rs.length === 1 ? 'reclamaţie' : 'reclamaţii'} · ${produse.length} ${produse.length === 1 ? 'cod' : 'coduri'}` : '';
+  $('produse').innerHTML = produse.length ? `<table class="produse">
+      <thead><tr><th>Cod</th><th>Produs</th><th class="num">Cantitate</th><th>UM</th><th class="num">Reclamaţii</th></tr></thead>
+      <tbody>${produse.map(p => `<tr><td class="cod">${esc(p.cod)}</td><td>${esc(p.denumire)}</td><td class="num"><b>${virgula(p.cantitate)}</b></td>
+        <td class="dim">${esc(p.um ?? '')}</td><td class="num">${p.reclamatii.size}</td></tr>`).join('')}</tbody></table>`
+    : '<div class="gol">Nicio reclamaţie în perioada asta.</div>';
+  $('lista').innerHTML = rs.map(r => `<div class="recl">
+      <div class="cap"><a href="/#comanda/${r.comanda_id}">${esc(r.comanda_nr)} · ${esc(r.client_nume)}</a>${stare(r)}</div>
+      <div class="motiv">${esc(r.motiv)}</div>
+      <div class="info">deschisă de <b>${esc(r.creat_de_nume)}</b> · ${dataOra(r.creat_la)}${r.rezolvata_la ? ` · rezolvată de ${esc(r.rezolvata_de_nume ?? '—')} · ${dataOra(r.rezolvata_la)}` : ''}${
+        r.factura_nr ? ` · factura ${esc(r.factura_nr)}` : ''}</div>
+      <div class="info">Pentru atelier: ${esc(r.explicatii)}</div>
+      <ul>${r.linii.map(l => `<li><span class="mono">${esc(l.cod)}</span> ${esc(l.denumire)} — <b>${virgula(l.cantitate)} ${esc(l.um ?? '')}</b>${
+        l.debitare ? ` <span class="dim">· ${esc(l.debitare)}</span>` : ''}</li>`).join('')}</ul>
+    </div>`).join('') || '<div class="gol">Nimic de arătat.</div>';
+}
+
+$('perioada').addEventListener('click', e => {
+  const b = e.target.closest('button[data-p]');
+  if (!b) return;
+  perioada = b.dataset.p;
+  $('perioada').querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b));
+  $('interval').hidden = perioada !== 'interval';
+  incarca();
+});
+for (const id of ['de', 'pana']) $(id).addEventListener('change', incarca);
+$('cauta').addEventListener('input', randeaza);
+// actualizare live (/live.js): o reclamaţie nouă / rezolvată schimbă comanda
+urmareste(() => incarca());
+incarca();
+</script>
+</body>
+</html>

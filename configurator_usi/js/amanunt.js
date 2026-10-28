@@ -66,6 +66,10 @@ const comanda = { livrare: null, agent: null, plata: null, incasare: null };
 // coşul ofertei (js/cos.js): produsele deja adăugate + oferta deschisă din manager, dacă e
 const cos = cosul.citeste();
 let modFisa = null;         // ?fisa=<id>&poz=<k> — doar tipar: { numar, debitare }
+// Reclamaţie la o comandă finalizată (userul, 2026-10-28): ?reclamatie=<comanda> — formularul (produsele de
+// înlocuit + motivul + explicaţiile pt. atelier); ?reclamatie_fisa=<id> — fişa ei, din manager.
+// { comanda, reclamatie? (cea salvată), blocata? (mesajul de ce nu se poate deschide) }
+let recl = null;
 
 // ── Ce se facturează ────────────────────────────────────────────────────────
 
@@ -162,18 +166,24 @@ function actualizeaza() {
 }
 
 // paşii, ca în configurator: ✓ pe cei gata, albastru pe primul neterminat; starea pe cardul de jos
+// la reclamaţie: motivul şi explicaţiile pentru atelier, obligatorii
+const lipsaReclamatie = () => [['reclMotiv', 'motivul reclamaţiei'], ['reclExplicatii', 'explicaţiile pentru atelier']]
+  .filter(([id]) => $(id).value.trim().length < 3).map(([id, text]) => ({ id, text }));
+const NR_PAS = { produse: 1, client: 2, motiv: 1, explicatii: 3 };
 function pasi() {
   const { errors } = facturare();
-  const lipsa = $('ofertaNr').style.display !== 'none' ? campuriLipsa() : [];
-  marcheazaDeCompletat(campuriLipsa().map(x => $(x.id)));   // câmpurile obligatorii goale, colorate
-  const gata = { produse: !errors.length,
-                 client: !lipsa.some(x => ['clientNume', 'comandaLivrare', 'comandaAgent'].includes(x.id)) };
+  if (recl) NR_PAS.produse = 2;
+  const lipsa = recl ? lipsaReclamatie() : $('ofertaNr').style.display !== 'none' ? campuriLipsa() : [];
+  marcheazaDeCompletat((recl ? lipsaReclamatie() : campuriLipsa()).map(x => $(x.id)));   // câmpurile obligatorii goale, colorate
+  const gata = recl ? { motiv: !lipsa.some(x => x.id === 'reclMotiv'), produse: !errors.length, explicatii: !lipsa.some(x => x.id === 'reclExplicatii') }
+    : { produse: !errors.length,
+        client: !lipsa.some(x => ['clientNume', 'comandaLivrare', 'comandaAgent'].includes(x.id)) };
   let curent = null;
   document.querySelectorAll('.pas[data-pas]').forEach(s => {
     const id = s.dataset.pas;
     if (!(id in gata)) return;
     s.classList.toggle('gata', gata[id]);
-    s.querySelector('.pas-nr').textContent = gata[id] ? '✓' : id === 'produse' ? '1' : '2';
+    s.querySelector('.pas-nr').textContent = gata[id] ? '✓' : String(NR_PAS[id]);
     s.classList.remove('curent');
     if (!curent && !gata[id]) { curent = s; s.classList.add('curent'); }
   });
@@ -183,12 +193,13 @@ function pasi() {
     : lipsa.length ? `Mai completează: ${lipsa.map(x => x.text).join(', ')}` : 'Gata de salvat';
 }
 // starea se schimbă la datele clientului şi la nr. ofertei
-for (const id of ['clientNume', 'clientTelefon', 'clientAdresa', 'comandaLivrare', 'comandaPlata', 'comandaIncasare', 'comandaAgent', 'ofertaNr'])
+for (const id of ['clientNume', 'clientTelefon', 'clientAdresa', 'comandaLivrare', 'comandaPlata', 'comandaIncasare', 'comandaAgent', 'ofertaNr', 'reclMotiv', 'reclExplicatii'])
   for (const ev of ['input', 'change']) $(id).addEventListener(ev, pasi);
 // Goleşte pagina — ca în configurator: produsul de pe ecran de la zero (coşul rămâne)
 // cu produse deja puse, întâi o întrebare — butonul e lângă „Salvează" şi şterge tot ce nu e salvat
 $('btnClear').addEventListener('click', async () => {
   if (linii.some(l => l?.cod) && !(await confirma('Goleşti pagina? Produsele puse aici şi nesalvate se pierd.', 'Goleşte'))) return;
+  if (recl) { linii = []; $('reclMotiv').value = $('reclExplicatii').value = ''; return randeaza(); }   // fără coş: doar formularul
   cosul.golesteEcranul(cos);
 });
 
@@ -327,7 +338,7 @@ $('randuri').addEventListener('keydown', e => {
 $('randuri').addEventListener('keydown', e => {
   if (e.key !== 'Enter' || e.defaultPrevented || !e.target.classList.contains('produs') || e.target.value.trim()) return;
   e.preventDefault();
-  $('clientNume').focus();
+  $(recl ? 'reclExplicatii' : 'clientNume').focus();
 });
 // în rest (client, livrare, plată, agent, nr. ofertă), Enter = câmpul următor — ca în configurator
 activeazaCampuri(document.querySelector('main'), { cuCautabile: false });
@@ -470,7 +481,15 @@ function renderOferta() {
                         const nr = $('ofertaNr'), eticheta = nr.closest('label.nou-camp');   // cu eticheta lui
                         nr.style.display = da && !cos.adaugaLa ? '' : 'none';
                         if (eticheta) eticheta.style.display = nr.style.display; };
-  if (!servit || modFisa) { $('ofertaUI').innerHTML = ''; return arata(false); }
+  if (!servit || modFisa) { $('ofertaUI').innerHTML = ''; $('btnReclamatie').hidden = true; return arata(false); }
+  if (recl) {   // reclamaţie: doar „Salvează reclamaţia şi printează"
+    arata(false);
+    $('btnReclamatie').hidden = stare !== 'logat';
+    $('btnReclamatie').disabled = !!recl.blocata;
+    $('ofertaUI').innerHTML = stare === 'nelogat' ? `<div class="oferta-hint">Autentifică-te ca să poţi salva reclamaţia.
+      <a href="/login?redirect=${encodeURIComponent(location.pathname + location.search)}">Intră în cont</a></div>` : '';
+    return pasi();
+  }
   if (stare === 'nelogat') {
     arata(false);
     $('ofertaUI').innerHTML = `<div class="oferta-hint">Autentifică-te ca să poţi salva oferte.
@@ -614,15 +633,7 @@ function tipareste({ vezi = false } = {}) {
   // debitarea fiecărei linii: la fişă din necesarul îngheţat, altfel din rândurile de pe ecran
   const peCod = modFisa?.debitare ?? new Map(linii.filter(deb).map(l => [l.cod, textDebitare(l)]));
   const rand = (et, v) => (v ? `<tr><td>${et}</td><td>${esc(v)}</td></tr>` : '');
-  $('tipar').innerHTML = `
-    <div class="cap"><div><h1>Ofertă cu amănuntul</h1>${modFisa?.numar ? `<strong>${esc(modFisa.numar)}</strong>` : ''}</div>
-      <div class="dreapta">${configuratDe() ? `<div>Configurat de <b>${esc(configuratDe())}</b></div>` : ''}<div>${dataRo()}</div></div></div>
-    <table class="perechi">
-      ${$('clientNume').value.trim() ? `<tr class="client"><td>Client</td><td>${esc($('clientNume').value.trim())}</td></tr>` : ''}${rand('Telefon', $('clientTelefon').value)}${rand('Adresă', $('clientAdresa').value)}
-      ${rand('Mod de livrare', comanda.livrare)}${rand('Facturare', plataText(comanda.plata))}${rand('Încasare', incasareText(comanda.incasare))}${rand('Agent', comanda.agent)}
-      ${rand(modFisa?.etNumar ?? numarText(comanda.plata), $('ofertaNr').value.trim())}${rand('Observaţii', $('observatii').value.trim())}
-    </table>
-    <table>
+  const tabel = `<table>
       <thead><tr class="margine"><td colspan="6"></td></tr><tr><th>#</th><th>Cod</th><th>Produs</th><th>Debitare</th><th>Cant.</th><th>✓</th></tr></thead>
       <tfoot><tr class="margine"><td colspan="6"></td></tr></tfoot>
       <tbody>${lines.map((l, k) => { const d = bucatiDebitare(peCod.get(l.cod)); return `<tr><td>${k + 1}</td><td>${esc(l.cod)}</td>
@@ -630,18 +641,78 @@ function tipareste({ vezi = false } = {}) {
         <td class="deb-col">${d ? d.bucati.map(b => `<div>${esc(b)}</div>`).join('') + (d.bara ? `<div class="bara-de">din bare de ${esc(d.bara)}</div>` : '') : ''}</td>
         <td class="num">${virgula(l.cantitate)} ${d?.bara ? (+l.cantitate === 1 ? 'bară' : 'bare') : esc(l.um)}</td><td class="bifa"></td></tr>`; }).join('')}</tbody>
     </table>`;
+  // fişa reclamaţiei: se capsează la foile comenzii — comanda, motivul, ce se înlocuieşte, ce face atelierul
+  const c = recl?.comanda, r = recl?.reclamatie;
+  $('tipar').innerHTML = recl ? `
+    <div class="cap"><div><h1 class="recl-titlu">RECLAMAŢIE</h1><strong>la comanda ${esc(c.oferta_nr || c.numar)}</strong></div>
+      <div class="dreapta"><div>Deschisă de <b>${esc(r?.creat_de_nume ?? manager.stareOferta().utilizator?.nume ?? '')}</b></div>
+        <div>${r?.creat_la ? ziRo(r.creat_la) : dataRo()}</div></div></div>
+    <table class="perechi">
+      <tr class="client"><td>Client</td><td>${esc(c.client_nume)}</td></tr>${rand('Telefon', c.client_telefon)}${rand('Adresă', c.client_adresa)}
+      ${rand('Mod de livrare', c.livrare)}${rand('Factura', c.factura_nr)}${rand('Agent', c.agent)}
+    </table>
+    <div class="caseta"><div class="et">Motivul reclamaţiei</div><div class="txt">${esc($('reclMotiv').value.trim())}</div></div>
+    <h2 class="inlocuieste">Ce se înlocuieşte</h2>
+    ${tabel}
+    <div class="caseta atelier"><div class="et">Explicaţii pentru atelier</div><div class="txt">${esc($('reclExplicatii').value.trim())}</div></div>` : `
+    <div class="cap"><div><h1>Ofertă cu amănuntul</h1>${modFisa?.numar ? `<strong>${esc(modFisa.numar)}</strong>` : ''}</div>
+      <div class="dreapta">${configuratDe() ? `<div>Configurat de <b>${esc(configuratDe())}</b></div>` : ''}<div>${dataRo()}</div></div></div>
+    <table class="perechi">
+      ${$('clientNume').value.trim() ? `<tr class="client"><td>Client</td><td>${esc($('clientNume').value.trim())}</td></tr>` : ''}${rand('Telefon', $('clientTelefon').value)}${rand('Adresă', $('clientAdresa').value)}
+      ${rand('Mod de livrare', comanda.livrare)}${rand('Facturare', plataText(comanda.plata))}${rand('Încasare', incasareText(comanda.incasare))}${rand('Agent', comanda.agent)}
+      ${rand(modFisa?.etNumar ?? numarText(comanda.plata), $('ofertaNr').value.trim())}${rand('Observaţii', $('observatii').value.trim())}
+    </table>
+    ${tabel}`;
   if (vezi) {
     return arataPrevizualizare(`<!DOCTYPE html><html lang="ro"><head><meta charset="UTF-8"><link rel="stylesheet" href="/fonte.css">
       <style>body { font-family: 'Inter', sans-serif; color: #000; margin: 0; } ${stilTipar()} #tipar { padding-bottom: 10mm; }</style>
-      </head><body><div id="tipar">${$('tipar').innerHTML}</div></body></html>`, { titlu: 'Lista — ofertă cu amănuntul', pagini: '#tipar' });
+      </head><body><div id="tipar">${$('tipar').innerHTML}</div></body></html>`, { titlu: recl ? 'Fişa reclamaţiei' : 'Lista — ofertă cu amănuntul', pagini: '#tipar' });
   }
   addEventListener('afterprint', () => { try { window.top.postMessage({ tip: 'fisa-tiparita' }, location.origin); } catch {} }, { once: true });
   window.print();
 }
 $('btnFisa').addEventListener('click', () => {
   tipareste({ vezi: true });
-  window.noteazaVazut?.('A văzut lista (ofertă cu amănuntul)', cos.ofertaEditata ?? null);
+  window.noteazaVazut?.(recl ? 'A văzut fişa reclamaţiei (nesalvată)' : 'A văzut lista (ofertă cu amănuntul)', recl?.comanda.id ?? cos.ofertaEditata ?? null);
 });
+// data reclamaţiei pe fişă (SQLite: UTC) — ziua, în ora României
+const ziRo = s => new Intl.DateTimeFormat('ro-RO', { timeZone: 'Europe/Bucharest', day: '2-digit', month: '2-digit', year: 'numeric' })
+  .format(new Date(String(s).replace(' ', 'T') + 'Z'));
+
+// ── Reclamaţia: salvare, apoi printul obligatoriu ───────────────────────────
+// Fără „Da, am printat" reclamaţia rămâne salvată, dar comanda nu intră în lucru — fişa se printează
+// din pagina comenzii (manager, Fise.printeazaReclamatie).
+async function salveazaReclamatia() {
+  const { errors } = facturare();
+  if (errors.length) return mesaj(esc(errors[0]), 'eroare');
+  const lipsa = lipsaReclamatie();
+  if (lipsa.length) { $(lipsa[0].id).focus(); return mesaj(`Completează ${lipsa.map(x => x.text).join(', ')}.`, 'eroare'); }
+  const b = $('btnReclamatie'), id = recl.comanda.id;
+  b.disabled = true;
+  b.textContent = 'Se salvează…';
+  const gata = () => { b.disabled = false; b.textContent = 'Salvează reclamaţia şi printează'; };
+  let r;
+  try {
+    r = await fetch(`/api/comenzi/${id}/reclamatie`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ motiv: $('reclMotiv').value, explicatii: $('reclExplicatii').value,
+        linii: linii.filter(l => l.cod).map(l => ({ cod: l.cod, denumire: l.denumire, um: l.um, cantitate: cantitate(l), debitare: textDebitare(l) })) }) });
+  } catch { gata(); return mesaj('Serverul nu răspunde. Verifică legătura la reţea.', 'eroare'); }
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) { gata(); return mesaj(esc(d.eroare || `Salvarea a eşuat (${r.status}).`), 'eroare'); }
+  b.textContent = 'Se printează…';
+  const inchis = new Promise(gata => addEventListener('afterprint', gata, { once: true }));
+  tipareste();
+  await inchis;
+  if (await window.intreabaObligatoriu('Ai printat fişa reclamaţiei?\n\nO capsezi la foile comenzii. Abia după „Da" comanda intră în lucru, marcată cu galben.',
+      'Da, am printat', 'Nu, n-am printat')) {
+    await fetch(`/api/comenzi/${id}/reclamatie-fisa`, { method: 'POST' });
+  } else {
+    window.noteazaVazut?.('Print neconfirmat (fişa reclamaţiei) — a răspuns „Nu, n-am printat"', id);
+    await window.alerta('Reclamaţia s-a salvat, dar NU e în lucru: fişa nu s-a printat.\n\nO printezi din pagina comenzii, cu „Printează fişa reclamaţiei".');
+  }
+  location.href = '/#comanda/' + id;
+}
+$('btnReclamatie').addEventListener('click', salveazaReclamatia);
 
 // ── Pornire: produs nou, din coş (?cos=1&poz=k) sau „Fişă" din manager (?fisa=id&poz=k) ──
 
@@ -668,7 +739,37 @@ const puneClientul = (client, ofertaNr, detalii) => {
     const r = await cosul.dinAdauga(params.get('adauga'), manager.incarcaOferta, 'amanunt');
     if (r.eroare) eroare = r.eroare; else return;
   }
-  if (params.get('fisa')) {
+  if (params.get('reclamatie')) {
+    const o = await manager.incarcaOferta(params.get('reclamatie'));
+    const c = o.comanda;
+    recl = { comanda: c ?? {} };
+    recl.blocata = o.eroare ? 'Comanda nu există.'
+      : c.anulat || c.tip !== 'comanda' || !c.finalizat_la ? 'Reclamaţia se deschide doar la o comandă finalizată.'
+      : o.reclamatii?.some(x => !x.rezolvata_la) ? 'Comanda are deja o reclamaţie nerezolvată — vezi pagina comenzii.' : null;
+    eroare = recl.blocata;
+    document.body.classList.add('mod-reclamatie');
+    document.title = 'Reclamaţie';
+    document.querySelector('.bara-context').textContent = 'Reclamaţie';
+    $('btnFisa').textContent = '👁 Vezi fişa';
+    $('btnFisa').title = 'Previzualizare — fişa se printează la salvare';
+    if (c) $('reclComanda').innerHTML = `<span>Comanda <b class="mono">${esc(c.oferta_nr || c.numar)}</b></span><span><b>${esc(c.client_nume)}</b></span>${
+      c.factura_nr ? `<span class="dim">factura ${esc(c.factura_nr)}</span>` : ''}<a href="/#comanda/${c.id}" class="dim">← înapoi la comandă</a>`;
+  } else if (params.get('reclamatie_fisa')) {
+    let d = {};
+    try {
+      const r = await fetch('/api/reclamatii/' + encodeURIComponent(params.get('reclamatie_fisa')));
+      d = await r.json().catch(() => ({}));
+      if (!r.ok) eroare = d.eroare || 'Reclamaţia nu există.';
+    } catch { eroare = 'Managerul nu răspunde.'; }
+    if (!eroare) {
+      recl = { comanda: d.comanda, reclamatie: d.reclamatie };
+      document.body.classList.add('mod-reclamatie');
+      linii = d.reclamatie.linii.map(l => ({ cod: l.cod, denumire: l.denumire, um: l.um, cantitate: l.cantitate }));
+      $('reclMotiv').value = d.reclamatie.motiv;
+      $('reclExplicatii').value = d.reclamatie.explicatii;
+      modFisa = { debitare: new Map(d.reclamatie.linii.filter(l => l.debitare).map(l => [l.cod, l.debitare])) };
+    }
+  } else if (params.get('fisa')) {
     const o = await manager.incarcaOferta(params.get('fisa'));
     if (o.comanda) Object.assign(o.comanda, dinAcceptare(params));   // plata aleasă chiar acum, la acceptare
     const k = +params.get('poz') || 0, p = o.pozitii?.[k];
@@ -697,28 +798,30 @@ const puneClientul = (client, ofertaNr, detalii) => {
     if (ecran) { linii = ecran.linii; $('observatii').value = ecran.observatii; }
     cosul.scrie(cos);
   }
-  if (!modFisa) {
+  if (!modFisa && !recl) {
     card = cosul.initCard($('cardCos'), cos, { curenta, client: () => ({ ...clientPtCos(), modificat: ciorna.modificata() }),
                                                gamaEcran: () => 'amanunt', produse: $('cosProduse'),
                                                transport: () => liniaTransport({ comanda }) });
     document.addEventListener('cos:schimbat', renderOferta);
-  } else { $('cardCosSec').hidden = true; $('nouActiuni').hidden = true; }
+  } else { $('cardCosSec').hidden = true; if (modFisa) $('nouActiuni').hidden = true; }
   randeaza();
   await manager.initOferta(renderOferta);
-  if (cos.comandaEditata) { $('btnComanda').textContent = TEXT.btnComanda(); mesaj(cosul.mesajModificaComanda(cos), 'ok'); }
+  if (recl) { /* nici coş, nici ciornă */ }
+  else if (cos.comandaEditata) { $('btnComanda').textContent = TEXT.btnComanda(); mesaj(cosul.mesajModificaComanda(cos), 'ok'); }
   else if (cos.ofertaEditata) { $('btnConfirma').textContent = TEXT.btnConfirma(); mesaj(`Modifici oferta <strong>${esc(cos.numar ?? '')}</strong>.`, 'ok'); }
   if (eroare) mesaj(esc(eroare), 'eroare');
-  if (!modFisa) ciorna.init({ cos, gama: () => 'amanunt', client: clientPtCos,
+  if (!modFisa && !recl) ciorna.init({ cos, gama: () => 'amanunt', client: clientPtCos,
     ecran: () => ({ linii, observatii: $('observatii').value }),
     areContinut: () => cos.pozitii.length > 0 || linii.some(l => l?.cod || String(l?.denumire ?? '').trim()),
     titlu: () => {
       const n = cos.pozitii.length - (cos.curent != null ? 1 : 0);   // celelalte produse
       return `Ofertă cu amănuntul${n ? ` + ${n} ${n === 1 ? 'produs' : 'produse'}` : ''} · ${$('clientNume').value.trim() || 'fără client'}`;
     } });
-  if (params.get('fisa')) {
+  if (params.get('fisa') || params.get('reclamatie_fisa')) {
     // managerul încarcă pagina într-un cadru ascuns şi aşteaptă răspunsul — ÎNAINTE de print: dialogul
     // blochează pagina, iar „s-a închis" (afterprint) ar ajunge înaintea lui „fişa e gata" şi s-ar pierde
     if (window.parent !== window) window.parent.postMessage({ tip: 'fisa', eroare: modFisa ? null : eroare }, location.origin);
     if (modFisa) tipareste({ vezi: params.get('vezi') === '1' });
-  } else focus(linii.length, 'produs');
+  } else if (recl) $('reclMotiv').focus();
+  else focus(linii.length, 'produs');
 })();

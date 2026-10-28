@@ -579,6 +579,34 @@ const MIGRATII = [
   // v36 → v37 (2026-10-27): conducerea şterge clienţi din pagina Clienţi (userul). Pe Cloudflare rândul rămâne,
   // marcat şters, cu versiune nouă — aşa ajunge ştergerea în copie; aici rămâne şi el (MAX(versiune) nu scade).
   d => d.exec('ALTER TABLE client ADD COLUMN sters_la TEXT'),
+  // v37 → v38 (2026-10-28): reclamaţiile la comenzile finalizate (server/reclamatii.js, userul) — motivul, ce se
+  // înlocuieşte (produse din oferta cu amănuntul) şi explicaţiile pentru atelier. Comanda stă în „În lucru" (galben)
+  // de la fişa printată până la „Reclamaţie rezolvată"; finalizat_la / factura rămân neatinse.
+  d => d.exec(`
+    CREATE TABLE reclamatie (
+      id               INTEGER PRIMARY KEY,
+      comanda_id       INTEGER NOT NULL REFERENCES comanda(id) ON DELETE CASCADE,
+      motiv            TEXT NOT NULL,
+      explicatii       TEXT NOT NULL,                -- pentru atelier: ce fac cu comanda
+      creat_de         INTEGER NOT NULL REFERENCES utilizator(id),
+      creat_la         TEXT NOT NULL,
+      fisa_printata_la TEXT,                         -- NULL = salvată, dar nu e încă în lucru
+      fisa_printata_de INTEGER REFERENCES utilizator(id),
+      rezolvata_la     TEXT,
+      rezolvata_de     INTEGER REFERENCES utilizator(id)
+    );
+    CREATE INDEX reclamatie_comanda ON reclamatie (comanda_id);
+    CREATE TABLE reclamatie_linie (
+      id            INTEGER PRIMARY KEY,
+      reclamatie_id INTEGER NOT NULL REFERENCES reclamatie(id) ON DELETE CASCADE,
+      idx           INTEGER NOT NULL,
+      cod           TEXT NOT NULL,
+      denumire      TEXT NOT NULL,
+      um            TEXT,
+      cantitate     REAL NOT NULL,
+      debitare      TEXT                            -- „2 × 1200 mm → 1 bară de 3000 mm", ca la amănunt
+    );
+    CREATE INDEX reclamatie_linie_r ON reclamatie_linie (reclamatie_id, idx);`),
 ];
 
 // Exportată pt. test.

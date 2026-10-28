@@ -61,6 +61,9 @@
   .btn-pin:hover { opacity: .7; }
   .btn-pin.activ { filter: none; opacity: 1; }
   table.lista tr.fixat td { background: rgba(77, 163, 255, .10); }
+  /* reclamaţie în lucru (userul, 2026-10-28): rândul galben */
+  table.lista tr.reclamatie td { background: rgba(229, 180, 90, .16); }
+  table.lista tr.reclamatie td:first-child { box-shadow: inset 4px 0 0 #e5b45a; }
 
   table.lista { width: 100%; border-collapse: collapse; }
   table.lista th {
@@ -411,7 +414,8 @@ let lista = [], listaPt = null, cautare = '', sortare = 'data';
 let pesteTot = localStorage.getItem('cautaPesteTot') !== '0';
 const ceLista = () => (cautare.trim() && pesteTot ? 'toate' : tabCurent);   // ce listă trebuie să fie pe ecran
 // starea unei comenzi = tabul în care stă
-const stareRand = c => (c.tip === 'comanda' ? (c.finalizat_la ? 'finalizata' : 'comanda') : c.tip);
+// o comandă finalizată cu reclamaţie în lucru (c.reclamatie, server/reclamatii.js) stă în „În lucru"
+const stareRand = c => (c.tip === 'comanda' ? (c.finalizat_la && !c.reclamatie ? 'finalizata' : 'comanda') : c.tip);
 // utilizatorul logat (/api/eu) — rolul decide ce butoane apar. Serverul verifică
 // oricum: „birou" nu poate schimba / anula un nr. de factură deja trecut.
 let eu = null;
@@ -719,10 +723,10 @@ function randeazaTabel() {
         <th data-c="cine">Creat de<span class="stivuit">${titluData}</span></th><th data-c="data">${titluData}</th><th data-c="actiuni"></th>
       </tr></thead>
       <tbody>${randuri.map((c, i) => `${titluGrup(c, i)}
-        <tr data-id="${c.id}" class="${c.fixat ? 'fixat' : ''}${c.id === selectat ? ' selectat' : ''}${c.demo ? ' demo' : ''}">
+        <tr data-id="${c.id}" class="${c.fixat ? 'fixat' : ''}${c.reclamatie ? ' reclamatie' : ''}${c.id === selectat ? ' selectat' : ''}${c.demo ? ' demo' : ''}">
           <td class="pin" data-c="pin"><button class="btn-pin${c.fixat ? ' activ' : ''}" data-id="${c.id}"
                 title="${c.fixat ? 'Scoate de sus' : 'Fixează sus (doar pentru tine)'}">📌</button></td>
-          <td data-c="client">${esc(c.client_nume)}${c.demo ? ` ${DEMO}` : ''}${c.pe_hold ? ' <span class="stare-pastila anulata" title="Anulare cerută — comanda e oprită până decide conducerea">anulare cerută</span>' : ''}${totul && c.client_telefon ? `<div class="nr-mic mono">${esc(c.client_telefon)}</div>` : ''}</td>
+          <td data-c="client">${esc(c.client_nume)}${c.reclamatie ? ' <span class="stare-pastila reclamatie" title="Reclamaţie în lucru — comanda e finalizată">Reclamaţie</span>' : ''}${c.demo ? ` ${DEMO}` : ''}${c.pe_hold ? ' <span class="stare-pastila anulata" title="Anulare cerută — comanda e oprită până decide conducerea">anulare cerută</span>' : ''}${totul && c.client_telefon ? `<div class="nr-mic mono">${esc(c.client_telefon)}</div>` : ''}</td>
           <td class="mono" data-c="oferta">${esc(c.oferta_nr || c.numar)}</td>
           <td data-c="sistem">${esc(c.sistem ?? '—')}</td>
           ${cuStatus ? `<td data-c="status">${statusHtml(c.status)}</td>` : ''}
@@ -816,14 +820,14 @@ const deVerificat = c => c.livrare && c.livrare !== 'Ridicare personala' ? ' dat
 // întâi ce faci CU comanda (deschizi, printezi, modifici / adaugi), apoi unde o MUŢI (trecerile
 // colorate; „Anulează…" la capăt). Task / Tichet stau mici lângă ×. În „Drumul comenzii", pasul
 // la care eşti are butonul lui chiar pe rând (factura, sticla, fişa), fără să cauţi în altă parte.
-function cardDetalii({ comanda: c, cerere, cerereFactura, cerereNumar, plataNumar, pozitii, sticlaLinii = [], fise: printari = [] }, fise) {
+function cardDetalii({ comanda: c, cerere, cerereFactura, cerereNumar, plataNumar, pozitii, sticlaLinii = [], fise: printari = [], reclamatii = [] }, fise) {
   const eOferta = c.tip === 'oferta', ePlata = c.tip === 'plata', eComanda = c.tip === 'comanda';
-  const [cls, stare] = eOferta ? ['oferta', 'Ofertă'] : ePlata ? ['plata', 'Aşteaptă plata']
+  const [cls, stare] = eOferta ? ['oferta', 'Ofertă'] : ePlata ? ['plata', 'Aşteaptă plata'] : c.reclamatie ? ['reclamatie', 'Reclamaţie în lucru']
     : c.finalizat_la ? ['gata', 'Comandă finalizată'] : ['lucru', 'Comandă în lucru'];
   const comandate = sticlaLinii.filter(l => l.comandat_la);
   const sticla = sticlaLinii.length ? { total: sticlaLinii.length, comandate: comandate.length } : null;
   const activa = !c.anulat && cerere?.stare !== 'deschisa';
-  const treceri = butoaneTreceri(c, minuteInapoi(c)).trim() + butonAnulare(c, cerere);
+  const treceri = butoaneTreceri(c, minuteInapoi(c)).trim() + butonDeschideReclamatie(c, reclamatii) + butonAnulare(c, cerere);
   const noi = printari.length ? neprintate(printari, pozitii.length) : [];
   const fisa = noi.length && activa
     ? pas('acum', 'Fişă', `<span class="urmeaza">neprintată: ${esc(noi.map(k => numeFisa(fise, k)).join(', '))}</span>`)
@@ -838,6 +842,7 @@ function cardDetalii({ comanda: c, cerere, cerereFactura, cerereNumar, plataNuma
       <button class="cc-inchide" id="ccInchide" title="Închide (Esc)" aria-label="Închide">${icoana('inchide')}</button></div>
     <div class="cc-nr"><span class="mono">${esc(c.oferta_nr || c.numar)}</span>${butonNumar(c, plataNumar)}${cerereNumarText(cerereNumar)}<span class="stare-pastila ${c.anulat ? 'anulata' : cls}">${c.anulat ? 'Anulată' : stare}</span>${c.demo ? DEMO : ''}</div>
     ${blocAnulare(c, cerere)}
+    ${blocReclamatie(c, reclamatii)}
     <div class="cc-butoane">
       <button class="primar" id="ccDeschide" title="Pagina comenzii (dublu-click sau Enter pe rând)">Deschide comanda</button>
       ${pozitii.length > 1
@@ -899,6 +904,7 @@ async function incarcaCard() {
   $('ccModifica')?.addEventListener('click', () => { location.href = '/configurator/?oferta=' + id; });
   el.querySelectorAll('button.cc-fisa').forEach(b => b.addEventListener('click', () => veziFisa(id, b, +b.dataset.poz)));
   leagaPrint(el, id, d.fise ?? [], d.pozitii.length, () => mergiLa(id));
+  leagaReclamatie(el, d.comanda, d.reclamatii ?? [], () => mergiLa(id));
 }
 
 // ↑ ↓ aleg comanda următoare / de dinainte; Enter o deschide; Esc închide cardul
@@ -931,7 +937,53 @@ function butoaneTreceri(c, minute) {
                  <button class="verde" data-trecere="accepta" title="Oferta devine comandă: se printează fişa, apoi „Ai printat?"">Acceptă comanda şi printează</button>` : ''}
     ${ePlata ? '<button class="verde" data-trecere="accepta" title="Comanda intră în lucru: se printează fişa, apoi „Ai printat?"">Plată primită şi printează</button>' : ''}
     ${eComanda && !c.finalizat_la ? '<button class="verde-contur" data-trecere="finalizeaza">Marchează finalizată</button>' : ''}
-    ${c.finalizat_la && !c.factura_nr ? '<button class="galben-contur" data-trecere="redeschide">Redeschide</button>' : ''}`;
+    ${c.finalizat_la && !c.factura_nr && !c.reclamatie ? '<button class="galben-contur" data-trecere="redeschide">Redeschide</button>' : ''}`;
+}
+
+// ── Reclamaţii (userul, 2026-10-28) — server/reclamatii.js ──────────────────────
+// La o comandă finalizată: „Deschide reclamaţie" → formularul (configurator, amanunt.html?reclamatie=<id>):
+// motivul, ce se înlocuieşte, explicaţiile pt. atelier; fişa se printează obligatoriu şi se capsează la foile
+// comenzii. După „Da, am printat" comanda stă în „În lucru", galben, până la „Reclamaţie rezolvată".
+// `reclamatii` din /api/comenzi/:id, cea mai nouă prima — cea nerezolvată (dacă e) e prima.
+const nerezolvata = rs => rs.find(r => !r.rezolvata_la) ?? null;
+const butonDeschideReclamatie = (c, rs) => (c.tip === 'comanda' && c.finalizat_la && !c.anulat && !nerezolvata(rs)
+  ? '<button class="galben-contur" data-recl="deschide" title="Ceva de refăcut la comanda asta: alegi ce se înlocuieşte, se printează o fişă pentru atelier">⚠ Deschide reclamaţie</button>' : '');
+const liniiReclamatie = r => `<ul class="recl-linii">${r.linii.map(l => `<li><span class="mono">${esc(l.cod)}</span> ${esc(l.denumire)} — <b>${esc(String(l.cantitate).replace('.', ','))} ${esc(l.um ?? '')}</b>${
+  l.debitare ? ` <span class="dim">· ${esc(l.debitare)}</span>` : ''}</li>`).join('')}</ul>`;
+// `tot` — pagina comenzii: şi produsele, explicaţiile şi reclamaţiile rezolvate de dinainte
+function blocReclamatie(c, rs, tot = false) {
+  const r = nerezolvata(rs);
+  const vechi = tot ? rs.filter(x => x.rezolvata_la) : [];
+  const deschisa = r ? `<div class="reclamatie-info"><b>Reclamaţie</b> deschisă de ${esc(r.creat_de_nume)} · ${dataOra(r.creat_la)}
+      <div class="recl-motiv">„${esc(r.motiv)}"</div>
+      ${tot ? `${liniiReclamatie(r)}<div class="recl-motiv"><span class="dim">Pentru atelier:</span> ${esc(r.explicatii)}</div>` : ''}
+      ${r.fisa_printata_la ? `<div class="recl-stare">În lucru — fişa printată ${deCine(r.fisa_printata_de_nume, r.fisa_printata_la)}</div>`
+        : '<div class="recl-stare neprintata">⚠ Fişa reclamaţiei nu s-a printat — comanda nu e încă în lucru.</div>'}
+      <div class="recl-butoane">${r.fisa_printata_la
+        ? `<button class="mic" data-recl="vezi" data-rid="${r.id}">👁 Fişa reclamaţiei</button>
+           <button class="mic" data-recl="printeaza" data-rid="${r.id}">🖶 Printează din nou</button>
+           <button class="mic verde" data-recl="rezolvata">✓ Reclamaţie rezolvată</button>`
+        : `<button class="mic primar" data-recl="printeaza" data-rid="${r.id}">🖶 Printează fişa reclamaţiei</button>
+           <button class="mic" data-recl="vezi" data-rid="${r.id}">👁 Vezi fişa</button>
+           <button class="mic rosu-contur" data-recl="renunta" title="Salvată din greşeală — se şterge">Renunţă la reclamaţie</button>`}</div></div>` : '';
+  return deschisa + vechi.map(v => `<div class="reclamatie-info rezolvata"><b>Reclamaţie rezolvată</b> ${deCine(v.rezolvata_de_nume, v.rezolvata_la)}
+      · deschisă ${deCine(v.creat_de_nume, v.creat_la)}<div class="recl-motiv">„${esc(v.motiv)}"</div>${liniiReclamatie(v)}
+      <div class="recl-butoane"><button class="mic" data-recl="vezi" data-rid="${v.id}">👁 Fişa reclamaţiei</button></div></div>`).join('');
+}
+function leagaReclamatie(root, c, rs, dupa) {
+  const nr = c.oferta_nr || c.numar;
+  root.querySelectorAll('[data-recl]').forEach(b => b.addEventListener('click', async e => {
+    e.stopPropagation();
+    const ce = b.dataset.recl;
+    if (ce === 'deschide') { location.href = `/configurator/amanunt.html?reclamatie=${c.id}`; return; }
+    if (ce === 'vezi') return Fise.veziReclamatie(b.dataset.rid, b);
+    if (ce === 'printeaza') { await Fise.printeazaReclamatie(c.id, b.dataset.rid, b); return dupa(); }
+    if (ce === 'rezolvata' && !(await confirma(`Reclamaţia la comanda ${nr} (${c.client_nume}) e rezolvată?\n\nComanda se întoarce la „Comenzi finalizate".`, 'Da, e rezolvată'))) return;
+    if (ce === 'renunta' && !(await confirma('Renunţi la reclamaţie? Se şterge (fişa ei nu s-a printat).', 'Renunţă la reclamaţie'))) return;
+    const rr = await api(`/api/comenzi/${c.id}/${ce === 'rezolvata' ? 'reclamatie-rezolvata' : 'reclamatie'}`, { method: ce === 'renunta' ? 'DELETE' : 'POST' });
+    if (rr && !rr.ok) alerta((await rr.json().catch(() => ({}))).eroare || 'Operaţia a eşuat.');
+    dupa();
+  }));
 }
 // ── Anularea: o cere oricine, cu motivul; o decide conducerea (pagina /cereri, server/cereri.js) ──
 // Pe pagina comenzii şi în card: starea cererii (sau a anulării) + butonul „Anulează…".
@@ -948,7 +1000,7 @@ const butonAnulare = (c, r) => (c.anulat || r?.stare === 'deschisa' ? '' : '<but
 // toate operaţiile (fişa, treceri, facturare, sticlă, livrare, modificări); rămân doar vederea şi
 // taskurile. Serverul le refuză oricum (index.js) — aici doar nu le arătăm degeaba.
 // „Vezi fişa" rămâne — e doar de văzut; printul nu
-const ACTIUNI = '[data-trecere], [data-adauga-la], #modifica, #ccModifica, [data-print], [data-numar], '
+const ACTIUNI = '[data-trecere], [data-adauga-la], #modifica, #ccModifica, [data-print], [data-numar], [data-recl]:not([data-recl="vezi"]), '
   + '#schimbaLivrare, .factura-form, #anuleazaFactura, #cereFactura, .sticla-comanda, .sticla-anuleaza, .sticla-da';
 const opresteActiuni = (el, cerere) => { if (cerere?.stare === 'deschisa') el.querySelectorAll(ACTIUNI).forEach(b => b.remove()); };
 
@@ -1042,7 +1094,7 @@ async function mergiLa(id) {
   const r = await api('/api/comenzi/' + id);
   const c = r?.ok ? (await r.json()).comanda : null;
   if (!c || !$('tabelLista')) return;
-  tabCurent = c.tip === 'oferta' ? 'oferta' : c.tip === 'plata' ? 'plata' : c.finalizat_la ? 'finalizata' : 'comanda';
+  tabCurent = stareRand(c);
   history.replaceState(null, '', HASH_TAB[tabCurent]);
   selectat = id;
   await renderLista();
@@ -1151,7 +1203,7 @@ async function renderDetaliu(id) {
   if (!r) return;
   if (!r.ok) { $('continut').innerHTML = '<div class="mesaj eroare">Comanda nu există.</div>'; return; }
 
-  const { comanda: c, cerere, cerereFactura, cerereNumar, plataNumar, pozitii, coduri, scanari, sticlaLinii = [], fise: printari = [] } = await r.json();
+  const { comanda: c, cerere, cerereFactura, cerereNumar, plataNumar, pozitii, coduri, scanari, sticlaLinii = [], fise: printari = [], reclamatii = [] } = await r.json();
   const fise = pozitii.length > 1 ? numeFise(pozitii, await incarcaGame()) : [];
   const total = facturareTotala(pozitii);
   const eOferta = c.tip === 'oferta';
@@ -1167,8 +1219,8 @@ async function renderDetaliu(id) {
       <div>
         <h1>${esc(c.client_nume)}</h1>
         <div class="nr-comanda"><span class="mono">${esc(c.oferta_nr || c.numar)}</span>${butonNumar(c, plataNumar)}${cerereNumarText(cerereNumar)}</div>
-        <div class="dim mic">${c.anulat ? '<span class="stare-pastila anulata">Anulată</span>' : `<span class="stare-pastila ${eOferta ? 'oferta' : ePlata ? 'plata' : c.finalizat_la ? 'gata' : 'lucru'}">${eOferta ? 'Ofertă'
-          : ePlata ? 'Aşteaptă plata' : c.finalizat_la ? 'Comandă finalizată' : 'Comandă în lucru'}</span>`}${c.demo ? DEMO : ''}</div>
+        <div class="dim mic">${c.anulat ? '<span class="stare-pastila anulata">Anulată</span>' : `<span class="stare-pastila ${eOferta ? 'oferta' : ePlata ? 'plata' : c.reclamatie ? 'reclamatie' : c.finalizat_la ? 'gata' : 'lucru'}">${eOferta ? 'Ofertă'
+          : ePlata ? 'Aşteaptă plata' : c.reclamatie ? 'Reclamaţie în lucru' : c.finalizat_la ? 'Comandă finalizată' : 'Comandă în lucru'}</span>`}${c.demo ? DEMO : ''}</div>
         ${fisaPrintata(printari, pozitii.length, fise)}
       </div>
       <div class="spatiu"></div>
@@ -1179,11 +1231,13 @@ async function renderDetaliu(id) {
       ${butonModifica(c, 'modifica')}
       ${eComanda && !c.finalizat_la && !c.anulat ? '<button class="primar" data-adauga-la>+ Adaugă la comandă</button>' : ''}
       ${butoaneTreceri(c, minuteInapoi(c))}
+      ${butonDeschideReclamatie(c, reclamatii)}
       <button id="taskNou" title="Un task / reminder legat de comanda asta">+ Task</button>
       <button id="tichetNou" title="Un tichet pentru administrator despre comanda asta">+ Tichet</button>
       ${butonAnulare(c, cerere)}
     </div>
     ${blocAnulare(c, cerere)}
+    ${blocReclamatie(c, reclamatii, true)}
 
     <!-- stânga: datele clientului; dreapta: paşii comenzii (cine şi când) -->
     <div class="card info-comanda" data-z="info">
@@ -1242,11 +1296,12 @@ async function renderDetaliu(id) {
     document.querySelectorAll('.taburi-detaliu button').forEach(x => x.classList.toggle('active', x === b));
     document.querySelectorAll('.panou-detaliu').forEach(x => { x.hidden = x.dataset.panou !== tabDetaliu; });
   }));
-  tabCurent = eOferta ? 'oferta' : ePlata ? 'plata' : c.finalizat_la ? 'finalizata' : 'comanda';
+  tabCurent = stareRand(c);
   asiguraTaburi();   // taburile rămân sus şi aici, cu tabul comenzii marcat
   $('modifica')?.addEventListener('click', () => { location.href = '/configurator/?oferta=' + id; });
   // Aşteaptă plata / Acceptă / Plată primită / Finalizată / Redeschide / Înapoi în ofertă
   leagaTreceri($('continut').querySelector('.antet'), c, () => renderDetaliu(id), pozitii.length);
+  leagaReclamatie($('continut'), c, reclamatii, () => renderDetaliu(id));
   Adresa.marcheaza($('continut'));
   // livrarea şi adresa la comenzile în lucru / care aşteaptă plata (userul, 2026-10-08; adresa 2026-10-19).
   // Cu fişa deja printată: după salvare, un OK obligatoriu — „completează de mână pe fişa de comandă".

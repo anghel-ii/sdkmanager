@@ -107,6 +107,7 @@
     lucru:   '<path d="M20.5 7.5 12 3 3.5 7.5v9L12 21l8.5-4.5z"/><path d="M3.5 7.5 12 12l8.5-4.5M12 12v9"/>',
     gata:    '<circle cx="12" cy="12" r="8.5"/><path d="m8.5 12.2 2.4 2.4 4.6-5"/>',
     cereri:  '<path d="M5 4.5h14v11H9.5L5 19.5z"/><path d="M9 8.5h6M9 11.5h4"/>',
+    reclamatii: '<path d="M12 4 3.5 19h17z"/><path d="M12 10v4M12 16.5v.5"/>',
     tichete: '<path d="M9.5 18h5M10.5 21h3"/><path d="M12 3.5a5.8 5.8 0 0 0-3.4 10.5c.6.5.9 1.1.9 1.8v.2h5v-.2c0-.7.3-1.3.9-1.8A5.8 5.8 0 0 0 12 3.5z"/>',
     taskuri: '<path d="M10 6.5h10M10 12h10M10 17.5h10"/><path d="m3.5 6.5 1.4 1.4 2.3-2.6M3.5 12l1.4 1.4 2.3-2.6M3.5 17.5l1.4 1.4 2.3-2.6"/>',
     sticla:  '<rect x="4.5" y="3.5" width="15" height="17" rx="1.5"/><path d="m8 9.5 3-3M8 14.5l7.5-7.5"/>',
@@ -314,6 +315,7 @@
       ${link('/tichete', 'tichete', 'Tichete', 'id="linkTichete"', '<span class="insigna rosie" id="nrTichete"></span>')}
       <div class="grup" id="grupAdmin" hidden><span class="txt">Administrare</span></div>
       ${link('/clienti', 'clienti', 'Clienţi', 'id="linkClienti" hidden', '<span class="insigna cald" id="nrClienti" title="trimise de agenţi, de aprobat"></span>')}
+      ${link('/reclamatii', 'reclamatii', 'Reclamaţii', 'id="linkReclamatii" hidden')}
       ${link('/activitate', 'activitate', 'Activitate', 'id="linkActivitate" hidden')}
       ${link('/admin', 'admin', 'Tablou admin', 'id="linkAdmin" hidden')}
       <div class="spatiu"></div>
@@ -455,6 +457,7 @@
         localStorage.setItem('modTestVazut', mod);
       } catch {}
       radacina.querySelector('#linkAdmin').hidden = eu.rol !== 'admin';     // conturile — doar admin
+      radacina.querySelector('#linkReclamatii')?.toggleAttribute('hidden', eu.rol === 'birou');   // reclamaţiile + produsele folosite — admin + conducere
       radacina.querySelector('#linkActivitate')?.toggleAttribute('hidden', eu.rol === 'birou');   // jurnalul tuturor — admin + conducere
       radacina.querySelector('#linkClienti').hidden = eu.rol === 'birou';   // clienţii — nu şi biroul (userul, 2026-10-02)
       // de la distanţă se deschid doar tabloul de admin şi tichetele (releu.js le blochează pe restul) → restul meniului dispare
@@ -587,7 +590,7 @@
   const cale = location.pathname.replace(/\/$/, '') || '/';
   const PAGINI = { '/': 'Comenzi', '/comenzi': 'Comenzi', '/sticla': 'Comandă sticlă', '/livrari': 'Organizează livrări',
     '/taskuri': 'Taskuri', '/tichete': 'Tichete', '/cereri': 'Cereri', '/clienti': 'Clienţi', '/admin': 'Tablou admin',
-    '/activitate': 'Activitate', '/configurator': 'Configurator', '/configurator/index.html': 'Configurator',
+    '/activitate': 'Activitate', '/reclamatii': 'Reclamaţii', '/configurator': 'Configurator', '/configurator/index.html': 'Configurator',
     '/configurator/amanunt.html': 'Ofertă cu amănuntul' };
   const p = new URLSearchParams(location.search);
   const id = p.get('oferta') || p.get('adauga');

@@ -10,7 +10,8 @@
 // întrebările — din /dialog.js.
 (() => {
   // `extra` = {plata, telefon, adresa} aleşi la acceptare, încă nesalvaţi — fişa îi pune peste ai comenzii
-  const cadru = (id, poz, vezi, extra = {}) => {
+  // `src` — altă pagină decât fişa unui produs (fişa unei reclamaţii)
+  const cadru = (id, poz, vezi, extra = {}, src = null) => {
     document.getElementById('cadruFisa')?.remove();
     const f = document.createElement('iframe');
     f.id = 'cadruFisa';
@@ -18,7 +19,7 @@
     // nu display:none — configuratorul are nevoie de un cadru „viu" (3D, print)
     f.style.cssText = 'position:fixed; left:-10000px; top:0; width:1200px; height:900px; border:0; visibility:hidden';
     const alese = new URLSearchParams(Object.entries(extra).filter(([, v]) => v)).toString();
-    f.src = `/configurator/?fisa=${encodeURIComponent(id)}&poz=${poz}${vezi ? '&vezi=1' : ''}${alese ? '&' + alese : ''}`;
+    f.src = src ?? `/configurator/?fisa=${encodeURIComponent(id)}&poz=${poz}${vezi ? '&vezi=1' : ''}${alese ? '&' + alese : ''}`;
     document.body.appendChild(f);
     return f;
   };
@@ -91,5 +92,39 @@
   const noteaza = (id, fise = 1) => Promise.all(lista(fise).map(poz =>
     fetch(`/api/comenzi/${id}/fisa`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ poz }) })));
 
-  window.Fise = { vezi, printeaza, printeazaToate, noteaza };
+  // ── Fişa unei reclamaţii (userul, 2026-10-28): /configurator/amanunt.html?reclamatie_fisa=<id>, acelaşi
+  // cadru şi aceleaşi mesaje. Printată = POST /api/comenzi/<comanda>/reclamatie-fisa (comanda intră în lucru).
+  const cadruReclamatie = (rid, vezi) =>
+    cadru(0, 0, vezi, {}, `/configurator/amanunt.html?reclamatie_fisa=${encodeURIComponent(rid)}${vezi ? '&vezi=1' : ''}`);
+  async function veziReclamatie(rid, buton = null) {
+    ocupat(buton, true);
+    const f = cadruReclamatie(rid, true);
+    const r = await mesaj(['fisa']);
+    ocupat(buton, false);
+    if (r.eroare) { f.remove(); return spune(r.eroare); }
+    f.removeAttribute('aria-hidden');
+    f.style.cssText = 'position:fixed; inset:0; width:100%; height:100%; border:0; z-index:3000; background:transparent';
+    f.focus();
+    await mesaj(['fisa-inchide']);
+    f.remove();
+  }
+  // print + „Ai printat?"; true doar la „Da, am printat" — atunci se notează
+  async function printeazaReclamatie(comandaId, rid, buton = null) {
+    ocupat(buton, true);
+    try {
+      const tiparita = mesaj(['fisa-tiparita']);
+      const f = cadruReclamatie(rid, false);
+      const r = await mesaj(['fisa']);
+      if (r.eroare) { f.remove(); await spune(r.eroare); return false; }
+      await tiparita;
+      f.remove();
+    } finally { ocupat(buton, false); }
+    const da = await intreabaObligatoriu('Ai printat fişa reclamaţiei?\n\nO capsezi la foile comenzii. Dacă da, comanda intră în lucru (galben) până la „Reclamaţie rezolvată".',
+      'Da, am printat', 'Nu, n-am printat');
+    if (da) await fetch(`/api/comenzi/${comandaId}/reclamatie-fisa`, { method: 'POST' });
+    else window.noteazaVazut?.('Print neconfirmat (fişa reclamaţiei) — a răspuns „Nu, n-am printat"', comandaId);
+    return da;
+  }
+
+  window.Fise = { vezi, printeaza, printeazaToate, noteaza, veziReclamatie, printeazaReclamatie };
 })();

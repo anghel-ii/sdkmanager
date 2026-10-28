@@ -25,6 +25,7 @@ const clienti     = require('./clienti.js');
 const ora         = require('./ora.js');
 const releu       = require('./releu.js');
 const activitate  = require('./activitate.js');
+const reclamatii  = require('./reclamatii.js');
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  Serverul managerului de comenzi
@@ -45,7 +46,7 @@ const activitate  = require('./activitate.js');
 //   { }                — orice utilizator logat
 //   { rol: 'admin' }   — doar administratorii
 
-const MODULE = [utilizatori, comenzi, scanare, evenimente, sticla, livrari, taskuri, cereri, tichete, notificari, tablou, actualizare, clienti, activitate].filter(Boolean);
+const MODULE = [utilizatori, comenzi, scanare, evenimente, sticla, livrari, taskuri, cereri, tichete, notificari, tablou, actualizare, clienti, activitate, reclamatii].filter(Boolean);
 
 const rute = MODULE.flatMap(m => m.rute).map(([metoda, cale, spec]) => [metoda, cale, spec]);
 const potriveste = router(rute);
@@ -140,6 +141,7 @@ async function trateaza(req, res) {
     '/login':       'login',
     '/admin':       'admin',     // conturile (API-ul e doar pt. admin; pagina se autoverifică)
     '/activitate':  'activitate', // jurnalul de activitate al tuturor (API-ul: admin + conducere)
+    '/reclamatii':  'reclamatii', // reclamaţiile şi produsele folosite la remedieri (API-ul: admin + conducere)
     ...(config.scanare ? { '/scan': 'scan', '/test-camera': 'test-camera' } : {}),
   };
   const pagina = PAGINI[cale.replace(/\/$/, '') || '/'];

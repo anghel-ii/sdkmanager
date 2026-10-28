@@ -342,6 +342,18 @@ body.ui-nou [data-z="info"] .factura-form input { flex: 1 1 110px; }
 .anulare-info a { color: var(--accent); }
 .anulare-info.deschisa { border-color: rgba(212, 162, 76, .45); background: rgba(212, 162, 76, .08); }
 .anulare-info.anulata { border-color: rgba(201, 96, 76, .55); background: rgba(201, 96, 76, .1); }
+/* reclamaţie (server/reclamatii.js): comanda finalizată, din nou în lucru — galben în listă şi în pagina comenzii */
+.stare-pastila.reclamatie { color: #2a1f00; border-color: #e5b45a; background: #e5b45a; }
+.reclamatie-info { margin: 10px 0 2px; padding: 10px 12px; border-radius: 10px; font-size: 13px; line-height: 1.5;
+                   border: 1px solid rgba(229, 180, 90, .6); background: rgba(229, 180, 90, .12); }
+.reclamatie-info.rezolvata { border-color: var(--line); background: var(--panel-2); color: var(--text-dim); }
+.reclamatie-info b { color: var(--text); }
+.reclamatie-info .recl-motiv { white-space: pre-wrap; }
+.reclamatie-info .recl-linii { margin: 4px 0 0 18px; }
+.reclamatie-info .recl-linii .mono { font-size: 12px; }
+.reclamatie-info .recl-stare { margin-top: 4px; }
+.reclamatie-info .recl-stare.neprintata { color: var(--cald); font-weight: 600; }
+.reclamatie-info .recl-butoane { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 .stare-pastila.demo { color: #ffb366; border-color: rgba(255, 157, 46, .55); background: rgba(255, 157, 46, .14); letter-spacing: .04em; }
 .stare-pastila.anulata { color: var(--rosu-text); border-color: rgba(201, 96, 76, .55); background: rgba(201, 96, 76, .1); }
 

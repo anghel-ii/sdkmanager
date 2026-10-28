@@ -112,7 +112,24 @@
       #tipar table.perechi td:first-child { width: 130px; color: #444; }
       /* numele clientului — mult mai mare (userul, 2026-10-08) */
       #tipar table.perechi tr.client td:last-child { font-size: 26px; font-weight: 700; line-height: 1.2; }
+      /* fişa reclamaţiei — se capsează la foile comenzii (userul, 2026-10-28) */
+      #tipar .recl-titlu { font-size: 26px; letter-spacing: .06em; }
+      #tipar .caseta { border: 2px solid #000; padding: 8px 10px; margin-top: 10px; }
+      #tipar .caseta .et { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
+      #tipar .caseta .txt { font-size: 15px; white-space: pre-wrap; line-height: 1.35; }
+      #tipar .caseta.atelier .txt { font-size: 17px; font-weight: 600; }
+      #tipar h2.inlocuieste { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; margin-top: 14px; }
     }
+
+    /* reclamaţie (?reclamatie=<id>): fără client / ofertă — comanda e deja făcută */
+    body.mod-reclamatie [data-pas="obs"], body.mod-reclamatie [data-pas="cos"], body.mod-reclamatie [data-pas="client"],
+    body.mod-reclamatie #cosProduse, body.mod-reclamatie #nouActiuni label.nou-camp { display: none !important; }
+    body:not(.mod-reclamatie) .doar-reclamatie { display: none !important; }
+    .recl-comanda { display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: 13px; margin-bottom: 10px; }
+    .recl-comanda b { font-size: 15px; }
+    textarea.recl { width: 100%; padding: 8px 10px; font: inherit; font-size: 14px; border: 1px solid var(--line); border-radius: 6px;
+                    background: var(--bg); color: var(--text); resize: vertical; }
+    textarea.recl:focus { outline: none; border-color: var(--accent); }
   </style>
 </head>
 <body class="ui-nou">
@@ -132,6 +149,16 @@
   <!-- celelalte produse ale ofertei, câte un card restrâns (js/cos.js) -->
   <div id="cosProduse"></div>
 
+  <!-- reclamaţie la o comandă finalizată (?reclamatie=<id>): comanda + motivul, sus -->
+  <section class="pas doar-reclamatie" data-pas="motiv">
+    <div class="pas-cap"><span class="pas-nr">1</span><span class="pas-titlu">Reclamaţie</span>
+      <span class="pas-indemn">ce s-a întâmplat — motivul reclamaţiei</span></div>
+    <div class="pas-corp">
+      <div class="recl-comanda" id="reclComanda"></div>
+      <textarea id="reclMotiv" class="recl" rows="3" placeholder="Motivul reclamaţiei — ex. geamul uşii 2 a venit spart"></textarea>
+    </div>
+  </section>
+
   <section class="pas curent" data-pas="produse">
     <div class="pas-cap"><span class="pas-nr">1</span><span class="pas-titlu">Produse</span>
       <span class="pas-indemn">scrie denumirea sau codul şi alege din listă</span></div>
@@ -148,6 +175,13 @@
         <button id="btnCopyCant" class="fisa-print" type="button">Copiază cantităţi</button>
       </div>
     </div>
+  </section>
+
+  <!-- reclamaţie: ce face atelierul cu comanda — obligatoriu, scris mare pe fişă -->
+  <section class="pas doar-reclamatie" data-pas="explicatii">
+    <div class="pas-cap"><span class="pas-nr">3</span><span class="pas-titlu">Explicaţii</span>
+      <span class="pas-indemn">pentru atelier — ce trebuie făcut cu comanda</span></div>
+    <div class="pas-corp"><textarea id="reclExplicatii" class="recl" rows="4" placeholder="ex. se schimbă geamul uşii 2; uşa vine înapoi de la client joi"></textarea></div>
   </section>
 
   <!-- observaţiile produsului — se tipăresc pe foaie (userul, 2026-10-08) -->
@@ -192,6 +226,7 @@
         <button id="btnConfirma" class="oferta-confirma" type="button" style="display:none">Salvează oferta</button>
         <button id="btnComanda" class="oferta-confirma" type="button" style="display:none">Salvează comanda şi printează</button>
         <button id="btnPlata" class="oferta-confirma" type="button" style="display:none">Aşteaptă plata</button>
+        <button id="btnReclamatie" class="oferta-confirma doar-reclamatie" type="button">Salvează reclamaţia şi printează</button>
         <button id="btnFisa" class="fisa-print" type="button" title="Previzualizare — lista se printează când oferta devine comandă">👁 Vezi lista</button>
       </div>
     </div>

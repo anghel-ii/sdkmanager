@@ -489,7 +489,7 @@ async function main() {
     const idVechi = Number(db2().prepare("INSERT INTO utilizator (nume, user, parola_hash, parola_salt, rol) VALUES ('Vechi', 'vechi', 'x', 'x', 'operator')").run().lastInsertRowid);
     require('../server/db.js').roluriNoi(db2());
     verifica('migraţie: operator → birou', db2().prepare('SELECT rol FROM utilizator WHERE id = ?').get(idVechi).rol === 'birou');
-    verifica('schema la versiunea 37', db2().prepare('PRAGMA user_version').get().user_version === 37);
+    verifica('schema la versiunea 38', db2().prepare('PRAGMA user_version').get().user_version === 38);
   }
 
   console.log('\nFixare şi sortare — per utilizator');
@@ -1329,6 +1329,58 @@ async function main() {
     await cer('POST', `/api/cereri/${rid}/respinge`, { raspuns: 'Continuăm' });
     verifica('respinsă: revine la sticlă şi la livrări', await laSticla() && await laLivrari());
     verifica('respinsă: se lucrează din nou pe ea', (await cer('POST', `/api/comenzi/${id}/finalizeaza`)).stare === 200);
+  }
+
+  console.log('\nReclamaţii (server/reclamatii.js) — comanda finalizată revine în lucru, galben, până la rezolvare');
+  {
+    const id = (await cer('POST', '/api/comenzi', { client: { nume: 'Client Reclamaţie', telefon: '0700', adresa: 'X' }, ofertaNr: 'REC-1',
+      pozitii: [pozitie('confortGamma', 'Confort Gamma', 1, 1200)] })).date.comanda.id;
+    const corp = { motiv: 'Geamul uşii a venit spart', explicatii: 'Se schimbă geamul, uşa vine joi',
+      linii: [{ cod: 'GG004', denumire: 'Geam float 4mm', um: 'mp', cantitate: 1.25 }, { cod: '352', denumire: 'Profil', um: 'buc', cantitate: 1, debitare: '1 × 2000 mm → 1 bară de 5800 mm' }] };
+    const deschide = c => cer('POST', `/api/comenzi/${id}/reclamatie`, c);
+    verifica('reclamaţie la o ofertă → 409', (await deschide(corp)).stare === 409);
+    await cer('POST', `/api/comenzi/${id}/accepta`, { incasare: 'card', plata: 'proforma' });
+    verifica('reclamaţie la o comandă în lucru → 409', (await deschide(corp)).stare === 409);
+    await cer('POST', `/api/comenzi/${id}/factura`, { numar: 'F-REC' });   // facturată = şi finalizată
+    verifica('fără motiv → 400', (await deschide({ ...corp, motiv: ' ' })).stare === 400);
+    verifica('fără explicaţii pt. atelier → 400', (await deschide({ ...corp, explicatii: '' })).stare === 400);
+    verifica('fără produse → 400', (await deschide({ ...corp, linii: [] })).stare === 400);
+    verifica('cantitate 0 → 400', (await deschide({ ...corp, linii: [{ cod: 'X', denumire: 'X', cantitate: 0 }] })).stare === 400);
+    const r = await deschide(corp);
+    verifica('reclamaţie la o comandă finalizată → 201', r.stare === 201 && r.date.reclamatie?.id > 0, JSON.stringify(r.date));
+    const inLucru = async () => (await cer('GET', '/api/comenzi?tip=comanda')).date.comenzi.find(c => c.id === id);
+    const laFinalizate = async () => (await cer('GET', '/api/comenzi?tip=finalizata')).date.comenzi.some(c => c.id === id);
+    verifica('neprintată: rămâne la finalizate, nu în lucru', !(await inLucru()) && await laFinalizate());
+    verifica('a doua reclamaţie cât e una nerezolvată → 409', (await deschide(corp)).stare === 409);
+    verifica('rezolvată înainte de print → 409', (await cer('POST', `/api/comenzi/${id}/reclamatie-rezolvata`)).stare === 409);
+    const sumarInainte = (await cer('GET', '/api/sumar')).date;
+    verifica('fişa printată → 200', (await cer('POST', `/api/comenzi/${id}/reclamatie-fisa`)).stare === 200);
+    const rand = await inLucru();
+    verifica('printată: apare în lucru, marcată (galben)', rand?.reclamatie === true && !(await laFinalizate()), JSON.stringify(rand));
+    const sumarDupa = (await cer('GET', '/api/sumar')).date;
+    verifica('sumarul: +1 în lucru, −1 finalizate', sumarDupa.comenzi === sumarInainte.comenzi + 1 && sumarDupa.finalizate === sumarInainte.finalizate - 1);
+    const d = (await cer('GET', `/api/comenzi/${id}`)).date;
+    verifica('pagina comenzii: reclamaţia cu produsele, comanda rămâne finalizată + facturată', d.comanda.reclamatie === true
+      && d.reclamatii[0]?.linii.length === 2 && d.reclamatii[0].fisa_printata_de_nume && d.comanda.finalizat_la && d.comanda.factura_nr === 'F-REC');
+    const fisa = (await cer('GET', `/api/reclamatii/${r.date.reclamatie.id}`)).date;
+    verifica('fişa reclamaţiei: comanda + motivul + liniile cu debitarea', fisa.comanda?.oferta_nr === 'REC-1' && fisa.reclamatie.motiv === corp.motiv
+      && fisa.reclamatie.linii[1].debitare === corp.linii[1].debitare && fisa.reclamatie.linii[0].cantitate === 1.25);
+    verifica('renunţare după print → 409', (await cer('DELETE', `/api/comenzi/${id}/reclamatie`)).stare === 409);
+    // pagina /reclamatii: doar conducere + admin
+    const k = cookie; cookie = null; await cer('POST', '/api/login', { user: 'maria', parola: 'parola-maria-1' });
+    verifica('biroul nu vede lista reclamaţiilor → 403', (await cer('GET', '/api/reclamatii')).stare === 403);
+    cookie = k;
+    const toate = (await cer('GET', '/api/reclamatii')).date.reclamatii;
+    verifica('conducerea / adminul vede reclamaţiile, cu produsele', toate.some(x => x.comanda_id === id && x.linii.length === 2 && x.comanda_nr === 'REC-1'));
+    verifica('filtrul pe perioadă: în viitor → nimic', !(await cer('GET', '/api/reclamatii?de=2099-01-01')).date.reclamatii.length);
+    verifica('rezolvată → 200', (await cer('POST', `/api/comenzi/${id}/reclamatie-rezolvata`)).stare === 200);
+    verifica('rezolvată: înapoi la finalizate', !(await inLucru()) && await laFinalizate());
+    verifica('o nouă reclamaţie după rezolvare → 201', (await deschide(corp)).stare === 201);
+    verifica('cea neprintată se poate şterge', (await cer('DELETE', `/api/comenzi/${id}/reclamatie`)).stare === 200
+      && (await cer('GET', `/api/comenzi/${id}`)).date.reclamatii.length === 1);
+    const op = db2().prepare("SELECT operatie FROM activitate WHERE comanda_id = ? AND operatie LIKE 'Reclamaţie%'").all(id).map(a => a.operatie);
+    verifica('jurnalul de activitate: deschisă + rezolvată', op.includes('Reclamaţie deschisă') && op.includes('Reclamaţie rezolvată'), op.join());
+    verifica('pagina /reclamatii se serveşte', String((await cer('GET', '/reclamatii')).date).includes('<title>Reclamaţii</title>'));
   }
 
   console.log('\nTichete pentru administrator (server/tichete.js) + tabloul din /admin');

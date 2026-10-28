@@ -367,11 +367,13 @@ async function adauga(ctx) {
 // ── Citire ───────────────────────────────────────────────────────────────────
 
 // tab: 'oferta' | 'plata' (aşteaptă plata) | 'comanda' (în lucru) | 'finalizata'
+// O comandă finalizată cu reclamaţie activă (printată, nerezolvată — server/reclamatii.js) stă în lucru.
+const { ACTIVA: RECLAMATIE } = require('../reclamatii.js');
 const FILTRE = {
   oferta:     "c.tip = 'oferta'",
   plata:      "c.tip = 'plata'",
-  comanda:    "c.tip = 'comanda' AND c.finalizat_la IS NULL",
-  finalizata: "c.tip = 'comanda' AND c.finalizat_la IS NOT NULL",
+  comanda:    `c.tip = 'comanda' AND (c.finalizat_la IS NULL OR ${RECLAMATIE})`,
+  finalizata: `c.tip = 'comanda' AND c.finalizat_la IS NOT NULL AND NOT ${RECLAMATIE}`,
   toate:      '1',   // căutarea globală din manager: toate stările la un loc
 };
 
@@ -414,7 +416,8 @@ function listeaza(ctx) {
            ${config.scanare ? `(${ULTIMA_SCANARE})` : 'NULL'} AS ultima,
            (${STICLA}) AS sticla_brut,
            EXISTS (SELECT 1 FROM fixare f WHERE f.comanda_id = c.id AND f.utilizator_id = ?) AS fixat,
-           NOT ${require('../cereri.js').FARA_CERERE} AS pe_hold   -- anulare cerută, nedecisă
+           NOT ${require('../cereri.js').FARA_CERERE} AS pe_hold,  -- anulare cerută, nedecisă
+           ${RECLAMATIE} AS reclamatie                              -- reclamaţie în lucru: galben, în „În lucru"
       FROM comanda c
       JOIN utilizator u ON u.id = c.creat_de
      WHERE ${filtru} AND c.anulat = 0
@@ -425,7 +428,7 @@ function listeaza(ctx) {
   json(ctx.res, 200, {
     comenzi: randuri.map(({ ultima, sticla_brut, ...r }) => {
       const [operatie, moment, cine] = ultima ? ultima.split('|') : [];
-      return { ...r, fixat: !!r.fixat, ...(demo.has(r.id) && { demo: true }),
+      return { ...r, fixat: !!r.fixat, reclamatie: !!r.reclamatie, ...(demo.has(r.id) && { demo: true }),
                ...(config.scanare && { status: ultima ? { operatie, moment, cine } : null }),
                sticla: stareSticla(sticla_brut) };
     }),
@@ -449,6 +452,8 @@ function detaliu(ctx) {
   `).get(id);
   if (!comanda) return eroare(ctx.res, 404, 'Comandă inexistentă.');
   if (comenziDemo().has(id)) comanda.demo = true;
+  // reclamaţie în lucru (printată, nerezolvată): comanda finalizată stă în „În lucru", galben
+  comanda.reclamatie = !!db().prepare(`SELECT ${RECLAMATIE} AS x FROM comanda c WHERE c.id = ?`).get(id).x;
   // livrarea / adresa schimbate după ce s-a printat fişa (vreun produs fără reprintare de atunci) — de completat de mână
   comanda.fisa_de_completat = !!comanda.livrare_modificata_la && !!db().prepare(`SELECT 1 FROM (SELECT MAX(la) AS ultima
     FROM fisa_printare WHERE comanda_id = ? GROUP BY poz) WHERE ultima < ? LIMIT 1`).get(id, comanda.livrare_modificata_la);
@@ -474,6 +479,7 @@ function detaliu(ctx) {
     sticla,                          // null = comanda n-are sticlă de comandat
     sticlaLinii: require('../sticla.js').sticlaComenzii(id),   // pe furnizor: mail + bifă
     fise: fiseComenzii(id),          // printările fişei (prima + retipăririle)
+    reclamatii: require('../reclamatii.js').reclamatiiComenzii(id),   // cea mai nouă prima; cea nerezolvată e prima
     // codul de bare + istoricul din atelier — doar cu scanarea pornită
     ...(config.scanare && { coduri, scanari: require('../scanare.js').scanariComanda(id) }),
     pozitii: pozitii.map(p => ({
@@ -750,9 +756,9 @@ const sumar = ctx => json(ctx.res, 200, {
   ...db().prepare(`
   SELECT SUM(tip = 'oferta')                              AS oferte,
          SUM(tip = 'plata')                               AS plata,
-         SUM(tip = 'comanda' AND finalizat_la IS NULL)     AS comenzi,
-         SUM(tip = 'comanda' AND finalizat_la IS NOT NULL) AS finalizate
-    FROM comanda WHERE anulat = 0
+         SUM(${FILTRE.comanda})                           AS comenzi,
+         SUM(${FILTRE.finalizata})                        AS finalizate
+    FROM comanda c WHERE anulat = 0
 `).get(),
   sticla: require('../sticla.js').sumarSticla(),   // bucăţi de sticlă de comandat
   deAprobat: require('../clienti.js').nrDeAprobat(), // clienţi noi / modificări de la agenţi, de aprobat
