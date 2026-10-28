@@ -675,6 +675,17 @@ $('btnFisa').addEventListener('click', () => {
   tipareste({ vezi: true });
   window.noteazaVazut?.(recl ? 'A văzut fişa reclamaţiei (nesalvată)' : 'A văzut lista (ofertă cu amănuntul)', recl?.comanda.id ?? cos.ofertaEditata ?? null);
 });
+// Specificaţia unui produs al comenzii (/api/comenzi/:id → pozitii), ca tabul „Specificaţie" din manager
+const specProdus = p => (p.sistem === 'amanunt' ? `<span class="dim">${p.linii.facturare.length} produse la bucată</span>`
+  : [p.finisaj, /^rama/.test(p.sistem ?? '') ? `ramă max. ${p.inaltime} × ${p.latime} mm (H × L)` : `gol ${p.inaltime} × ${p.latime} mm (H × L)`,
+     /^rama/.test(p.sistem ?? '') ? `${p.nr_usi} rame` : `${p.nr_usi} ${p.nr_usi === 1 ? 'uşă' : 'uşi'}`]
+    .filter(Boolean).map(t => `<span>${esc(t)}</span>`).join(''));
+// sub el: sticla cu dimensiunile ei; la amănunt, produsele
+const listaSpec = p => {
+  const linii = p.sistem === 'amanunt' ? p.linii.facturare : p.linii.sticla ?? [];
+  return linii.length ? `<ul>${linii.map(l => `<li>${p.sistem === 'amanunt' ? '' : 'Sticlă: '}<span class="mono">${esc(l.cod ?? '')}</span> ${esc(l.denumire)}${
+    l.debitare ? ` · <b>${esc(l.debitare)}</b>` : ''} · ${virgula(l.cantitate)} ${esc(l.um ?? '')}</li>`).join('')}</ul>` : '';
+};
 // data reclamaţiei pe fişă (SQLite: UTC) — ziua, în ora României
 const ziRo = s => new Intl.DateTimeFormat('ro-RO', { timeZone: 'Europe/Bucharest', day: '2-digit', month: '2-digit', year: 'numeric' })
   .format(new Date(String(s).replace(' ', 'T') + 'Z'));
@@ -754,6 +765,15 @@ const puneClientul = (client, ofertaNr, detalii) => {
     $('btnFisa').title = 'Previzualizare — fişa se printează la salvare';
     if (c) $('reclComanda').innerHTML = `<span>Comanda <b class="mono">${esc(c.oferta_nr || c.numar)}</b></span><span><b>${esc(c.client_nume)}</b></span>${
       c.factura_nr ? `<span class="dim">factura ${esc(c.factura_nr)}</span>` : ''}<a href="/#comanda/${c.id}" class="dim">← înapoi la comandă</a>`;
+    // ce s-a livrat: fiecare produs al comenzii (model, culoare, gol, uşi, sticla) + fişa lui originală
+    $('reclSpec').innerHTML = (o.pozitii ?? []).map((p, k) => `<div class="recl-poz"><div class="rand1">
+        <b>${o.pozitii.length > 1 ? `${k + 1}. ` : ''}${esc(p.eticheta)}</b>${specProdus(p)}<span class="spatiu"></span>
+        <button type="button" class="fisa-print" data-poz="${k}" title="Fişa produsului, cum s-a printat la comandă">👁 Fişa</button></div>
+        ${listaSpec(p)}</div>`).join('');
+    $('reclSpec').addEventListener('click', e => {
+      const b = e.target.closest('button[data-poz]');
+      if (b) window.Fise?.vezi(c.id, +b.dataset.poz, b);
+    });
   } else if (params.get('reclamatie_fisa')) {
     let d = {};
     try {

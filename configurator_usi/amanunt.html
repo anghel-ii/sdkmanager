@@ -127,6 +127,15 @@
     body:not(.mod-reclamatie) .doar-reclamatie { display: none !important; }
     .recl-comanda { display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: 13px; margin-bottom: 10px; }
     .recl-comanda b { font-size: 15px; }
+    /* specificaţia comenzii (produsele ei), ca în tabul „Specificaţie" din manager */
+    .recl-spec { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+    .recl-poz { padding: 8px 10px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; font-size: 13px; }
+    .recl-poz .rand1 { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; }
+    .recl-poz .rand1 b { font-size: 14px; }
+    .recl-poz .rand1 .spatiu { flex: 1; }
+    .recl-poz .rand1 button { width: auto; padding: 4px 10px; font-size: 12px; }
+    .recl-poz ul { margin: 4px 0 0 18px; color: var(--text-dim); }
+    .recl-poz ul .mono { font-size: 12px; }
     textarea.recl { width: 100%; padding: 8px 10px; font: inherit; font-size: 14px; border: 1px solid var(--line); border-radius: 6px;
                     background: var(--bg); color: var(--text); resize: vertical; }
     textarea.recl:focus { outline: none; border-color: var(--accent); }
@@ -155,6 +164,7 @@
       <span class="pas-indemn">ce s-a întâmplat — motivul reclamaţiei</span></div>
     <div class="pas-corp">
       <div class="recl-comanda" id="reclComanda"></div>
+      <div class="recl-spec" id="reclSpec"></div>
       <textarea id="reclMotiv" class="recl" rows="3" placeholder="Motivul reclamaţiei"></textarea>
     </div>
   </section>
