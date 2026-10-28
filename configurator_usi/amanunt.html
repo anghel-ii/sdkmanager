@@ -134,8 +134,17 @@
     .recl-poz .rand1 b { font-size: 14px; }
     .recl-poz .rand1 .spatiu { flex: 1; }
     .recl-poz .rand1 button { width: auto; padding: 4px 10px; font-size: 12px; }
-    .recl-poz ul { margin: 4px 0 0 18px; color: var(--text-dim); }
-    .recl-poz ul .mono { font-size: 12px; }
+    /* necesarul produsului: „+ Refă" pune reperul la „Ce se înlocuieşte" */
+    table.necesar { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 13px; }
+    table.necesar th { text-align: left; font-size: 11px; font-weight: 500; color: var(--text-dim); padding: 2px 6px 4px; border-bottom: 1px solid var(--line); }
+    table.necesar td { padding: 4px 6px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+    table.necesar tr:last-child td { border-bottom: none; }
+    table.necesar .num { text-align: right; white-space: nowrap; }
+    table.necesar .mono { font-size: 12px; color: var(--text-dim); }
+    table.necesar td.x { width: 90px; text-align: right; }
+    table.necesar button.refa { width: auto; padding: 3px 10px; font-size: 12px; }
+    table.necesar button.refa.pus { background: #2f8f5b; border-color: #2f8f5b; color: #fff; }
+    .din-necesar { font-size: 11.5px; color: var(--text-dim); margin: 3px 2px 0; }
     textarea.recl { width: 100%; padding: 8px 10px; font: inherit; font-size: 14px; border: 1px solid var(--line); border-radius: 6px;
                     background: var(--bg); color: var(--text); resize: vertical; }
     textarea.recl:focus { outline: none; border-color: var(--accent); }

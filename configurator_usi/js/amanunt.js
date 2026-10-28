@@ -36,7 +36,7 @@ const TAIERE_MM = 0;
 // Modul de facturare al produsului (`fact`, din „Toata baza de date" — userul, 2026-10-22): bucăţi
 // întregi, întreg sau jumătate, lungime + 15 %, trepte după lungime, multiplu, arie — amanunt-calcul.js.
 const PE_COD = new Map(produse.map(p => [p.cod, p]));
-const mod = l => PE_COD.get(l?.cod)?.fact;
+const mod = l => (l?.necesar ? null : PE_COD.get(l?.cod)?.fact);
 // rândul are bucăţi de completat sub el: la bară (lungime × buc) sau geamul la mp (H × L × buc)
 const cuBucati = l => !!(l?.bara || mod(l)?.arie);
 // Produsele vândute şi pe jumătate de bară — pe rând, „Dă bara întreagă" (l.intreaga): clientul ia
@@ -47,8 +47,10 @@ const utila = l => lungimeUtila(l?.denumire, l?.bara);
 const deb = l => (l?.bara ? laBara(mod(l), l.debitare, utila(l), TAIERE_MM, l.intreaga) : mod(l)?.arie ? arie(l.debitare) : null);
 const textBara = l => `${l.bara} mm${utila(l) !== l.bara ? ` (${utila(l)} mm utili)` : ''}`;
 // la fişă: cantităţile îngheţate la salvare, aşa cum au fost
-const cantitate = l => (modFisa ? l.cantitate : deb(l)?.nr ?? rotunjeste(mod(l), l.cantitate));
+// (reperele din necesar — reclamaţie: cât scrii, fără rotunjirea catalogului; 15,5 ml perie rămâne 15,5)
+const cantitate = l => (modFisa ? l.cantitate : l?.necesar ? Math.max(0, +l.cantitate || 0) : deb(l)?.nr ?? rotunjeste(mod(l), l.cantitate));
 const textDebitare = l => {
+  if (l?.necesar) return l.debitare || null;   // reclamaţie: reperul din necesarul comenzii, cu debitarea lui
   const d = deb(l);
   if (!d) return null;
   const peArie = mod(l)?.arie;
@@ -98,9 +100,10 @@ const randHtml = (l, i) => {
   const d = deb(l);
   return `<tr data-i="${i}"${cuBucati(l) ? ' class="cu-debitare"' : ''}>
     <td class="nr">${i + 1}</td>
-    <td><input class="produs" value="${esc(l?.denumire ?? '')}" autocomplete="off" spellcheck="false"
+    <td><input class="produs" value="${esc(l?.denumire ?? '')}" autocomplete="off" spellcheck="false"${l?.necesar ? ' readonly' : ''}
          placeholder="${gol ? (i ? 'Încă un produs…' : 'Scrie denumirea sau codul…') : ''}"
-         role="combobox" aria-controls="sugestii" aria-expanded="false" aria-autocomplete="list"></td>
+         role="combobox" aria-controls="sugestii" aria-expanded="false" aria-autocomplete="list">${
+         l?.necesar ? `<div class="din-necesar">din necesar · ${esc(l.titlu)}${l.debitare ? ` · <b>${esc(l.debitare)}</b>` : ''}</div>` : ''}</td>
     <td class="cod">${celulaCod(l)}</td>
     <td class="num"><input class="cant" type="number" min="0" step="any" inputmode="decimal"
          value="${d ? d.nr : l?.cantitate || ''}"${gol ? ' disabled' : ''}${d ? ' readonly title="Calculat din debitare"' : ''} aria-label="Cantitate"></td>
@@ -161,6 +164,7 @@ function actualizeaza() {
     $(id).textContent = `Copiază ${id === 'btnCopyCod' ? 'coduri' : 'cantităţi'}${altele() ? ' (toată oferta)' : ''}`;
   }
   card?.actualizeaza();
+  if (recl) marcheazaNecesar();
   renderOferta();
   pasi();
 }
@@ -351,7 +355,7 @@ let sug = { i: -1, gasite: [], activ: 0 };
 function arataSugestii(i) {
   const input = $('randuri').querySelector(`tr[data-i="${i}"] .produs`);
   const q = input?.value ?? '';
-  if (!input || !q.trim() || linii[i]?.cod) return ascundeSugestii();
+  if (!input || !q.trim() || linii[i]?.cod || linii[i]?.necesar) return ascundeSugestii();
   sug = { i, gasite: cauta(q), activ: 0 };
   lista.innerHTML = sug.gasite.length ? sug.gasite.map((p, k) =>
     `<li role="option" id="sug-${k}" data-k="${k}" aria-selected="${k === 0}">${esc(p.denumire)}
@@ -631,7 +635,7 @@ const stilTipar = () => [...document.styleSheets].flatMap(sh => { try { return [
 function tipareste({ vezi = false } = {}) {
   const { lines } = facturare();
   // debitarea fiecărei linii: la fişă din necesarul îngheţat, altfel din rândurile de pe ecran
-  const peCod = modFisa?.debitare ?? new Map(linii.filter(deb).map(l => [l.cod, textDebitare(l)]));
+  const peCod = modFisa?.debitare ?? new Map(linii.filter(l => textDebitare(l)).map(l => [l.cod, textDebitare(l)]));
   const rand = (et, v) => (v ? `<tr><td>${et}</td><td>${esc(v)}</td></tr>` : '');
   const tabel = `<table>
       <thead><tr class="margine"><td colspan="6"></td></tr><tr><th>#</th><th>Cod</th><th>Produs</th><th>Debitare</th><th>Cant.</th><th>✓</th></tr></thead>
@@ -666,7 +670,8 @@ function tipareste({ vezi = false } = {}) {
   if (vezi) {
     return arataPrevizualizare(`<!DOCTYPE html><html lang="ro"><head><meta charset="UTF-8"><link rel="stylesheet" href="/fonte.css">
       <style>body { font-family: 'Inter', sans-serif; color: #000; margin: 0; } ${stilTipar()} #tipar { padding-bottom: 10mm; }</style>
-      </head><body><div id="tipar">${$('tipar').innerHTML}</div></body></html>`, { titlu: recl ? 'Fişa reclamaţiei' : 'Lista — ofertă cu amănuntul', pagini: '#tipar' });
+      </head><body><div id="tipar">${$('tipar').innerHTML}</div></body></html>`, { titlu: recl ? 'Fişa reclamaţiei' : 'Lista — ofertă cu amănuntul', pagini: '#tipar',
+        ...(recl && { nota: recl.reclamatie ? 'Doar de văzut.' : 'Doar de văzut — fişa se printează la „Salvează reclamaţia şi printează".' }) });
   }
   addEventListener('afterprint', () => { try { window.top.postMessage({ tip: 'fisa-tiparita' }, location.origin); } catch {} }, { once: true });
   window.print();
@@ -680,12 +685,35 @@ const specProdus = p => (p.sistem === 'amanunt' ? `<span class="dim">${p.linii.f
   : [p.finisaj, /^rama/.test(p.sistem ?? '') ? `ramă max. ${p.inaltime} × ${p.latime} mm (H × L)` : `gol ${p.inaltime} × ${p.latime} mm (H × L)`,
      /^rama/.test(p.sistem ?? '') ? `${p.nr_usi} rame` : `${p.nr_usi} ${p.nr_usi === 1 ? 'uşă' : 'uşi'}`]
     .filter(Boolean).map(t => `<span>${esc(t)}</span>`).join(''));
-// sub el: sticla cu dimensiunile ei; la amănunt, produsele
-const listaSpec = p => {
-  const linii = p.sistem === 'amanunt' ? p.linii.facturare : p.linii.sticla ?? [];
-  return linii.length ? `<ul>${linii.map(l => `<li>${p.sistem === 'amanunt' ? '' : 'Sticlă: '}<span class="mono">${esc(l.cod ?? '')}</span> ${esc(l.denumire)}${
-    l.debitare ? ` · <b>${esc(l.debitare)}</b>` : ''} · ${virgula(l.cantitate)} ${esc(l.um ?? '')}</li>`).join('')}</ul>` : '';
+// Necesarul fiecărui produs al comenzii (userul, 2026-10-28): reperele din necesarul atelierului + sticla (la amănunt,
+// produsele) — „+ Refă" pune reperul în „Ce se înlocuieşte", cu debitarea din comandă; cantitatea se scrie de mână.
+let necesare = [];   // [[linie, …] pe produs]
+const sursaNecesar = p => (p.sistem === 'amanunt' ? p.linii.facturare.filter(l => l.cod !== 'CHLTTRMANIP')
+  : [...p.linii.necesar, ...(p.linii.sticla ?? []).map(l => ({ ...l, sticla: true }))]).filter(l => l.cod);
+const tabelNecesar = (p, k) => {
+  const ls = necesare[k];
+  return ls.length ? `<table class="necesar"><thead><tr><th>Cod</th><th>Reper</th><th>Debitare</th><th class="num">Cant. comandă</th><th></th></tr></thead>
+    <tbody>${ls.map((l, j) => `<tr><td class="mono">${esc(l.cod)}</td><td>${l.sticla ? '<span class="dim">Sticlă ·</span> ' : ''}${esc(l.denumire)}</td>
+      <td><b>${esc(l.debitare ?? '')}</b></td><td class="num">${virgula(l.cantitate)} ${esc(l.um ?? '')}</td>
+      <td class="x"><button type="button" class="refa" data-sursa="${k}:${j}" title="Pune reperul la „Ce se înlocuieşte" — scrii tu cantitatea">+ Refă</button></td></tr>`).join('')}</tbody></table>`
+    : '<div class="dim mic">Produsul n-are necesar salvat — alege reperele din listă, mai jos.</div>';
 };
+function marcheazaNecesar() {
+  document.querySelectorAll('#reclSpec button.refa').forEach(b => {
+    const pus = linii.some(l => l.sursa === b.dataset.sursa);
+    b.classList.toggle('pus', pus);
+    b.textContent = pus ? '✓ Pus' : '+ Refă';
+  });
+}
+function refa(sursa) {
+  const i = linii.findIndex(l => l.sursa === sursa);
+  if (i >= 0) return focus(i, 'cant');   // e deja pus — doar la cantitate
+  const [k, j] = sursa.split(':').map(Number), l = necesare[k][j], p = recl.pozitii[k];
+  linii.push({ cod: l.cod, denumire: l.denumire, um: l.um ?? '', cantitate: 0, necesar: true, sursa, debitare: l.debitare ?? null,
+               titlu: recl.pozitii.length > 1 ? `${k + 1}. ${p.eticheta}` : p.eticheta });
+  randeaza();
+  focus(linii.length - 1, 'cant');
+}
 // data reclamaţiei pe fişă (SQLite: UTC) — ziua, în ora României
 const ziRo = s => new Intl.DateTimeFormat('ro-RO', { timeZone: 'Europe/Bucharest', day: '2-digit', month: '2-digit', year: 'numeric' })
   .format(new Date(String(s).replace(' ', 'T') + 'Z'));
@@ -766,13 +794,17 @@ const puneClientul = (client, ofertaNr, detalii) => {
     if (c) $('reclComanda').innerHTML = `<span>Comanda <b class="mono">${esc(c.oferta_nr || c.numar)}</b></span><span><b>${esc(c.client_nume)}</b></span>${
       c.factura_nr ? `<span class="dim">factura ${esc(c.factura_nr)}</span>` : ''}<a href="/#comanda/${c.id}" class="dim">← înapoi la comandă</a>`;
     // ce s-a livrat: fiecare produs al comenzii (model, culoare, gol, uşi, sticla) + fişa lui originală
-    $('reclSpec').innerHTML = (o.pozitii ?? []).map((p, k) => `<div class="recl-poz"><div class="rand1">
+    recl.pozitii = o.pozitii ?? [];
+    necesare = recl.pozitii.map(sursaNecesar);
+    $('reclSpec').innerHTML = recl.pozitii.map((p, k) => `<div class="recl-poz"><div class="rand1">
         <b>${o.pozitii.length > 1 ? `${k + 1}. ` : ''}${esc(p.eticheta)}</b>${specProdus(p)}<span class="spatiu"></span>
         <button type="button" class="fisa-print" data-poz="${k}" title="Fişa produsului, cum s-a printat la comandă">👁 Fişa</button></div>
-        ${listaSpec(p)}</div>`).join('');
+        ${tabelNecesar(p, k)}</div>`).join('');
     $('reclSpec').addEventListener('click', e => {
       const b = e.target.closest('button[data-poz]');
       if (b) window.Fise?.vezi(c.id, +b.dataset.poz, b);
+      const r = e.target.closest('button.refa');
+      if (r) refa(r.dataset.sursa);
     });
   } else if (params.get('reclamatie_fisa')) {
     let d = {};

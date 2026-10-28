@@ -31,7 +31,7 @@ const stilFoi = pagini => `<style>
 @media print { html { display: none !important; } }
 </style>`;
 
-export function arataPrevizualizare(html, { titlu = 'Fişa', pagini = 'body > div' } = {}) {
+export function arataPrevizualizare(html, { titlu = 'Fişa', pagini = 'body > div', nota = 'Doar de văzut — fişa se printează când oferta devine comandă.' } = {}) {
   if (!document.getElementById('stilPrevizualizare')) {
     const s = document.createElement('style');
     s.id = 'stilPrevizualizare';
@@ -41,9 +41,10 @@ export function arataPrevizualizare(html, { titlu = 'Fişa', pagini = 'body > di
   document.getElementById('previzualizare')?.remove();
   const el = document.createElement('div');
   el.id = 'previzualizare';
-  el.innerHTML = `<div class="pv-bara"><b></b><span>Doar de văzut — fişa se printează când oferta devine comandă.</span>
+  el.innerHTML = `<div class="pv-bara"><b></b><span></span>
     <span class="pv-spatiu"></span><button type="button">Închide</button></div><iframe title="Previzualizarea fişei"></iframe>`;
   el.querySelector('b').textContent = titlu;
+  el.querySelector('b + span').textContent = nota;
   const inchide = () => {
     el.remove();
     document.body.classList.remove('pv-deschis');
