@@ -25,7 +25,7 @@ export const meta = {
   // lăţimea minimă = cel mai mic gol cu uşa ≥ 601 mm (userul, 2026-10-15: „nu are voie mai îngustă de 600”; 601 = cel mai
   // mic cod, USA001) şi cu cod de şină (de la 1201 mm; la Cupru de la orice lungime) — verificat în test/referinta.mjs
   // maximul: şina ≤ 5800 mm, cât e bara (userul, 2026-10-15); uşă peste 2000 mm → fără cod, eroarea se vede
-  limits:   { width: [1167, 2896], height: [1900, 2700] },
+  limits:   { width: [1167, 2896], height: [1900, 3400] },
   // Cupru: şina Cupru e bară de 3,5 m → golul maxim la şină ≤ 3500 (uşa peste 1500 n-are cod Cupru → eroare).
   limitsFinisaj: { CUPRU: { width: [1167, 1746] } },
   finishes: FINISAJE_STANDARD,
