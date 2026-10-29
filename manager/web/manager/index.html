@@ -34,6 +34,7 @@
   dialog.fereastra::backdrop { background: rgba(0, 0, 0, .55); }
   .camp { display: grid; gap: 6px; margin-bottom: 14px; }
   .camp[hidden] { display: none; }
+  .eroare-camp { color: var(--rosu-text); font-size: .88rem; margin: -6px 0 14px; }
   .camp select, .camp input { font: inherit; padding: 8px 10px; border-radius: 8px;
     border: 1px solid var(--line); background: var(--panel-2); color: var(--text); }
   .butoane { display: flex; gap: 8px; justify-content: flex-end; }
@@ -139,6 +140,28 @@
     <div class="butoane">
       <button type="button" id="livRenunta">Renunţă</button>
       <button type="submit" class="verde" id="livOk">Salvează</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- „Aşteaptă plata" (userul, 2026-10-29): documentul trimis clientului şi numărul lui din NeoManager, obligatorii -->
+<dialog id="dialogPlata" class="fereastra" aria-labelledby="titluPlata">
+  <form method="dialog" id="formPlata">
+    <div class="fereastra-cap"><h2 id="titluPlata">Aşteaptă plata</h2></div>
+    <label class="camp">Document
+      <select id="plDocument" required>
+        <option value="" selected disabled>Alege…</option>
+        <option value="proforma">Factură proformă</option>
+        <option value="avans">Factură de avans</option>
+      </select>
+    </label>
+    <label class="camp"><span id="plNumarText">Număr document (din NeoManager)</span>
+      <input id="plNumar" type="text" maxlength="40" autocomplete="off" required>
+    </label>
+    <p class="eroare-camp" id="plEroare" hidden></p>
+    <div class="butoane">
+      <button type="button" id="plRenunta">Renunţă</button>
+      <button type="submit" class="galben-contur" id="plOk">Aşteaptă plata</button>
     </div>
   </form>
 </dialog>
@@ -979,10 +1002,44 @@ function leagaTreceri(root, c, dupa, nrFise = 1) {
     if (rr && !rr.ok) alerta((await rr.json().catch(() => ({}))).eroare || 'Operaţia a eşuat.');
     dupa();
   };
-  for (const [t, intrebare] of [
-    ['asteapta-plata', 'Trimiţi oferta la „Aşteaptă plata"?'],
-    ['inapoi-oferta', 'O întorci în oferte? De acolo o poţi accepta sau trimite la „Aşteaptă plata".'],
-  ]) buton(t)?.addEventListener('click', async () => { if (await confirma(intrebare)) posteaza(t); });
+  buton('inapoi-oferta')?.addEventListener('click', async () => {
+    if (await confirma('O întorci în oferte? De acolo o poţi accepta sau trimite la „Aşteaptă plata".')) posteaza('inapoi-oferta');
+  });
+  // „Aşteaptă plata" (userul, 2026-10-29): fără documentul (proformă / avans) şi numărul lui din NeoManager nu trece
+  buton('asteapta-plata')?.addEventListener('click', () => {
+    const dlg = $('dialogPlata'), doc = $('plDocument'), nrInp = $('plNumar');
+    $('formPlata').reset();
+    // proforma cu amănuntul doar la ofertele salvate cu ea (de la amănunt)
+    doc.querySelector('option[value="proforma_amanunt"]')?.remove();
+    if (c.plata === 'proforma_amanunt') doc.querySelector('option[value="proforma"]').insertAdjacentHTML('afterend',
+      '<option value="proforma_amanunt">Factură proformă cu amănuntul</option>');
+    // salvată deja ca proformă / avans → numărul ei e chiar al documentului; altfel e al ofertei şi se scrie altul
+    const deja = ['proforma', 'proforma_amanunt', 'avans'].includes(c.plata);
+    doc.value = deja ? c.plata : '';
+    nrInp.value = deja ? (c.oferta_nr ?? '') : '';
+    const eticheta = () => { $('plNumarText').textContent = `Număr ${doc.value === 'avans' ? 'factură de avans' : doc.value ? 'factură proformă' : 'document'} (din NeoManager)`; };
+    eticheta();
+    doc.onchange = eticheta;
+    $('plEroare').hidden = true;
+    $('plOk').disabled = false;
+    $('plRenunta').onclick = () => dlg.close();
+    $('formPlata').onsubmit = async e => {
+      e.preventDefault();
+      const numar = nrInp.value.trim();
+      const arata = t => { $('plEroare').textContent = t; $('plEroare').hidden = false; };
+      if (!numar) { nrInp.focus(); return arata('Scrie numărul documentului.'); }
+      if (!deja && numar === c.oferta_nr) { nrInp.focus(); return arata(`${numar} e numărul ofertei — scrie numărul ${doc.value === 'avans' ? 'facturii de avans' : 'proformei'} din NeoManager.`); }
+      $('plOk').disabled = true;
+      const rr = await api(`/api/comenzi/${id}/asteapta-plata`, { method: 'POST', body: JSON.stringify({ plata: doc.value, numar }) });
+      $('plOk').disabled = false;
+      if (!rr) return;
+      if (!rr.ok) return arata((await rr.json().catch(() => ({}))).eroare || 'Operaţia a eşuat.');
+      dlg.close();
+      dupa();
+    };
+    dlg.showModal();
+    (doc.value ? nrInp : doc).focus();
+  });
   buton('redeschide')?.addEventListener('click', () => posteaza('redeschide'));
   // livrarea / adresa schimbate după ce s-a printat fişa (şi nereprintată de atunci): s-a completat de mână?
   buton('finalizeaza')?.addEventListener('click', async () => {

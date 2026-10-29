@@ -3,7 +3,7 @@ import * as manager from './manager.js';
 import * as cosul from './cos.js';
 import { cautator, laBara, arie, rotunjeste, textMod, sePoatePeJumatate, lungimeUtila } from './amanunt-calcul.js';
 import { initSugestiiClienti } from './sugestii-clienti.js';
-import { LIVRARE, AGENTI, PLATI, INCASARI, plataText, incasareText, numarText, detaliiDinManager, dinAcceptare, liniaTransport, campuriLipsa, focusCamp, etichetaNumar, marcheazaDeCompletat, opritDePlata } from './lib/comun/comanda.js';
+import { LIVRARE, AGENTI, PLATI, INCASARI, plataText, incasareText, numarText, detaliiDinManager, dinAcceptare, liniaTransport, campuriLipsa, focusCamp, etichetaNumar, marcheazaDeCompletat, opritDePlata, lipsaPlataAsteapta } from './lib/comun/comanda.js';
 import { copyRows } from './lib/comun/clipboard.js';
 import { qtyText } from './lib/comun/num.js';
 import { dataRo } from './ora.js';
@@ -513,9 +513,12 @@ async function trimite(unde) {
   // obligatorii: numele, livrarea, agentul, nr. ofertei; la „Salvează comanda" şi telefonul + adresa
   const lipsa = campuriLipsa({ laAcceptare: unde === 'comanda' });
   if (lipsa.length) { focusCamp(lipsa[0].id); return mesaj(`Completează ${lipsa.map(x => x.text).join(', ')}.`, 'eroare'); }
+  const faraDocument = unde === 'plata' && lipsaPlataAsteapta(comanda.plata);
+  if (faraDocument) { focusCamp('comandaPlata'); return mesaj(faraDocument, 'eroare'); }
   const tot = cosul.toate(cos, curenta());
   if (tot.eroare) return mesaj(esc(tot.eroare), 'eroare');
-  const plata = unde === 'comanda' ? await cerePlata() : null;
+  // „Aşteaptă plata": documentul (proformă / avans) şi numărul lui — nr. din bară
+  const plata = unde === 'comanda' ? await cerePlata() : unde === 'plata' ? { plata: comanda.plata, numar: ofertaNr } : null;
   if (unde === 'comanda' && !plata) return;
 
   for (const id of BUTOANE) $(id).disabled = true;

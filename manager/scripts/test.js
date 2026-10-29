@@ -729,16 +729,29 @@ async function main() {
       pozitii: [pozitie('confortGamma', 'Confort Gamma', 1, 1200)] });
     verifica('metodă de plată / încasare necunoscută → ignorată (NULL)',
       Object.values(db2().prepare('SELECT plata, incasare FROM comanda WHERE id = ?').get(oc.date.comanda.id)).every(v => v === null));
+    // documentul (proformă / avans) + numărul lui din NeoManager sunt obligatorii (userul, 2026-10-29)
+    for (const [corp, de] of [[undefined, 'fără nimic'], [{ numar: 'AV-12' }, 'fără document'], [{ plata: 'fiscala', numar: 'AV-12' }, 'cu factură fiscală'],
+      [{ plata: 'avans', numar: '  ' }, 'fără număr']]) verifica(`aşteaptă plata ${de} → 400`, (await cer('POST', `/api/comenzi/${pid}/asteapta-plata`, corp)).stare === 400);
+    const oNr = await cer('POST', '/api/comenzi', { client: { nume: 'Plata nr oferta' }, ofertaNr: 'OF-9', detalii: { plata: 'oferta' },
+      pozitii: [pozitie('confortGamma', 'Confort Gamma', 1, 1200)] });
+    verifica('aşteaptă plata cu numărul ofertei → 400', (await cer('POST', `/api/comenzi/${oNr.date.comanda.id}/asteapta-plata`, { plata: 'proforma', numar: 'OF-9' })).stare === 400);
+    verifica('… salvată deja ca proformă: numărul ei merge', (await cer('POST', `/api/comenzi/${pid}/asteapta-plata`, { plata: 'proforma_amanunt', numar: 'NM-77' })).stare === 200);
+    verifica('… înapoi în ofertă', (await cer('POST', `/api/comenzi/${pid}/inapoi-oferta`)).stare === 200);
     const sumarInainte = (await cer('GET', '/api/sumar')).date;
-    verifica('ofertă → aşteaptă plata → 200', (await cer('POST', `/api/comenzi/${pid}/asteapta-plata`)).stare === 200);
-    verifica('a doua oară → 409', (await cer('POST', `/api/comenzi/${pid}/asteapta-plata`)).stare === 409);
+    const ap = await cer('POST', `/api/comenzi/${pid}/asteapta-plata`, { plata: 'avans', numar: ' AV-12 ' });
+    verifica('ofertă → aşteaptă plata (factură de avans AV-12) → 200', ap.stare === 200 && ap.date.comanda.oferta_nr === 'AV-12' && ap.date.comanda.plata === 'avans',
+      JSON.stringify(ap.date));
+    verifica('… numărul e al facturii de avans (fiscal)', (await cer('GET', `/api/comenzi/${pid}`)).date.plataNumar === 'avans');
+    verifica('… jurnal: documentul şi numărul', ((await cer('GET', `/api/comenzi/${pid}/activitate`)).date.randuri ?? [])
+      .some(x => x.operatie === 'Trimisă la „Aşteaptă plata"' && x.detalii === 'factură de avans · nr. AV-12'));
+    verifica('a doua oară → 409', (await cer('POST', `/api/comenzi/${pid}/asteapta-plata`, { plata: 'avans', numar: 'AV-13' })).stare === 409);
     const tab = (await cer('GET', '/api/comenzi?tip=plata')).date.comenzi;
-    verifica('apare în tabul Aşteaptă plata, cu nr. de ofertă', tab.length === 1 && tab[0].oferta_nr === 'NM-77', JSON.stringify(tab));
+    verifica('apare în tabul Aşteaptă plata, cu nr. facturii de avans', tab.length === 1 && tab[0].oferta_nr === 'AV-12', JSON.stringify(tab));
     const sumarDupa = (await cer('GET', '/api/sumar')).date;
     verifica('sumar: plata +1, oferte −1', sumarDupa.plata === 1 && sumarDupa.oferte === sumarInainte.oferte - 1, JSON.stringify(sumarDupa));
     // se modifică din configurator (userul, 2026-10-27) şi rămâne la „Aşteaptă plata"
-    const mp = await cer('PUT', `/api/comenzi/${pid}`, { client: { nume: 'Client plata' }, detalii: { plata: 'proforma_amanunt', incasare: 'cash_bf_sofer' },
-      ofertaNr: 'NM-77', pozitii: [pozitie('confortGamma', 'G', 1, 1300)] });
+    const mp = await cer('PUT', `/api/comenzi/${pid}`, { client: { nume: 'Client plata' }, detalii: { plata: 'avans', incasare: 'cash_bf_sofer' },
+      ofertaNr: 'AV-12', pozitii: [pozitie('confortGamma', 'G', 1, 1300)] });
     const dupaMp = db2().prepare('SELECT tip, client_nume FROM comanda WHERE id = ?').get(pid);
     verifica('se modifică din configurator, rămâne la Aşteaptă plata', mp.stare === 200 && dupaMp.tip === 'plata' && dupaMp.client_nume === 'Client plata'
       && db2().prepare('SELECT latime FROM pozitie WHERE comanda_id = ?').get(pid).latime === 1300, JSON.stringify([mp, dupaMp]));
@@ -758,10 +771,14 @@ async function main() {
     verifica('înapoi în ofertă → 200, e iar ofertă', ina.stare === 200 && ina.date.comanda.tip === 'oferta'
       && ina.date.comanda.numar_comanda === null && ina.date.comanda.confirmat_la === null && ina.date.comanda.achitat_la === null, JSON.stringify(ina.date));
     verifica('înapoi a doua oară → 409', (await cer('POST', `/api/comenzi/${pid}/inapoi-oferta`)).stare === 409);
-    verifica('aşteaptă plata → înapoi în ofertă → 200', (await cer('POST', `/api/comenzi/${pid}/asteapta-plata`)).stare === 200
+    verifica('aşteaptă plata → înapoi în ofertă → 200', (await cer('POST', `/api/comenzi/${pid}/asteapta-plata`, { plata: 'proforma', numar: 'PF-5' })).stare === 200
       && (await cer('POST', `/api/comenzi/${pid}/inapoi-oferta`)).stare === 200);
+    const inapoi = db2().prepare('SELECT oferta_nr, plata FROM comanda WHERE id = ?').get(pid);
+    verifica('… înapoi în ofertă: numărul şi documentul de dinainte de proformă', inapoi.oferta_nr === 'AV-12' && inapoi.plata === 'proforma', JSON.stringify(inapoi));
+    verifica('… şi în configuraţie (fără urma proformei)', (cfg => cfg.comanda.plata == null && !('dinOferta' in cfg.comanda))(
+      JSON.parse(db2().prepare('SELECT config_json FROM pozitie WHERE comanda_id = ?').get(pid).config_json)));
     const re = await cer('POST', `/api/comenzi/${pid}/accepta`, { incasare: 'card', plata: 'proforma', avans: 0, telefon: '0700', adresa: 'X' });
-    verifica('reacceptată: acelaşi nr. de ofertă', re.stare === 200 && re.date.comanda.oferta_nr === 'NM-77');
+    verifica('reacceptată: acelaşi nr.', re.stare === 200 && re.date.comanda.oferta_nr === 'AV-12');
     verifica('… direct din ofertă: avans 0 merge, nu e achitată', re.date.comanda.achitat_la === null);
     db2().prepare("UPDATE comanda SET tip_schimbat_la = datetime('now', '-11 minutes') WHERE id = ?").run(pid);
     verifica('după 10 minute → 409', (await cer('POST', `/api/comenzi/${pid}/inapoi-oferta`)).stare === 409);
@@ -1585,7 +1602,7 @@ async function main() {
       JSON.stringify(t.date));
     verifica('oferta din test NU e în baza reală', !pePeBune("SELECT 1 FROM comanda WHERE client_nume = 'Client Doar Test'").length);
     verifica('poziţiile ei stau în copie, legate de ea', inCopie(`SELECT comanda_id FROM pozitie WHERE comanda_id = ${t.date.comanda.id}`).length === 1);
-    verifica('în test: oferta reală trece la „Aşteaptă plata"', (await cer('POST', `/api/comenzi/${reala.date.comanda.id}/asteapta-plata`)).stare === 200);
+    verifica('în test: oferta reală trece la „Aşteaptă plata"', (await cer('POST', `/api/comenzi/${reala.date.comanda.id}/asteapta-plata`, { plata: 'proforma', numar: 'PF-MT' })).stare === 200);
     verifica('… dar pe bune rămâne ofertă', pePeBune(`SELECT tip FROM comanda WHERE id = ${reala.date.comanda.id}`)[0].tip === 'oferta');
     // „demo" (2026-10-19, în locul chenarului): doar comenzile făcute / schimbate în test
     const oferteT = (await cer('GET', '/api/comenzi')).date.comenzi;
@@ -1634,7 +1651,7 @@ async function main() {
     const a = await cer('POST', '/api/comenzi', { client: { nume: 'Client Admin Test' }, ofertaNr: 'MT-A1', pozitii: [pozitie('confortGamma', 'Confort Gamma', 2, 1600)] });
     verifica('admin: oferta lui merge doar în copie', a.stare === 201 && a.date.comanda.id >= 1e9
       && !pePeBune("SELECT 1 FROM comanda WHERE client_nume = 'Client Admin Test'").length);
-    verifica('admin: nu poate atinge comanda reală', (await cer('POST', `/api/comenzi/${r2.date.comanda.id}/asteapta-plata`)).stare === 200
+    verifica('admin: nu poate atinge comanda reală', (await cer('POST', `/api/comenzi/${r2.date.comanda.id}/asteapta-plata`, { plata: 'proforma', numar: 'PF-A' })).stare === 200
       && pePeBune(`SELECT tip FROM comanda WHERE id = ${r2.date.comanda.id}`)[0].tip === 'oferta');
     const cont = await cer('POST', '/api/utilizatori', { nume: 'Nou Pe Bune', user: 'noupebune', parola: 'parola-noua-12', rol: 'birou' });
     verifica('admin: administrarea (conturi) rămâne pe bune', cont.stare === 201 && pePeBune("SELECT 1 FROM utilizator WHERE user = 'noupebune'").length === 1,

@@ -94,6 +94,11 @@ export function opritDePlata(buton, plata) {
   if (buton === 'oferta' && plata !== 'oferta') return 'Facturarea nu e „Ofertă" — salvează comanda sau aşteaptă plata';
   return null;
 }
+// „Aşteaptă plata" (userul, 2026-10-29): clientului i s-a trimis o factură proformă sau una de avans — documentul ales
+// la Facturare, iar nr. din bară e numărul lui (serverul le cere, POST /api/comenzi/:id/asteapta-plata). → mesajul sau null.
+export const PLATI_ASTEAPTA = ['proforma', 'proforma_amanunt', 'avans'];
+export const lipsaPlataAsteapta = plata => (PLATI_ASTEAPTA.includes(plata) ? null
+  : 'Pentru „Aşteaptă plata" alege la Facturare <strong>Factură proformă</strong> sau <strong>Factură de avans</strong> şi scrie numărul ei din NeoManager.');
 // câmpul pe care-l vede omul (la meniul căutabil — caseta lui, <select>-ul e ascuns)
 const vizibil = el => el?.hidden ? el.nextElementSibling?.querySelector('input') : el;
 // cursorul în câmpul care lipseşte
