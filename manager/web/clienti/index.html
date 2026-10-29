@@ -94,6 +94,17 @@ async function api(cale, optiuni = {}) {
 }
 
 let date = { clienti: [] };
+// textul de căutare al fiecărui client, normalizat o singură dată (nu la fiecare tastă):
+// [cu spaţii, fără spaţii]. La o preluare nouă vin obiecte noi, deci se refac singure.
+const textCautat = new WeakMap();
+function textCautare(c) {
+  let t = textCautat.get(c);
+  if (!t) {
+    const cu = normal(Object.values(c).join(' '));
+    textCautat.set(c, t = [cu, cu.replace(/\s+/g, '')]);
+  }
+  return t;
+}
 let eu = null;             // utilizatorul logat — aprobă conducerea sau adminul
 let propuneri = [];
 
@@ -158,8 +169,10 @@ function randeaza() {
   const q = normal($('cauta').value.trim());
   // şi fără spaţii (userul, 2026-10-29): „mobila conceptum" găseşte „MOBILACONCEPTUM" şi invers
   const qc = q.replace(/\s+/g, '');
-  const cl = !q ? date.clienti : date.clienti.filter(c => normal(Object.values(c).join(' ')).includes(q)
-    || Object.values(c).some(v => normal(v).replace(/\s+/g, '').includes(qc)));
+  const cl = !q ? date.clienti : date.clienti.filter(c => {
+    const [cu, fara] = textCautare(c);
+    return cu.includes(q) || fara.includes(qc);
+  });
   if (!cl.length) {
     $('lista').innerHTML = `<div class="gol">${q ? 'Niciun client găsit.' : 'Niciun client încă.'}</div>`;
     return;
