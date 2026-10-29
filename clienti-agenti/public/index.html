@@ -87,6 +87,15 @@
   dialog p { margin: 8px 0 18px; color: var(--dim); }
   dialog .butoane { display: flex; justify-content: flex-end; gap: 8px; }
   button.rosu { background: #8f2f2b; border-color: #8f2f2b; color: #fff; }
+  /* „Salvează modificări": gri cât nu e nimic de salvat, verde când ai modificat ceva (userul, 2026-10-29) */
+  #salveaza:disabled { opacity: .5; cursor: default; }
+  #salveaza.verde { background: #2e7d4f; border-color: #2e7d4f; color: #fff; }
+  #salveaza.verde:disabled { opacity: .7; }
+  tr.schimbat td.sterge { box-shadow: inset 3px 0 0 #4caf7d; }
+  .pastila.schimbat { background: #1c3a2a; color: var(--ok); }
+  #fParola { display: grid; gap: 12px; }
+  #fParola label { display: grid; gap: 6px; font-size: .9rem; color: var(--dim); }
+  #eroareParola { color: var(--danger); margin: 0; }
 </style>
 </head>
 <body>
@@ -102,30 +111,45 @@
     <label>Parolă<input name="parola" type="password" autocomplete="current-password" required></label>
     <button class="primar">Intră</button>
   </form>
+  <p class="dim" style="margin-top:16px">Ai uitat parola? Contactează administratorul — el îţi face una nouă.</p>
 </section>
 
 <!-- 2. Clienţii agentului, ca un tabel de Excel -->
 <section id="ecranTabel" hidden>
   <div class="cap">
     <div><h1 id="titlu">Clienţii mei</h1><span class="dim" id="agent"></span></div>
+    <button id="salveaza" type="button" disabled>Salvează modificări</button>
     <span class="spatiu"></span>
     <input id="cauta" type="search" placeholder="Caută nume, CUI, localitate, telefon…">
     <span class="dim" id="numar"></span>
+    <button id="schimbaParola" type="button">Schimbă parola</button>
     <button id="iesire">Ieşi</button>
   </div>
   <div id="mesaj" role="status"></div>
-  <p class="dim ajutor" id="ajutorConducere" hidden>Cont de conducere: vezi toţi clienţii şi scrii direct în celule — modificarea
-    se salvează imediat, fără aprobare. Schimbi agentul unui client (îl alegi din listă) → clientul trece la noul agent, care îl
+  <p class="dim ajutor" id="ajutorConducere" hidden>Cont de conducere: vezi toţi clienţii şi scrii direct în celule (Enter sau Tab =
+    celula următoare; alt rând = click pe el). La sfârşit apeşi „Salvează modificări" sus — se salvează direct, fără aprobare. Schimbi agentul unui client (îl alegi din listă) → clientul trece la noul agent, care îl
     vede şi îl poate modifica din contul lui. Judeţul şi localitatea se aleg din listă. Reducerile: doar numărul (15 = 15%).
     🗑 din stânga şterge clientul (cu confirmare).</p>
-  <p class="dim ajutor" id="ajutorAgent">Scrii direct în celule (Enter = rândul de jos). Când ieşi de pe un rând, modificarea se
-    trimite spre aprobare — până e aprobată, rândul e galben. Client nou: primul rând, cu nume şi un telefon sau e-mail.
+  <p class="dim ajutor" id="ajutorAgent">Scrii direct în celule (Enter sau Tab = celula următoare; alt rând = click pe el). La
+    sfârşit apeşi „Salvează modificări" sus (verde când ai ceva nesalvat) — modificările pleacă spre aprobare; până sunt
+    aprobate, rândul e galben. Client nou: primul rând, cu nume şi un telefon sau e-mail.
     Judeţul şi localitatea se aleg din listă (pt. curier şi livrări). Reducerile: doar numărul (15 = 15%).
     🗑 din stânga cere ştergerea clientului (tot cu aprobare); ↺ anulează cererea. Un rând = o singură cerere: dacă îl mai
     modifici până e aprobat, pleacă varianta finală.</p>
   <div class="foaie"><table id="tabel"></table></div>
   <div id="sugestii" hidden></div>
 </section>
+
+<dialog id="dParola">
+  <form id="fParola">
+    <b>Schimbă parola</b>
+    <label>Parola de acum<input type="password" name="veche" autocomplete="current-password" required></label>
+    <label>Parola nouă (cel puţin 8 caractere)<input type="password" name="noua" autocomplete="new-password" minlength="8" required></label>
+    <label>Încă o dată parola nouă<input type="password" name="noua2" autocomplete="new-password" required></label>
+    <p id="eroareParola" hidden></p>
+    <div class="butoane"><button type="button" id="parolaNu">Renunţă</button><button class="primar">Schimbă parola</button></div>
+  </form>
+</dialog>
 
 <dialog id="confirmare">
   <b id="confirmareTitlu"></b>
@@ -190,12 +214,15 @@ let clienti = [];
 let semnLista = '';   // „versiunea" listei de pe ecran — vezi actualizarea fără refresh, jos
 let inZbor = 0;       // salvări / ştergeri trimise, încă fără răspuns
 let scrieri = 0;      // câte s-au terminat — o listă adusă înaintea uneia e veche (n-are ce ai scris tu)
-const salvariInZbor = new Set();   // salvările pe drum — lista se reface abia după ele (k-urile rândurilor rămân valabile)
+let salvez = false;   // „Salvează modificări" în curs
 let conducere = false, agentiPosibili = [];   // contul de conducere + agenţii pe care îi poate primi un client
 let COL = COLOANE;                            // coloanele afişate: la conducere şi Agent, după nume
 const MAX_RANDURI = 500;                      // la conducere sunt mii — se văd primii, căutarea ajunge la oricare
-// textul unui rând, aşa cum era când a intrat pe ecran — ca să ştim dacă s-a schimbat ceva
-const salvat = new Map();
+// Modificările nesalvate (userul, 2026-10-29: se salvează cu butonul de sus, nu la ieşirea din rând):
+// cheia rândului ('nou' sau cheieClient) → valorile celulelor. Rămân şi când tabelul se reface (căutare,
+// listă nouă de pe server) — rândul se desenează din ele.
+const ciorne = new Map();
+const erori = new Map();   // cheia rândului → de ce n-a mers salvarea (rândul rămâne roşu, cu ciorna lui)
 const textMesaj = (t, tip) => { $('mesaj').textContent = t; $('mesaj').className = tip || ''; };
 const textEroare = err => err instanceof TypeError ? 'Fără internet — încearcă din nou.' : err.message;
 
@@ -220,6 +247,8 @@ function aplicaLista(j) {
   clienti = j.clienti.sort(ordine);
   semnLista = j.semn;
   deAplicat = null;
+  const chei = new Set(clienti.map(cheieClient));
+  for (const ch of ciorne.keys()) if (ch !== 'nou' && !chei.has(ch)) { ciorne.delete(ch); erori.delete(ch); }
 }
 function arataLista(j) {
   $('agent').textContent = j.agent;
@@ -230,6 +259,7 @@ function arataLista(j) {
   $('ajutorConducere').hidden = !conducere;
   $('ajutorAgent').hidden = conducere;
   $('banda').hidden = !j.admin;
+  $('schimbaParola').hidden = !!j.admin;   // adminul intrat din manager nu schimbă parola agentului
   $('banda').textContent = `Eşti în contul lui ${j.agent}, intrat din manager (admin). Ce modifici aici se vede la agent.`;
   randeaza();
   arata('ecranTabel');
@@ -238,12 +268,11 @@ function arataLista(j) {
 // ── Modificările altora, fără refresh (userul, 2026-10-29) ──────────────────
 // La 15 s (doar cu pagina la vedere) pagina întreabă serverul dacă s-a schimbat ceva (aprobări,
 // respingeri, conducerea, alt telefon) — un singur număr, ieftin — şi reîncarcă lista doar atunci.
-// Cât scrii într-un rând (sau o salvare e pe drum), lista nouă aşteaptă: întâi se schimbă doar
-// rândurile la care nu umbli, restul (clienţi apăruţi / dispăruţi) când ieşi din tabel.
+// Ce n-ai salvat rămâne (ciorne). Cât eşti într-o celulă (sau se salvează), lista nouă aşteaptă:
+// întâi se schimbă doar celelalte rânduri, restul (clienţi apăruţi / dispăruţi) când ieşi din tabel.
 const cheieClient = c => (c.id ? `c${c.id}` : `p${c.propunere_id}`);
 let deAplicat = null;   // lista nouă, adusă cât erai ocupat
-const randuriSchimbate = () => [...$('tabel').querySelectorAll('tbody tr')].filter(tr => JSON.stringify(citesteRand(tr)) !== salvat.get(tr.dataset.k));
-const ocupat = () => inZbor > 0 || $('tabel').contains(document.activeElement) || $('confirmare').open || randuriSchimbate().length > 0;
+const ocupat = () => inZbor > 0 || salvez || $('tabel').contains(document.activeElement) || $('confirmare').open || $('dParola').open;
 
 function aplicaDacaSePoate() {
   if (!deAplicat) return;
@@ -253,15 +282,14 @@ function aplicaDacaSePoate() {
     randeaza();
     return;
   }
-  // ocupat: doar rândurile de pe ecran care nu sunt în lucru şi au alte date
+  if (inZbor || salvez) return;
+  // eşti într-o celulă: doar celelalte rânduri de pe ecran care au alte date
   const noi = new Map(deAplicat.clienti.map(c => [cheieClient(c), c]));
-  const inLucru = new Set(randuriSchimbate());
   for (const tr of $('tabel').querySelectorAll('tbody tr:not([data-k="nou"])')) {
     const k = +tr.dataset.k, n = noi.get(cheieClient(clienti[k]));
-    if (!n || tr.contains(document.activeElement) || inLucru.has(tr) || JSON.stringify(n) === JSON.stringify(clienti[k])) continue;
+    if (!n || tr.contains(document.activeElement) || JSON.stringify(n) === JSON.stringify(clienti[k])) continue;
     clienti[k] = n;
     tr.outerHTML = randHtml(n, k);
-    salvat.set(String(k), JSON.stringify(citesteRand($('tabel').querySelector(`tr[data-k="${k}"]`))));
   }
 }
 
@@ -300,15 +328,23 @@ const butonSterge = c => !c ? '' : c.inAsteptare === 'stergere'
   ? '<button type="button" class="anuleaza" title="Anulează cererea de ştergere">↺</button>'
   : '<button type="button" title="Şterge clientul">🗑</button>';
 
+const cheieRand = k => (k === 'nou' ? 'nou' : cheieClient(clienti[+k]));
+// valorile de acum ale rândului (din baza de date), aşa cum le dă citesteRand — cu ele se compară ce scrii
+const original = c => Object.fromEntries(Object.entries(valoriRand(c)).map(([k, v]) => [k, String(v).trim()]));
+const stareRand = (c, cheie) => (erori.has(cheie)
+  ? `<span class="pastila eroare" title="${esc(erori.get(cheie))}">⚠ nesalvat</span>`
+  : ciorne.has(cheie) ? '<span class="pastila schimbat" title="Apasă „Salvează modificări" sus">✎ nesalvat</span>' : stareHtml(c));
+
 function randHtml(c, k) {
-  const v = valoriRand(c);
+  const cheie = cheieRand(k);
+  const v = ciorne.get(cheie) ?? valoriRand(c);
   const celula = (cheie, clasa = '') => `<td contenteditable="plaintext-only" spellcheck="false" data-c="${esc(cheie)}"${clasa ? ` class="${clasa}"` : ''}>${esc(v[cheie])}</td>`;
-  return `<tr data-k="${k}" class="${clasaRand(c, k)}">
+  return `<tr data-k="${k}" class="${clasaRand(c, k)}${ciorne.has(cheie) ? ' schimbat' : ''}${erori.has(cheie) ? ' greseala' : ''}">
     <td class="sterge">${butonSterge(c)}</td>
     ${COL.map(([cheie]) => celula(cheie, cheie === 'nume' ? 'nume' : '')).join('')}
     ${GAME.map(g => celula(`g:${g}`, 'gama')).join('')}
     ${celula('alte')}
-    <td class="stare">${stareHtml(c)}</td>
+    <td class="stare">${stareRand(c, cheie)}</td>
   </tr>`;
 }
 
@@ -329,56 +365,90 @@ function randeaza() {
         ${GAME.map(g => `<th class="gama">${g}</th>`).join('')}<th>Alte</th><th>Stare</th></tr>
     </thead>
     <tbody>${randHtml(null, 'nou')}${arataK.map(k => randHtml(clienti[k], k)).join('')}</tbody>`;
-  salvat.clear();
-  $('tabel').querySelectorAll('tbody tr').forEach(tr => salvat.set(tr.dataset.k, JSON.stringify(citesteRand(tr))));
+  actualizeazaButon();
 }
 
 const citesteRand = tr => Object.fromEntries([...tr.querySelectorAll('td[data-c]')].map(td => [td.dataset.c, td.textContent.trim()]));
 
-// ── Salvarea unui rând (la ieşirea din el) ──────────────────────────────────
-async function salveazaRand(tr) {
-  const k = tr.dataset.k, v = citesteRand(tr);
-  if (JSON.stringify(v) === salvat.get(k)) return;   // nimic schimbat
-  const c = k === 'nou' ? null : clienti[+k];
-  if (!v.nume) { if (c) return arataEroare(tr, 'Numele clientului e obligatoriu.'); return; }   // rând nou gol
+// ── Ce ai scris → ciorna rândului; „Salvează modificări" le trimite pe toate ──
+function noteaza(tr) {
+  const k = tr.dataset.k, cheie = cheieRand(k), c = k === 'nou' ? null : clienti[+k];
+  const v = citesteRand(tr);
+  if (JSON.stringify(v) === JSON.stringify(original(c))) ciorne.delete(cheie); else ciorne.set(cheie, v);
+  erori.delete(cheie);
+  tr.classList.toggle('schimbat', ciorne.has(cheie));
+  tr.classList.remove('greseala');
+  tr.querySelector('.stare').innerHTML = stareRand(c, cheie);
+  actualizeazaButon();
+}
+function actualizeazaButon() {
+  const b = $('salveaza'), n = ciorne.size;
+  b.disabled = !n || salvez;
+  b.classList.toggle('verde', n > 0);
+  b.textContent = salvez ? 'Se salvează…' : n ? `Salvează modificări (${n})` : 'Salvează modificări';
+}
+
+// Un rând → o cerere (sau salvare directă, la conducere). → { nume, text } / { eroare } / null (nimic de făcut)
+async function salveazaCiorna(cheie) {
+  const v = ciorne.get(cheie);
+  const k = cheie === 'nou' ? -1 : clienti.findIndex(x => cheieClient(x) === cheie);
+  const c = k < 0 ? null : clienti[k];
+  if (cheie !== 'nou' && !c) { ciorne.delete(cheie); return null; }   // clientul a dispărut între timp
+  if (!v.nume) return { eroare: c ? 'Numele clientului e obligatoriu.' : 'Client nou: scrie numele.' };
   const reduceri = Object.fromEntries(GAME.map(g => [g, v[`g:${g}`].replace(/%/g, '').trim()]));
   const gresita = GAME.find(g => reduceri[g] && !/^\d+([.,]\d+)?$/.test(reduceri[g]));
-  if (gresita) return arataEroare(tr, `Reducerea la ${gresita} trebuie să fie un număr (ex. 15).`);
-  const adresa = adresaGresita(v, salvat.has(k) ? JSON.parse(salvat.get(k)) : null);
-  if (adresa) return arataEroare(tr, adresa);
-  if (conducere && v.agent && !agentiPosibili.includes(v.agent)) return arataEroare(tr, `Agentul „${v.agent}" nu există — alege-l din listă.`);
-  const date = { ...Object.fromEntries(COL.map(([cheie]) => [cheie, v[cheie]])), discounturi: compuneReduceri(reduceri, v.alte) };
+  if (gresita) return { eroare: `Reducerea la ${gresita} trebuie să fie un număr (ex. 15).` };
+  const adresa = adresaGresita(v, original(c));
+  if (adresa) return { eroare: adresa };
+  if (conducere && v.agent && !agentiPosibili.includes(v.agent)) return { eroare: `Agentul „${v.agent}" nu există — alege-l din listă.` };
+  const date = { ...Object.fromEntries(COL.map(([col]) => [col, v[col]])), discounturi: compuneReduceri(reduceri, v.alte) };
   if (!c?.id && ![date.telefon_administrator, date.telefon_delegat, date.email].some(Boolean)) {
-    return arataEroare(tr, 'Client nou: completează cel puţin un telefon sau e-mailul.');
+    return { eroare: 'Client nou: completează cel puţin un telefon sau e-mailul.' };
   }
-  const stare = tr.querySelector('.stare');
-  stare.innerHTML = '<span class="dim">se trimite…</span>';
   inZbor++;
   try {
     // client existent → PUT pe el; client nou încă neaprobat → PUT pe propunere; altfel client nou
     const cale = c?.id ? `/api/clienti/${c.id}` : c?.propunere_id ? `/api/propuneri/${c.propunere_id}` : '/api/clienti';
     const { client } = await api(cale, { method: c ? 'PUT' : 'POST', body: JSON.stringify(date) });
-    if (c) clienti[+k] = client; else clienti.push(client);
-    tr.classList.remove('greseala');
+    if (c) clienti[k] = client; else clienti.unshift(client);   // clientul nou: sus, să se vadă
+    ciorne.delete(cheie);
     // conducerea salvează direct; agentul schimbat = clientul a trecut la el
-    const gata = !conducere ? (client.inAsteptare ? 'trimis spre aprobare.' : 'înapoi cum era — nimic de aprobat.')
+    const text = !conducere ? (client.inAsteptare ? 'trimis spre aprobare.' : 'înapoi cum era — nimic de aprobat.')
       : c && client.agent !== c.agent ? `salvat — trecut la ${client.agent || 'niciun agent'}.` : 'salvat.';
-    if (!c) {   // rândul nou a devenit client — tabelul se reface (apare alt rând gol)
-      randeaza();
-      textMesaj(`✓ ${client.nume} — ${gata}`, 'ok');
-      return;
-    }
-    salvat.set(k, JSON.stringify(citesteRand(tr)));
-    tr.className = clasaRand(client, k);
-    tr.querySelector('.sterge').innerHTML = butonSterge(client);
-    stare.innerHTML = conducere ? '<span class="pastila ok">✓ salvat</span>' : stareHtml(client);
-    textMesaj(`✓ ${client.nume} — ${gata}`, 'ok');
+    return { nume: client.nume, text };
   } catch (err) {
-    arataEroare(tr, textEroare(err));
+    return { eroare: textEroare(err) };
   } finally {
     inZbor--; scrieri++; deAplicat = null;
   }
 }
+
+async function salveazaTot() {
+  if (salvez || !ciorne.size) return;
+  if ($('tabel').contains(document.activeElement)) document.activeElement.blur();   // judeţul / localitatea se corectează la ieşire
+  salvez = true;
+  actualizeazaButon();
+  const ok = [], rau = [];
+  // clienţii existenţi întâi, rândul nou la urmă (el mută rândurile în listă)
+  for (const cheie of [...ciorne.keys()].sort((a, b) => (a === 'nou') - (b === 'nou'))) {
+    const r = await salveazaCiorna(cheie);
+    if (!r) continue;
+    if (r.eroare) { erori.set(cheie, r.eroare); rau.push(r.eroare); } else ok.push(r);
+  }
+  salvez = false;
+  randeaza();
+  if (rau.length) {
+    textMesaj(`${ok.length ? `✓ ${ok.length} ${ok.length === 1 ? 'rând salvat' : 'rânduri salvate'}. ` : ''}⚠ ${rau.length === 1
+      ? `Un rând nesalvat: ${rau[0]}` : `${rau.length} rânduri nesalvate (cele roşii — ţine mouse-ul pe „⚠ nesalvat"): ${rau[0]}`}`, 'eroare');
+  } else if (ok.length === 1) {
+    textMesaj(`✓ ${ok[0].nume} — ${ok[0].text}`, 'ok');
+  } else if (ok.length) {
+    textMesaj(`✓ ${ok.length} clienţi — ${conducere ? 'salvaţi.' : 'trimişi spre aprobare.'}`, 'ok');
+  }
+}
+$('salveaza').addEventListener('click', salveazaTot);
+// ce n-ai salvat nu pleacă fără întrebare (închizi pagina / dai refresh)
+addEventListener('beforeunload', e => { if (ciorne.size) e.preventDefault(); });
 
 // ── Ştergerea (butonul din stânga, userul 2026-10-29) ───────────────────────
 // Conducerea: direct. Agentul: cerere de ştergere, de aprobat din manager (înlocuieşte
@@ -399,7 +469,7 @@ function confirma(titlu, text, da) {
 }
 
 async function stergeRand(tr) {
-  await Promise.allSettled([...salvariInZbor]);   // rândul poate fi chiar pe drum (ai ieşit din el pe 🗑 al altuia)
+  if (salvez) return;
   const k = +tr.dataset.k, c = clienti[k];
   if (!c) return;
   const nume = c.nume || 'clientul';
@@ -421,11 +491,11 @@ async function stergeRand(tr) {
   inZbor++;
   try {
     const r = await api(cale, { method: metoda });
+    ciorne.delete(cheieClient(c)); erori.delete(cheieClient(c));   // ce scriseseşi pe el nu mai contează
+    actualizeazaButon();
     if (r.client) {   // agentul: rândul rămâne, cu ştergerea cerută
       clienti[k] = r.client;
       tr.outerHTML = randHtml(r.client, k);
-      const nou = $('tabel').querySelector(`tr[data-k="${k}"]`);
-      salvat.set(String(k), JSON.stringify(citesteRand(nou)));
       textMesaj(`✓ ${nume} — ştergerea a fost cerută, aşteaptă aprobarea.`, 'ok');
     } else {
       // client şters / cerere retrasă: din nou de pe server (la retragere, clientul revine cum e în bază)
@@ -442,11 +512,6 @@ $('tabel').addEventListener('click', e => {
   const b = e.target.closest('td.sterge button');
   if (b) stergeRand(b.closest('tr'));
 });
-function arataEroare(tr, t) {
-  tr.classList.add('greseala');
-  tr.querySelector('.stare').innerHTML = `<span class="pastila eroare" title="${esc(t)}">⚠ nesalvat</span>`;
-  textMesaj(t, 'eroare');
-}
 
 // ── Judeţ + localitate din lista SIRUTA (/localitati.json, 2026-10-19) ──────
 // Ca FAN Courier şi harta livrărilor să găsească adresa: cât scrii, sugestii din
@@ -536,6 +601,7 @@ function alegeSugestia(i) {
     celula(tr, 'judet').textContent = v.judet;
   }
   ascundeSugestii();
+  noteaza(tr);
 }
 document.querySelector('.foaie').addEventListener('scroll', aseazaSugestii);   // lista e fixă pe ecran
 $('sugestii').addEventListener('mousedown', e => {
@@ -584,6 +650,7 @@ $('tabel').addEventListener('focusout', e => {
     const l = localitateDin(judetDin(tj.textContent), tl.textContent);
     if (l) tl.textContent = l;
   }
+  noteaza(tr);
 }, true);
 // la salvare: dacă judeţul / localitatea s-au schimbat, trebuie să fie din listă
 function adresaGresita(v, inainte) {
@@ -595,25 +662,24 @@ function adresaGresita(v, inainte) {
   return null;
 }
 
-// ieşirea de pe un rând (focusul trece în alt rând sau în afara tabelului) → se trimite
-$('tabel').addEventListener('focusout', e => {
-  const tr = e.target.closest('tr');
-  if (!tr || tr.contains(e.relatedTarget)) return;
-  const p = salveazaRand(tr);
-  salvariInZbor.add(p);
-  p.finally(() => salvariInZbor.delete(p));
-});
-// Enter = celula de dedesubt (ca în Excel); Esc = renunţă la ce ai scris în celulă
+// ce scrii → ciorna rândului (butonul de sus se înverzeşte)
+$('tabel').addEventListener('input', e => { if (e.target.matches('td[data-c]')) noteaza(e.target.closest('tr')); });
+// Enter şi Tab = celula următoare din acelaşi rând; pe ultima nu se mai întâmplă nimic — în alt rând
+// treci doar cu click (userul, 2026-10-29). Esc = renunţă la ce ai scris în celulă.
 let inainte = '';
 $('tabel').addEventListener('focusin', e => { if (e.target.matches('td[contenteditable]')) inainte = e.target.textContent; });
 $('tabel').addEventListener('keydown', e => {
   const td = e.target.closest('td[contenteditable]');
   if (!td) return;
-  if (e.key === 'Enter') {
+  if (e.key === 'Enter' || (e.key === 'Tab' && !e.shiftKey)) {
     e.preventDefault();
-    const jos = td.parentElement.nextElementSibling?.querySelector(`td[data-c="${CSS.escape(td.dataset.c)}"]`);
-    (jos ?? td).focus();
-  } else if (e.key === 'Escape') { td.textContent = inainte; td.blur(); }
+    let urm = td.nextElementSibling;
+    while (urm && !urm.isContentEditable) urm = urm.nextElementSibling;
+    if (!urm) return;
+    urm.focus();
+    getSelection().selectAllChildren(urm);   // cursorul la sfârşitul textului
+    getSelection().collapseToEnd();
+  } else if (e.key === 'Escape') { td.textContent = inainte; noteaza(td.closest('tr')); td.blur(); }
 });
 
 // ── Login / ieşire / căutare ────────────────────────────────────────────────
@@ -627,11 +693,28 @@ $('fLogin').addEventListener('submit', async e => {
   } catch (err) { $('mesajLogin').textContent = textEroare(err); }
 });
 $('iesire').addEventListener('click', async () => {
+  if (ciorne.size && !(await confirma('Ai modificări nesalvate', 'Dacă ieşi acum, se pierd. Apasă întâi „Salvează modificări".', 'Ieşi fără să salvez'))) return;
+  ciorne.clear(); erori.clear();
   await api('/api/logout', { method: 'POST' }).catch(() => {});
   $('banda').hidden = true;
   arata('ecranLogin');
 });
 $('cauta').addEventListener('input', randeaza);
+
+// ── Schimbă parola (userul, 2026-10-29) — POST /api/parola; parola uitată o face adminul ──
+const eroareParola = t => { $('eroareParola').textContent = t; $('eroareParola').hidden = !t; };
+$('schimbaParola').addEventListener('click', () => { $('fParola').reset(); eroareParola(''); $('dParola').showModal(); });
+$('parolaNu').addEventListener('click', () => $('dParola').close());
+$('fParola').addEventListener('submit', async e => {
+  e.preventDefault();
+  const f = Object.fromEntries(new FormData($('fParola')));
+  if (f.noua !== f.noua2) return eroareParola('Parola nouă nu e la fel în cele două căsuţe.');
+  try {
+    await api('/api/parola', { method: 'POST', body: JSON.stringify({ veche: f.veche, noua: f.noua }) });
+    $('dParola').close();
+    textMesaj('✓ Parola a fost schimbată. Pe alte telefoane / calculatoare intri din nou cu parola nouă.', 'ok');
+  } catch (err) { eroareParola(textEroare(err)); }
+});
 
 // fără sesiune → ecranul de login (îl arată api() la 401)
 incarca().catch(err => { if (!$('ecranLogin').hidden) return; arata('ecranLogin'); $('mesajLogin').textContent = textEroare(err); });

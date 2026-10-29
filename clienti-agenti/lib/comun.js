@@ -105,6 +105,9 @@ export async function agentLogat(request, env) {
     WHERE s.token_hash = ? AND s.expira_la > datetime('now') AND a.activ = 1`).bind(await sha256(token)).first();
 }
 
+// hash-ul tokenului sesiunii din cerere (ca în tabelul sesiune) — schimbarea parolei păstrează doar sesiunea asta
+export const sesiuneaCurenta = async request => sha256(tokenDin(request) || '');
+
 export async function stergeSesiunea(request, env) {
   const token = tokenDin(request);
   if (token) await env.DB.prepare('DELETE FROM sesiune WHERE token_hash = ?').bind(await sha256(token)).run();
