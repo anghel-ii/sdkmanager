@@ -156,7 +156,10 @@ function randeaza() {
   $('preia').hidden = !date.activ;
 
   const q = normal($('cauta').value.trim());
-  const cl = !q ? date.clienti : date.clienti.filter(c => normal(Object.values(c).join(' ')).includes(q));
+  // şi fără spaţii (userul, 2026-10-29): „mobila conceptum" găseşte „MOBILACONCEPTUM" şi invers
+  const qc = q.replace(/\s+/g, '');
+  const cl = !q ? date.clienti : date.clienti.filter(c => normal(Object.values(c).join(' ')).includes(q)
+    || Object.values(c).some(v => normal(v).replace(/\s+/g, '').includes(qc)));
   if (!cl.length) {
     $('lista').innerHTML = `<div class="gol">${q ? 'Niciun client găsit.' : 'Niciun client încă.'}</div>`;
     return;

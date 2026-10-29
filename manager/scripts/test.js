@@ -937,6 +937,10 @@ async function main() {
     verifica('sugestii: fără diacritice / cu altele (ş-ș, ţ-ț) / majuscule — acelaşi client',
       await cauta('serban taru') === 'Şerban Ţăruş Râmnicu SRL' && await cauta('ȘERBAN ȚĂRUȘ') === 'Şerban Ţăruş Râmnicu SRL'
       && await cauta('ramnicu') === 'Şerban Ţăruş Râmnicu SRL', await cauta('serban taru'));
+    // fără spaţii (userul, 2026-10-29: „mobila conceptum" → „MOBILACONCEPTUM")
+    verifica('sugestii: cu sau fără spaţii — acelaşi client',
+      await cauta('serbantarus') === 'Şerban Ţăruş Râmnicu SRL' && await cauta('ramni cu') === 'Şerban Ţăruş Râmnicu SRL',
+      await cauta('serbantarus'));
     db2().prepare('DELETE FROM client WHERE extern_id = 999').run();
     verifica('pagina /clienti se serveşte', (await cer('GET', '/clienti')).stare === 200);
     const ag = await cer('GET', '/api/agenti');

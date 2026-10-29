@@ -690,7 +690,9 @@ function randeazaTabel() {
       // telefonul şi fără spaţii: „0722000111" găseşte „0722 000 111"
       // şi după cine a creat-o (userul, 2026-10-26: „să pot căuta şi după utilizator")
       [c.client_nume, c.sistem, c.factura_nr, c.numar, c.oferta_nr, c.client_telefon, c.creat_de_nume,
-        String(c.client_telefon ?? '').replace(/\D/g, '')].some(v => normal(v).includes(cuv))))
+        String(c.client_telefon ?? '').replace(/\D/g, '')].some(v => normal(v).includes(cuv)))
+      // şi fără spaţii (userul, 2026-10-29): „mobila conceptum" găseşte „MOBILACONCEPTUM" şi invers
+      || normal(c.client_nume).replace(/\s+/g, '').includes(q.replace(/\s+/g, '')))
     .sort((a, b) =>
       (ordine(a) - ordine(b)) ||                                                    // căutare: pe stări, în ordinea taburilor
       (b.fixat - a.fixat) ||                                                        // fixate sus (ale tale)
