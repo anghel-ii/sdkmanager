@@ -18,7 +18,8 @@ singur schimbările la 5 minute (`manager/server/clienti.js`).
   Pe baza remote, o singură dată: `npx wrangler d1 execute clienti-agenti --remote --command="ALTER TABLE client ADD COLUMN sters_la TEXT"`.
 - **Reduceri pe grupe de produse + modalitate de plată + ştergere + fără refresh (2026-10-29).** Reducerile au câte o coloană
   pe fiecare „GrupaProdus" din NeoManager (34, lista `GAME` din public/index.html); textul vechi („LUX 15%, GOLA 5%")
-  se citeşte singur în grupele noi, ce nu mai e grupă (Usi, MANER…) rămâne în „Alte". „Modalitate de plată" = text liber
+  se citeşte singur în grupele noi; gamele vechi fără grupă nouă (Usi, MANER, Sertare, Hairpin, Jolly, Rehau, Acc SDK,
+  Lamele) nu se mai arată şi dispar din client la următoarea salvare a rândului. „Alte" = doar notiţe text. „Modalitate de plată" = text liber
   (`client.modalitate_plata`). 🗑 în stânga: conducerea şterge direct, agentul CERE ştergerea (cu aprobare, ↺ o anulează).
   Un rând = o singură cerere: ce mai trimite agentul până la aprobare o înlocuieşte (şi o ştergere / o modificare
   una pe alta); înapoi exact cum era = cererea dispare. Pagina întreabă la 15 s `GET /api/clienti?semn` şi

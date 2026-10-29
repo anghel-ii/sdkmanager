@@ -188,14 +188,16 @@ const COLOANE = [
 ];
 // grupele de produse pe care se dau reduceri — „GrupaProdus" din NeoManager (userul, 2026-10-29;
 // înainte: LUX, CONFORT, UTIL, Usi, GOLA, MANER, Sertare, Hairpin, Jolly, Dressing, Rehau, Acc SDK, Lamele).
-// Textul vechi se citeşte fără să ţină cont de majuscule: „LUX 15%" intră la Lux, „GOLA" la Gola;
-// ce nu mai e grupă (Usi, MANER, Sertare…) rămâne în „Alte", ca text — nu se pierde.
+// Textul vechi se citeşte fără să ţină cont de majuscule: „LUX 15%" intră la Lux, „GOLA" la Gola.
 const GAME = ['Accesorii bucatarie', 'Accesorii diverse', 'Balamale pentru rame', 'Balamale pentru rame speciale',
   'Capete pentru profile LED', 'Confort', 'Dressing', 'Elemente de imbinare', 'Geam/Oglinda', 'Gola', 'HAFELE', 'Leduri',
   'Lux', 'Manere mobilier', 'OPK', 'Picioare mobilier si masa', 'Prize electrice', 'Produse Accesoria',
   'Produse finite Gama Confort', 'Produse finite Gama Lux', 'Produse finite rame', 'Produse finite rame speciale',
   'Produse finite usi suspendate', 'Produse la oferta', 'Profil cabina dus', 'Profil maner', 'Rafturi modulare', 'RAME',
   'Sertare SM/TB', 'Sertare ST/SP', 'Usi aplicate/pliante', 'Usi hambar', 'Usi suspendate', 'UTIL'];
+// gamele vechi fără grupă nouă: reducerile pe ele nu se mai arată (nici în „Alte") şi dispar din client la
+// următoarea salvare a rândului (userul, 2026-10-29). În „Alte" rămâne doar text liber (notiţe).
+const GAME_SCOASE = ['Usi', 'MANER', 'Sertare', 'Hairpin', 'Jolly', 'Rehau', 'Acc SDK', 'Lamele'];
 
 // „LUX 15%, CONFORT 12,5%, ceva" → { pe: { LUX: '15', CONFORT: '12,5' }, alte: 'ceva' }
 function desfaReduceri(text) {
@@ -204,7 +206,8 @@ function desfaReduceri(text) {
   for (const parte of String(text ?? '').split(/,(?!\d)/).map(s => s.trim()).filter(Boolean)) {
     const m = parte.match(/^(.+?)\s+(\d+(?:[.,]\d+)?)\s*%$/);
     const gama = m && GAME.find(g => normal(g) === normal(m[1]));
-    if (gama && !(gama in pe)) pe[gama] = m[2]; else alte.push(parte);
+    if (gama && !(gama in pe)) pe[gama] = m[2];
+    else if (!(m && GAME_SCOASE.some(g => normal(g) === normal(m[1])))) alte.push(parte);
   }
   return { pe, alte: alte.join(', ') };
 }
