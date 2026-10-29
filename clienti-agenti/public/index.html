@@ -36,7 +36,8 @@
   .cap .spatiu { flex: 1; }
   #cauta { width: 280px; max-width: 100%; }
   .ajutor { padding: 0 16px 10px; }
-  .foaie { flex: 1; overflow: auto; border-top: 1px solid var(--line); }
+  /* scroll-padding = coloanele fixe (🗑 + nume): celula la care sari cu Enter / Tab nu rămâne sub ele */
+  .foaie { flex: 1; overflow: auto; border-top: 1px solid var(--line); scroll-padding-left: 270px; }
   /* lăţimea = suma coloanelor (pusă din JS) — tabelul curge spre dreapta, ca în Excel */
   table { border-collapse: separate; border-spacing: 0; font-size: 14px; table-layout: fixed; }
   th, td { border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 6px 8px;
