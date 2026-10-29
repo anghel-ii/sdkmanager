@@ -6,3 +6,9 @@ compatibility_date = "2026-09-01"
 binding = "DB"
 database_name = "clienti-agenti"
 database_id = "179d03c6-9b59-46c6-b065-09b5d9fb97ab"
+
+# Legăturile live ale paginii (anunturi/worker.js — Worker separat, Pages nu poate defini Durable Objects)
+[[durable_objects.bindings]]
+name = "ANUNTURI"
+class_name = "Anunturi"
+script_name = "clienti-anunturi"

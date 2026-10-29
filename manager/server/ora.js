@@ -46,4 +46,8 @@ const acumMs = () => Date.now() + diferenta;
 // formatul din SQLite (datetime('now')): UTC, „2026-10-05 12:24:57"
 const acumSql = () => new Date(acumMs()).toISOString().slice(0, 19).replace('T', ' ');
 
-module.exports = { porneste, sincronizeaza, acumMs, acumSql, _seteaza: ms => { diferenta = ms; } };
+// Cât de des întreabă serverul Cloudflare (clienţii + cererile agenţilor, raportul pt. /admin):
+// la 30 s în programul de lucru, 7–18, altfel la 10 minute (userul, 2026-10-29 — mai puţine cereri).
+const pauzaCloudflare = () => { const h = new Date(acumMs()).getHours(); return h >= 7 && h < 18 ? 30e3 : 10 * 60e3; };
+
+module.exports = { porneste, sincronizeaza, acumMs, acumSql, pauzaCloudflare, _seteaza: ms => { diferenta = ms; } };

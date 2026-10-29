@@ -1,0 +1,16 @@
+# Worker-ul care ţine legăturile live ale paginii agenţilor (Durable Object `Anunturi`).
+# Portalul (Pages) îl foloseşte prin legătura ANUNTURI din ../wrangler.toml — Pages nu poate
+# defini singur un Durable Object. Nu are adresă proprie: se ajunge la el doar prin portal.
+# Publicare (o dată, şi la fiecare schimbare a lui worker.js): npx wrangler deploy  (din folderul ăsta)
+name = "clienti-anunturi"
+main = "worker.js"
+compatibility_date = "2026-09-01"
+workers_dev = false
+
+[[durable_objects.bindings]]
+name = "ANUNTURI"
+class_name = "Anunturi"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Anunturi"]

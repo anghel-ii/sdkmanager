@@ -69,7 +69,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 //  Update la serverul din firmă de oriunde (userul, 2026-10-08). Pagina doar LASĂ
 //  o cerere (functions/api/server/admin.js); serverul o ia la următoarea raportare
-//  (≤ 20 s) şi îşi trimite starea: versiunea, jurnalul, ce e nou.
+//  (la 30 s între 7 şi 18, altfel la 10 min — manager/server/ora.js) şi îşi trimite starea: versiunea, jurnalul, ce e nou.
 // ═══════════════════════════════════════════════════════════════════════════
 const $ = id => document.getElementById(id);
 const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -99,7 +99,9 @@ async function incarca() {
   const d = await api('GET');
   if (!d) return false;
   $('fLogin').hidden = true; $('pagina').hidden = false;
-  const r = d.raport, viu = d.secunde != null && d.secunde < 90;
+  // serverul raportează la 30 s între 7 şi 18, altfel la 10 min — „nu răspunde" abia după 3 ture pierdute
+  const ziua = (h => h >= 7 && h < 18)(new Date().getHours());
+  const r = d.raport, viu = d.secunde != null && d.secunde < (ziua ? 90 : 30 * 60);
   $('legatura').innerHTML = d.secunde == null ? '<span class="eroare">n-a raportat niciodată — are versiunea nouă a managerului?</span>'
     : viu ? `<span class="ok">● conectat</span> <span class="dim">(acum ${durata(d.secunde)})</span>`
     : `<span class="eroare">● nu răspunde de ${durata(d.secunde)}</span> <span class="dim">— oprit, fără internet sau în repornire</span>`;
@@ -111,7 +113,7 @@ async function incarca() {
   cererePeDrum = !!d.cerere;
   $('verifica').disabled = $('actualizeaza').disabled = cererePeDrum || !viu || !!r?.ruleaza || !r?.disponibil;
   $('mesaj').innerHTML = d.cerere
-    ? `<span class="astept">Cerere trimisă (${d.cerere === 'verifica' ? 'verifică' : 'actualizează'}) — serverul o preia în cel mult 20 s.</span>`
+    ? `<span class="astept">Cerere trimisă (${d.cerere === 'verifica' ? 'verifică' : 'actualizează'}) — serverul o preia în cel mult ${ziua ? '30 de secunde' : '10 minute (noaptea întreabă mai rar)'}.</span>`
     : r?.eroare ? `<span class="eroare">${esc(r.eroare)}</span>` : '';
   $('cardNoutati').hidden = !r?.noutati;
   if (r?.noutati) $('noutati').innerHTML = r.noutati.length

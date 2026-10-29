@@ -210,8 +210,8 @@ async function porneste(ctx) {
 
 // ── Update şi când nu eşti la firmă (userul, 2026-10-08) ─────────────────────
 // Serverul nu primeşte nimic din internet, deci pagina /admin de pe Cloudflare
-// (clienti-agenti, functions/api/server) nu-l poate chema. El întreabă: la 20 s
-// trimite acolo starea (versiunea, jurnalul, noutăţile) cu cheia managerului şi
+// (clienti-agenti, functions/api/server) nu-l poate chema. El întreabă: la 30 s între 7 şi 18,
+// altfel la 10 min (ora.js pauzaCloudflare; era la 20 s) trimite acolo starea (versiunea, jurnalul, noutăţile) cu cheia managerului şi
 // primeşte înapoi ce s-a cerut de pe pagină — „verifica" sau „actualizeaza".
 let laDistanta = { noutati: null, eroare: null, la: null };   // rezultatul ultimei cereri de pe pagină
 async function raporteaza() {
@@ -226,13 +226,14 @@ async function raporteaza() {
     if (cerere === 'verifica') laDistanta.noutati = await noutati();
     else if (cerere === 'actualizeaza') { await pornesteUpdate(); if (faraAdmin()) scrieJurnal('(pornit de pe pagina de pe Cloudflare)'); }
   } catch (e) { laDistanta.eroare = e.message; }
-  await trimite();   // rezultatul pe pagină imediat, nu peste 20 s
+  await trimite();   // rezultatul pe pagină imediat, nu la tura următoare
 }
 function pornesteRaportarea() {
   if (!config.raportare) return;   // doar serverul firmei (vezi config.raportare)
-  const tura = () => raporteaza().catch(e => console.error('Raportarea spre Cloudflare:', e.message));
+  const { pauzaCloudflare } = require('./ora.js');
+  const tura = () => raporteaza().catch(e => console.error('Raportarea spre Cloudflare:', e.message))
+    .finally(() => setTimeout(tura, pauzaCloudflare()).unref());
   tura();
-  setInterval(tura, 20 * 1000).unref();
 }
 
 // Cheia GitHub (fine-grained, doar citire, doar repository-ul ăsta) — se verifică

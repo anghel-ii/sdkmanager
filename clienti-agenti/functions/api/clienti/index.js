@@ -1,4 +1,4 @@
-import { raspuns, clientDinCerere, agentLogat, eManager, vedereAgent, scrieDirect, numeAgenti, semn } from '../../../lib/comun.js';
+import { raspuns, clientDinCerere, agentLogat, eManager, vedereAgent, scrieDirect, numeAgenti, semn, anunta } from '../../../lib/comun.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  GET   manager (Bearer CHEIE_MANAGER): ?dupa=<versiune> → tot ce s-a adăugat
@@ -7,8 +7,8 @@ import { raspuns, clientDinCerere, agentLogat, eManager, vedereAgent, scrieDirec
 //        agent logat: clienţii LUI (agent = numele lui), cu propunerile lui în
 //        aşteptare peste ei + clienţii noi încă neaprobaţi.
 //        cont de conducere: TOŢI clienţii + agenţii pe care îi poate primi un client.
-//        ?semn → doar { semn }: pagina întreabă la câteva secunde dacă s-a schimbat ceva
-//        (vezi semn() în lib/comun.js) şi reîncarcă lista abia atunci.
+//        ?semn → doar { semn } (vezi semn() în lib/comun.js): managerul, la 30 s / 10 min;
+//        pagina, doar când i se redeschide legătura live (functions/api/live.js).
 //  POST  agent logat: client nou, pe numele lui — ca PROPUNERE, până o aprobă cineva
 //        din manager (vezi api/propuneri). Conducerea: direct, cu agentul ales.
 // ═══════════════════════════════════════════════════════════════════════════
@@ -16,6 +16,8 @@ import { raspuns, clientDinCerere, agentLogat, eManager, vedereAgent, scrieDirec
 export async function onRequestGet({ request, env }) {
   if (request.headers.has('Authorization')) {
     if (!eManager(request, env)) return raspuns(401, { eroare: 'Cheie greşită.' });
+    // ?semn → managerul întreabă dacă s-a schimbat ceva (clienţi sau cereri), ieftin, la 30 s / 10 min
+    if (new URL(request.url).searchParams.has('semn')) return raspuns(200, { semn: await semn(env, null) });
     const dupa = Math.max(0, parseInt(new URL(request.url).searchParams.get('dupa'), 10) || 0);
     const { results } = await env.DB.prepare('SELECT * FROM client WHERE versiune > ? ORDER BY versiune LIMIT 500').bind(dupa).all();
     return raspuns(200, { clienti: results });
@@ -51,5 +53,6 @@ export async function onRequestPost({ request, env }) {
   if (eroare) return raspuns(400, { eroare });
   const p = await env.DB.prepare(`INSERT INTO propunere (client_id, agent, date_json, creat_la)
     VALUES (NULL, ?, ?, datetime('now')) RETURNING *`).bind(agent.nume, JSON.stringify(v)).first();
+  await anunta(env, { agenti: [agent.nume] });   // celelalte pagini ale lui (alt telefon)
   return raspuns(201, { client: vedereAgent(p) });
 }

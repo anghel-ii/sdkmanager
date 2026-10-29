@@ -53,13 +53,27 @@ async function preia() {
   return noi;
 }
 
-// porneşte oricum: cheia poate fi lipită mai târziu în /admin (preia() nu face nimic fără ea)
+// O singură întrebare spre Cloudflare (userul, 2026-10-29): „s-a schimbat ceva?" (semnul: clienţii +
+// cererile agenţilor — clienti-agenti/lib/comun.js semn()). Abia când e altul se preiau clienţii şi
+// cererile (insigna de pe „Clienţi", secţiunea „De aprobat"). Aprobarea / respingerea de aici
+// merg pe loc, fiecare cu cererea ei (decide).
+let semnCF = null;
+async function verificaCloudflare() {
+  if (!activ()) return;
+  const r = await laCF('GET', '/api/clienti?semn');
+  if (r.eroare || r.stare !== 200) return;   // data viitoare
+  const semn = r.date.semn ?? null;   // null = portal vechi, fără semn: preia de fiecare dată
+  if (semn !== null && semn === semnCF) return;
+  await preia();
+  await reimprospateazaPropuneri();
+  if (!ultimaPreluare?.eroare) semnCF = semn;
+}
+// porneşte oricum: cheia poate fi lipită mai târziu în /admin; la 30 s între 7 şi 18, altfel la 10 min (ora.js)
 function porneste() {
-  preia();
-  setInterval(preia, 5 * 60 * 1000).unref();
-  // propunerile agenţilor — pentru insigna de pe butonul „Clienţi" (din minut în minut)
-  reimprospateazaPropuneri();
-  setInterval(reimprospateazaPropuneri, 60 * 1000).unref();
+  const { pauzaCloudflare } = require('./ora.js');
+  const tura = () => verificaCloudflare().catch(e => console.error('Verificarea clienţilor pe Cloudflare:', e.message))
+    .finally(() => setTimeout(tura, pauzaCloudflare()).unref());
+  tura();
 }
 
 const lista = ({ res }) => json(res, 200, {
@@ -126,8 +140,8 @@ const APROBA = ['admin', 'conducere'];
 // Pagina Clienţi (lista, preluarea, propunerile) — nu şi biroul (userul, 2026-10-02).
 // Sugestiile din configurator (/api/clienti/cauta) rămân pt. toţi: biroul face oferte.
 const CLIENTI = ['admin', 'conducere'];
-// Ultima listă citită de pe Cloudflare: o reîmprospătează serverul din minut în minut
-// (nu fiecare pagină deschisă) şi anunţă paginile când se schimbă numărul — insigna de
+// Ultima listă citită de pe Cloudflare: o reîmprospătează serverul când s-a schimbat ceva acolo
+// (verificaCloudflare; nu fiecare pagină deschisă) şi anunţă paginile când se schimbă lista — insigna de
 // pe „Clienţi" (în /api/sumar) şi secţiunea „De aprobat" se actualizează singure.
 let deAprobat = { propuneri: [], la: 0 };
 async function reimprospateazaPropuneri() {
@@ -140,10 +154,10 @@ async function reimprospateazaPropuneri() {
   if (cheieLista(deAprobat.propuneri) !== inainte) anunta();   // s-a schimbat ceva → paginile se reîmprospătează
 }
 const nrDeAprobat = () => (activ() ? deAprobat.propuneri.length : 0);
-// pagina „Clienţi": lista de acum (citită din nou dacă e mai veche de 15 s)
+// pagina „Clienţi": lista de acum — o ţine la zi verificaCloudflare (fără cereri în plus la fiecare pagină)
 async function propuneri({ res }) {
   if (!activ()) return json(res, 200, { activ: false, propuneri: [] });
-  if (Date.now() - deAprobat.la > 15 * 1000) await reimprospateazaPropuneri();
+  if (!deAprobat.la) await reimprospateazaPropuneri();   // prima dată (cheie lipită acum, server pornit acum)
   json(res, 200, { activ: true, propuneri: deAprobat.propuneri });
 }
 async function decide({ res, params }) {
@@ -190,7 +204,7 @@ async function puneCheie({ req, res }) {
 }
 
 module.exports = {
-  preia, porneste, nrDeAprobat, laCF, activ, cheie,
+  preia, porneste, verificaCloudflare, nrDeAprobat, laCF, activ, cheie,
   rute: [
     ['GET',  '/api/clienti',       { handler: lista, rol: CLIENTI }],
     ['GET',  '/api/clienti/cauta', { handler: cauta }],

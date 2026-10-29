@@ -1,4 +1,4 @@
-import { raspuns, clientDinCerere, agentLogat, eManager, vedereAgent, clientul, scrieDirect, stergeClient, CAMPURI } from '../../../lib/comun.js';
+import { raspuns, clientDinCerere, agentLogat, eManager, vedereAgent, clientul, scrieDirect, stergeClient, anunta, CAMPURI } from '../../../lib/comun.js';
 
 // PUT — agentul modifică un client de-al LUI (altfel 404, ca să nu afle că există).
 // Modificarea aşteaptă aprobarea din manager: se ţine ca propunere — UNA pe client
@@ -22,11 +22,13 @@ export async function onRequestPut({ request, env, params }) {
   if (!c) return raspuns(404, { eroare: 'Clientul nu există sau nu e al tău.' });
   if (Object.keys(CAMPURI).every(k => (v[k] ?? null) === (c[k] ?? null))) {   // înapoi la ce e acum: nimic de aprobat
     await env.DB.prepare('DELETE FROM propunere WHERE client_id = ?').bind(c.id).run();
+    await anunta(env, { agenti: [agent.nume] });
     return raspuns(200, { client: c });
   }
   const p = await env.DB.prepare(`INSERT INTO propunere (client_id, agent, date_json, creat_la, stergere) VALUES (?, ?, ?, datetime('now'), 0)
     ON CONFLICT(client_id) DO UPDATE SET date_json = excluded.date_json, creat_la = excluded.creat_la, stergere = 0 RETURNING *`)
     .bind(c.id, agent.nume, JSON.stringify(v)).first();
+  await anunta(env, { agenti: [agent.nume] });
   return raspuns(200, { client: vedereAgent(p, c) });
 }
 
@@ -50,5 +52,6 @@ export async function onRequestDelete({ request, env, params }) {
   const p = await env.DB.prepare(`INSERT INTO propunere (client_id, agent, date_json, creat_la, stergere) VALUES (?, ?, '{}', datetime('now'), 1)
     ON CONFLICT(client_id) DO UPDATE SET date_json = '{}', creat_la = excluded.creat_la, stergere = 1 RETURNING *`)
     .bind(c.id, agent.nume).first();
+  await anunta(env, { agenti: [agent.nume] });
   return raspuns(200, { client: vedereAgent(p, c) });
 }

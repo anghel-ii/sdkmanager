@@ -1,4 +1,4 @@
-import { raspuns, eManager, CAMPURI, VERSIUNE_NOUA, clientul, stergeClient } from '../../../../lib/comun.js';
+import { raspuns, eManager, CAMPURI, VERSIUNE_NOUA, clientul, stergeClient, anunta } from '../../../../lib/comun.js';
 
 // POST /api/propuneri/:id/aproba   — DOAR managerul: propunerea intră în `client`
 //      (client nou sau modificat, cu versiune nouă → managerul o preia), apoi dispare.
@@ -10,9 +10,11 @@ export async function onRequestPost({ request, env, params }) {
   const p = await env.DB.prepare('SELECT * FROM propunere WHERE id = ?').bind(+params.id || 0).first();
   if (!p) return raspuns(404, { eroare: 'Propunerea nu mai există — a aprobat-o sau a respins-o deja cineva.' });
   const sterge = env.DB.prepare('DELETE FROM propunere WHERE id = ?').bind(p.id);
-  if (params.actiune === 'respinge') { await sterge.run(); return raspuns(200, { ok: true }); }
+  // aprobarea / respingerea ajunge imediat pe pagina agentului (şi a conducerii, dacă s-a schimbat un client)
+  if (params.actiune === 'respinge') { await sterge.run(); await anunta(env, { agenti: [p.agent] }); return raspuns(200, { ok: true }); }
   if (p.stergere) {
-    if (await clientul(env, p.client_id)) await stergeClient(env, p.client_id); else await sterge.run();
+    if (await clientul(env, p.client_id)) await stergeClient(env, p.client_id);
+    else { await sterge.run(); await anunta(env, { agenti: [p.agent] }); }
     return raspuns(200, { ok: true });
   }
 
@@ -24,5 +26,6 @@ export async function onRequestPost({ request, env, params }) {
         VALUES (?${', ?'.repeat(col.length)}, ?, datetime('now'), ${VERSIUNE_NOUA})`)
         .bind(p.agent, ...col.map(k => v[k] ?? null), p.creat_la);
   await env.DB.batch([scrie, sterge]);   // amândouă sau niciuna
+  await anunta(env, { agenti: [p.agent], conducere: true });
   return raspuns(200, { ok: true });
 }

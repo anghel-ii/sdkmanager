@@ -213,7 +213,10 @@ async function api(cale, optiuni = {}) {
   if (!r.ok) throw new Error(j.eroare || 'Eroare — încearcă din nou.');
   return j;
 }
-function arata(ecran) { for (const e of ['ecranLogin', 'ecranTabel']) $(e).hidden = e !== ecran; }
+function arata(ecran) {
+  for (const e of ['ecranLogin', 'ecranTabel']) $(e).hidden = e !== ecran;
+  if (ecran === 'ecranLogin') inchideLive();   // delogat: nimic live
+}
 
 // cei în aşteptarea aprobării primii, apoi alfabetic
 const ordine = (a, b) => (!!b.inAsteptare - !!a.inAsteptare) || a.nume.localeCompare(b.nume, 'ro', { sensitivity: 'base' });
@@ -243,12 +246,13 @@ function arataLista(j) {
   $('banda').textContent = `Eşti în contul lui ${j.agent}, intrat din manager (admin). Ce modifici aici se vede la agent.`;
   randeaza();
   arata('ecranTabel');
+  conecteazaLive();
 }
 
 // ── Modificările altora, fără refresh (userul, 2026-10-29) ──────────────────
-// La 30 s între 7 şi 18, altfel la 10 minute (doar cu pagina la vedere), pagina întreabă serverul dacă s-a schimbat ceva (aprobări,
-// respingeri, conducerea, alt telefon) — un singur număr, ieftin — şi reîncarcă lista doar atunci.
-// Ce n-ai salvat rămâne (ciorne). Cât eşti într-o celulă (sau se salvează), lista nouă aşteaptă:
+// Pagina NU întreabă singură: ţine o legătură live (WebSocket, /api/live → anunturi/worker.js) şi
+// primeşte „schimbat" doar când portalul atinge clienţii / cererile ei (aprobare, respingere,
+// conducerea, alt telefon) — abia atunci reîncarcă lista. Ce n-ai salvat rămâne (ciorne). Cât eşti într-o celulă (sau se salvează), lista nouă aşteaptă:
 // întâi se schimbă doar celelalte rânduri, restul (clienţi apăruţi / dispăruţi) când ieşi din tabel.
 const cheieClient = c => (c.id ? `c${c.id}` : `p${c.propunere_id}`);
 let deAplicat = null;   // lista nouă, adusă cât erai ocupat
@@ -273,26 +277,59 @@ function aplicaDacaSePoate() {
   }
 }
 
-async function verificaSchimbari() {
-  if (document.hidden || $('ecranTabel').hidden) return;
+let deReverificat = false;   // a venit un anunţ cât pagina era ascunsă / salvai — se ia lista după
+
+// cuSemn: întâi întreabă dacă s-a schimbat ceva (la redeschiderea legăturii — poate nimic); la un
+// anunţ „schimbat" ştim deja că da, deci direct lista
+async function verificaSchimbari(cuSemn = false) {
+  if ($('ecranTabel').hidden) return;
+  if (document.hidden) { deReverificat = true; return; }   // nicio cerere cu pagina ascunsă: la revenire
   try {
     if (!deAplicat) {
-      const { semn } = await api('/api/clienti?semn');
-      if (semn === semnLista) return;
+      if (cuSemn && (await api('/api/clienti?semn')).semn === semnLista) return;
       const g = scrieri;
       const j = await api('/api/clienti');
       if (!!j.conducere !== conducere) return location.reload();   // contul şi-a schimbat tipul
-      if (g !== scrieri || inZbor) return;   // ai salvat ceva între timp: lista asta nu-l are — data viitoare
+      if (g !== scrieri || inZbor) { deReverificat = true; return; }   // ai salvat între timp: lista asta nu-l are — după salvare
       deAplicat = j;
     }
     aplicaDacaSePoate();
-  } catch { /* fără internet / delogat — încearcă din nou data viitoare (api() arată login-ul la 401) */ }
+  } catch { /* fără internet / delogat (api() arată login-ul la 401) — legătura se reface şi verifică atunci */ }
 }
-// cât de des (userul, 2026-10-29 — cererile spre Cloudflare săriseră cu verificarea la 15 s): 30 s în programul
-// de lucru, 7–18 după ceasul agentului, altfel la 10 minute. Când revii la pagină, verifică imediat.
-const pauzaVerificare = () => { const h = new Date().getHours(); return h >= 7 && h < 18 ? 30e3 : 10 * 60e3; };
-(function programeaza() { setTimeout(async () => { await verificaSchimbari(); programeaza(); }, pauzaVerificare()); })();
-document.addEventListener('visibilitychange', verificaSchimbari);
+// după o salvare / ştergere sau la revenirea pe pagină: anunţul pierdut între timp
+function reverificaDacaE() { if (deReverificat && !document.hidden && !inZbor && !salvez) { deReverificat = false; verificaSchimbari(); } }
+
+// Legătura live. Se reface singură (2 s, 4 s… cel mult 10 min între încercări); la refacere întreabă o
+// dată semnul — anunţurile cât a fost închisă (telefon adormit, fără internet) s-au pierdut.
+// Ping la 45 s, ca legătura să nu fie închisă pe drum; „pong" vine automat, fără cost.
+let live = null, pauzaLive = 2000, primaLegatura = true;
+function conecteazaLive() {
+  if (live || $('ecranTabel').hidden) return;
+  const ws = live = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/api/live`);
+  let ping = null;
+  ws.onopen = () => {
+    pauzaLive = 2000;
+    ping = setInterval(() => { if (ws.readyState === 1) ws.send('ping'); }, 45e3);
+    if (!primaLegatura) verificaSchimbari(true);
+    primaLegatura = false;
+  };
+  // cât salvezi, anunţul vine chiar de la salvarea ta — lista se ia o singură dată, după
+  ws.onmessage = e => { if (e.data !== 'schimbat') return; if (inZbor || salvez) deReverificat = true; else verificaSchimbari(); };
+  ws.onclose = () => {
+    clearInterval(ping);
+    if (live !== ws) return;
+    live = null;
+    if ($('ecranTabel').hidden) return;   // ieşire / login: nu se mai reface
+    setTimeout(conecteazaLive, pauzaLive);
+    pauzaLive = Math.min(pauzaLive * 2, 10 * 60e3);
+  };
+}
+function inchideLive() { const ws = live; live = null; primaLegatura = true; ws?.close(); }
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) return;
+  if (!live) { pauzaLive = 2000; conecteazaLive(); }   // telefonul s-a trezit: legătura, imediat
+  reverificaDacaE();
+});
 // ai ieşit din tabel → ce a rămas de aplicat se aplică acum
 $('tabel').addEventListener('focusout', () => setTimeout(aplicaDacaSePoate, 0));
 
@@ -420,6 +457,7 @@ async function salveazaTot() {
   }
   salvez = false;
   randeaza();
+  reverificaDacaE();
   if (rau.length) {
     textMesaj(`${ok.length ? `✓ ${ok.length} ${ok.length === 1 ? 'rând salvat' : 'rânduri salvate'}. ` : ''}⚠ ${rau.length === 1
       ? `Un rând nesalvat: ${rau[0]}` : `${rau.length} rânduri nesalvate (cele roşii — ţine mouse-ul pe „⚠ nesalvat"): ${rau[0]}`}`, 'eroare');
@@ -489,6 +527,7 @@ async function stergeRand(tr) {
     textMesaj(textEroare(err), 'eroare');
   } finally {
     inZbor--; scrieri++; deAplicat = null;
+    reverificaDacaE();
   }
 }
 $('tabel').addEventListener('click', e => {

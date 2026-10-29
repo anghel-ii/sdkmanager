@@ -169,6 +169,7 @@ export async function scrieDirect(request, env, id) {
     const c = await env.DB.prepare(`INSERT INTO client (agent, ${col.join(', ')}, creat_la, modificat_la, versiune)
       VALUES (?${', ?'.repeat(col.length)}, datetime('now'), datetime('now'), ${VERSIUNE_NOUA}) RETURNING *`)
       .bind(agent, ...col.map(k => v[k])).first();
+    await anunta(env, { agenti: [agent], conducere: true });
     return { client: c };
   }
   const vechi = await clientul(env, id);
@@ -178,6 +179,7 @@ export async function scrieDirect(request, env, id) {
         versiune = ${VERSIUNE_NOUA} WHERE id = ?`).bind(agent, ...col.map(k => v[k]), vechi.id),
     ...(agent === vechi.agent ? [] : [env.DB.prepare('DELETE FROM propunere WHERE client_id = ?').bind(vechi.id)]),
   ]);
+  await anunta(env, { agenti: [vechi.agent, agent], conducere: true });
   return { client: await clientul(env, id) };
 }
 
@@ -188,19 +190,37 @@ export const vedereAgent = (p, client = null) => ({
   propunere_id: p.id, inAsteptare: p.stergere ? 'stergere' : p.client_id ? 'modificare' : 'nou', trimis_la: p.creat_la,
 });
 
-// „S-a schimbat ceva de când ai încărcat pagina?" — pagina întreabă la câteva secunde (userul, 2026-10-29:
-// modificările să se vadă fără refresh) şi reîncarcă lista doar când semnul e altul. Ieftin: MAX(versiune)
-// merge pe index; propunerile sunt puţine. Agentul: clienţii (aprobări, conducerea) + cererile lui
-// (respinse, trimise de pe alt telefon). Conducerea vede doar clienţii.
+// „S-a schimbat ceva?" — un singur rând, ieftin: MAX(versiune) merge pe index, propunerile sunt puţine.
+// Agentul: clienţii (aprobări, conducerea) + cererile lui (respinse, trimise de pe alt telefon); conducerea:
+// doar clienţii; managerul (agent = null): clienţii + TOATE cererile — îl întreabă la 30 s / 10 min
+// (manager/server/clienti.js) şi abia când e altul preia clienţii şi cererile.
+// Pagina îl întreabă doar la reconectarea legăturii live (ce s-a pierdut cât era închisă).
 export async function semn(env, agent) {
+  const toate = agent === null;
   const r = await env.DB.prepare(`SELECT (SELECT COALESCE(MAX(versiune), 0) FROM client) AS v,
-      (SELECT COUNT(*) || ':' || COALESCE(MAX(id), 0) || ':' || COALESCE(MAX(creat_la), '') FROM propunere WHERE agent = ?) AS p`)
-    .bind(agent.rol === 'conducere' ? '' : agent.nume).first();
+      (SELECT COUNT(*) || ':' || COALESCE(MAX(id), 0) || ':' || COALESCE(MAX(creat_la), '') FROM propunere
+        WHERE ? OR agent = ?) AS p`)
+    .bind(toate ? 1 : 0, toate || agent.rol === 'conducere' ? '' : agent.nume).first();
   return `${r.v}|${r.p}`;
 }
 
+// Anunţă paginile deschise că s-a schimbat ceva la ele (anunturi/worker.js): agenţii atinşi şi,
+// dacă s-au schimbat clienţi (nu doar cereri), conducerea. Nu strică niciodată cererea care a
+// făcut schimbarea — fără legătura live, paginile văd la refresh, ca înainte.
+export async function anunta(env, { agenti = [], conducere = false }) {
+  if (!env.ANUNTURI) return;
+  try {
+    await env.ANUNTURI.get(env.ANUNTURI.idFromName('portal')).fetch('https://anunturi/anunta', {
+      method: 'POST', body: JSON.stringify({ agenti: [...new Set(agenti.filter(Boolean))], conducere }),
+    });
+  } catch (e) { console.error('Anunţul live a eşuat:', e.message); }
+}
+
 // Ştergerea unui client (rândul rămâne, cu versiune nouă — vezi api/clienti/[id].js) + cererea de pe el
-export const stergeClient = (env, id) => env.DB.batch([
-  env.DB.prepare(`UPDATE client SET sters_la = datetime('now'), versiune = ${VERSIUNE_NOUA} WHERE id = ?`).bind(id),
-  env.DB.prepare('DELETE FROM propunere WHERE client_id = ?').bind(id),
-]);
+export async function stergeClient(env, id) {
+  const [c] = (await env.DB.batch([
+    env.DB.prepare(`UPDATE client SET sters_la = datetime('now'), versiune = ${VERSIUNE_NOUA} WHERE id = ? RETURNING agent`).bind(id),
+    env.DB.prepare('DELETE FROM propunere WHERE client_id = ?').bind(id),
+  ]))[0].results;
+  await anunta(env, { agenti: [c?.agent], conducere: true });
+}

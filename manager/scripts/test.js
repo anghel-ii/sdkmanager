@@ -872,7 +872,7 @@ async function main() {
     verifica('fără configurare → preluarea e oprită (409)', (await cer('POST', '/api/clienti/preia')).stare === 409);
     // un „Cloudflare" fals, cu aceeaşi interfaţă ca clienti-agenti/functions/api/clienti/index.js:
     // GET ?dupa=<versiune> → ce s-a schimbat după ea, în ordinea versiunii, câte `pagina`
-    let versiune = 0, pagina = 2, primitAgent = null;
+    let versiune = 0, pagina = 2, primitAgent = null, cereriDupa = 0;
     const externi = new Map();
     const rapoarte = [], deCerut = [];
     const propuse = new Map([[7, { id: 7, tip: 'nou', agent: 'Ion', trimis_la: '2026-10-01 10:00:00', propus: { nume: 'Propus SRL' }, actual: null }],
@@ -916,6 +916,9 @@ async function main() {
           r.end(JSON.stringify({ ok: true }));
         });
       }
+      // ?semn → „s-a schimbat ceva?" (clienţii + cererile), ca semn() din clienti-agenti/lib/comun.js
+      if (new URL(q.url, 'http://x').searchParams.has('semn')) return r.end(JSON.stringify({ semn: `${versiune}|${[...propuse.keys()]}` }));
+      cereriDupa++;
       const dupa = +new URL(q.url, 'http://x').searchParams.get('dupa');
       r.end(JSON.stringify({ clienti: [...externi.values()].filter(c => c.versiune > dupa)
         .sort((a, b) => a.versiune - b.versiune).slice(0, pagina) }));
@@ -940,6 +943,18 @@ async function main() {
     verifica('a doua oară: nimic nou', (await cer('POST', '/api/clienti/preia')).date.noi === 0);
     verifica('modalitatea de plată vine şi ea în copie (v38)',
       db2().prepare('SELECT modalitate_plata FROM client WHERE extern_id = 1').get().modalitate_plata === 'OP 30 zile');
+    // o singură întrebare spre Cloudflare la 30 s / 10 min (userul, 2026-10-29): preia doar când semnul e altul
+    const { verificaCloudflare } = require('../server/clienti.js');
+    await verificaCloudflare();
+    const d0 = cereriDupa;
+    await verificaCloudflare();
+    verifica('semnul neschimbat → nicio preluare (doar întrebarea)', cereriDupa === d0, `${d0} → ${cereriDupa}`);
+    schimba({ id: 3, telefon_delegat: '0733 111' });
+    await verificaCloudflare();
+    verifica('… un client schimbat acolo → preluat', cereriDupa > d0
+      && db2().prepare('SELECT telefon_delegat FROM client WHERE extern_id = 3').get().telefon_delegat === '0733 111');
+    const { pauzaCloudflare } = require('../server/ora.js');
+    verifica('programul: 30 s sau 10 min, după oră', [30e3, 600e3].includes(pauzaCloudflare()));
     schimba({ id: 2, localitate: 'Paşcani', modificat_la: '2026-09-29 12:00:00' });
     schimba({ id: 4, agent: 'Maria', nume: 'Nou', email: 'n@x.ro', creat_la: '2026-09-29 12:05:00', modificat_la: '2026-09-29 12:05:00' });
     verifica('agentul a modificat unul şi a adăugat unul → 2', (await cer('POST', '/api/clienti/preia')).date.noi === 2);
