@@ -172,7 +172,8 @@ function randeaza() {
   const cl = !q ? date.clienti : date.clienti.filter(c => {
     const [cu, fara] = textCautare(c);
     return cu.includes(q) || fara.includes(qc);
-  });
+  // la căutare, cei cu CUI sau „Persoana Fizica" trecut înaintea celor cu câmpul gol (userul, 2026-10-29)
+  }).sort((a, b) => !String(a.cui ?? '').trim() - !String(b.cui ?? '').trim());
   if (!cl.length) {
     $('lista').innerHTML = `<div class="gol">${q ? 'Niciun client găsit.' : 'Niciun client încă.'}</div>`;
     return;

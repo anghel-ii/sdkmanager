@@ -941,6 +941,13 @@ async function main() {
     verifica('sugestii: cu sau fără spaţii — acelaşi client',
       await cauta('serbantarus') === 'Şerban Ţăruş Râmnicu SRL' && await cauta('ramni cu') === 'Şerban Ţăruş Râmnicu SRL',
       await cauta('serbantarus'));
+    // cu CUI / „Persoana Fizica" trecut — înaintea celor fără (userul, 2026-10-29)
+    db2().prepare(`INSERT INTO client (nume, cui, extern_id, versiune) VALUES
+      ('Şerban Uşi', ' ', 998, 1), ('Şerban PF', 'Persoana Fizica', 997, 1), ('Mobila Şerban', '12345678', 996, 1)`).run();
+    verifica('sugestii: cei cu CUI / „Persoana Fizica" trecut primii (chiar dacă nu încep cu textul), cei fără la urmă',
+      /^(Mobila Şerban,Şerban PF|Şerban PF,Mobila Şerban),/.test(await cauta('serban'))
+      && (await cauta('serban')).split(',').length === 4, await cauta('serban'));
+    db2().prepare('DELETE FROM client WHERE extern_id IN (996, 997, 998)').run();
     db2().prepare('DELETE FROM client WHERE extern_id = 999').run();
     verifica('pagina /clienti se serveşte', (await cer('GET', '/clienti')).stare === 200);
     const ag = await cer('GET', '/api/agenti');

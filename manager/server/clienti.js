@@ -70,6 +70,7 @@ const lista = ({ res }) => json(res, 200, {
 // celor care nu sunt în bază). Numele care ÎNCEP cu textul vin primele. Fără
 // diacritice şi majuscule (fara_diacritice din db.js — userul, 2026-10-26), şi
 // fără spaţii: „mobila conceptum" găseşte „MOBILACONCEPTUM" şi invers (2026-10-29).
+// Clienţii cu CUI sau „Persoana Fizica" trecut vin înaintea celor cu câmpul gol (userul, 2026-10-29).
 function cauta({ req, res }) {
   const q = (new URL(req.url, 'http://x').searchParams.get('q') ?? '').trim();
   if (q.length < 2) return json(res, 200, { clienti: [] });
@@ -79,7 +80,7 @@ function cauta({ req, res }) {
     SELECT nume, cui, agent, judet, localitate, adresa_sediu, adresa_livrare, telefon_administrator, telefon_delegat
       FROM client WHERE sters_la IS NULL
        AND (fara_diacritice(nume) LIKE ? ESCAPE '\\' OR replace(fara_diacritice(nume), ' ', '') LIKE ? ESCAPE '\\')
-     ORDER BY fara_diacritice(nume) NOT LIKE ? ESCAPE '\\', nume LIMIT 20`).all(`%${text}%`, `%${lipit}%`, `${text}%`) });
+     ORDER BY trim(IFNULL(cui, '')) = '', fara_diacritice(nume) NOT LIKE ? ESCAPE '\\', nume LIMIT 20`).all(`%${text}%`, `%${lipit}%`, `${text}%`) });
 }
 
 async function preiaAcum({ res }) {
