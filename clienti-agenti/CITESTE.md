@@ -10,12 +10,12 @@ singur schimbările la 5 minute (`manager/server/clienti.js`).
   cu coloana Agent în plus, şi scriu direct, fără aprobare (şi clienţi noi). Agentul schimbat = clientul trece la noul
   agent (îl vede şi îl modifică din contul lui); modificarea în aşteptare a celui vechi pe el se pierde. Agentul trebuie
   să fie un cont de agent sau o valoare deja în coloana AGENT (BIROU, SITE…) — altfel 400.
-  Pe baza remote, o singură dată, ÎNAINTE de publicare (login-ul citeşte coloana):
+  ✅ FĂCUT pe baza remote (2026-10-27) — nu se mai rulează (dă „duplicate column name"):
   `npx wrangler d1 execute clienti-agenti --remote --command="ALTER TABLE agent ADD COLUMN rol TEXT NOT NULL DEFAULT 'agent'"`.
 - Conducerea / adminul, din pagina Clienţi a managerului: modifică direct (fără aprobare, şi agentul) şi
   şterge clienţi (`PUT` / `DELETE /api/clienti/:id` cu cheia managerului). Şters = `sters_la` + versiune
   nouă: rândul rămâne, ca ştergerea să ajungă în copiile managerului; agentul nu-l mai vede.
-  Pe baza remote, o singură dată: `npx wrangler d1 execute clienti-agenti --remote --command="ALTER TABLE client ADD COLUMN sters_la TEXT"`.
+  ✅ FĂCUT pe baza remote (2026-10-27): `npx wrangler d1 execute clienti-agenti --remote --command="ALTER TABLE client ADD COLUMN sters_la TEXT"`.
 - **Reduceri pe grupe de produse + modalitate de plată + ştergere + fără refresh (2026-10-29).** Reducerile au câte o coloană
   pe fiecare „GrupaProdus" din NeoManager (34, lista `GAME` din public/index.html); textul vechi („LUX 15%, GOLA 5%")
   se citeşte singur în grupele noi; gamele vechi fără grupă nouă (Usi, MANER, Sertare, Hairpin, Jolly, Rehau, Acc SDK,
@@ -26,7 +26,7 @@ singur schimbările la 5 minute (`manager/server/clienti.js`).
   Un rând = o singură cerere: ce mai trimite agentul până la aprobare o înlocuieşte (şi o ştergere / o modificare
   una pe alta); înapoi exact cum era = cererea dispare. Pagina întreabă la 15 s `GET /api/clienti?semn` şi
   reîncarcă lista doar când s-a schimbat ceva (rândul în care scrii nu se atinge).
-  Pe baza remote, o singură dată, ÎNAINTE de publicare:
+  Pe baza remote, o singură dată, ÎNAINTE de publicare (rulat din folderul ăsta):
   `npx wrangler d1 execute clienti-agenti --remote --command="ALTER TABLE client ADD COLUMN modalitate_plata TEXT; ALTER TABLE propunere ADD COLUMN stergere INTEGER NOT NULL DEFAULT 0"`.
 - Conturile agenţilor se fac din manager: `/admin` → „Conturi agenţi de vânzări" (cont nou, parolă nouă,
   dezactivare, „Intră ca agent" = link de o folosinţă, 60 s → sesiune de 8 ore în contul agentului, cu bandă
