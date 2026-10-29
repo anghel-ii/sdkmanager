@@ -19,7 +19,9 @@ singur schimbările la 5 minute (`manager/server/clienti.js`).
 - **Reduceri pe grupe de produse + modalitate de plată + ştergere + fără refresh (2026-10-29).** Reducerile au câte o coloană
   pe fiecare „GrupaProdus" din NeoManager (34, lista `GAME` din public/index.html); textul vechi („LUX 15%, GOLA 5%")
   se citeşte singur în grupele noi; gamele vechi fără grupă nouă (Usi, MANER, Sertare, Hairpin, Jolly, Rehau, Acc SDK,
-  Lamele) nu se mai arată şi dispar din client la următoarea salvare a rândului. „Alte" = doar notiţe text. „Modalitate de plată" = text liber
+  Lamele) nu mai sunt relevante — nu se mai arată. „Alte" = doar notiţe text. Lista şi citirea: `public/reduceri.js`.
+  După publicare, o singură dată: `node curata-reduceri.mjs` (arată ce schimbă) şi `node curata-reduceri.mjs --aplica`
+  — rescrie reducerile tuturor clienţilor (şi ale cererilor în aşteptare) pe grupele noi, cu backup în ../date-clienti/. „Modalitate de plată" = text liber
   (`client.modalitate_plata`). 🗑 în stânga: conducerea şterge direct, agentul CERE ştergerea (cu aprobare, ↺ o anulează).
   Un rând = o singură cerere: ce mai trimite agentul până la aprobare o înlocuieşte (şi o ştergere / o modificare
   una pe alta); înapoi exact cum era = cererea dispare. Pagina întreabă la 15 s `GET /api/clienti?semn` şi
