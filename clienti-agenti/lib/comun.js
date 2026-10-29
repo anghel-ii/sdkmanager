@@ -10,7 +10,7 @@ export const text = (v, max) => (typeof v === 'string' && v.trim()) ? v.trim().s
 export const CAMPURI = {
   nume: 120, cui: 20, judet: 40, localitate: 80, adresa_sediu: 300, adresa_livrare: 300,
   administrator: 120, telefon_administrator: 40, email: 120, delegat: 120, telefon_delegat: 40,
-  discounturi: 500,
+  discounturi: 1500, modalitate_plata: 120,
 };
 
 // Corpul cererii → câmpurile clientului validate, sau { eroare }. Telefonul /
@@ -182,5 +182,22 @@ export async function scrieDirect(request, env, id) {
 // clientul cu valorile propuse peste cele de acum + cum se recunoaşte.
 export const vedereAgent = (p, client = null) => ({
   ...(client ?? { id: null, agent: p.agent, creat_la: null }), ...JSON.parse(p.date_json),
-  propunere_id: p.id, inAsteptare: p.client_id ? 'modificare' : 'nou', trimis_la: p.creat_la,
+  propunere_id: p.id, inAsteptare: p.stergere ? 'stergere' : p.client_id ? 'modificare' : 'nou', trimis_la: p.creat_la,
 });
+
+// „S-a schimbat ceva de când ai încărcat pagina?" — pagina întreabă la câteva secunde (userul, 2026-10-29:
+// modificările să se vadă fără refresh) şi reîncarcă lista doar când semnul e altul. Ieftin: MAX(versiune)
+// merge pe index; propunerile sunt puţine. Agentul: clienţii (aprobări, conducerea) + cererile lui
+// (respinse, trimise de pe alt telefon). Conducerea vede doar clienţii.
+export async function semn(env, agent) {
+  const r = await env.DB.prepare(`SELECT (SELECT COALESCE(MAX(versiune), 0) FROM client) AS v,
+      (SELECT COUNT(*) || ':' || COALESCE(MAX(id), 0) || ':' || COALESCE(MAX(creat_la), '') FROM propunere WHERE agent = ?) AS p`)
+    .bind(agent.rol === 'conducere' ? '' : agent.nume).first();
+  return `${r.v}|${r.p}`;
+}
+
+// Ştergerea unui client (rândul rămâne, cu versiune nouă — vezi api/clienti/[id].js) + cererea de pe el
+export const stergeClient = (env, id) => env.DB.batch([
+  env.DB.prepare(`UPDATE client SET sters_la = datetime('now'), versiune = ${VERSIUNE_NOUA} WHERE id = ?`).bind(id),
+  env.DB.prepare('DELETE FROM propunere WHERE client_id = ?').bind(id),
+]);

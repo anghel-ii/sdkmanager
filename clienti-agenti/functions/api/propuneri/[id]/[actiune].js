@@ -1,7 +1,8 @@
-import { raspuns, eManager, CAMPURI, VERSIUNE_NOUA } from '../../../../lib/comun.js';
+import { raspuns, eManager, CAMPURI, VERSIUNE_NOUA, clientul, stergeClient } from '../../../../lib/comun.js';
 
 // POST /api/propuneri/:id/aproba   — DOAR managerul: propunerea intră în `client`
 //      (client nou sau modificat, cu versiune nouă → managerul o preia), apoi dispare.
+//      Cererea de ştergere: clientul se şterge (sters_la + versiune nouă, ca din manager).
 // POST /api/propuneri/:id/respinge — propunerea dispare, `client` rămâne neschimbat.
 export async function onRequestPost({ request, env, params }) {
   if (!eManager(request, env)) return raspuns(401, { eroare: 'Cheie greşită.' });
@@ -10,6 +11,10 @@ export async function onRequestPost({ request, env, params }) {
   if (!p) return raspuns(404, { eroare: 'Propunerea nu mai există — a aprobat-o sau a respins-o deja cineva.' });
   const sterge = env.DB.prepare('DELETE FROM propunere WHERE id = ?').bind(p.id);
   if (params.actiune === 'respinge') { await sterge.run(); return raspuns(200, { ok: true }); }
+  if (p.stergere) {
+    if (await clientul(env, p.client_id)) await stergeClient(env, p.client_id); else await sterge.run();
+    return raspuns(200, { ok: true });
+  }
 
   const v = JSON.parse(p.date_json), col = Object.keys(CAMPURI);
   const scrie = p.client_id

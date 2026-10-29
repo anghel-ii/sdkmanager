@@ -1,4 +1,4 @@
-import { raspuns, clientDinCerere, agentLogat, eManager, vedereAgent, scrieDirect, numeAgenti } from '../../../lib/comun.js';
+import { raspuns, clientDinCerere, agentLogat, eManager, vedereAgent, scrieDirect, numeAgenti, semn } from '../../../lib/comun.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  GET   manager (Bearer CHEIE_MANAGER): ?dupa=<versiune> → tot ce s-a adăugat
@@ -7,6 +7,8 @@ import { raspuns, clientDinCerere, agentLogat, eManager, vedereAgent, scrieDirec
 //        agent logat: clienţii LUI (agent = numele lui), cu propunerile lui în
 //        aşteptare peste ei + clienţii noi încă neaprobaţi.
 //        cont de conducere: TOŢI clienţii + agenţii pe care îi poate primi un client.
+//        ?semn → doar { semn }: pagina întreabă la câteva secunde dacă s-a schimbat ceva
+//        (vezi semn() în lib/comun.js) şi reîncarcă lista abia atunci.
 //  POST  agent logat: client nou, pe numele lui — ca PROPUNERE, până o aprobă cineva
 //        din manager (vezi api/propuneri). Conducerea: direct, cu agentul ales.
 // ═══════════════════════════════════════════════════════════════════════════
@@ -20,9 +22,12 @@ export async function onRequestGet({ request, env }) {
   }
   const agent = await agentLogat(request, env);
   if (!agent) return raspuns(401, { eroare: 'Nu eşti logat.' });
+  // semnul se citeşte ÎNAINTEA listei: o schimbare venită între ele se vede la următoarea întrebare
+  const s = await semn(env, agent);
+  if (new URL(request.url).searchParams.has('semn')) return raspuns(200, { semn: s });
   if (agent.rol === 'conducere') {
     const { results } = await env.DB.prepare('SELECT * FROM client WHERE sters_la IS NULL ORDER BY nume COLLATE NOCASE').all();
-    return raspuns(200, { agent: agent.nume, admin: !!agent.admin, conducere: true, agenti: await numeAgenti(env), clienti: results });
+    return raspuns(200, { agent: agent.nume, admin: !!agent.admin, conducere: true, agenti: await numeAgenti(env), clienti: results, semn: s });
   }
   const [clienti, propuneri] = await env.DB.batch([
     env.DB.prepare('SELECT * FROM client WHERE agent = ? AND sters_la IS NULL ORDER BY nume COLLATE NOCASE').bind(agent.nume),
@@ -32,7 +37,7 @@ export async function onRequestGet({ request, env }) {
   return raspuns(200, { agent: agent.nume, admin: !!agent.admin, clienti: [
     ...propuneri.results.filter(p => !p.client_id).map(p => vedereAgent(p)),
     ...clienti.results.map(c => (pe.has(c.id) ? vedereAgent(pe.get(c.id), c) : c)),
-  ] });
+  ], semn: s });
 }
 
 export async function onRequestPost({ request, env }) {

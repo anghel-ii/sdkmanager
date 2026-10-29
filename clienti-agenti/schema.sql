@@ -47,6 +47,9 @@ CREATE TABLE IF NOT EXISTS client (
   delegat               TEXT,            -- cine preia marfa
   telefon_delegat       TEXT,
   discounturi           TEXT,
+  -- text liber (userul, 2026-10-29: „OP 30 zile", „Cash"…). Pe baza veche (remote):
+  --   ALTER TABLE client ADD COLUMN modalitate_plata TEXT;
+  modalitate_plata      TEXT,
   creat_la              TEXT,            -- NULL la cei importaţi din Excel
   modificat_la          TEXT,
   -- creşte la FIECARE adăugare/modificare (MAX + 1); managerul cere „după versiunea X"
@@ -66,8 +69,12 @@ CREATE TABLE IF NOT EXISTS propunere (
   id        INTEGER PRIMARY KEY AUTOINCREMENT,
   client_id INTEGER REFERENCES client(id) ON DELETE CASCADE,   -- NULL = client nou
   agent     TEXT NOT NULL,
-  date_json TEXT NOT NULL,          -- câmpurile propuse (CAMPURI din lib/comun.js)
+  date_json TEXT NOT NULL,          -- câmpurile propuse (CAMPURI din lib/comun.js); '{}' la ştergere
   creat_la  TEXT NOT NULL,          -- ultima trimitere a agentului
+  -- 1 = agentul cere ştergerea clientului (userul, 2026-10-29). Tot o singură cerere pe client:
+  -- o modificare trimisă după o ştergere (sau invers) o înlocuieşte. Pe baza veche (remote):
+  --   ALTER TABLE propunere ADD COLUMN stergere INTEGER NOT NULL DEFAULT 0;
+  stergere  INTEGER NOT NULL DEFAULT 0,
   UNIQUE (client_id)                -- o singură modificare în aşteptare pe client (NULL-urile nu se ciocnesc)
 );
 

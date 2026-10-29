@@ -489,7 +489,7 @@ async function main() {
     const idVechi = Number(db2().prepare("INSERT INTO utilizator (nume, user, parola_hash, parola_salt, rol) VALUES ('Vechi', 'vechi', 'x', 'x', 'operator')").run().lastInsertRowid);
     require('../server/db.js').roluriNoi(db2());
     verifica('migraţie: operator → birou', db2().prepare('SELECT rol FROM utilizator WHERE id = ?').get(idVechi).rol === 'birou');
-    verifica('schema la versiunea 37', db2().prepare('PRAGMA user_version').get().user_version === 37);
+    verifica('schema la versiunea 38', db2().prepare('PRAGMA user_version').get().user_version === 38);
   }
 
   console.log('\nFixare şi sortare — per utilizator');
@@ -861,7 +861,7 @@ async function main() {
     const propuse = new Map([[7, { id: 7, tip: 'nou', agent: 'Ion', trimis_la: '2026-10-01 10:00:00', propus: { nume: 'Propus SRL' }, actual: null }],
                              [8, { id: 8, tip: 'nou', agent: 'Ion', trimis_la: '2026-10-01 10:01:00', propus: { nume: 'Respins SRL' }, actual: null }]]);
     const schimba = c => externi.set(c.id, { ...externi.get(c.id), ...c, versiune: ++versiune });
-    schimba({ id: 1, agent: 'Ion', nume: 'Ana SRL', cui: 'RO1', telefon_administrator: '0722' });
+    schimba({ id: 1, agent: 'Ion', nume: 'Ana SRL', cui: 'RO1', telefon_administrator: '0722', modalitate_plata: 'OP 30 zile' });
     schimba({ id: 2, agent: 'Ion', nume: 'Dan', email: 'd@x.ro', judet: 'IASI', delegat: 'Vio' });
     schimba({ id: 3, agent: 'Maria', nume: 'Vlad', telefon_delegat: '0733' });
     const fals = http.createServer((q, r) => {
@@ -921,6 +921,8 @@ async function main() {
     verifica('preia toţi 3, pe mai multe pagini', (await cer('POST', '/api/clienti/preia')).date.noi === 3
       && db2().prepare('SELECT COUNT(*) AS n FROM client').get().n === 3);
     verifica('a doua oară: nimic nou', (await cer('POST', '/api/clienti/preia')).date.noi === 0);
+    verifica('modalitatea de plată vine şi ea în copie (v38)',
+      db2().prepare('SELECT modalitate_plata FROM client WHERE extern_id = 1').get().modalitate_plata === 'OP 30 zile');
     schimba({ id: 2, localitate: 'Paşcani', modificat_la: '2026-09-29 12:00:00' });
     schimba({ id: 4, agent: 'Maria', nume: 'Nou', email: 'n@x.ro', creat_la: '2026-09-29 12:05:00', modificat_la: '2026-09-29 12:05:00' });
     verifica('agentul a modificat unul şi a adăugat unul → 2', (await cer('POST', '/api/clienti/preia')).date.noi === 2);

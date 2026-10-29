@@ -36,6 +36,8 @@
   .propunere .cap .spatiu { flex: 1; }
   .propunere .tip { font-size: .72rem; font-weight: 700; letter-spacing: .05em; padding: 2px 8px; border-radius: 999px;
                     color: #d4a24c; border: 1px solid rgba(212, 162, 76, .5); background: rgba(212, 162, 76, .1); }
+  .propunere .tip.stergere { color: var(--danger); border-color: var(--danger); background: transparent; }
+  .propunere td.sterge-cerut { color: var(--danger); font-weight: 600; }
   .propunere table { width: 100%; border-collapse: collapse; font-size: .86rem; }
   .propunere td { padding: 4px 8px; border-top: 1px solid var(--line); vertical-align: top; }
   .propunere td:first-child { color: var(--text-dim); width: 190px; }
@@ -111,7 +113,9 @@ let propuneri = [];
 // ── De aprobat: clienţi noi / modificări de la agenţi (pe Cloudflare, până la aprobare) ──
 const ETICHETE = { nume: 'Nume client', cui: 'CUI', judet: 'Judeţ', localitate: 'Localitate', adresa_sediu: 'Adresa sediului',
   adresa_livrare: 'Adresa de livrare', administrator: 'Administrator', telefon_administrator: 'Telefon administrator',
-  email: 'E-mail', delegat: 'Delegat', telefon_delegat: 'Telefon delegat', discounturi: 'Discounturi' };
+  email: 'E-mail', delegat: 'Delegat', telefon_delegat: 'Telefon delegat', modalitate_plata: 'Modalitate de plată',
+  discounturi: 'Discounturi' };
+const TIPURI = { nou: 'CLIENT NOU', modificare: 'MODIFICARE', stergere: 'ŞTERGERE' };
 const poateAproba = () => eu?.rol === 'admin' || eu?.rol === 'conducere';
 
 async function incarcaPropuneri() {
@@ -121,8 +125,12 @@ async function incarcaPropuneri() {
   $('deAprobat').hidden = !propuneri.length;
   $('nrPropuneri').textContent = propuneri.length || '';
   $('propuneri').innerHTML = propuneri.map(p => {
-    // client nou: tot ce a completat; modificare: doar câmpurile schimbate, vechi → nou
-    const randuri = Object.entries(ETICHETE).map(([k, et]) => {
+    // client nou: tot ce a completat; modificare: doar câmpurile schimbate, vechi → nou;
+    // ştergere (userul, 2026-10-29): clientul, ca să se vadă pe cine şterge
+    const randuri = p.tip === 'stergere'
+      ? `<tr><td colspan="2" class="sterge-cerut">Agentul cere ştergerea clientului.</td></tr>${Object.entries(ETICHETE)
+        .filter(([k]) => p.actual?.[k]).map(([k, et]) => `<tr><td>${et}</td><td>${esc(p.actual[k])}</td></tr>`).join('')}`
+      : Object.entries(ETICHETE).map(([k, et]) => {
       const nou = p.propus[k] ?? '', vechi = p.actual?.[k] ?? '';
       if (p.tip === 'nou' ? !nou : nou === vechi) return '';
       return `<tr><td>${et}</td><td>${p.tip === 'nou' ? esc(nou)
@@ -130,7 +138,7 @@ async function incarcaPropuneri() {
     }).join('');
     return `<div class="propunere" data-id="${p.id}">
       <div class="cap">
-        <span class="tip">${p.tip === 'nou' ? 'CLIENT NOU' : 'MODIFICARE'}</span>
+        <span class="tip${p.tip === 'stergere' ? ' stergere' : ''}">${TIPURI[p.tip] ?? p.tip}</span>
         <b>${esc(p.tip === 'nou' ? p.propus.nume : p.actual?.nume)}</b>
         <span class="dim mic">de la ${esc(p.agent)} · ${dataOra(p.trimis_la)}</span>
         <span class="spatiu"></span>
@@ -144,7 +152,10 @@ async function incarcaPropuneri() {
   $('propuneri').querySelectorAll('button[data-actiune]').forEach(b => b.addEventListener('click', async () => {
     const card = b.closest('.propunere'), p = propuneri.find(x => x.id === +card.dataset.id);
     const aproba = b.dataset.actiune === 'aproba';
-    if (!aproba && !(await confirma(`Respingi ${p.tip === 'nou' ? 'clientul nou' : 'modificarea'} trimisă de ${p.agent}? Se pierde.`, 'Respinge'))) return;
+    const ce = { nou: 'clientul nou', modificare: 'modificarea', stergere: 'cererea de ştergere' }[p.tip] ?? 'cererea';
+    if (!aproba && !(await confirma(`Respingi ${ce} trimisă de ${p.agent}? ${p.tip === 'stergere' ? 'Clientul rămâne.' : 'Se pierde.'}`, 'Respinge'))) return;
+    if (aproba && p.tip === 'stergere'
+      && !(await confirma(`Ştergi clientul „${p.actual?.nume ?? ''}"? Dispare din baza de clienţi, pentru toată lumea.`, 'Şterge'))) return;
     card.querySelectorAll('button').forEach(x => { x.disabled = true; });
     const r = await api(`/api/clienti/propuneri/${p.id}/${b.dataset.actiune}`, { method: 'POST' });
     if (r && !r.ok) alerta((await r.json().catch(() => ({}))).eroare || 'Operaţia a eşuat.');
@@ -184,7 +195,7 @@ function randeaza() {
   const doua = (a, b) => [a, b].filter(Boolean).join('<br>');
   $('lista').innerHTML = `<p class="dim mic" style="margin-bottom:10px">${cl.length} clienţi${cl.length > arata.length ? ` — se văd primii ${arata.length}, caută ca să-l găseşti pe cel dorit` : ''}</p>
     <table class="clienti">
-    <thead><tr><th>Client</th><th>Agent</th><th>Judeţ / localitate</th><th>Sediu / livrare</th><th>Administrator</th><th>E-mail</th><th>Delegat</th><th>Discounturi</th>${poateAproba() ? '<th></th>' : ''}</tr></thead>
+    <thead><tr><th>Client</th><th>Agent</th><th>Judeţ / localitate</th><th>Sediu / livrare</th><th>Administrator</th><th>E-mail</th><th>Delegat</th><th>Plată / discounturi</th>${poateAproba() ? '<th></th>' : ''}</tr></thead>
     <tbody>${arata.map(c => `<tr data-id="${c.extern_id}">
       <td><b>${esc(c.nume)}</b><br><span class="dim mic">${esc(c.cui)}</span></td>
       <td>${esc(c.agent)}${c.modificat_la ? `<br><span class="dim mic" title="ultima modificare de la agent">${dataOra(c.modificat_la)}</span>` : ''}</td>
@@ -193,7 +204,7 @@ function randeaza() {
       <td>${doua(esc(c.administrator), tel(c.telefon_administrator))}</td>
       <td>${c.email ? `<a href="mailto:${esc(c.email)}">${esc(c.email)}</a>` : ''}</td>
       <td>${doua(esc(c.delegat), tel(c.telefon_delegat))}</td>
-      <td class="mic">${esc(c.discounturi)}</td>
+      <td class="mic">${doua(c.modalitate_plata ? `<b>${esc(c.modalitate_plata)}</b>` : '', esc(c.discounturi))}</td>
       ${poateAproba() ? `<td class="actiuni"><button class="mic" data-fa="modifica">Modifică</button><button class="mic rosu-contur" data-fa="sterge">Şterge</button></td>` : ''}
     </tr>`).join('')}</tbody></table>`;
   $('lista').querySelectorAll('button[data-fa]').forEach(b => b.addEventListener('click', () => {
@@ -205,11 +216,11 @@ function randeaza() {
 // ── Conducerea / adminul: modifică direct (fără aprobare) sau şterge un client ──
 // Se scrie în originalul de pe Cloudflare, apoi serverul îl preia imediat înapoi.
 const LUNGIMI = { agent: 120, nume: 120, cui: 20, judet: 40, localitate: 80, adresa_sediu: 300, adresa_livrare: 300,
-  administrator: 120, telefon_administrator: 40, email: 120, delegat: 120, telefon_delegat: 40, discounturi: 500 };
+  administrator: 120, telefon_administrator: 40, email: 120, delegat: 120, telefon_delegat: 40, modalitate_plata: 120, discounturi: 1500 };
 const LATE = ['adresa_sediu', 'adresa_livrare', 'discounturi'];
 // ordinea din fereastră: perechile stau pe acelaşi rând
 const ORDINE = ['nume', 'agent', 'cui', 'email', 'judet', 'localitate', 'adresa_sediu', 'adresa_livrare',
-  'administrator', 'telefon_administrator', 'delegat', 'telefon_delegat', 'discounturi'];
+  'administrator', 'telefon_administrator', 'delegat', 'telefon_delegat', 'modalitate_plata', 'discounturi'];
 
 function modifica(c) {
   const d = document.createElement('dialog');

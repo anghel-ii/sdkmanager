@@ -579,6 +579,8 @@ const MIGRATII = [
   // v36 → v37 (2026-10-27): conducerea şterge clienţi din pagina Clienţi (userul). Pe Cloudflare rândul rămâne,
   // marcat şters, cu versiune nouă — aşa ajunge ştergerea în copie; aici rămâne şi el (MAX(versiune) nu scade).
   d => d.exec('ALTER TABLE client ADD COLUMN sters_la TEXT'),
+  // v37 → v38 (2026-10-29): „Modalitate de plată" la client, text liber — o scriu agenţii pe portal (userul)
+  d => d.exec('ALTER TABLE client ADD COLUMN modalitate_plata TEXT'),
 ];
 
 // Exportată pt. test.

@@ -17,7 +17,8 @@ const { config } = require('./config.js');
 
 // coloanele din Excel-ul de clienţi (+ agent) — aceleaşi pe Cloudflare
 const CAMPURI = ['agent', 'nume', 'cui', 'judet', 'localitate', 'adresa_sediu', 'adresa_livrare', 'administrator',
-  'telefon_administrator', 'email', 'delegat', 'telefon_delegat', 'discounturi', 'creat_la', 'modificat_la', 'versiune', 'sters_la'];
+  'telefon_administrator', 'email', 'delegat', 'telefon_delegat', 'discounturi', 'modalitate_plata', 'creat_la', 'modificat_la',
+  'versiune', 'sters_la'];
 
 // cheia managerului: din mediu, altfel cea lipită în /admin
 const cheie = () => config.clientiCheie
