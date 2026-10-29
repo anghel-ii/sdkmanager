@@ -246,7 +246,7 @@ function arataLista(j) {
 }
 
 // ── Modificările altora, fără refresh (userul, 2026-10-29) ──────────────────
-// La 15 s (doar cu pagina la vedere) pagina întreabă serverul dacă s-a schimbat ceva (aprobări,
+// La 30 s între 7 şi 18, altfel la 10 minute (doar cu pagina la vedere), pagina întreabă serverul dacă s-a schimbat ceva (aprobări,
 // respingeri, conducerea, alt telefon) — un singur număr, ieftin — şi reîncarcă lista doar atunci.
 // Ce n-ai salvat rămâne (ciorne). Cât eşti într-o celulă (sau se salvează), lista nouă aşteaptă:
 // întâi se schimbă doar celelalte rânduri, restul (clienţi apăruţi / dispăruţi) când ieşi din tabel.
@@ -288,7 +288,10 @@ async function verificaSchimbari() {
     aplicaDacaSePoate();
   } catch { /* fără internet / delogat — încearcă din nou data viitoare (api() arată login-ul la 401) */ }
 }
-setInterval(verificaSchimbari, 15e3);
+// cât de des (userul, 2026-10-29 — cererile spre Cloudflare săriseră cu verificarea la 15 s): 30 s în programul
+// de lucru, 7–18 după ceasul agentului, altfel la 10 minute. Când revii la pagină, verifică imediat.
+const pauzaVerificare = () => { const h = new Date().getHours(); return h >= 7 && h < 18 ? 30e3 : 10 * 60e3; };
+(function programeaza() { setTimeout(async () => { await verificaSchimbari(); programeaza(); }, pauzaVerificare()); })();
 document.addEventListener('visibilitychange', verificaSchimbari);
 // ai ieşit din tabel → ce a rămas de aplicat se aplică acum
 $('tabel').addEventListener('focusout', () => setTimeout(aplicaDacaSePoate, 0));

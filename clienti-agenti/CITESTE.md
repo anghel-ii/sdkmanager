@@ -24,7 +24,7 @@ singur schimbările la 5 minute (`manager/server/clienti.js`).
   — rescrie reducerile tuturor clienţilor (şi ale cererilor în aşteptare) pe grupele noi, cu backup în ../date-clienti/. „Modalitate de plată" = text liber
   (`client.modalitate_plata`). 🗑 în stânga: conducerea şterge direct, agentul CERE ştergerea (cu aprobare, ↺ o anulează).
   Un rând = o singură cerere: ce mai trimite agentul până la aprobare o înlocuieşte (şi o ştergere / o modificare
-  una pe alta); înapoi exact cum era = cererea dispare. Pagina întreabă la 15 s `GET /api/clienti?semn` şi
+  una pe alta); înapoi exact cum era = cererea dispare. Pagina întreabă `GET /api/clienti?semn` la 30 s între 7 şi 18, altfel la 10 minute, şi
   reîncarcă lista doar când s-a schimbat ceva (rândul în care scrii nu se atinge).
   Pe baza remote, o singură dată, ÎNAINTE de publicare (rulat din folderul ăsta):
   `npx wrangler d1 execute clienti-agenti --remote --command="ALTER TABLE client ADD COLUMN modalitate_plata TEXT; ALTER TABLE propunere ADD COLUMN stergere INTEGER NOT NULL DEFAULT 0"`.
