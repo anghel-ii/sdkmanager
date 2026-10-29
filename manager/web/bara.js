@@ -435,7 +435,7 @@
       radacina.querySelector('#cine').textContent = eu.nume;
       // modul demo: ce face omul pe comenzi merge pe o copie a bazei (server/db.js). Colegii puşi
       // în demo de admin: chenar portocaliu pe toată pagina + eticheta sus, să fie clar unde sunt.
-      // Adminul (mereu în demo pe comenzi): fără chenar (userul, 2026-10-19). La toţi, comenzile
+      // Adminul (în demo doar cu MANAGER_ADMIN_TEST=1): fără chenar (userul, 2026-10-19). La toţi, comenzile
       // care nu mai sunt ca pe bune apar portocalii, cu „DEMO" („demo" din API). Fără clicuri pe chenar.
       if (eu.mod_test) {
         window.modTest = true;

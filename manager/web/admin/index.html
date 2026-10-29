@@ -331,7 +331,8 @@ async function incarca() {
           <td title="cont creat ${dataOra(u.creat_la)}">${esc(u.nume)}${euInsumi ? ' <span class="dim mic">(tu)</span>' : ''}<small>${stare(u)}</small></td>
           <td class="mono">${esc(u.user)}</td>
           <td>${euInsumi ? esc(u.rol) : `<select class="rol">${ROLURI.map(x => `<option${x === u.rol ? ' selected' : ''}>${x}</option>`).join('')}</select>`}</td>
-          <td>${u.rol === 'admin' ? '<span class="dim" title="Comenzile adminului merg mereu pe copia de test; administrarea, pe bune">mereu</span>' : `<input type="checkbox" class="modtest"${u.mod_test ? ' checked' : ''} aria-label="Mod test pentru ${esc(u.nume)}">`}</td>
+          <td>${u.rol === 'admin' ? (eu.mod_test ? '<span class="dim" title="Comenzile adminului merg pe copia de test; administrarea, pe bune">mereu</span>'
+            : '<span class="dim" title="Adminul lucrează pe baza reală (de probat: pe un server de probă)">nu</span>') : `<input type="checkbox" class="modtest"${u.mod_test ? ' checked' : ''} aria-label="Mod test pentru ${esc(u.nume)}">`}</td>
           <td class="actiuni">${euInsumi ? '' : `
             <button class="mic reset" title="${u.activat ? 'O parolă temporară nouă' : 'Cont vechi fără parolă — pune-i una'}">${u.activat ? 'Parolă nouă' : 'Pune parola'}</button>
             <button class="mic activ ${u.activ ? 'rosu-contur' : 'verde-contur'}">${u.activ ? 'Dezactivează' : 'Reactivează'}</button>`}</td>
@@ -570,6 +571,8 @@ async function reimprospateaza() {
     $('continut').innerHTML = '<div class="card">Pagina asta e doar pentru administrator. <a href="/">Înapoi la comenzi</a></div>';
     return;
   }
+  // demo admin doar dacă serverul îl ţine pe admin în test (MANAGER_ADMIN_TEST=1)
+  document.querySelector('[data-reface="admin"]').hidden = !eu.mod_test;
   punePlaci();
   await incarca();   // conturile întâi: „ultima dată" din tabelul de activitate vine de aici
   incarcaSumar(); incarcaTichete(); incarcaTablou(); incarcaAgenti(); stareActualizare();

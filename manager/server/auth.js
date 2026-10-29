@@ -59,7 +59,7 @@ function reseteazaParola(id) {
   db().prepare('DELETE FROM sesiune WHERE utilizator_id = ?').run(id);
 }
 
-// adminul e MEREU în modul test (config.adminInTest) — administrarea şi clienţii rămân pe bune (index.js)
+// adminul în modul test doar cu config.adminInTest (MANAGER_ADMIN_TEST=1) — administrarea şi clienţii rămân pe bune (index.js)
 function gasesteUtilizator(id) {
   const u = db().prepare(`SELECT ${PUBLIC} FROM utilizator WHERE id = ?`).get(id) ?? null;
   if (u?.rol === 'admin' && config.adminInTest) u.mod_test = 1;
