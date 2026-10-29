@@ -237,7 +237,7 @@ async function main() {
     console.log(`[+] Comandă ID ${cId} (${cDef.ofertaNr}) creată.`);
 
     if (cDef.actiune === 'plata') {
-      await cer('POST', `/api/comenzi/${cId}/asteapta-plata`, { oferta_nr: cDef.ofertaNr }, cookie);
+      await cer('POST', `/api/comenzi/${cId}/asteapta-plata`, { plata: 'proforma', numar: `PF-${cDef.ofertaNr}` }, cookie);
       console.log(`    ↳ trecută în 'Așteaptă plata'`);
     } else if (['accepta', 'finalizeaza', 'factura'].includes(cDef.actiune)) {
       await cer('POST', `/api/comenzi/${cId}/accepta`, { incasare: 'card',

@@ -129,7 +129,7 @@ server.once('listening', async () => {
     await cer('POST', `/api/comenzi/${comenziIds[0]}/factura`, { numar: 'FAC-2026-0099' });
 
     // Put order 5 in "Asteapta plata"
-    await cer('POST', `/api/comenzi/${comenziIds[4]}/asteapta-plata`, { oferta_nr: 'OF-HOLD-55' });
+    await cer('POST', `/api/comenzi/${comenziIds[4]}/asteapta-plata`, { plata: 'proforma', numar: 'PF-HOLD-55' });
     console.log('ORDER_IN_WAITING_PAYMENT');
 
     // Create a task

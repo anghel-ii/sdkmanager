@@ -55,7 +55,7 @@ const OPERATII = {
                                                  r?.sticlaRamasa?.length && `sticlă comandată scoasă: ${r.sticlaRamasa.map(l => l.cod).join(', ')}`)],
   'POST /api/comenzi/:id/accepta':           ['Acceptată — comandă în lucru', S, (b, r) => lista(PLATI[b.plata] ?? b.plata, INCASARI[r?.comanda?.incasare],
                                                Number(b.avans) > 0 && `${r?.comanda?.achitat_la ? 'achitată' : 'avans'} ${lei(b.avans)}`)],
-  'POST /api/comenzi/:id/asteapta-plata':    ['Trimisă la „Aşteaptă plata"', S],
+  'POST /api/comenzi/:id/asteapta-plata':    ['Trimisă la „Aşteaptă plata"', S, b => lista(PLATI[b.plata] ?? b.plata, b.numar && `nr. ${scurt(b.numar, 40)}`)],
   'POST /api/comenzi/:id/livrare':           ['Livrarea / adresa modificată', S, b => lista(b.livrare, b.adresa && scurt(b.adresa, 80))],
   'POST /api/comenzi/:id/adauga':            ['Produse adăugate la comandă', S, b => Array.isArray(b.pozitii) && `${b.pozitii.length} ${b.pozitii.length === 1 ? 'produs' : 'produse'}`],
   'POST /api/comenzi/:id/inapoi-oferta':     ['Întoarsă în oferte', S],

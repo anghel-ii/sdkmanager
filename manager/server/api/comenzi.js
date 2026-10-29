@@ -536,13 +536,39 @@ async function schimbaLivrare(ctx) {
   json(ctx.res, 200, { comanda: db().prepare('SELECT * FROM comanda WHERE id = ?').get(id) });
 }
 
-function asteaptaPlata(ctx) {
+// La „Aşteaptă plata" (userul, 2026-10-29) se cere documentul trimis clientului — factură proformă sau factură de
+// avans — şi numărul lui din NeoManager: { plata, numar }. Numărul devine numărul comenzii (oferta_nr), iar
+// documentul trece şi în configuraţii (de acolo îl iau eticheta de pe fişă şi plataNumarului — avansul e fiscal).
+// Ce era înainte rămâne în config.comanda.dinOferta, pentru „Înapoi în ofertă".
+const PLATI_ASTEAPTA = ['proforma', 'proforma_amanunt', 'avans'];
+// documentul (config.comanda.plata, la rame config.rame.plata) al tuturor produselor comenzii
+function scriePlataPozitiilor(d, id, plata, dinOferta) {
+  for (const p of d.prepare('SELECT id, config_json FROM pozitie WHERE comanda_id = ? ORDER BY idx').all(id)) {
+    const cfg = JSON.parse(p.config_json);
+    cfg.comanda = { ...cfg.comanda, plata, dinOferta };   // dinOferta nedat → dispare (JSON nu scrie undefined)
+    if (cfg.rame && 'plata' in cfg.rame) cfg.rame.plata = plata;
+    d.prepare('UPDATE pozitie SET config_json = ? WHERE id = ?').run(JSON.stringify(cfg), p.id);
+  }
+}
+async function asteaptaPlata(ctx) {
   const id = Number(ctx.params.id);
+  const corp = await corpJson(ctx.req);
   const c = db().prepare('SELECT * FROM comanda WHERE id = ?').get(id);
   if (!c)                 return eroare(ctx.res, 404, 'Comandă inexistentă.');
   if (c.anulat)           return eroare(ctx.res, 400, 'Oferta e anulată.');
   if (c.tip !== 'oferta') return eroare(ctx.res, 409, c.tip === 'plata' ? 'Comanda aşteaptă deja plata.' : 'Oferta e deja comandă în lucru.');
-  db().prepare(`UPDATE comanda SET tip = 'plata', tip_schimbat_la = ${ACUM()} WHERE id = ?`).run(id);
+  if (!PLATI_ASTEAPTA.includes(corp.plata)) return eroare(ctx.res, 400, 'Alege documentul: factură proformă sau factură de avans.');
+  const numar = String(corp.numar ?? '').trim().slice(0, 40);
+  if (!numar) return eroare(ctx.res, 400, 'Scrie numărul facturii proforme / de avans din NeoManager.');
+  const plataVeche = plataNumarului(id);
+  // salvată deja ca proformă / avans: numărul ei e chiar al documentului; altfel e al ofertei
+  if (numar === c.oferta_nr && ![plataVeche, c.plata].some(p => PLATI_ASTEAPTA.includes(p))) {
+    return eroare(ctx.res, 400, 'E numărul ofertei — scrie numărul facturii proforme / de avans din NeoManager.');
+  }
+  tranzactie(d => {
+    d.prepare(`UPDATE comanda SET tip = 'plata', tip_schimbat_la = ${ACUM()}, plata = ?, oferta_nr = ? WHERE id = ?`).run(corp.plata, numar, id);
+    scriePlataPozitiilor(d, id, corp.plata, { plata: plataVeche, numar: c.oferta_nr, plataComenzii: c.plata });
+  });
   anunta({ comanda: id });
   json(ctx.res, 200, { comanda: db().prepare('SELECT * FROM comanda WHERE id = ?').get(id) });
 }
@@ -607,8 +633,16 @@ function inapoiInOferta(ctx) {
                     WHERE p.comanda_id = ?) AS scanat`).get(id, id);
   if (lucrat.sticla)        return eroare(ctx.res, 409, 'Sticla e deja comandată la furnizor.');
   if (lucrat.scanat)        return eroare(ctx.res, 409, 'S-a început lucrul în atelier (există scanări).');
-  db().prepare(`UPDATE comanda SET tip = 'oferta', numar_comanda = NULL, confirmat_la = NULL, confirmat_de = NULL,
-                                   avans = NULL, achitat_la = NULL, tip_schimbat_la = NULL WHERE id = ?`).run(id);
+  // de la „Aşteaptă plata": numărul şi documentul ofertei, de dinainte de proformă / avans
+  const prima = db().prepare('SELECT config_json FROM pozitie WHERE comanda_id = ? ORDER BY idx LIMIT 1').get(id);
+  const dinOferta = c.tip === 'plata' ? JSON.parse(prima?.config_json ?? '{}').comanda?.dinOferta : undefined;
+  tranzactie(d => {
+    d.prepare(`UPDATE comanda SET tip = 'oferta', numar_comanda = NULL, confirmat_la = NULL, confirmat_de = NULL,
+                                  avans = NULL, achitat_la = NULL, tip_schimbat_la = NULL WHERE id = ?`).run(id);
+    if (!dinOferta) return;
+    d.prepare('UPDATE comanda SET oferta_nr = ?, plata = ? WHERE id = ?').run(dinOferta.numar, dinOferta.plataComenzii, id);
+    scriePlataPozitiilor(d, id, dinOferta.plata);
+  });
   anunta({ comanda: id });
   json(ctx.res, 200, { comanda: db().prepare('SELECT * FROM comanda WHERE id = ?').get(id) });
 }

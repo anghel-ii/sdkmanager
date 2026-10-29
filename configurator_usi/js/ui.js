@@ -13,7 +13,7 @@ import { geamPermisLux } from './lib/lux/index.js';
 import gameJson from './systems/game.json';
 import { renderRame, syncRame, refreshRame } from './ui_rame.js';
 import { activeazaCampuri } from './campuri.js';
-import { LIVRARE, AGENTI, PLATI, INCASARI, numarText, detaliiComanda, detaliiDinManager, dinAcceptare, liniaTransport, campuriLipsa, focusCamp, etichetaNumar, opritDePlata } from './lib/comun/comanda.js';
+import { LIVRARE, AGENTI, PLATI, INCASARI, numarText, detaliiComanda, detaliiDinManager, dinAcceptare, liniaTransport, campuriLipsa, focusCamp, etichetaNumar, opritDePlata, lipsaPlataAsteapta } from './lib/comun/comanda.js';
 import { stareRameGoala } from './lib/rame/rame.js';
 import { renderUtil } from './ui_util.js';
 import { initSugestiiClienti } from './sugestii-clienti.js';
@@ -1127,9 +1127,13 @@ async function trimiteOferta(unde = 'oferta') {
     focusCamp(lipsa[0].id);
     return mesajOferta(`Completează ${lipsa.map(x => x.text).join(', ')}.`, 'eroare');
   }
+  const plataAleasa = detaliiComanda(state).plata;
+  const faraDocument = unde === 'plata' && lipsaPlataAsteapta(plataAleasa);
+  if (faraDocument) { focusCamp('comandaPlata'); return mesajOferta(faraDocument, 'eroare'); }
   const tot = cosul.toate(cos, curentaUsi());
   if (tot.eroare) return mesajOferta(esc(tot.eroare), 'eroare');
-  const plata = unde === 'comanda' ? await cerePlata() : null;
+  // „Aşteaptă plata": documentul (proformă / avans) şi numărul lui — nr. din bară
+  const plata = unde === 'comanda' ? await cerePlata() : unde === 'plata' ? { plata: plataAleasa, numar: ofertaNr } : null;
   if (unde === 'comanda' && !plata) return;
 
   const butoane = ['btnConfirma', 'btnComanda', 'btnPlata'].map($);
