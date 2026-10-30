@@ -465,7 +465,7 @@ async function salveazaCiorna(cheie) {
   if (cheie !== 'nou' && !c) { ciorne.delete(cheie); return null; }   // clientul a dispărut între timp
   if (!v.nume) return { eroare: c ? 'Numele clientului e obligatoriu.' : 'Client nou: scrie numele.' };
   const lipsa = c?.id ? [] : obligatoriiLipsa(v);
-  if (lipsa.length) return { eroare: `Client nou — completează: ${lipsa.map(([, t]) => t.toLowerCase()).join(', ')}.` };
+  if (lipsa.length) return { eroare: `Client nou — completează: ${lipsa.map(([, t]) => (t === t.toUpperCase() ? t : t.toLowerCase())).join(', ')}.` };
   const reduceri = Object.fromEntries(GAME.map(g => [g, v[`g:${g}`].replace(/%/g, '').trim()]));
   const gresita = GAME.find(g => reduceri[g] && !/^\d+([.,]\d+)?$/.test(reduceri[g]));
   if (gresita) return { eroare: `Reducerea la ${gresita} trebuie să fie un număr (ex. 15).` };
