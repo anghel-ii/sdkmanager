@@ -26,6 +26,7 @@ const NORMAL_JUDETE = JUDETE.map(j => [j, normal(j)]);
 
 // Adresa pe bucăţi (web/adresa.js + lista SIRUTA): judeţul, localitatea, strada.
 const Adresa = require('../web/adresa.js');
+const Suma = require('../web/suma.js');   // „12,5" şi „12.5", „1.200,50" (userul, 2026-10-30)
 const LOCALITATI = Adresa.index(require('../web/localitati.json'));
 const adresaDin = text => Adresa.desface(text, LOCALITATI);
 
@@ -95,8 +96,7 @@ async function modificaComanda(ctx) {
     set.push('judet = ?'); val.push(corp.judet || null);
   }
   if ('de_incasat' in corp) {
-    const t = String(corp.de_incasat ?? '').trim().replace(',', '.');
-    const v = t === '' ? null : Number(t);
+    const v = Suma.din(corp.de_incasat);
     if (v != null && !(Number.isFinite(v) && v >= 0)) return eroare(ctx.res, 400, 'Suma de încasat trebuie să fie un număr (gol = nimic de încasat).');
     set.push('de_incasat = ?'); val.push(v == null ? null : Math.round(v * 100) / 100);
   }

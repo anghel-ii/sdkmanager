@@ -2,6 +2,7 @@ const { json, eroare, corpJson } = require('../http.js');
 const { db, tranzactie, ACUM, copiaCurenta, comenziDemo, peBune } = require('../db.js');
 const { acumMs } = require('../ora.js');
 const { config } = require('../config.js');
+const Suma = require('../../web/suma.js');
 const { anunta, anuntaUtilizator } = require('../evenimente.js');
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -589,7 +590,7 @@ async function accepta(ctx) {
   if (c.tip === 'comanda') return eroare(ctx.res, 409, 'Oferta e deja comandă în lucru.');
 
   if (!PLATI.includes(corp.plata)) return eroare(ctx.res, 400, 'Alege facturarea: ofertă, factură proformă, proformă cu amănuntul, factură fiscală, bon fiscal sau factură de avans.');
-  const avans = corp.avans == null || String(corp.avans).trim() === '' ? 0 : Number(String(corp.avans).replace(',', '.'));
+  const avans = Suma.din(corp.avans) ?? 0;   // cu virgulă sau cu punct
   const incasare = INCASARI.includes(corp.incasare) ? corp.incasare : c.incasare;
   if (!incasare) return eroare(ctx.res, 400, 'Alege metoda de încasare.');
   const achitat = c.tip === 'plata';

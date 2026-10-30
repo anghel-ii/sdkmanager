@@ -12,6 +12,7 @@
 <script src="/leaflet/leaflet.min.js"></script>
 <script src="/dialog.js"></script>
 <script src="/data.js"></script>
+<script src="/suma.js"></script>
 <script src="/live.js"></script>
 <style>
   #continut { padding: 20px 24px 40px; max-width: 1500px; margin: 0 auto; }
@@ -59,6 +60,9 @@
   textarea.obs { width: 180px; min-height: 38px; padding: 6px 8px; font-size: .84rem; resize: vertical; }
   textarea.obs.salvat { border-color: var(--ok); }
   .fara-punct { color: var(--cald); font-size: .78rem; }
+  /* comenzile aceluiaşi client: un singur rând (o oprire) pe borderou, dar aici fiecare cu bifa ei */
+  table.lst tr.grup td.bifa { box-shadow: inset 3px 0 0 var(--accent-dim); }
+  .comasat { color: var(--accent); font-size: .76rem; margin-top: 3px; }
   button.mic { padding: 4px 9px; font-size: .78rem; }
   a.buton { display: inline-block; padding: 5px 10px; font-size: .8rem; border: 1px solid var(--accent-dim); border-radius: 6px;
             color: var(--accent); background: rgba(77, 163, 255, .08); text-decoration: none; white-space: nowrap; }
@@ -173,6 +177,7 @@
 // comanda din demo (modul demo, „demo" din API) — vezi comun.css
 const DEMO = '<span class="eticheta-demo" title="Făcută sau schimbată în modul demo — pe bune nu e aşa">DEMO</span>';
 const $ = id => document.getElementById(id);
+const faraDiacritice = t => String(t).normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const lei = n => `${Number(n).toLocaleString('ro-RO', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} lei`;
 const lei2 = n => `${Number(n).toLocaleString('ro-RO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} lei`;   // pe borderou, ca în Excel
@@ -210,13 +215,25 @@ const vizibile = () => comenzi.filter(c => alese.has(c.judet ?? ''));
 const inOrdine = () => { const v = vizibile(), p = new Map(ordine.map((id, k) => [id, k]));
   return v.sort((a, b) => (p.get(a.id) ?? 1e9) - (p.get(b.id) ?? 1e9)); };
 const bifate = () => inOrdine().filter(c => !debifate.has(c.id));
+// Comenzile aceluiaşi client (userul, 2026-10-30) = o singură oprire: pe borderou un rând (preţurile tot separate),
+// pe hartă şi în listă acelaşi număr; în listă rămân rânduri separate, fiecare cu bifa ei. Clientul = numele (fără
+// diacritice / majuscule / spaţii în plus — comenzile n-au id de client).
+const cheieClient = c => faraDiacritice(c.client_nume ?? '').toLowerCase().replace(/\s+/g, ' ').trim();
+// aceeaşi ordine, dar comenzile unui client vin toate la locul primei lui comenzi
+function grupeaza(lista) {
+  const grupe = new Map();
+  for (const c of lista) { const k = cheieClient(c); if (!grupe.has(k)) grupe.set(k, []); grupe.get(k).push(c); }
+  return [...grupe.values()];
+}
+// id → numărul opririi (1, 2, 3 — o dată pe client)
+const numere = lista => new Map(grupeaza(lista).flatMap((g, k) => g.map(c => [c.id, k + 1])));
 // Lista stă MEREU în ordinea celui mai scurt traseu (userul nu trebuie să apese nimic):
 // bifatele cu punct pe hartă — în ordinea traseului, apoi bifatele fără punct, apoi nebifatele.
 function reordoneaza() {
   const cu = bifate().filter(c => c.lat != null);
   const drum = cu.length > 1 ? ordineOptima(cu.map(c => [c.lat, c.lon]), [plecare.lat, plecare.lon]).map(i => cu[i]) : cu;
   const rest = inOrdine().filter(c => !drum.includes(c));
-  ordine = [...drum, ...rest.filter(c => !debifate.has(c.id)), ...rest.filter(c => debifate.has(c.id))].map(c => c.id)
+  ordine = [...grupeaza([...drum, ...rest.filter(c => !debifate.has(c.id))]).flat(), ...rest.filter(c => debifate.has(c.id))].map(c => c.id)
     .concat(ordine.filter(id => !vizibile().some(c => c.id === id)));
 }
 
@@ -258,18 +275,21 @@ function randeazaPlan() {
   const v = inOrdine();
   $('plan').hidden = !v.length;
   if (!v.length) return;
-  let k = 0;
+  const nr = numere(bifate());
+  const peClient = new Map();   // cheie → { toate, bifate } (dintre cele la vedere)
+  for (const c of v) { const g = peClient.get(cheieClient(c)) ?? { toate: 0, bifate: 0 }; g.toate++; if (!debifate.has(c.id)) g.bifate++; peClient.set(cheieClient(c), g); }
   $('tabel').innerHTML = `<table class="lst">
     <thead><tr><th class="bifa"><input type="checkbox" id="toate" ${v.every(c => !debifate.has(c.id)) ? 'checked' : ''}></th><th></th>
       <th>Client</th><th>Produse</th><th>Adresă</th><th>Observaţii livrare</th><th>Ofertă</th><th>Preţ</th></tr></thead>
     <tbody>${v.map(c => {
-      const bif = !debifate.has(c.id);
-      const nr = bif ? ++k : null;
-      return `<tr data-id="${c.id}" class="${bif ? '' : 'debifat'}${c.demo ? ' demo' : ''}">
+      const bif = !debifate.has(c.id), g = peClient.get(cheieClient(c));
+      return `<tr data-id="${c.id}" class="${bif ? '' : 'debifat'}${c.demo ? ' demo' : ''}${g.toate > 1 ? ' grup' : ''}">
         <td class="bifa"><input type="checkbox" class="rand" ${bif ? 'checked' : ''}></td>
-        <td class="ordine">${nr ? `<span class="bulina">${nr}</span>` : ''}</td>
+        <td class="ordine">${bif ? `<span class="bulina">${nr.get(c.id)}</span>` : ''}</td>
         <td><div class="client">${esc(c.client_nume)}${c.demo ? DEMO : ''}</div>
-            <div class="mic-dim">${esc(c.client_telefon ?? '')}${c.client_telefon ? ' · ' : ''}<span class="mono">${esc(c.numar)}</span></div></td>
+            <div class="mic-dim">${esc(c.client_telefon ?? '')}${c.client_telefon ? ' · ' : ''}<span class="mono">${esc(c.numar)}</span></div>
+            ${g.toate > 1 ? `<div class="comasat" title="Pe borderou: un singur rând pentru client, cu preţul fiecărei comenzi bifate">${g.toate} comenzi ale clientului${
+              g.bifate < g.toate ? ` · ${g.bifate} ${g.bifate === 1 ? 'bifată' : 'bifate'}` : ''} — un rând pe borderou</div>` : ''}</td>
         <td class="produse">${c.produse.map(p => `<div>${esc(p)}</div>`).join('') || '<span class="dim">—</span>'}</td>
         <td>${esc(c.client_adresa ?? '—')}
             <div><select class="judet${c.judet ? '' : ' lipsa'}" title="Judeţul livrării">
@@ -278,7 +298,7 @@ function randeazaPlan() {
             ${c.lat == null ? ` <span class="fara-punct">nu e pe hartă</span> <button class="mic pune">📍 Pune pe hartă</button>` : ''}</div></td>
         <td><textarea class="obs" rows="2" maxlength="300" placeholder="ex. sună înainte, descărcare la rampă">${esc(c.observatii_livrare ?? '')}</textarea></td>
         <td>${data(c.creat_la)}<div class="mic-dim">${c.finalizat_la ? 'finalizată' : 'în lucru'}</div></td>
-        <td><input class="incasat" inputmode="decimal" placeholder="0" value="${c.de_incasat ?? ''}">
+        <td><input class="incasat" inputmode="decimal" placeholder="0" title="Cu virgulă sau cu punct: 1200,50 · 1200.50 · 1.200,50" value="${Suma.text(c.de_incasat)}">
             <div><select class="coloana${faraColoana(c) ? ' lipsa' : ''}" title="Unde ajunge preţul pe borderou">
               <option value=""${c.coloana_borderou ? '' : ' selected'}>Pe borderou la…</option>
               ${Object.entries(COLOANE).map(([k, t]) => `<option value="${k}"${k === c.coloana_borderou ? ' selected' : ''}>${t}</option>`).join('')}</select></div>
@@ -299,8 +319,9 @@ function randeazaPlan() {
     const inp = tr.querySelector('input.incasat');
     inp.addEventListener('change', async () => {
       const r = await api(`/api/livrari/comanda/${id}`, { method: 'PUT', body: JSON.stringify({ de_incasat: inp.value }) });
-      if (r && !r.ok) { inp.value = c.de_incasat ?? ''; return alerta(await eroareDin(r)); }
-      c.de_incasat = inp.value.trim() === '' ? null : Number(inp.value.replace(',', '.'));
+      if (r && !r.ok) { inp.value = Suma.text(c.de_incasat); return alerta(await eroareDin(r)); }
+      c.de_incasat = Suma.din(inp.value);
+      inp.value = Suma.text(c.de_incasat);   // „1.200,50" → „1200,5": se vede ce s-a înţeles
       inp.classList.add('salvat'); setTimeout(() => inp.classList.remove('salvat'), 1200);
       // prima dată: coloana sugerată din metoda de plată (se poate schimba)
       if (c.de_incasat != null && !c.coloana_borderou && COLOANA_DIN_PLATA[c.plata]) await puneColoana(COLOANA_DIN_PLATA[c.plata]);
@@ -337,7 +358,9 @@ function randeazaPlan() {
 function randeazaTotal() {
   const b = bifate();
   const suma = b.reduce((s, c) => s + pret(c), 0);
-  $('total').innerHTML = `<strong>${b.length}</strong> ${b.length === 1 ? 'comandă bifată' : 'comenzi bifate'} · preţ <strong>${lei(suma)}</strong>`
+  const opriri = grupeaza(b).length;
+  $('total').innerHTML = `<strong>${b.length}</strong> ${b.length === 1 ? 'comandă bifată' : 'comenzi bifate'}${
+    opriri < b.length ? ` (<strong>${opriri}</strong> ${opriri === 1 ? 'client' : 'clienţi'} pe borderou)` : ''} · preţ <strong>${lei(suma)}</strong>`
     + ` · numerar de încasat <strong>${lei(numerar(b))}</strong>`;
 }
 
@@ -365,12 +388,12 @@ function randeazaHarta() {
   initHarta();
   setTimeout(() => harta.invalidateSize(), 0);
   strat.clearLayers();
-  const b = bifate().filter(c => c.lat != null);
+  const b = bifate().filter(c => c.lat != null), nr = numere(bifate());
   const pct = [];
   L.marker([plecare.lat, plecare.lon], { icon: marcaj('⌂', 'plecare'), title: 'Plecare: ' + plecare.adresa }).addTo(strat);
   pct.push([plecare.lat, plecare.lon]);
-  b.forEach((c, k) => {
-    const m = L.marker([c.lat, c.lon], { icon: marcaj(k + 1, c.demo ? 'demo' : ''), draggable: true, title: c.client_nume + (c.demo ? ' (DEMO)' : '') }).addTo(strat)
+  b.forEach(c => {
+    const m = L.marker([c.lat, c.lon], { icon: marcaj(nr.get(c.id), c.demo ? 'demo' : ''), draggable: true, title: c.client_nume + (c.demo ? ' (DEMO)' : '') }).addTo(strat)
       .bindPopup(`<b>${esc(c.client_nume)}</b><br>${esc(c.client_adresa ?? '')}`);
     m.on('dragend', () => salveazaPunct(c, m.getLatLng().lat, m.getLatLng().lng));   // punct greşit → îl muţi
     pct.push([c.lat, c.lon]);
@@ -561,8 +584,8 @@ function cardLivrare(l) {
     </div>
     <table class="lst">
       <thead><tr><th></th><th>Client</th><th>Telefon</th><th>Adresă</th><th>Produse</th><th>Preţ</th></tr></thead>
-      <tbody>${l.comenzi.map((c, k) => `<tr${c.demo ? ' class="demo"' : ''}>
-        <td class="ordine"><span class="bulina">${k + 1}</span></td>
+      <tbody>${(nr => l.comenzi.map(c => `<tr${c.demo ? ' class="demo"' : ''}>
+        <td class="ordine"><span class="bulina">${nr.get(c.id)}</span></td>
         <td><div class="client">${esc(c.client_nume)}${c.demo ? DEMO : ''}</div><div class="mic-dim mono">${esc(c.numar)}</div></td>
         <td>${esc(c.client_telefon ?? '—')}</td>
         <td>${esc(c.client_adresa ?? '—')}${c.judet ? `<div class="mic-dim">${esc(c.judet)}</div>` : ''}${
@@ -570,7 +593,7 @@ function cardLivrare(l) {
         <td class="produse">${c.produse.map(p => `<div>${esc(p)}</div>`).join('')}</td>
         <td>${c.de_incasat ? lei(c.de_incasat) : '<span class="dim">—</span>'}${c.de_incasat != null && c.coloana_borderou
           ? `<div class="mic-dim">pe borderou: ${COLOANE[c.coloana_borderou]}</div>` : ''}${c.plata ? `<div class="mic-dim">${esc(PLATI[c.plata] ?? c.plata)}</div>` : ''}</td>
-      </tr>`).join('')}</tbody>
+      </tr>`).join(''))(numere(l.comenzi))}</tbody>
     </table>
   </div>`;
 }
@@ -578,20 +601,22 @@ function cardLivrare(l) {
 // Borderoul de livrare (userul, 2026-10-19 — modelul „Livrare jud ALBA SIBIU 16.10.2026.pdf"): A4 orizontal,
 // FIRMA · DELEGAT / TELEFON / OBSERVAŢII · LOCALITATE / STRADA · Preţ · Bon · Factură + chitanţă · OP · colete
 // (colete — de mână), totalurile şi „Total numerar de încasat" (Bon + Factură + chitanţă). Fără hartă.
-const faraDiacritice = t => String(t).normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 function borderouHtml(l, previzualizare = false) {
   const judete = [...new Set(l.comenzi.map(c => c.judet).filter(Boolean))].map(j => faraDiacritice(j).toUpperCase());
   const [a, ll, z] = l.data.split('-');
   const sume = { pret: 0, bon: 0, factura: 0, op: 0 };
-  const randuri = l.comenzi.map(c => {
-    const col = c.coloana_borderou, p = pret(c);
-    sume.pret += p; if (col) sume[col] += p;
-    const celula = k => `<td${k === 'factura' ? ' class="numerar"' : ''}>${col === k && c.de_incasat != null ? lei2(p) : ''}</td>`;
+  // un rând pe client (comenzile lui comasate), cu preţul fiecărei comenzi pe rândul lui, în celulă
+  const unice = xs => [...new Set(xs.filter(Boolean))];
+  const randuri = grupeaza(l.comenzi).map(g => {
+    for (const c of g) { sume.pret += pret(c); if (c.coloana_borderou) sume[c.coloana_borderou] += pret(c); }
+    const cuPret = g.filter(c => c.de_incasat != null);
+    const preturi = cs => cs.map(c => lei2(pret(c))).join('<br>');
+    const celula = k => `<td${k === 'factura' ? ' class="numerar"' : ''}>${preturi(cuPret.filter(c => c.coloana_borderou === k))}</td>`;
     return `<tr>
-      <td class="firma">${esc(c.client_nume)}${c.demo ? ' (DEMO)' : ''}</td>
-      <td>${[c.client_telefon, c.observatii_livrare].filter(Boolean).map(esc).join('<br>')}</td>
-      <td>${esc(c.client_adresa ?? '')}</td>
-      <td>${c.de_incasat != null ? lei2(p) : ''}</td>${celula('bon')}${celula('factura')}${celula('op')}<td></td></tr>`;
+      <td class="firma">${esc(g[0].client_nume)}${g.some(c => c.demo) ? ' (DEMO)' : ''}</td>
+      <td>${[...unice(g.map(c => c.client_telefon)), ...unice(g.map(c => c.observatii_livrare))].map(esc).join('<br>')}</td>
+      <td>${unice(g.map(c => c.client_adresa)).map(esc).join('<br>')}</td>
+      <td>${preturi(cuPret)}</td>${celula('bon')}${celula('factura')}${celula('op')}<td></td></tr>`;
   }).join('');
   return `<table>
       <colgroup><col style="width:19%"><col style="width:15.5%"><col style="width:13%"><col style="width:8.5%"><col style="width:8%">

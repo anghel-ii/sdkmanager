@@ -1112,6 +1112,13 @@ async function main() {
         && db2().prepare('SELECT observatii_livrare FROM comanda WHERE id = ?').get(id0).observatii_livrare === null);
     }
     verifica('livrări: sumă negativă → 400', (await cer('PUT', `/api/livrari/comanda/${iasi}`, { de_incasat: '-3' })).stare === 400);
+    // cu punct sau cu virgulă (userul, 2026-10-30) — web/suma.js, acelaşi în pagină şi pe server
+    for (const [scris, valoare] of [['12.5', 12.5], ['1.200', 1200], ['1,200', 1200], ['1.200,50', 1200.5], ['1,200.50', 1200.5], ['1 200 lei', 1200]]) {
+      await cer('PUT', `/api/livrari/comanda/${iasi}`, { de_incasat: scris });
+      verifica(`livrări: preţul „${scris}" → ${valoare}`, db2().prepare('SELECT de_incasat FROM comanda WHERE id = ?').get(iasi).de_incasat === valoare);
+    }
+    verifica('livrări: preţ „abc" → 400', (await cer('PUT', `/api/livrari/comanda/${iasi}`, { de_incasat: 'abc' })).stare === 400);
+    await cer('PUT', `/api/livrari/comanda/${iasi}`, { de_incasat: '1250,5' });
     verifica('livrări: coordonate în afara României → 400', (await cer('PUT', `/api/livrari/comanda/${iasi}`, { lat: 51.5, lon: -0.1 })).stare === 400);
     verifica('livrări: coordonatele din România se salvează', (await cer('PUT', `/api/livrari/comanda/${iasi}`, { lat: 47.24, lon: 26.72, geo_adresa: 'x' })).stare === 200);
     c = await cand();
