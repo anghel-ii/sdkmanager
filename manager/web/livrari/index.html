@@ -28,9 +28,12 @@
   .judete button.fara { border-style: dashed; color: var(--cald); }
 
   .plan[hidden] { display: none; }
-  .plan { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(380px, 1fr); gap: 16px; align-items: start; }
-  /* după locul paginii (meniul din stânga poate fi lat sau restrâns), nu după ecran */
-  @container continut (max-width: 1180px) { .plan { grid-template-columns: 1fr; } }
+  .plan { display: grid; grid-template-columns: minmax(0, 1fr) clamp(380px, 32%, 560px); gap: 16px; align-items: start; }
+  /* după locul paginii (meniul din stânga poate fi lat sau restrâns), nu după ecran. Harta stă lângă listă doar
+     când încape tabelul întreg (~950 px, cu preţul) — altfel trece sub el (userul, 2026-10-30: intra peste preţuri) */
+  @container continut (max-width: 1420px) { .plan { grid-template-columns: 1fr; } }
+  /* plasă: un tabel mai lat decât coloana lui (nume lungi) se derulează în card, nu intră sub hartă */
+  #tabel { overflow-x: auto; }
   .harta-card { position: sticky; top: 16px; }
 
   table.lst { width: 100%; border-collapse: collapse; font-size: .88rem; }
@@ -53,7 +56,7 @@
   select.coloana.salvat { border-color: var(--ok); }
   input.incasat { width: 110px; padding: 6px 8px; text-align: right; font-family: 'JetBrains Mono', ui-monospace, monospace; }
   input.incasat.salvat { border-color: var(--ok); }
-  textarea.obs { width: 190px; min-height: 38px; padding: 6px 8px; font-size: .84rem; resize: vertical; }
+  textarea.obs { width: 180px; min-height: 38px; padding: 6px 8px; font-size: .84rem; resize: vertical; }
   textarea.obs.salvat { border-color: var(--ok); }
   .fara-punct { color: var(--cald); font-size: .78rem; }
   button.mic { padding: 4px 9px; font-size: .78rem; }
@@ -109,6 +112,10 @@
     #borderou .total-numerar { margin: 14pt auto 0; break-inside: avoid; border-collapse: collapse; width: auto; }
     #borderou .total-numerar td { border: 2px solid #000; padding: 4pt 10pt; font-size: 11pt; height: auto; }
     #borderou .total-numerar td:first-child { font-weight: 700; width: 110pt; }
+    /* previzualizarea (userul, 2026-10-30): „NU E FINAL" în titlu şi pe diagonală, pe fiecare pagină (fixed se repetă la tipar) */
+    #borderou .nefinal { color: #000; }
+    #borderou .filigran { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-24deg); z-index: -1;
+                          font: 700 96pt 'Times New Roman', Times, serif; color: #000; opacity: .09; white-space: nowrap; pointer-events: none; }
   }
 </style>
 </head>
@@ -136,6 +143,7 @@
         <span class="total" id="total"></span>
         <label class="mic-dim" for="dataLivrare">Data livrării</label>
         <input type="date" id="dataLivrare">
+        <button id="previzualizeaza" title="Borderoul de tipar, marcat „NU E FINAL" — livrarea nu se programează">Previzualizează livrarea</button>
         <button class="verde" id="confirma">Confirmă livrarea</button>
       </div>
     </div>
@@ -525,6 +533,17 @@ $('confirma').addEventListener('click', async () => {
   b.forEach(c => debifate.delete(c.id));
   incarca();
 });
+// „Previzualizează livrarea" (userul, 2026-10-30): borderoul comenzilor bifate, în ordinea traseului, marcat „NU E FINAL" —
+// doar de printat / de făcut socoteala; livrarea NU se programează şi comenzile rămân aici.
+$('previzualizeaza').addEventListener('click', async () => {
+  const b = bifate();
+  if (!b.length) return alerta('Bifează cel puţin o comandă.');
+  const lipsa = b.filter(faraColoana);
+  if (lipsa.length && !(await confirma(`La ${lipsa.length === 1 ? 'o comandă' : `${lipsa.length} comenzi`} nu e ales unde ajunge preţul pe borderou — `
+    + `preţul lor apare doar la „Preţ", nu şi în totalul de numerar:\n${lipsa.map(c => c.client_nume).join('\n')}`, 'Previzualizează oricum'))) return;
+  const azi = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Bucharest' });
+  tipareste({ data: $('dataLivrare').value || azi, comenzi: b }, true);
+});
 const ziua = zi => new Date(zi + 'T12:00:00').toLocaleDateString('ro-RO', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
 // implicit mâine
 { const m = new Date(Date.now() + 864e5); $('dataLivrare').value = `${m.getFullYear()}-${String(m.getMonth() + 1).padStart(2, '0')}-${String(m.getDate()).padStart(2, '0')}`; }
@@ -560,7 +579,7 @@ function cardLivrare(l) {
 // FIRMA · DELEGAT / TELEFON / OBSERVAŢII · LOCALITATE / STRADA · Preţ · Bon · Factură + chitanţă · OP · colete
 // (colete — de mână), totalurile şi „Total numerar de încasat" (Bon + Factură + chitanţă). Fără hartă.
 const faraDiacritice = t => String(t).normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-function borderouHtml(l) {
+function borderouHtml(l, previzualizare = false) {
   const judete = [...new Set(l.comenzi.map(c => c.judet).filter(Boolean))].map(j => faraDiacritice(j).toUpperCase());
   const [a, ll, z] = l.data.split('-');
   const sume = { pret: 0, bon: 0, factura: 0, op: 0 };
@@ -577,7 +596,7 @@ function borderouHtml(l) {
   return `<table>
       <colgroup><col style="width:19%"><col style="width:15.5%"><col style="width:13%"><col style="width:8.5%"><col style="width:8%">
         <col style="width:9%"><col style="width:9%"><col style="width:6%"></colgroup>
-      <thead><tr><th class="titlu" colspan="8"><h1>Transport${judete.length ? ` Jud ${esc(judete.join('-'))}` : ''} ${z}.${ll}.${a}</h1></th></tr>
+      <thead><tr><th class="titlu" colspan="8"><h1>${previzualizare ? '<span class="nefinal">PREVIZUALIZARE — NU E FINAL · </span>' : ''}Transport${judete.length ? ` Jud ${esc(judete.join('-'))}` : ''} ${z}.${ll}.${a}</h1></th></tr>
         <tr><th>FIRMA</th><th>NUME DELEGAT-NR TELEFON-OBSERVATII</th><th>LOCALITATE/ STRADA</th><th>Preţ</th><th>Bon</th>
         <th>Factura + chitanta</th><th>OP</th><th>colete</th></tr></thead>
       <tbody>${randuri}
@@ -585,17 +604,18 @@ function borderouHtml(l) {
         <td class="suma numerar">${lei2(sume.factura)}</td><td class="suma">${lei2(sume.op)}</td><td></td></tr></tbody>
       <tfoot><tr><td colspan="8"></td></tr></tfoot>
     </table>
-    <table class="total-numerar"><tr><td>Total numerar de încasat:</td><td>${lei2(sume.bon + sume.factura)}</td></tr></table>`;
+    <table class="total-numerar"><tr><td>Total numerar de încasat:</td><td>${lei2(sume.bon + sume.factura)}</td></tr></table>${
+      previzualizare ? '<div class="filigran">NU E FINAL</div>' : ''}`;
 }
 
-function tipareste(l) {
+function tipareste(l, previzualizare = false) {
   document.getElementById('borderou')?.remove();
   const b = document.createElement('div');
   b.id = 'borderou';
-  b.innerHTML = borderouHtml(l);
+  b.innerHTML = borderouHtml(l, previzualizare);
   document.body.append(b);
   document.body.classList.add('tipar-borderou');
-  noteazaVazut('A printat borderoul de livrare', null, `${l.data} · ${l.comenzi.length} comenzi`);
+  noteazaVazut(previzualizare ? 'A printat previzualizarea borderoului (nu e final)' : 'A printat borderoul de livrare', null, `${l.data} · ${l.comenzi.length} comenzi`);
   window.addEventListener('afterprint', () => { document.body.classList.remove('tipar-borderou'); b.remove(); }, { once: true });
   window.print();
 }
