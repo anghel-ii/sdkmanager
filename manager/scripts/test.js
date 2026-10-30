@@ -1005,10 +1005,23 @@ async function main() {
     verifica('acţiune necunoscută → 404', (await cer('POST', '/api/clienti/propuneri/7/sterge')).stare === 404);
     cookie = null;
     await cer('POST', '/api/login', { user: 'maria', parola: 'parola-maria-1' });
-    verifica('biroul n-are pagina Clienţi: nici lista, nici propunerile, nici aprobarea (403)',
-      (await cer('GET', '/api/clienti')).stare === 403 && (await cer('GET', '/api/clienti/propuneri')).stare === 403
-      && (await cer('POST', '/api/clienti/preia')).stare === 403 && (await cer('POST', '/api/clienti/propuneri/7/aproba')).stare === 403
-      && (await cer('PUT', '/api/clienti/2', { nume: 'Birou' })).stare === 403 && (await cer('DELETE', '/api/clienti/2')).stare === 403);
+    // biroul (userul, 2026-10-30): vede pagina Clienţi şi modifică doar clienţii cu agent BIROU / NECUNOSCUT / fără agent
+    schimba({ id: 60, agent: 'NECUNOSCUT', nume: 'Fara Agent SRL' });
+    schimba({ id: 61, agent: 'Birou', nume: 'Al Biroului SRL' });
+    verifica('biroul: lista + preluarea merg', (await cer('GET', '/api/clienti')).stare === 200 && (await cer('POST', '/api/clienti/preia')).stare === 200
+      && db2().prepare('SELECT COUNT(*) AS n FROM client WHERE extern_id IN (60, 61)').get().n === 2);
+    verifica('biroul: nici propunerile, nici aprobarea, nici ştergerea (403); insigna „de aprobat" = 0',
+      (await cer('GET', '/api/clienti/propuneri')).stare === 403 && (await cer('POST', '/api/clienti/propuneri/7/aproba')).stare === 403
+      && (await cer('DELETE', '/api/clienti/60')).stare === 403 && (await cer('GET', '/api/sumar')).date.deAprobat === 0);
+    verifica('biroul: clientul unui agent de vânzări → 403', (await cer('PUT', '/api/clienti/2', { nume: 'Birou' })).stare === 403
+      && db2().prepare('SELECT nume FROM client WHERE extern_id = 2').get().nume === 'Dan');
+    const bm = await cer('PUT', '/api/clienti/60', { nume: 'Fara Agent Modificat SRL', agent: 'BIROU', telefon_delegat: '0744' });
+    const fa = db2().prepare('SELECT * FROM client WHERE extern_id = 60').get();
+    verifica('biroul: modifică un client NECUNOSCUT (şi îl trece la BIROU) → imediat în copie', bm.stare === 200
+      && fa.nume === 'Fara Agent Modificat SRL' && fa.agent === 'BIROU' && fa.telefon_delegat === '0744', JSON.stringify(fa));
+    verifica('biroul: „Birou" (altă scriere) e tot al lui', (await cer('PUT', '/api/clienti/61', { nume: 'Al Biroului SRL', agent: 'Birou' })).stare === 200);
+    verifica('biroul: nu-l poate muta la un agent de vânzări (403)', (await cer('PUT', '/api/clienti/60', { nume: 'X', agent: 'Ion' })).stare === 403
+      && db2().prepare('SELECT agent FROM client WHERE extern_id = 60').get().agent === 'BIROU');
     verifica('… dar are sugestiile din configurator', (await cer('GET', '/api/clienti/cauta?q=an')).stare === 200);
     cookie = null;
     await cer('POST', '/api/login', { user: 'ion', parola: 'parola-noua-1' });

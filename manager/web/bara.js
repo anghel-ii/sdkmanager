@@ -456,7 +456,7 @@
       } catch {}
       radacina.querySelector('#linkAdmin').hidden = eu.rol !== 'admin';     // conturile — doar admin
       radacina.querySelector('#linkActivitate')?.toggleAttribute('hidden', eu.rol === 'birou');   // jurnalul tuturor — admin + conducere
-      radacina.querySelector('#linkClienti').hidden = eu.rol === 'birou';   // clienţii — nu şi biroul (userul, 2026-10-02)
+      radacina.querySelector('#linkClienti').hidden = false;   // şi biroul (userul, 2026-10-30; înainte nu, 2026-10-02)
       // de la distanţă se deschid doar tabloul de admin şi tichetele (releu.js le blochează pe restul) → restul meniului dispare
       if (laDistanta) radacina.querySelectorAll('#ofertaNoua, .grup:not(#grupAdmin), a[href]:not(.marca)').forEach(el => {
         if (!['/admin', '/tichete'].includes(el.getAttribute('href'))) el.hidden = true;

@@ -137,9 +137,13 @@ const agenti = laCloudflare('/api/agenti');
 // pe Cloudflare stau ca propuneri şi abia aprobarea le scrie în baza de clienţi (de
 // unde le preia copia de aici). Lista o vede oricine; aprobă conducerea sau adminul.
 const APROBA = ['admin', 'conducere'];
-// Pagina Clienţi (lista, preluarea, propunerile) — nu şi biroul (userul, 2026-10-02).
-// Sugestiile din configurator (/api/clienti/cauta) rămân pt. toţi: biroul face oferte.
-const CLIENTI = ['admin', 'conducere'];
+// Pagina Clienţi (lista, preluarea) — şi biroul (userul, 2026-10-30; până atunci nu, 2026-10-02). Propunerile
+// agenţilor („De aprobat") rămân la cei care le aprobă. Sugestiile din configurator (/api/clienti/cauta) sunt pt. toţi.
+const CLIENTI = ['admin', 'conducere', 'birou'];
+// Biroul modifică (direct, ca şi conducerea — nu şterge) doar clienţii fără agent de vânzări: agent BIROU,
+// NECUNOSCUT sau gol (userul, 2026-10-30); agentul îl poate pune tot doar BIROU / NECUNOSCUT — nu-l mută la un agent.
+const AGENTI_BIROU = ['BIROU', 'NECUNOSCUT'];
+const alBiroului = agent => !String(agent ?? '').trim() || AGENTI_BIROU.includes(String(agent).trim().toUpperCase());
 // Ultima listă citită de pe Cloudflare: o reîmprospătează serverul când s-a schimbat ceva acolo
 // (verificaCloudflare; nu fiecare pagină deschisă) şi anunţă paginile când se schimbă lista — insigna de
 // pe „Clienţi" (în /api/sumar) şi secţiunea „De aprobat" se actualizează singure.
@@ -171,10 +175,17 @@ async function decide({ res, params }) {
 }
 // Conducerea modifică (direct, fără aprobare) sau şterge un client — :id = id-ul de pe
 // Cloudflare (extern_id). Copia de aici se ia de acolo imediat după, ca la aprobare.
-async function modificaSauSterge({ req, res, params }) {
+async function modificaSauSterge({ req, res, params, utilizator }) {
   if (!/^\d+$/.test(params.id)) return eroare(res, 404, 'Client necunoscut.');
   if (!activ()) return eroare(res, 409, 'Legătura cu Cloudflare nu e configurată.');
-  const r = await laCF(req.method, `/api/clienti/${params.id}`, req.method === 'PUT' ? JSON.stringify(await corpJson(req)) : undefined);
+  const corp = req.method === 'PUT' ? await corpJson(req) : undefined;
+  if (utilizator.rol === 'birou') {
+    const c = db().prepare('SELECT agent FROM client WHERE extern_id = ? AND sters_la IS NULL').get(Number(params.id));
+    if (!c) return eroare(res, 404, 'Clientul nu mai există.');
+    if (!alBiroului(c.agent)) return eroare(res, 403, `Clientul e al agentului ${c.agent} — îl modifică el sau conducerea.`);
+    if ('agent' in corp && !alBiroului(corp.agent)) return eroare(res, 403, 'Biroul poate pune la agent doar BIROU sau NECUNOSCUT.');
+  }
+  const r = await laCF(req.method, `/api/clienti/${params.id}`, corp && JSON.stringify(corp));
   if (r.eroare) return eroare(res, ...r.eroare);
   if (r.stare === 200) await preia();
   json(res, r.stare, r.date);
@@ -204,15 +215,15 @@ async function puneCheie({ req, res }) {
 }
 
 module.exports = {
-  preia, porneste, verificaCloudflare, nrDeAprobat, laCF, activ, cheie,
+  preia, porneste, verificaCloudflare, nrDeAprobat, laCF, activ, cheie, alBiroului,
   rute: [
     ['GET',  '/api/clienti',       { handler: lista, rol: CLIENTI }],
     ['GET',  '/api/clienti/cauta', { handler: cauta }],
     ['POST', '/api/clienti/preia', { handler: preiaAcum, rol: CLIENTI }],
-    ['GET',  '/api/clienti/propuneri', { handler: propuneri, rol: CLIENTI }],
+    ['GET',  '/api/clienti/propuneri', { handler: propuneri, rol: APROBA }],
     ['POST', '/api/clienti/propuneri/:id/:actiune', { handler: decide, rol: APROBA }],
     ['PUT',   '/api/clienti/cheie', { handler: puneCheie, rol: 'admin' }],
-    ['PUT',    '/api/clienti/:id',  { handler: modificaSauSterge, rol: APROBA }],
+    ['PUT',    '/api/clienti/:id',  { handler: modificaSauSterge, rol: CLIENTI }],   // biroul: doar BIROU / NECUNOSCUT
     ['DELETE', '/api/clienti/:id',  { handler: modificaSauSterge, rol: APROBA }],
     ['GET',   '/api/agenti',       { handler: agenti, rol: 'admin' }],
     ['POST',  '/api/agenti',       { handler: agenti, rol: 'admin' }],

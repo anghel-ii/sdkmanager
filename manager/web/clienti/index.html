@@ -51,7 +51,7 @@
   .modifica-client .campuri { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; margin-top: 12px; }
   .modifica-client label { display: flex; flex-direction: column; gap: 4px; font-size: .78rem; color: var(--text-dim); }
   .modifica-client label.lat { grid-column: 1 / -1; }
-  .modifica-client input, .modifica-client textarea { width: 100%; font-size: .9rem; padding: 7px 10px; }
+  .modifica-client input, .modifica-client textarea, .modifica-client select { width: 100%; font-size: .9rem; padding: 7px 10px; }
   .modifica-client .eroare { color: var(--danger); margin-top: 10px; }
 </style>
 </head>
@@ -63,7 +63,7 @@
 <div id="continut">
   <header class="pagina-cap">
     <h1>Clienţi</h1>
-    <p>Copia bazei de clienţi a agenţilor de vânzări — se actualizează singură. Ce trimit agenţii aşteaptă întâi la „De aprobat". Conducerea poate modifica sau şterge un client direct din listă.</p>
+    <p>Copia bazei de clienţi a agenţilor de vânzări — se actualizează singură. Ce trimit agenţii aşteaptă întâi la „De aprobat". Conducerea poate modifica sau şterge un client direct din listă; biroul poate modifica clienţii cu agent BIROU sau NECUNOSCUT.</p>
   </header>
   <section id="deAprobat" hidden>
     <h2>De aprobat <span class="cate" id="nrPropuneri"></span>
@@ -117,6 +117,11 @@ const ETICHETE = { nume: 'Nume client', cui: 'CUI', judet: 'Judeţ', localitate:
   discounturi: 'Discounturi' };
 const TIPURI = { nou: 'CLIENT NOU', modificare: 'MODIFICARE', stergere: 'ŞTERGERE' };
 const poateAproba = () => eu?.rol === 'admin' || eu?.rol === 'conducere';
+// biroul (userul, 2026-10-30): modifică doar clienţii fără agent de vânzări — BIROU, NECUNOSCUT sau gol (serverul verifică şi el)
+const AGENTI_BIROU = ['BIROU', 'NECUNOSCUT'];
+const alBiroului = agent => !String(agent ?? '').trim() || AGENTI_BIROU.includes(String(agent).trim().toUpperCase());
+const poateModifica = c => poateAproba() || (eu?.rol === 'birou' && alBiroului(c.agent));
+const areActiuni = () => poateAproba() || eu?.rol === 'birou';
 
 async function incarcaPropuneri() {
   const r = await api('/api/clienti/propuneri');
@@ -195,7 +200,7 @@ function randeaza() {
   const doua = (a, b) => [a, b].filter(Boolean).join('<br>');
   $('lista').innerHTML = `<p class="dim mic" style="margin-bottom:10px">${cl.length} clienţi${cl.length > arata.length ? ` — se văd primii ${arata.length}, caută ca să-l găseşti pe cel dorit` : ''}</p>
     <table class="clienti">
-    <thead><tr><th>Client</th><th>Agent</th><th>Judeţ / localitate</th><th>Sediu / livrare</th><th>Administrator</th><th>E-mail</th><th>Delegat</th><th>Plată / discounturi</th>${poateAproba() ? '<th></th>' : ''}</tr></thead>
+    <thead><tr><th>Client</th><th>Agent</th><th>Judeţ / localitate</th><th>Sediu / livrare</th><th>Administrator</th><th>E-mail</th><th>Delegat</th><th>Plată / discounturi</th>${areActiuni() ? '<th></th>' : ''}</tr></thead>
     <tbody>${arata.map(c => `<tr data-id="${c.extern_id}">
       <td><b>${esc(c.nume)}</b><br><span class="dim mic">${esc(c.cui)}</span></td>
       <td>${esc(c.agent)}${c.modificat_la ? `<br><span class="dim mic" title="ultima modificare de la agent">${dataOra(c.modificat_la)}</span>` : ''}</td>
@@ -205,7 +210,8 @@ function randeaza() {
       <td>${c.email ? `<a href="mailto:${esc(c.email)}">${esc(c.email)}</a>` : ''}</td>
       <td>${doua(esc(c.delegat), tel(c.telefon_delegat))}</td>
       <td class="mic">${doua(c.modalitate_plata ? `<b>${esc(c.modalitate_plata)}</b>` : '', esc(c.discounturi))}</td>
-      ${poateAproba() ? `<td class="actiuni"><button class="mic" data-fa="modifica">Modifică</button><button class="mic rosu-contur" data-fa="sterge">Şterge</button></td>` : ''}
+      ${areActiuni() ? `<td class="actiuni">${poateModifica(c) ? '<button class="mic" data-fa="modifica">Modifică</button>' : ''}${
+        poateAproba() ? '<button class="mic rosu-contur" data-fa="sterge">Şterge</button>' : ''}</td>` : ''}
     </tr>`).join('')}</tbody></table>`;
   $('lista').querySelectorAll('button[data-fa]').forEach(b => b.addEventListener('click', () => {
     const c = date.clienti.find(x => x.extern_id === +b.closest('tr').dataset.id);
@@ -226,12 +232,15 @@ function modifica(c) {
   const d = document.createElement('dialog');
   d.className = 'mesaj-dialog modifica-client';
   const agenti = [...new Set(date.clienti.map(x => x.agent).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'ro'));
+  // biroul alege agentul doar între BIROU şi NECUNOSCUT (nu mută clientul la un agent de vânzări)
+  const biroul = eu?.rol === 'birou', agentAcum = String(c.agent ?? '').trim().toUpperCase() || 'NECUNOSCUT';
   const camp = (k, et) => `<label class="${LATE.includes(k) ? 'lat' : ''}">${et}${k === 'discounturi'
     ? `<textarea name="${k}" rows="2" maxlength="${LUNGIMI[k]}">${esc(c[k])}</textarea>`
+    : k === 'agent' && biroul ? `<select name="agent">${AGENTI_BIROU.map(a => `<option${a === agentAcum ? ' selected' : ''}>${a}</option>`).join('')}</select>`
     : `<input name="${k}" value="${esc(c[k])}" maxlength="${LUNGIMI[k]}" autocomplete="off"${k === 'agent' ? ' list="agentiCunoscuti"' : ''}>`}</label>`;
   const inAsteptare = propuneri.some(p => p.actual?.id === c.extern_id);
   d.innerHTML = `<b>Modifică clientul</b>
-    <p class="dim mic">Se salvează direct în baza de clienţi, fără aprobare — agentul vede imediat datele noi.${inAsteptare
+    <p class="dim mic">Se salvează direct în baza de clienţi, fără aprobare${biroul ? '' : ' — agentul vede imediat datele noi'}.${inAsteptare
       ? '\n⚠ Agentul are o modificare în aşteptare pe acest client (sus, la „De aprobat"): dacă o aprobi după, o scrie peste ce salvezi acum.' : ''}</p>
     <div class="campuri">${ORDINE.map(k => camp(k, k === 'nume' ? 'Nume client *' : ETICHETE[k] ?? 'Agent')).join('')}</div>
     <datalist id="agentiCunoscuti">${agenti.map(a => `<option value="${esc(a)}">`).join('')}</datalist>
@@ -272,19 +281,19 @@ $('preia').addEventListener('click', async () => {
   $('preia').disabled = false;
   if (r && !r.ok) alerta((await r.json().catch(() => ({}))).eroare || 'Preluarea a eşuat.');
   incarca();
-  incarcaPropuneri();
+  if (poateAproba()) incarcaPropuneri();
 });
 
 (async () => {
   const r = await api('/api/eu');
   if (!r) return;
   eu = (await r.json()).utilizator;
-  // biroul n-are pagina Clienţi (nici API-ul ei) — înapoi la pagina principală
-  if (eu.rol === 'birou') { location.replace('/'); return; }
+  // biroul vede lista (şi modifică ce e al biroului), nu şi „De aprobat" — aprobă conducerea / adminul
+  const cuPropuneri = poateAproba() ? incarcaPropuneri : () => {};
   await incarca();
-  incarcaPropuneri();
+  cuPropuneri();
   // serverul verifică propunerile din minut în minut şi anunţă când se schimbă
-  urmareste(() => { incarca(); incarcaPropuneri(); });
+  urmareste(() => { incarca(); cuPropuneri(); });
 })();
 
 </script>

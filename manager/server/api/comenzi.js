@@ -790,7 +790,8 @@ const sumar = ctx => json(ctx.res, 200, {
     FROM comanda WHERE anulat = 0
 `).get(),
   sticla: require('../sticla.js').sumarSticla(),   // bucăţi de sticlă de comandat
-  deAprobat: require('../clienti.js').nrDeAprobat(), // clienţi noi / modificări de la agenţi, de aprobat
+  // clienţi noi / modificări de la agenţi, de aprobat — doar la cei care aprobă (biroul vede Clienţi din 2026-10-30, nu aprobă)
+  deAprobat: ['admin', 'conducere'].includes(ctx.utilizator.rol) ? require('../clienti.js').nrDeAprobat() : 0,
   // anulări de decis — la admin cele reale (le decide pe bune, server/index.js), deşi în rest e în demo
   cereri: ctx.utilizator.rol === 'admin' ? peBune(() => require('../cereri.js').nrDeschise())
     : ctx.utilizator.rol === 'conducere' ? require('../cereri.js').nrDeschise() : 0,
