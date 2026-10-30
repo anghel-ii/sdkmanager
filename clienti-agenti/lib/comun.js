@@ -14,17 +14,23 @@ export const CAMPURI = {
   discounturi: 1500, modalitate_plata: 120,
 };
 
-// Corpul cererii → câmpurile clientului validate, sau { eroare }. Telefonul /
-// e-mailul se cer doar la clientul NOU: mulţi din Excel n-au niciunul, iar
-// agentul trebuie să le poată completa restul fără să fie blocat.
+// Clientul NOU are toate câmpurile obligatorii, în afară de reduceri (userul, 2026-10-30). Cei de
+// dinainte (din Excel, FAN, TP) au multe goale — la ei se cere doar numele, ca agentul să le poată
+// completa pe rând fără să fie blocat. Ordinea şi numele = coloanele paginii (public/index.html).
+export const OBLIGATORII_NOU = {
+  nume: 'nume', cui: 'CUI (sau „Persoana Fizica")', judet: 'judeţ', localitate: 'localitate', adresa_sediu: 'adresa sediului',
+  adresa_livrare: 'adresa de livrare', administrator: 'administrator', telefon_administrator: 'telefon administrator',
+  email: 'e-mail', delegat: 'delegat', telefon_delegat: 'telefon delegat', modalitate_plata: 'modalitate de plată',
+};
+
+// Corpul cererii → câmpurile clientului validate, sau { eroare }.
 export async function clientDinCerere(request, nou) {
   let c;
   try { c = await request.json(); } catch { return { eroare: 'Date invalide.' }; }
   const v = Object.fromEntries(Object.entries(CAMPURI).map(([k, max]) => [k, text(c?.[k], max)]));
   if (!v.nume) return { eroare: 'Numele clientului e obligatoriu.' };
-  if (nou && !v.telefon_administrator && !v.telefon_delegat && !v.email) {
-    return { eroare: 'Completează cel puţin un telefon sau e-mailul.' };
-  }
+  const lipsa = nou ? Object.keys(OBLIGATORII_NOU).filter(k => !v[k]) : [];
+  if (lipsa.length) return { eroare: `Client nou — completează: ${lipsa.map(k => OBLIGATORII_NOU[k]).join(', ')}.` };
   return { v };
 }
 
@@ -163,6 +169,7 @@ export async function scrieDirect(request, env, id) {
   const { v, eroare } = await clientDinCerere(request.clone(), !id);
   if (eroare) return { cod: 400, eroare };
   const agent = text((await request.json()).agent, 120);
+  if (!id && !agent) return { cod: 400, eroare: 'Client nou — alege agentul.' };
   const gresit = await agentGresit(env, agent);
   if (gresit) return { cod: 400, eroare: gresit };
   const col = Object.keys(CAMPURI);

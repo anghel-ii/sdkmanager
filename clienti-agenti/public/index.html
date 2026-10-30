@@ -95,6 +95,8 @@
   #salveaza.verde { background: #2e7d4f; border-color: #2e7d4f; color: #fff; }
   #salveaza.verde:disabled { opacity: .7; }
   tr.schimbat td.sterge { box-shadow: inset 3px 0 0 #4caf7d; }
+  /* client nou: câmp obligatoriu încă gol */
+  td.lipsa, tr.nou td.lipsa, tr.astept td.lipsa { background: #3a3315; box-shadow: inset 0 0 0 1px #8a7426; }
   .pastila.schimbat { background: #1c3a2a; color: var(--ok); }
   #fParola { display: grid; gap: 12px; }
   #fParola label { display: grid; gap: 6px; font-size: .9rem; color: var(--dim); }
@@ -137,7 +139,8 @@
     🗑 din stânga şterge clientul (cu confirmare).</p>
   <p class="dim ajutor" id="ajutorAgent">Scrii direct în celule (Enter sau Tab = celula următoare; alt rând = click pe el). La
     sfârşit apeşi „Salvează modificări" sus (verde când ai ceva nesalvat) — modificările pleacă spre aprobare; până sunt
-    aprobate, rândul e galben. Client nou: primul rând, cu nume şi un telefon sau e-mail.
+    aprobate, rândul e galben. Client nou: primul rând, cu TOATE câmpurile completate (în afară de reduceri şi „Alte");
+    la persoane fizice, la CUI scrii „Persoana Fizica".
     Judeţul şi localitatea se aleg din listă (pt. curier şi livrări). Reducerile: doar numărul (15 = 15%).
     🗑 din stânga cere ştergerea clientului (tot cu aprobare); ↺ anulează cererea. Un rând = o singură cerere: dacă îl mai
     modifici până e aprobat, pleacă varianta finală.</p>
@@ -382,6 +385,14 @@ const butonSterge = c => !c ? '' : c.inAsteptare === 'stergere'
   : '<button type="button" title="Şterge clientul">🗑</button>';
 
 const cheieRand = k => (k === 'nou' ? 'nou' : cheieClient(clienti[+k]));
+// Client nou (userul, 2026-10-30): toate coloanele clientului obligatorii — nu reducerile şi „Alte". La fel
+// verifică şi serverul (OBLIGATORII_NOU în lib/comun.js). → [[câmp, titlu]] goale
+const obligatoriiLipsa = v => COL.filter(([k]) => !String(v[k] ?? '').trim());
+// celulele goale ale unui client nou, colorate — doar după ce ai început rândul (altfel rândul gol de sus ar fi tot galben)
+function marcheazaLipsa(tr, c, cheie) {
+  const deMarcat = !c?.id && (ciorne.has(cheie) || erori.has(cheie));
+  for (const [k] of COL) tr.querySelector(`td[data-c="${k}"]`)?.classList.toggle('lipsa', deMarcat && !tr.querySelector(`td[data-c="${k}"]`).textContent.trim());
+}
 // valorile de acum ale rândului (din baza de date), aşa cum le dă citesteRand — cu ele se compară ce scrii
 const original = c => Object.fromEntries(Object.entries(valoriRand(c)).map(([k, v]) => [k, String(v).trim()]));
 const stareRand = (c, cheie) => (erori.has(cheie)
@@ -391,7 +402,11 @@ const stareRand = (c, cheie) => (erori.has(cheie)
 function randHtml(c, k) {
   const cheie = cheieRand(k);
   const v = ciorne.get(cheie) ?? valoriRand(c);
-  const celula = (cheie, clasa = '') => `<td contenteditable="plaintext-only" spellcheck="false" data-c="${esc(cheie)}"${clasa ? ` class="${clasa}"` : ''}>${esc(v[cheie])}</td>`;
+  const lipsa = !c?.id && (ciorne.has(cheie) || erori.has(cheie)) ? new Set(obligatoriiLipsa(v).map(([x]) => x)) : new Set();
+  const celula = (cheie, clasa = '') => {
+    clasa = [clasa, lipsa.has(cheie) ? 'lipsa' : ''].filter(Boolean).join(' ');
+    return `<td contenteditable="plaintext-only" spellcheck="false" data-c="${esc(cheie)}"${clasa ? ` class="${clasa}"` : ''}>${esc(v[cheie])}</td>`;
+  };
   return `<tr data-k="${k}" class="${clasaRand(c, k)}${ciorne.has(cheie) ? ' schimbat' : ''}${erori.has(cheie) ? ' greseala' : ''}">
     <td class="sterge">${butonSterge(c)}</td>
     ${COL.map(([cheie]) => celula(cheie, cheie === 'nume' ? 'nume' : '')).join('')}
@@ -431,6 +446,7 @@ function noteaza(tr) {
   erori.delete(cheie);
   tr.classList.toggle('schimbat', ciorne.has(cheie));
   tr.classList.remove('greseala');
+  marcheazaLipsa(tr, c, cheie);
   tr.querySelector('.stare').innerHTML = stareRand(c, cheie);
   actualizeazaButon();
 }
@@ -448,6 +464,8 @@ async function salveazaCiorna(cheie) {
   const c = k < 0 ? null : clienti[k];
   if (cheie !== 'nou' && !c) { ciorne.delete(cheie); return null; }   // clientul a dispărut între timp
   if (!v.nume) return { eroare: c ? 'Numele clientului e obligatoriu.' : 'Client nou: scrie numele.' };
+  const lipsa = c?.id ? [] : obligatoriiLipsa(v);
+  if (lipsa.length) return { eroare: `Client nou — completează: ${lipsa.map(([, t]) => t.toLowerCase()).join(', ')}.` };
   const reduceri = Object.fromEntries(GAME.map(g => [g, v[`g:${g}`].replace(/%/g, '').trim()]));
   const gresita = GAME.find(g => reduceri[g] && !/^\d+([.,]\d+)?$/.test(reduceri[g]));
   if (gresita) return { eroare: `Reducerea la ${gresita} trebuie să fie un număr (ex. 15).` };
@@ -455,9 +473,6 @@ async function salveazaCiorna(cheie) {
   if (adresa) return { eroare: adresa };
   if (conducere && v.agent && !agentiPosibili.includes(v.agent)) return { eroare: `Agentul „${v.agent}" nu există — alege-l din listă.` };
   const date = { ...Object.fromEntries(COL.map(([col]) => [col, v[col]])), discounturi: compuneReduceri(reduceri, v.alte) };
-  if (!c?.id && ![date.telefon_administrator, date.telefon_delegat, date.email].some(Boolean)) {
-    return { eroare: 'Client nou: completează cel puţin un telefon sau e-mailul.' };
-  }
   inZbor++;
   try {
     // client existent → PUT pe el; client nou încă neaprobat → PUT pe propunere; altfel client nou
