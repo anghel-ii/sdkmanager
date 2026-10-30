@@ -24,6 +24,8 @@
   #mesaj.ok { background: #1c3a2a; color: var(--ok); }
   #mesaj.eroare { background: #3d1f1f; color: var(--danger); }
   #banda { background: #4a3a12; color: var(--astept); padding: 10px 16px; font-size: .9rem; }
+  /* portalul s-a actualizat cât aveai modificări nesalvate */
+  #actualizare { background: #1f3b5c; color: #cfe3ff; padding: 10px 16px; font-size: .9rem; cursor: pointer; }
 
   /* 1. login */
   #ecranLogin { max-width: 420px; margin: 0 auto; padding: 24px 16px; }
@@ -102,6 +104,8 @@
 <body>
 <!-- adminul intrat în contul agentului din /admin-ul managerului -->
 <div id="banda" hidden></div>
+<div id="actualizare" hidden>Portalul s-a actualizat. Apasă „Salvează modificări" — pagina se reîncarcă singură după
+  (sau apasă aici ca să o reîncarci acum; ce n-ai salvat se pierde).</div>
 
 <!-- 1. Login -->
 <section id="ecranLogin" hidden>
@@ -192,6 +196,7 @@ const { GAME, desfaReduceri, compuneReduceri } = Reduceri;
 
 let clienti = [];
 let semnLista = '';   // „versiunea" listei de pe ecran — vezi actualizarea fără refresh, jos
+let versiuneaMea = null;   // versiunea portalului cu care s-a încărcat pagina (vezi verificaVersiunea)
 let inZbor = 0;       // salvări / ştergeri trimise, încă fără răspuns
 let scrieri = 0;      // câte s-au terminat — o listă adusă înaintea uneia e veche (n-are ce ai scris tu)
 let salvez = false;   // „Salvează modificări" în curs
@@ -229,6 +234,8 @@ async function incarca() {
 function aplicaLista(j) {
   clienti = j.clienti.sort(ordine);
   semnLista = j.semn;
+  versiuneaMea ??= j.versiune ?? null;
+  if (j.versiune && j.versiune !== versiuneaMea) verificaVersiunea(j.versiune);
   deAplicat = null;
   const chei = new Set(clienti.map(cheieClient));
   for (const ch of ciorne.keys()) if (ch !== 'nou' && !chei.has(ch)) { ciorne.delete(ch); erori.delete(ch); }
@@ -286,7 +293,11 @@ async function verificaSchimbari(cuSemn = false) {
   if (document.hidden) { deReverificat = true; return; }   // nicio cerere cu pagina ascunsă: la revenire
   try {
     if (!deAplicat) {
-      if (cuSemn && (await api('/api/clienti?semn')).semn === semnLista) return;
+      if (cuSemn) {
+        const r = await api('/api/clienti?semn');
+        verificaVersiunea(r.versiune);
+        if (r.semn === semnLista) return;
+      }
       const g = scrieri;
       const j = await api('/api/clienti');
       if (!!j.conducere !== conducere) return location.reload();   // contul şi-a schimbat tipul
@@ -296,6 +307,24 @@ async function verificaSchimbari(cuSemn = false) {
     aplicaDacaSePoate();
   } catch { /* fără internet / delogat (api() arată login-ul la 401) — legătura se reface şi verifică atunci */ }
 }
+// ── Portal publicat din nou (userul, 2026-10-30) ─────────────────────────────
+// Legătura live aduce „versiune" după o publicare; pagina întreabă o dată ce versiune e acum (anunţul poate
+// veni şi de la o publicare veche) şi, dacă e alta decât cea cu care s-a încărcat, se reîncarcă singură —
+// doar fără modificări nesalvate; altfel arată banda de sus şi se reîncarcă după „Salvează modificări".
+let deReincarcat = false;
+async function verificaVersiunea(v) {
+  if (v === undefined) { try { v = (await api('/api/clienti?semn')).versiune; } catch { return; } }
+  if (!v || !versiuneaMea || v === versiuneaMea) return;
+  deReincarcat = true;
+  reincarcaDacaSePoate();
+}
+function reincarcaDacaSePoate() {
+  if (!deReincarcat) return;
+  if (!ciorne.size && !salvez && !inZbor && !$('confirmare').open && !$('dParola').open) return location.reload();
+  $('actualizare').hidden = false;
+}
+$('actualizare').addEventListener('click', () => location.reload());   // cu ce n-ai salvat, întreabă browserul
+
 // după o salvare / ştergere sau la revenirea pe pagină: anunţul pierdut între timp
 function reverificaDacaE() { if (deReverificat && !document.hidden && !inZbor && !salvez) { deReverificat = false; verificaSchimbari(); } }
 
@@ -314,7 +343,11 @@ function conecteazaLive() {
     primaLegatura = false;
   };
   // cât salvezi, anunţul vine chiar de la salvarea ta — lista se ia o singură dată, după
-  ws.onmessage = e => { if (e.data !== 'schimbat') return; if (inZbor || salvez) deReverificat = true; else verificaSchimbari(); };
+  ws.onmessage = e => {
+    if (e.data === 'versiune') return verificaVersiunea();
+    if (e.data !== 'schimbat') return;
+    if (inZbor || salvez) deReverificat = true; else verificaSchimbari();
+  };
   ws.onclose = () => {
     clearInterval(ping);
     if (live !== ws) return;
@@ -458,6 +491,7 @@ async function salveazaTot() {
   salvez = false;
   randeaza();
   reverificaDacaE();
+  reincarcaDacaSePoate();
   if (rau.length) {
     textMesaj(`${ok.length ? `✓ ${ok.length} ${ok.length === 1 ? 'rând salvat' : 'rânduri salvate'}. ` : ''}⚠ ${rau.length === 1
       ? `Un rând nesalvat: ${rau[0]}` : `${rau.length} rânduri nesalvate (cele roşii — ţine mouse-ul pe „⚠ nesalvat"): ${rau[0]}`}`, 'eroare');

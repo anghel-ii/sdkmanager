@@ -1,4 +1,5 @@
 // Ajutoare comune pentru functions/ (în afara lui functions/, ca să nu devină rută).
+import pagina from '../public/index.html';   // ca text (wrangler) — pt. versiunea paginii, mai jos
 
 export const raspuns = (cod, date, antete = {}) =>
   Response.json(date, { status: cod, headers: { 'Cache-Control': 'no-store', ...antete } });
@@ -202,6 +203,25 @@ export async function semn(env, agent) {
         WHERE ? OR agent = ?) AS p`)
     .bind(toate ? 1 : 0, toate || agent.rol === 'conducere' ? '' : agent.nume).first();
   return `${r.v}|${r.p}`;
+}
+
+// Versiunea paginii de acum = amprenta lui public/index.html (userul, 2026-10-30: pagina deschisă înainte
+// de o publicare să se actualizeze singură). Merge în răspunsurile listei şi ale semnului; pagina o ţine
+// minte pe prima şi se reîncarcă când vede alta. (Doar index.html: o schimbare numai în reduceri.js
+// nu reîncarcă paginile — atinge şi index.html atunci.)
+let _versiune = null;
+export const versiunePagina = async () => (_versiune ??= (await sha256(pagina)).slice(0, 12));
+
+// O publicare nouă = instanţe noi: prima cerere din fiecare îi spune obiectului de anunţuri versiunea
+// (functions/_middleware.js); dacă e alta decât ştia, el anunţă toate paginile deschise („versiune"),
+// iar ele întreabă o dată ce versiune e acum şi se reîncarcă dacă e alta decât a lor.
+export async function anuntaVersiunea(env) {
+  if (!env.ANUNTURI) return;
+  try {
+    await env.ANUNTURI.get(env.ANUNTURI.idFromName('portal')).fetch('https://anunturi/versiune', {
+      method: 'POST', body: JSON.stringify({ versiune: await versiunePagina() }),
+    });
+  } catch (e) { console.error('Anunţul versiunii a eşuat:', e.message); }
 }
 
 // Anunţă paginile deschise că s-a schimbat ceva la ele (anunturi/worker.js): agenţii atinşi şi,

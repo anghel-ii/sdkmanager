@@ -36,6 +36,16 @@ export class Anunturi extends DurableObject {
       }
       return Response.json({ trimise });
     }
+    if (cale === '/versiune' && request.method === 'POST') {
+      // o publicare nouă a portalului: dacă versiunea paginii e alta, toate paginile deschise află („versiune")
+      // şi întreabă portalul ce versiune e acum — o instanţă a unei publicări vechi nu le poate păcăli
+      const { versiune } = await request.json().catch(() => ({}));
+      const stiuta = await this.ctx.storage.get('versiune');
+      if (!versiune || versiune === stiuta) return Response.json({ nou: false });
+      await this.ctx.storage.put('versiune', versiune);
+      if (stiuta) for (const ws of this.ctx.getWebSockets()) { try { ws.send('versiune'); } catch { /* închisă */ } }
+      return Response.json({ nou: true });
+    }
     return new Response('Necunoscut.', { status: 404 });
   }
 

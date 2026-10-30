@@ -1,4 +1,4 @@
-import { raspuns, clientDinCerere, agentLogat, eManager, vedereAgent, scrieDirect, numeAgenti, semn, anunta } from '../../../lib/comun.js';
+import { raspuns, clientDinCerere, agentLogat, eManager, vedereAgent, scrieDirect, numeAgenti, semn, anunta, versiunePagina } from '../../../lib/comun.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  GET   manager (Bearer CHEIE_MANAGER): ?dupa=<versiune> → tot ce s-a adăugat
@@ -25,11 +25,11 @@ export async function onRequestGet({ request, env }) {
   const agent = await agentLogat(request, env);
   if (!agent) return raspuns(401, { eroare: 'Nu eşti logat.' });
   // semnul se citeşte ÎNAINTEA listei: o schimbare venită între ele se vede la următoarea întrebare
-  const s = await semn(env, agent);
-  if (new URL(request.url).searchParams.has('semn')) return raspuns(200, { semn: s });
+  const s = await semn(env, agent), versiune = await versiunePagina();
+  if (new URL(request.url).searchParams.has('semn')) return raspuns(200, { semn: s, versiune });
   if (agent.rol === 'conducere') {
     const { results } = await env.DB.prepare('SELECT * FROM client WHERE sters_la IS NULL ORDER BY nume COLLATE NOCASE').all();
-    return raspuns(200, { agent: agent.nume, admin: !!agent.admin, conducere: true, agenti: await numeAgenti(env), clienti: results, semn: s });
+    return raspuns(200, { agent: agent.nume, admin: !!agent.admin, conducere: true, agenti: await numeAgenti(env), clienti: results, semn: s, versiune });
   }
   const [clienti, propuneri] = await env.DB.batch([
     env.DB.prepare('SELECT * FROM client WHERE agent = ? AND sters_la IS NULL ORDER BY nume COLLATE NOCASE').bind(agent.nume),
@@ -39,7 +39,7 @@ export async function onRequestGet({ request, env }) {
   return raspuns(200, { agent: agent.nume, admin: !!agent.admin, clienti: [
     ...propuneri.results.filter(p => !p.client_id).map(p => vedereAgent(p)),
     ...clienti.results.map(c => (pe.has(c.id) ? vedereAgent(pe.get(c.id), c) : c)),
-  ], semn: s });
+  ], semn: s, versiune });
 }
 
 export async function onRequestPost({ request, env }) {
