@@ -1,4 +1,4 @@
-// Calculele ofertei cu amănuntul — căutarea în produse (js/catalog/amanunt.json)
+// Calculele ofertei cu amănuntul — căutarea în produse (cele listate, de la manager)
 // şi debitarea pe bare — separate de pagină, ca să le verifice şi testul (fără browser).
 
 import MiniSearch from 'minisearch';

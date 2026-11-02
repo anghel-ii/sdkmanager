@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import { cautator, normal, debitare, sePoatePeJumatate, laBara, arie, rotunjeste, lungimeUtila } from '../js/amanunt-calcul.js';
 import { liniaTransport, LIVRARE } from '../js/lib/comun/comanda.js';
 
-const produse = JSON.parse(fs.readFileSync(new URL('../js/catalog/amanunt.json', import.meta.url)));
+const produse = JSON.parse(fs.readFileSync(new URL('../../manager/server/produse-start.json', import.meta.url))).filter(p => p.listat);
 assert.ok(produse.length > 500, `prea puţine produse: ${produse.length}`);
 assert.ok(produse.every(p => p.cod && p.denumire && p.um), 'fiecare produs are cod, denumire şi UM');
 assert.equal(new Set(produse.map(p => p.cod)).size, produse.length, 'coduri unice');

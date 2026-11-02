@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Produse</title>
+<link rel="stylesheet" href="/comun.css">
+<link rel="stylesheet" href="/nou.css">
+<script src="/dialog.js"></script>
+<style>
+  /* Produsele (userul, 2026-11-02): sus încărcarea exportului din NeoManager, dedesubt toată baza,
+     cu listat / nelistat. Listat = îl găsesc colegii la oferta cu amănuntul. */
+  #continut { max-width: 1400px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; margin-bottom: 16px; }
+  .card h2 { font-size: 15px; margin: 0 0 4px; }
+  .explica { margin: 0 0 12px; font-size: 13.5px; color: var(--text-dim); }
+  .alege { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+  .alege .nume { font-size: 13.5px; color: var(--text-dim); }
+  .eroare { margin-top: 12px; color: var(--rosu-text); font-size: 13.5px; }
+  .verificat { margin-top: 14px; }
+  .verificat .rezumat { font-size: 14px; margin: 0 0 10px; }
+  .verificat .noi { max-height: 320px; overflow: auto; border: 1px solid var(--line); border-radius: 10px; margin-bottom: 12px; }
+  .verificat .butoane { display: flex; gap: 8px; }
+
+  .filtre { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; margin-bottom: 12px; }
+  .filtre .segmented { width: auto; }
+  .filtre .segmented button { padding: 6px 11px; }
+  .filtre input[type=search] { flex: 1 1 260px; min-width: 200px; width: auto; padding: 7px 10px; font-size: 13.5px; }
+
+  table.produse { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  table.produse th { text-align: left; padding: 6px 8px; font-size: 12px; font-weight: 600; color: var(--text-dim); border-bottom: 1px solid var(--line); background: var(--panel); position: sticky; top: 0; }
+  table.produse td { padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  table.produse tbody tr:last-child td { border-bottom: none; }
+  table.produse td.cod { white-space: nowrap; font-variant-numeric: tabular-nums; }
+  table.produse td.um, table.produse td.grupa { white-space: nowrap; color: var(--text-dim); }
+  table.produse td.stare { white-space: nowrap; width: 200px; text-align: right; }
+  table.produse tr.nelistat td.cod, table.produse tr.nelistat td.denumire { color: var(--text-dim); }
+  .eticheta { margin-right: 10px; font-size: 12.5px; color: var(--verde-text); }
+  tr.nelistat .eticheta { color: var(--text-dim); }
+  .jos { display: flex; align-items: center; gap: 12px; margin-top: 12px; color: var(--text-dim); font-size: 13px; }
+  .gol { text-align: center; padding: 30px; color: var(--text-dim); }
+</style>
+</head>
+<body class="ui-nou">
+
+<div id="bara"></div>
+<script src="/bara.js"></script>
+
+<div id="continut">
+  <header class="pagina-cap">
+    <h1>Produse</h1>
+    <p>Toate produsele din NeoManager. Cele listate apar la oferta cu amănuntul, cele nelistate rămân în bază, dar nu le găsesc colegii.</p>
+  </header>
+
+  <section class="card">
+    <h2>Încarcă un export din NeoManager</h2>
+    <p class="explica">Se adaugă doar codurile noi, ca listate. Exportul poate fi complet sau doar cu produsele noi: ce există deja nu se schimbă, iar ce lipseşte din fişier nu se şterge.</p>
+    <div class="alege">
+      <button type="button" class="primar" id="alege">Alege fişierul .xlsx</button>
+      <input type="file" id="fisier" accept=".xlsx" hidden>
+      <span class="nume" id="numeFisier"></span>
+    </div>
+    <div class="eroare" id="eroare" role="alert" hidden></div>
+    <div class="verificat" id="verificat" hidden></div>
+  </section>
+
+  <section class="card">
+    <div class="filtre">
+      <input type="search" id="cauta" placeholder="Caută după cod sau denumire" aria-label="Caută produse">
+      <div class="segmented" id="stare">
+        <button type="button" class="active" data-stare="">Toate <span id="nrToate"></span></button>
+        <button type="button" data-stare="listate">Listate <span id="nrListate"></span></button>
+        <button type="button" data-stare="nelistate">Nelistate <span id="nrNelistate"></span></button>
+      </div>
+    </div>
+    <div id="lista"></div>
+    <div class="jos" id="jos" hidden>
+      <button type="button" id="inapoi">‹ Înapoi</button>
+      <span id="pagina"></span>
+      <button type="button" id="inainte">Înainte ›</button>
+    </div>
+  </section>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const nr = n => Number(n).toLocaleString('ro-RO');
+const cereri = (cale, corp) => fetch(cale, corp === undefined ? {} : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corp) })
+  .then(async r => { const d = await r.json().catch(() => ({})); if (!r.ok) throw new Error(d.eroare || 'Nu s-a putut face operaţia.'); return d; });
+
+// ── Lista ───────────────────────────────────────────────────────────────────
+const f = { cauta: '', stare: '', pagina: 1 };
+let randuri = [], numarari = { listate: 0, nelistate: 0 };
+
+const rand = (p, i) => `<tr class="${p.listat ? '' : 'nelistat'}">
+  <td class="cod">${esc(p.cod)}</td><td class="denumire">${esc(p.denumire)}</td><td class="um">${esc(p.um)}</td><td class="grupa">${esc(p.grupa)}</td>
+  <td class="stare"><span class="eticheta">${p.listat ? 'listat' : 'nelistat'}</span><button type="button" data-i="${i}">${p.listat ? 'Nu lista' : 'Listează'}</button></td>
+</tr>`;
+
+const puneNumarari = () => {
+  $('nrToate').textContent = nr(numarari.listate + numarari.nelistate);
+  $('nrListate').textContent = nr(numarari.listate);
+  $('nrNelistate').textContent = nr(numarari.nelistate);
+};
+
+const randeaza = () => {
+  $('lista').innerHTML = randuri.length
+    ? `<table class="produse"><thead><tr><th>Cod</th><th>Denumire</th><th>UM</th><th>Grupa</th><th></th></tr></thead><tbody>${randuri.map(rand).join('')}</tbody></table>`
+    : '<div class="gol">Niciun produs găsit.</div>';
+};
+
+let ultima = 0;
+async function incarca() {
+  const cerere = ++ultima;
+  const q = new URLSearchParams({ cauta: f.cauta, stare: f.stare, pagina: f.pagina });
+  try {
+    const d = await cereri(`/api/produse/lista?${q}`);
+    if (cerere !== ultima) return;   // între timp s-a scris altceva în căutare
+    randuri = d.produse; numarari = d; f.pagina = d.pagina;
+    randeaza(); puneNumarari();
+    $('jos').hidden = d.pagini < 2;
+    $('pagina').textContent = `Pagina ${d.pagina} din ${d.pagini} · ${nr(d.total)} produse`;
+    $('inapoi').disabled = d.pagina <= 1;
+    $('inainte').disabled = d.pagina >= d.pagini;
+  } catch (e) {
+    if (cerere === ultima) $('lista').innerHTML = `<div class="gol">${esc(e.message)}</div>`;
+  }
+}
+
+// rândul rămâne pe loc până la următoarea încărcare, ca o greşeală să se poată întoarce imediat
+$('lista').addEventListener('click', async e => {
+  const b = e.target.closest('button[data-i]');
+  if (!b) return;
+  const p = randuri[+b.dataset.i], listat = p.listat ? 0 : 1;
+  b.disabled = true;
+  try {
+    await cereri('/api/produse/listare', { cod: p.cod, listat });
+    p.listat = listat;
+    numarari.listate += listat ? 1 : -1;
+    numarari.nelistate += listat ? -1 : 1;
+    b.closest('tr').outerHTML = rand(p, +b.dataset.i);
+    puneNumarari();
+  } catch (err) { b.disabled = false; window.alerta?.(err.message); }
+});
+
+let tCauta = null;
+$('cauta').addEventListener('input', e => {
+  clearTimeout(tCauta);
+  tCauta = setTimeout(() => { f.cauta = e.target.value.trim(); f.pagina = 1; incarca(); }, 250);
+});
+document.querySelectorAll('#stare button').forEach(b => b.addEventListener('click', () => {
+  f.stare = b.dataset.stare; f.pagina = 1;
+  document.querySelectorAll('#stare button').forEach(x => x.classList.toggle('active', x === b));
+  incarca();
+}));
+$('inapoi').addEventListener('click', () => { f.pagina--; incarca(); });
+$('inainte').addEventListener('click', () => { f.pagina++; incarca(); });
+
+// ── Încărcarea exportului ───────────────────────────────────────────────────
+let continut = null;   // fişierul ales, base64; se trimite a doua oară la confirmare
+
+const arataEroare = t => { $('eroare').textContent = t ?? ''; $('eroare').hidden = !t; };
+const reseteaza = () => { continut = null; $('fisier').value = ''; $('numeFisier').textContent = ''; $('verificat').hidden = true; $('verificat').innerHTML = ''; };
+
+const citeste = fisier => new Promise((rezolva, respinge) => {
+  const r = new FileReader();
+  r.onload = () => rezolva(String(r.result).split(',')[1] ?? '');
+  r.onerror = () => respinge(new Error('Fişierul nu s-a putut citi.'));
+  r.readAsDataURL(fisier);
+});
+
+function arataVerificarea({ noi, existente, sarite }) {
+  const v = $('verificat');
+  const dinFisier = `${nr(existente)} există deja şi rămân neschimbate${sarite ? `; ${nr(sarite)} rânduri fără cod sau denumire, sărite` : ''}.`;
+  v.hidden = false;
+  if (!noi.length) {
+    v.innerHTML = `<p class="rezumat"><b>Niciun produs nou.</b> ${esc(dinFisier)}</p>`;
+    continut = null;
+    return;
+  }
+  v.innerHTML = `<p class="rezumat"><b>${nr(noi.length)} ${noi.length === 1 ? 'produs nou' : 'produse noi'}</b>, care vor apărea la oferta cu amănuntul. ${esc(dinFisier)}</p>
+    <div class="noi"><table class="produse"><thead><tr><th>Cod</th><th>Denumire</th><th>UM</th><th>Grupa</th></tr></thead><tbody>
+      ${noi.map(p => `<tr><td class="cod">${esc(p.cod)}</td><td class="denumire">${esc(p.denumire)}</td><td class="um">${esc(p.um)}</td><td class="grupa">${esc(p.grupa)}</td></tr>`).join('')}
+    </tbody></table></div>
+    <div class="butoane"><button type="button" class="primar" id="confirma">Adaugă ${noi.length === 1 ? 'produsul' : `cele ${nr(noi.length)} produse`}</button><button type="button" id="renunta">Renunţă</button></div>`;
+  $('renunta').addEventListener('click', reseteaza);
+  $('confirma').addEventListener('click', async e => {
+    e.target.disabled = true;
+    arataEroare(null);
+    try {
+      const { adaugate } = await cereri('/api/produse/incarca', { continut });
+      reseteaza();
+      $('verificat').hidden = false;
+      $('verificat').innerHTML = `<p class="rezumat"><b>Gata:</b> ${nr(adaugate)} ${adaugate === 1 ? 'produs adăugat' : 'produse adăugate'}.</p>`;
+      incarca();
+    } catch (err) { e.target.disabled = false; arataEroare(err.message); }
+  });
+}
+
+$('alege').addEventListener('click', () => $('fisier').click());
+$('fisier').addEventListener('change', async e => {
+  const fisier = e.target.files[0];
+  if (!fisier) return;
+  arataEroare(null);
+  $('verificat').hidden = true;
+  $('numeFisier').textContent = `${fisier.name} — se verifică…`;
+  $('alege').disabled = true;
+  try {
+    continut = await citeste(fisier);
+    const v = await cereri('/api/produse/verifica', { continut });
+    $('numeFisier').textContent = fisier.name;
+    arataVerificarea(v);
+  } catch (err) {
+    reseteaza();
+    arataEroare(err.message);
+  } finally { $('alege').disabled = false; }
+});
+
+incarca();
+</script>
+</body>
+</html>

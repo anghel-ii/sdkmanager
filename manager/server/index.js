@@ -25,6 +25,7 @@ const clienti     = require('./clienti.js');
 const ora         = require('./ora.js');
 const releu       = require('./releu.js');
 const activitate  = require('./activitate.js');
+const produse     = require('./produse.js');
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  Serverul managerului de comenzi
@@ -45,7 +46,7 @@ const activitate  = require('./activitate.js');
 //   { }                — orice utilizator logat
 //   { rol: 'admin' }   — doar administratorii
 
-const MODULE = [utilizatori, comenzi, scanare, evenimente, sticla, livrari, taskuri, cereri, tichete, notificari, tablou, actualizare, clienti, activitate].filter(Boolean);
+const MODULE = [utilizatori, comenzi, scanare, evenimente, sticla, livrari, taskuri, cereri, tichete, notificari, tablou, actualizare, clienti, activitate, produse].filter(Boolean);
 
 const rute = MODULE.flatMap(m => m.rute).map(([metoda, cale, spec]) => [metoda, cale, spec]);
 const potriveste = router(rute);
@@ -137,6 +138,7 @@ async function trateaza(req, res) {
     '/tichete':     'tichete',   // probleme / idei de la colegi pt. administrator (server/tichete.js)
     '/cereri':      'cereri',    // cererile (tichetele) pt. conducere: anulări de comenzi   // taskuri + remindere (notificarea o face bara.js)
     '/clienti':     'clienti',   // clienţii adăugaţi de agenţii de vânzări
+    '/produse':     'produse',   // exportul din NeoManager + listat / nelistat (server/produse.js)
     '/login':       'login',
     '/admin':       'admin',     // conturile (API-ul e doar pt. admin; pagina se autoverifică)
     '/activitate':  'activitate', // jurnalul de activitate al tuturor (API-ul: admin + conducere)

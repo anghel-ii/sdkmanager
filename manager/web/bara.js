@@ -108,6 +108,7 @@
     gata:    '<circle cx="12" cy="12" r="8.5"/><path d="m8.5 12.2 2.4 2.4 4.6-5"/>',
     cereri:  '<path d="M5 4.5h14v11H9.5L5 19.5z"/><path d="M9 8.5h6M9 11.5h4"/>',
     tichete: '<path d="M9.5 18h5M10.5 21h3"/><path d="M12 3.5a5.8 5.8 0 0 0-3.4 10.5c.6.5.9 1.1.9 1.8v.2h5v-.2c0-.7.3-1.3.9-1.8A5.8 5.8 0 0 0 12 3.5z"/>',
+    produse: '<path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/>',
     taskuri: '<path d="M10 6.5h10M10 12h10M10 17.5h10"/><path d="m3.5 6.5 1.4 1.4 2.3-2.6M3.5 12l1.4 1.4 2.3-2.6M3.5 17.5l1.4 1.4 2.3-2.6"/>',
     sticla:  '<rect x="4.5" y="3.5" width="15" height="17" rx="1.5"/><path d="m8 9.5 3-3M8 14.5l7.5-7.5"/>',
     livrari: '<path d="M14 16.5V6H3.5v10.5h1.8"/><path d="M14 9h3.8l2.7 3.4v4.1h-1.8M9 16.5h6.2"/><circle cx="7.2" cy="16.8" r="1.8"/><circle cx="17" cy="16.8" r="1.8"/>',
@@ -309,6 +310,7 @@
       <div class="grup"><span class="txt">Operaţiuni</span></div>
       ${link('/sticla', 'sticla', 'Comandă sticlă', 'id="linkSticla"', '<span class="insigna cald" id="nrSticla"></span>')}
       ${link('/livrari', 'livrari', 'Organizează livrări', 'id="linkLivrari"')}
+      ${link('/produse', 'produse', 'Produse', 'id="linkProduse"')}
       ${link('/taskuri', 'taskuri', 'Taskuri', 'id="linkTaskuri"', '<span class="insigna rosie" id="nrTaskuri" title="ajunse la ora reminderului"></span>')}
       ${link('/cereri', 'cereri', 'Cereri', 'id="linkCereri"', '<span class="insigna rosie" id="nrCereri" title="cereri de decis (anulări, schimbări de factură)"></span>')}
       ${link('/tichete', 'tichete', 'Tichete', 'id="linkTichete"', '<span class="insigna rosie" id="nrTichete"></span>')}
@@ -340,6 +342,7 @@
       <a href="/" class="buton" title="Comenzi">${icoana('acasa')}<span class="txt">Comenzi</span></a>
       <a href="/sticla" class="buton" id="linkSticla" title="Comandă sticlă">${icoana('sticla')}<span class="txt">Comandă sticlă</span><span class="insigna cald" id="nrSticla"></span></a>
       <a href="/livrari" class="buton" id="linkLivrari" title="Organizează livrări">${icoana('livrari')}<span class="txt">Organizează livrări</span></a>
+      <a href="/produse" class="buton" id="linkProduse" title="Produse">${icoana('produse')}<span class="txt">Produse</span></a>
       <a href="/taskuri" class="buton" id="linkTaskuri" title="Taskuri; numărul = ajunse la ora reminderului">${icoana('taskuri')}<span class="txt">Taskuri</span><span class="insigna rosie" id="nrTaskuri"></span></a>
       <a href="/tichete" class="buton" id="linkTichete" title="Tichete: ce nu merge, idei — pentru administrator">${icoana('tichete')}<span class="txt">Tichete</span><span class="insigna rosie" id="nrTichete"></span></a>
       <a href="/clienti" class="buton" id="linkClienti" hidden title="Clienţi; numărul = trimise de agenţi, de aprobat">${icoana('clienti')}<span class="txt">Clienţi</span><span class="insigna cald" id="nrClienti"></span></a>
@@ -586,7 +589,7 @@
   if (window.top !== window) return;   // configuratorul din cadrul unei fişe nu e o pagină deschisă de om
   const cale = location.pathname.replace(/\/$/, '') || '/';
   const PAGINI = { '/': 'Comenzi', '/comenzi': 'Comenzi', '/sticla': 'Comandă sticlă', '/livrari': 'Organizează livrări',
-    '/taskuri': 'Taskuri', '/tichete': 'Tichete', '/cereri': 'Cereri', '/clienti': 'Clienţi', '/admin': 'Tablou admin',
+    '/taskuri': 'Taskuri', '/tichete': 'Tichete', '/cereri': 'Cereri', '/clienti': 'Clienţi', '/produse': 'Produse', '/admin': 'Tablou admin',
     '/activitate': 'Activitate', '/configurator': 'Configurator', '/configurator/index.html': 'Configurator',
     '/configurator/amanunt.html': 'Ofertă cu amănuntul' };
   const p = new URLSearchParams(location.search);

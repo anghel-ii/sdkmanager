@@ -1,4 +1,3 @@
-import produse from './catalog/amanunt.json';
 import * as manager from './manager.js';
 import * as cosul from './cos.js';
 import { cautator, laBara, arie, rotunjeste, textMod, sePoatePeJumatate, lungimeUtila } from './amanunt-calcul.js';
@@ -14,7 +13,7 @@ import { confirma } from './intrebari.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  OFERTĂ CU AMĂNUNTUL (amanunt.html) — sertare, mânere, accesorii: produsele
-//  de vânzare din exportul NeoManager (scripts/amanunt.mjs → js/catalog/amanunt.json).
+//  listate în baza managerului (pagina /produse, GET /api/produse).
 //  Colegul scrie denumirea (sau codul), alege din sugestii şi pune cantitatea;
 //  se salvează la manager ca orice ofertă (sistem 'amanunt', fără gol / uşi),
 //  cu liniile de facturare gata de lipit în NeoManager.
@@ -23,8 +22,9 @@ import { confirma } from './intrebari.js';
 const $ = id => document.getElementById(id);
 const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const virgula = n => String(n).replace('.', ',');
-const cauta = cautator(produse);
-const peDenumire = new Map(produse.map(p => [p.denumire, p]));
+// produsele le aduce pornirea paginii, de la manager
+let cauta = () => [];
+let peDenumire = new Map();
 
 // rândurile ofertei: { cod, denumire, um, cantitate, bara?, debitare? } — cod null
 // cât timp textul nu e (încă) un produs din listă. Pe ecran mai e mereu un rând gol
@@ -35,13 +35,19 @@ let linii = [];
 const TAIERE_MM = 0;
 // Modul de facturare al produsului (`fact`, din „Toata baza de date" — userul, 2026-10-22): bucăţi
 // întregi, întreg sau jumătate, lungime + 15 %, trepte după lungime, multiplu, arie — amanunt-calcul.js.
-const PE_COD = new Map(produse.map(p => [p.cod, p]));
+const PE_COD = new Map();
 const mod = l => PE_COD.get(l?.cod)?.fact;
 // rândul are bucăţi de completat sub el: la bară (lungime × buc) sau geamul la mp (H × L × buc)
 const cuBucati = l => !!(l?.bara || mod(l)?.arie);
 // Produsele vândute şi pe jumătate de bară — pe rând, „Dă bara întreagă" (l.intreaga): clientul ia
 // şi restul barei → bare întregi (userul, 2026-10-14).
-const PE_JUMATATE = new Set(produse.filter(sePoatePeJumatate).map(p => p.cod));
+const PE_JUMATATE = new Set();
+const cunoaste = lista => {
+  for (const p of lista) {
+    PE_COD.set(p.cod, p);
+    if (sePoatePeJumatate(p)) PE_JUMATATE.add(p.cod);
+  }
+};
 // la Gola C / J şi mânerul L se calculează cu lungimea utilă (fără capete), în text rămâne şi cea a barei
 const utila = l => lungimeUtila(l?.denumire, l?.bara);
 const deb = l => (l?.bara ? laBara(mod(l), l.debitare, utila(l), TAIERE_MM, l.intreaga) : mod(l)?.arie ? arie(l.debitare) : null);
@@ -667,6 +673,12 @@ const puneClientul = (client, ofertaNr, detalii) => {
   // „Modifică oferta": coşul cu toate produsele ofertei îl face configuratorul (ştie gamele)
   if (params.get('oferta')) return location.replace(`./?oferta=${encodeURIComponent(params.get('oferta'))}`);
   let eroare = null;
+  const produse = await manager.incarcaProduse();
+  if (produse) {
+    cauta = cautator(produse);
+    peDenumire = new Map(produse.map(p => [p.denumire, p]));
+    cunoaste(produse);
+  }
   if (params.get('adauga')) {
     const r = await cosul.dinAdauga(params.get('adauga'), manager.incarcaOferta, 'amanunt');
     if (r.eroare) eroare = r.eroare; else return;
@@ -706,11 +718,15 @@ const puneClientul = (client, ofertaNr, detalii) => {
                                                transport: () => liniaTransport({ comanda }) });
     document.addEventListener('cos:schimbat', renderOferta);
   } else { $('cardCosSec').hidden = true; $('nouActiuni').hidden = true; }
+  // o ofertă mai veche poate avea produse trecute între timp pe nelistat: bara şi modul lor de facturare rămân
+  const necunoscute = [...new Set(linii.map(l => l?.cod).filter(c => c && !PE_COD.has(c)))];
+  if (necunoscute.length) cunoaste(await manager.produseDupaCod(necunoscute));
   randeaza();
   await manager.initOferta(renderOferta);
   if (cos.comandaEditata) { $('btnComanda').textContent = TEXT.btnComanda(); mesaj(cosul.mesajModificaComanda(cos), 'ok'); }
   else if (cos.ofertaEditata) { $('btnConfirma').textContent = TEXT.btnConfirma(); mesaj(`Modifici oferta <strong>${esc(cos.numar ?? '')}</strong>.`, 'ok'); }
   if (eroare) mesaj(esc(eroare), 'eroare');
+  else if (!produse) mesaj('Lista de produse nu s-a putut încărca. <button type="button" onclick="location.reload()">Încearcă din nou</button>', 'eroare');
   if (!modFisa) ciorna.init({ cos, gama: () => 'amanunt', client: clientPtCos,
     ecran: () => ({ linii, observatii: $('observatii').value }),
     areContinut: () => cos.pozitii.length > 0 || linii.some(l => l?.cod || String(l?.denumire ?? '').trim()),

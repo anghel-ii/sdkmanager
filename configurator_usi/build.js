@@ -68,7 +68,7 @@ async function build() {
     platform: 'browser',
     minify:   true,
   });
-  // „Ofertă cu amănuntul" — pagina ei, fără 3D (produsele: scripts/amanunt.mjs)
+  // „Ofertă cu amănuntul" — pagina ei, fără 3D (produsele vin de la manager)
   await esbuild.build({
     entryPoints: ['js/amanunt.js'],
     bundle:   true,

@@ -84,6 +84,10 @@ const OPERATII = {
                                                null, b => b.comenzi ?? []],
   'DELETE /api/livrari/:id':                 ['Livrare anulată', S, (b, r, p) => `livrarea ${p.id}`],
 
+  'POST /api/produse/verifica':              ['Export de produse verificat', V],
+  'POST /api/produse/incarca':               ['Export de produse încărcat', S, (b, r) => `${r?.adaugate ?? 0} produse noi`],
+  'POST /api/produse/listare':               [b => (b.listat ? 'Produs listat' : 'Produs trecut pe nelistat'), S, b => scurt(b.cod, 60)],
+
   'POST /api/taskuri':                       ['Task nou', S, b => scurt(b.text), null, b => [b.comanda_id]],
   'PATCH /api/taskuri/:id':                  [b => ('facut' in b ? (b.facut ? 'Task făcut' : 'Task redeschis') : 'asteptare' in b ? 'Task pus în aşteptare' : 'Task modificat'), S,
                                                b => b.text && scurt(b.text), null, (b, r, p) => [comandaTaskului(p.id)]],

@@ -34,6 +34,27 @@ async function verificaSesiunea() {
   return stare;
 }
 
+// Produsele listate pentru oferta cu amănuntul. null dacă nu se pot citi (fără server, nelogat).
+export async function incarcaProduse() {
+  try {
+    const r = await fetch('/api/produse', { headers: { Accept: 'application/json' } });
+    return r.ok ? (await r.json()).produse : null;
+  } catch {
+    return null;
+  }
+}
+
+// Produsele cu codurile date, şi cele nelistate — pentru ofertele deja făcute.
+export async function produseDupaCod(coduri) {
+  const q = new URLSearchParams(coduri.map(c => ['cod', c]));
+  try {
+    const r = await fetch(`/api/produse/coduri?${q}`, { headers: { Accept: 'application/json' } });
+    return r.ok ? (await r.json()).produse : [];
+  } catch {
+    return [];
+  }
+}
+
 // Sugestii pt. câmpul „Nume client", din baza de clienţi a managerului.
 // Fără manager (sau nelogat) nu se caută nimic — câmpul rămâne unul simplu.
 export async function cautaClienti(q) {

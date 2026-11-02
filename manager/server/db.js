@@ -581,6 +581,23 @@ const MIGRATII = [
   d => d.exec('ALTER TABLE client ADD COLUMN sters_la TEXT'),
   // v37 → v38 (2026-10-29): „Modalitate de plată" la client, text liber — o scriu agenţii pe portal (userul)
   d => d.exec('ALTER TABLE client ADD COLUMN modalitate_plata TEXT'),
+  // v38 → v39 (2026-11-02): produsele în bază (server/produse.js), nu în bundle-ul paginii cu amănuntul —
+  // ce era la amănunt rămâne listat, restul exportului din NeoManager intră nelistat (userul)
+  d => {
+    d.exec(`CREATE TABLE produs (
+      cod        TEXT PRIMARY KEY,
+      denumire   TEXT NOT NULL,
+      um         TEXT NOT NULL DEFAULT '',
+      grupa      TEXT NOT NULL DEFAULT '',
+      bara       INTEGER,                    -- lungimea barei în mm (debitare)
+      fact       TEXT,                       -- modul de facturare, JSON (js/amanunt-calcul.js)
+      listat     INTEGER NOT NULL DEFAULT 1,
+      adaugat_la TEXT                        -- NULL la produsele de la pornire
+    )`);
+    const pune = d.prepare('INSERT INTO produs (cod, denumire, um, grupa, bara, fact, listat) VALUES (?, ?, ?, ?, ?, ?, ?)');
+    for (const p of require('./produse-start.json'))
+      pune.run(p.cod, p.denumire, p.um ?? '', p.grupa ?? '', p.bara ?? null, p.fact ? JSON.stringify(p.fact) : null, p.listat);
+  },
 ];
 
 // Exportată pt. test.
