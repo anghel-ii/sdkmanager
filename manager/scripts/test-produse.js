@@ -98,6 +98,12 @@ const cate = () => db().prepare('SELECT COUNT(*) AS n FROM produs').get().n;
   const din2 = await cheama('POST', '/api/produse/incarca', fisier(exportul));
   verifica('acelaşi fişier a doua oară nu adaugă nimic', din2.date.adaugate === 0 && cate() === total + 2);
 
+  console.log('\nExportul „Standard" din NeoManager');
+  const standard = await cheama('POST', '/api/produse/incarca', fisier([['Gestiune', 'Denumire grupa', 'Denumire', 'Cod', 'UM', 'PretVanzare'], ['Cluj', 'Rame noi', 'Rama standard', 'STD-1', 'Buc', '10']]));
+  verifica('coloana „Denumire grupa" e acceptată', standard.cod === 200 && standard.date.adaugate === 1, JSON.stringify(standard));
+  verifica('grupa vine din ea', produsul('STD-1')?.grupa === 'Rame noi');
+  await cheama('POST', '/api/produse/listare', { corp: { cod: 'STD-1', listat: false } });
+
   console.log('\nFişiere greşite');
   const fara = await cheama('POST', '/api/produse/incarca', fisier([['Cod', 'Denumire'], ['X-1', 'Ceva']]));
   verifica('coloane lipsă → refuzat', fara.cod === 400 && /Grupa/.test(fara.date.eroare) && !produsul('X-1'), JSON.stringify(fara));
