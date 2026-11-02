@@ -50,10 +50,10 @@ datele, ca un coleg să-l treacă în NeoManager (`lib/mail.js`). Nu pleacă la 
 clientul rămâne salvat, iar cine l-a salvat vede un avertisment.
 
 Mailul îl trimite un Google Apps Script (`mail-script.gs`) de pe contul Gmail al portalului. Rulează pe serverele Google:
-nu trebuie să stea nimeni logat. Limita Google: 100 de destinatari pe zi. Destinatarul se schimbă DOAR în script.
+nu trebuie să stea nimeni logat. Limita Google: 100 de destinatari pe zi, iar CC-ul se numără (destinatar + un CC = 50 de mailuri pe zi). Destinatarul şi CC-ul se schimbă DOAR în script.
 
 Punere în funcţiune:
-1. `openssl rand -hex 24` → cheia. Pe script.google.com, proiect nou, lipeşti `mail-script.gs`, completezi CHEIE + DESTINATAR.
+1. `openssl rand -hex 24` → cheia. Pe script.google.com, proiect nou, lipeşti `mail-script.gs`, completezi CHEIE, DESTINATAR şi CC.
 2. Run pe funcţia `proba` → autorizezi → trebuie să ajungă mailul de probă.
 3. Deploy → New deployment → Web app; Execute as: Me; Who has access: Anyone → copiezi URL-ul (se termină cu /exec).
 4. Din folderul ăsta, ÎNAINTE de publicarea codului:
