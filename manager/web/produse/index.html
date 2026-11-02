@@ -90,19 +90,21 @@ const $ = id => document.getElementById(id);
 const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const nr = n => Number(n).toLocaleString('ro-RO');
 const cereri = (cale, corp) => fetch(cale, corp === undefined ? {} : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corp) })
-  .then(async r => { const d = await r.json().catch(() => ({})); if (!r.ok) throw new Error(d.eroare || 'Nu s-a putut face operaţia.'); return d; });
+  .then(async r => {
+    const d = await r.json().catch(() => ({}));
+    if (r.status === 403) location.replace('/');   // fără permisiunea „Produse" (bifată în Tabloul admin)
+    if (!r.ok) throw new Error(d.eroare || 'Nu s-a putut face operaţia.');
+    return d;
+  });
 
 // ── Lista ───────────────────────────────────────────────────────────────────
 const f = { cauta: '', stare: '', pagina: 1 };
 let randuri = [], numarari = { listate: 0, nelistate: 0 };
 
-// Regula de facturare: conducerea şi adminul o schimbă pe rând, ceilalţi doar o văd (server/produse.js).
-let schimbaRegula = false;
 const regulaDin = f => (f?.multiplu ? 'multiplu' : f?.pas ? 'jumatate' : f?.procent ? 'procent' : f?.trepte ? 'trepte' : f?.arie ? 'arie' : 'intreg');
 const TEXT_REGULA = f => ({ intreg: 'Bucăţi întregi', jumatate: 'Întreg sau jumătate', procent: 'Lungimea + 15 %', trepte: 'După lungimea bucăţii',
   arie: 'H × L × buc', multiplu: f?.multiplu ? `Multiplu de ${f.multiplu}` : 'Multiplu de…' }[regulaDin(f)]);
 function celulaRegula(p, i) {
-  if (!schimbaRegula) return esc(TEXT_REGULA(p.fact));
   const acum = regulaDin(p.fact);
   const optiuni = [['intreg', 'Bucăţi întregi'], ['jumatate', 'Întreg sau jumătate'], ...(p.bara ? [['procent', 'Lungimea + 15 %']] : []),
     ['multiplu', acum === 'multiplu' ? TEXT_REGULA(p.fact) : 'Multiplu de…'], ...(['trepte', 'arie'].includes(acum) ? [[acum, TEXT_REGULA(p.fact)]] : [])];
@@ -135,7 +137,7 @@ async function incarca() {
   try {
     const d = await cereri(`/api/produse/lista?${q}`);
     if (cerere !== ultima) return;   // între timp s-a scris altceva în căutare
-    randuri = d.produse; numarari = d; f.pagina = d.pagina; schimbaRegula = d.schimbaRegula;
+    randuri = d.produse; numarari = d; f.pagina = d.pagina;
     randeaza(); puneNumarari();
     $('jos').hidden = d.pagini < 2;
     $('pagina').textContent = `Pagina ${d.pagina} din ${d.pagini} · ${nr(d.total)} produse`;

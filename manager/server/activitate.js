@@ -45,7 +45,8 @@ const OPERATII = {
   'POST /api/utilizatori':                   ['Cont nou', S, b => lista(b.nume, b.user, ROLURI[b.rol])],
   'PATCH /api/utilizatori/:id':              ['Cont modificat', S, (b, r) => lista(r?.utilizator?.nume ?? r?.nume, b.rol && `rol: ${ROLURI[b.rol] ?? b.rol}`,
                                                'activ' in b && (b.activ ? 'reactivat' : 'dezactivat'), b.parola !== undefined && 'parolă nouă',
-                                               'mod_test' in b && `mod test: ${b.mod_test ? 'da' : 'nu'}`)],
+                                               'mod_test' in b && `mod test: ${b.mod_test ? 'da' : 'nu'}`,
+                                               Array.isArray(b.permisiuni) && `permisiuni: ${b.permisiuni.join(', ') || 'niciuna'}`)],
   'POST /api/test/reface':                   ['Copia de test refăcută', S],
 
   'POST /api/comenzi':                       ['Ofertă nouă', S, b => lista(b.nume, b.ofertaNr, Array.isArray(b.pozitii) && `${b.pozitii.length} ${b.pozitii.length === 1 ? 'produs' : 'produse'}`),

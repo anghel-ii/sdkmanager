@@ -91,6 +91,8 @@
   details > summary { cursor: pointer; color: var(--text-dim); font-size: 13px; }
   .legatura + .legatura { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 14px; }
   @media (max-width: 899px) { .cont-nou { grid-template-columns: 1fr; } .cifre { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .permisiune { display: inline-flex; align-items: center; gap: 6px; margin: 0 12px 0 0; font-size: 13px; white-space: nowrap; }
+  .permisiune input { width: auto; margin: 0; }
 </style>
 </head>
 <body class="ui-nou">
@@ -318,13 +320,13 @@ async function incarca() {
   const r = await api('/api/utilizatori');
   if (!r) return;
   if (!r.ok) { $('lista').textContent = await eroareDin(r); return; }
-  const { utilizatori } = await r.json();
+  const { utilizatori, permisiuni } = await r.json();
   stareTablou.utilizatori = utilizatori;
   punePlaci();
   $('lista').className = 'tabel-lat';
   $('lista').innerHTML = `
     <table class="tab">
-      <thead><tr><th>Nume</th><th>Utilizator</th><th>Rol</th><th title="Lucrează pe o copie a bazei: vede tot ce e pe bune, dar ce face el nu ajunge în baza reală">Mod test</th><th></th></tr></thead>
+      <thead><tr><th>Nume</th><th>Utilizator</th><th>Rol</th><th title="Lucrează pe o copie a bazei: vede tot ce e pe bune, dar ce face el nu ajunge în baza reală">Mod test</th><th title="Ce are voie un cont de birou în plus. Adminul şi conducerea au tot.">Permisiuni</th><th></th></tr></thead>
       <tbody>${utilizatori.map(u => {
         const euInsumi = u.id === eu.id;
         return `<tr data-id="${u.id}"${u.activ ? '' : ' class="dim"'}>
@@ -333,6 +335,8 @@ async function incarca() {
           <td>${euInsumi ? esc(u.rol) : `<select class="rol">${ROLURI.map(x => `<option${x === u.rol ? ' selected' : ''}>${x}</option>`).join('')}</select>`}</td>
           <td>${u.rol === 'admin' ? (eu.mod_test ? '<span class="dim" title="Comenzile adminului merg pe copia de test; administrarea, pe bune">mereu</span>'
             : '<span class="dim" title="Adminul lucrează pe baza reală (de probat: pe un server de probă)">nu</span>') : `<input type="checkbox" class="modtest"${u.mod_test ? ' checked' : ''} aria-label="Mod test pentru ${esc(u.nume)}">`}</td>
+          <td>${u.rol === 'birou' ? Object.entries(permisiuni).map(([p, text]) => `<label class="permisiune"><input type="checkbox" data-permisiune="${p}"${u.permisiuni.includes(p) ? ' checked' : ''} aria-label="${esc(text)} pentru ${esc(u.nume)}"> ${esc(text)}</label>`).join('')
+            : '<span class="dim">toate</span>'}</td>
           <td class="actiuni">${euInsumi ? '' : `
             <button class="mic reset" title="${u.activat ? 'O parolă temporară nouă' : 'Cont vechi fără parolă — pune-i una'}">${u.activat ? 'Parolă nouă' : 'Pune parola'}</button>
             <button class="mic activ ${u.activ ? 'rosu-contur' : 'verde-contur'}">${u.activ ? 'Dezactivează' : 'Reactivează'}</button>`}</td>
@@ -348,6 +352,8 @@ async function incarca() {
       if (rr && !rr.ok) await alerta(await eroareDin(rr));
       incarca();
     };
+    tr.querySelectorAll('input[data-permisiune]').forEach(c => c.addEventListener('change', () =>
+      patch({ permisiuni: [...tr.querySelectorAll('input[data-permisiune]:checked')].map(x => x.dataset.permisiune) })));
     tr.querySelector('select.rol')?.addEventListener('change', async e => {
       if (await confirma(`Schimbi rolul lui ${u.nume} din „${u.rol}" în „${e.target.value}"?`, 'Schimbă rolul')) patch({ rol: e.target.value });
       else e.target.value = u.rol;

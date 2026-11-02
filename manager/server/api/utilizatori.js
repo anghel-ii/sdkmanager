@@ -62,10 +62,11 @@ const getEu = ctx => json(ctx.res, 200, { utilizator: ctx.utilizator });
 // `activat` = şi-a pus parola (contul creat de admin, folosit cel puţin o dată).
 const listeaza = ctx => json(ctx.res, 200, {
   utilizatori: db().prepare(
-    `SELECT id, nume, user, rol, activ, creat_la, mod_test, parola_hash != '' AS activat,
+    `SELECT id, nume, user, rol, activ, creat_la, mod_test, permisiuni, parola_hash != '' AS activat,
             (SELECT MAX(vazut_la) FROM sesiune s WHERE s.utilizator_id = utilizator.id) AS vazut_la   -- ultima cerere a omului
        FROM utilizator ORDER BY nume`
-  ).all().map(u => ({ ...u, activat: !!u.activat })),
+  ).all().map(u => ({ ...u, activat: !!u.activat, permisiuni: JSON.parse(u.permisiuni) })),
+  permisiuni: auth.PERMISIUNI,
 });
 
 // utilizator: litere mici, cifre, punct, cratimă, underscore; 2–40 caractere
@@ -103,7 +104,7 @@ async function modifica(ctx) {
   const id = Number(ctx.params.id);
   if (!auth.gasesteUtilizator(id)) return eroare(res, 404, 'Utilizator inexistent.');
 
-  const { nume, rol, activ, parola, reseteazaParola, modTest } = await corpJson(ctx.req);
+  const { nume, rol, activ, parola, reseteazaParola, modTest, permisiuni } = await corpJson(ctx.req);
   // modul test — nu pentru admin: ar lucra pe copie şi la conturi, actualizări, agenţi
   if (modTest && (rol ?? auth.gasesteUtilizator(id).rol) === 'admin') return eroare(res, 400, 'Un administrator nu poate fi pus în modul test.');
   if (modTest && !modTestPosibil) return eroare(res, 409, 'Modul test cere Node 22.12 sau mai nou pe server.');
@@ -111,6 +112,9 @@ async function modifica(ctx) {
   // dădea 400, dar numele/rolul de dinainte rămâneau deja salvate.
   if (rol && !ROLURI.includes(rol)) return eroare(res, 400, `Rol necunoscut. Valori permise: ${ROLURI.join(', ')}.`);
   if (parola != null && String(parola).length < 8) return eroare(res, 400, 'Parola trebuie să aibă cel puţin 8 caractere.');
+  if (permisiuni != null && !(Array.isArray(permisiuni) && permisiuni.every(p => Object.hasOwn(auth.PERMISIUNI, p)))) {
+    return eroare(res, 400, 'Permisiune necunoscută.');
+  }
 
   if (reseteazaParola && id === ctx.utilizator.id) {
     return eroare(res, 400, 'Nu îţi poţi reseta singur parola — schimb-o din contul tău.');
@@ -130,6 +134,7 @@ async function modifica(ctx) {
     if (rol   != null) d.prepare('UPDATE utilizator SET rol   = ? WHERE id = ?').run(rol, id);
     if (activ != null) d.prepare('UPDATE utilizator SET activ = ? WHERE id = ?').run(activ ? 1 : 0, id);
     if (parola != null) auth.schimbaParola(id, parola);
+    if (permisiuni != null) d.prepare('UPDATE utilizator SET permisiuni = ? WHERE id = ?').run(JSON.stringify([...new Set(permisiuni)]), id);
     if (modTest != null || rol === 'admin') d.prepare('UPDATE utilizator SET mod_test = ? WHERE id = ?').run(modTest && rol !== 'admin' ? 1 : 0, id);
   });
   if (modTest) copieTest('colegi');   // primul cont pus în test face copia colegilor

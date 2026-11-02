@@ -475,6 +475,34 @@ async function main() {
       const eu = (await cer('GET', '/api/eu')).date.utilizator;
       verifica('/api/eu spune rolul (pt. interfaţă)', eu?.rol === 'birou');
     });
+    // permisiunile bifate în Tabloul admin: Produse e doar pentru cine are bifa, căutarea de la amănunt pentru toţi
+    const idMaria = (await cer('GET', '/api/utilizatori')).date.utilizatori.find(u => u.user === 'maria').id;
+    const bifeaza = permisiuni => cer('PATCH', `/api/utilizatori/${idMaria}`, { permisiuni });
+    const scrierile = [['/api/produse/verifica', {}], ['/api/produse/incarca', {}], ['/api/produse/listare', { cod: 'X', listat: 0 }], ['/api/produse/regula', { cod: 'X', regula: 'intreg' }]];
+    const opritaLaProduse = () => ca('maria', 'parola-maria-1', async () => {
+      const lista = await cer('GET', '/api/produse/lista');
+      const scrie = await Promise.all(scrierile.map(([c, b]) => cer('POST', c, b)));
+      return lista.stare === 403 && scrie.every(r => r.stare === 403);
+    });
+    verifica('birou fără bifă: pagina Produse + toate scrierile → 403', await opritaLaProduse());
+    await ca('maria', 'parola-maria-1', async () => {
+      verifica('birou fără bifă: caută tot produsele de la amănunt', (await cer('GET', '/api/produse')).stare === 200 && (await cer('GET', '/api/produse/coduri?cod=X')).stare === 200);
+      verifica('/api/eu arată permisiunile', (await cer('GET', '/api/eu')).date.utilizator.permisiuni.length === 0);
+      verifica('birou: NU îşi poate pune singur bifa → 403', (await bifeaza(['produse'])).stare === 403);
+    });
+    verifica('permisiune necunoscută → 400', (await bifeaza(['tot'])).stare === 400);
+    verifica('admin bifează Produse', (await bifeaza(['produse'])).date.utilizator?.permisiuni.join() === 'produse');
+    verifica('lista de conturi arată bifa', (await cer('GET', '/api/utilizatori')).date.utilizatori.find(u => u.id === idMaria).permisiuni.join() === 'produse');
+    await ca('maria', 'parola-maria-1', async () => {
+      verifica('birou cu bifă: vede Produse', (await cer('GET', '/api/produse/lista')).stare === 200);
+      verifica('birou cu bifă: schimbă şi regula', (await cer('POST', '/api/produse/regula', { cod: 'NICI-UN-COD', regula: 'intreg' })).stare === 404);
+      verifica('bifa nu dă alte drepturi', (await cer('GET', '/api/utilizatori')).stare === 403);
+    });
+    await bifeaza([]);
+    verifica('bifa scoasă → oprit imediat', await opritaLaProduse());
+    await ca('ion', 'parola-noua-1', async () => {
+      verifica('conducere: vede Produse fără bifă', (await cer('GET', '/api/produse/lista')).stare === 200);
+    });
     await ca('ion', 'parola-noua-1', async () => {
       verifica('conducere: modifică nr. existent → 200', (await fact({ numar: 'C-2' })).stare === 200 && nr() === 'C-2');
       verifica('conducere: anulează facturarea → 200', (await fact({ numar: '', anuleaza: true })).stare === 200 && nr() === null);
@@ -489,7 +517,7 @@ async function main() {
     const idVechi = Number(db2().prepare("INSERT INTO utilizator (nume, user, parola_hash, parola_salt, rol) VALUES ('Vechi', 'vechi', 'x', 'x', 'operator')").run().lastInsertRowid);
     require('../server/db.js').roluriNoi(db2());
     verifica('migraţie: operator → birou', db2().prepare('SELECT rol FROM utilizator WHERE id = ?').get(idVechi).rol === 'birou');
-    verifica('schema la versiunea 39', db2().prepare('PRAGMA user_version').get().user_version === 39);
+    verifica('schema la versiunea 40', db2().prepare('PRAGMA user_version').get().user_version === 40);
   }
 
   console.log('\nFixare şi sortare — per utilizator');
