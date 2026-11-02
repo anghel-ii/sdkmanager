@@ -19,7 +19,8 @@ const { citesteXlsx } = require('./xlsx.js');
 
 const MAX_FISIER = 5 * 1024 * 1024;   // încape în limita corpului JSON (8 MB) şi ca base64
 const PE_PAGINA = 100;
-const COLOANE = ['Cod', 'Denumire', 'UM', 'Grupa'];
+// numele din capul tabelului; la exportul „Standard" grupa se numeşte „Denumire grupa"
+const COLOANE = { Cod: ['Cod'], Denumire: ['Denumire'], UM: ['UM'], Grupa: ['Grupa', 'Denumire grupa'] };
 const ro = new Intl.Collator('ro');
 const eroareFisier = mesaj => Object.assign(new Error(mesaj), { cod: 400 });
 
@@ -29,10 +30,10 @@ function dinExport(buf) {
   let tabel;
   try { tabel = citesteXlsx(buf); } catch { throw eroareFisier('Fişierul nu e un Excel .xlsx.'); }
   const [cap = [], ...randuri] = tabel;
-  const col = n => [...cap].findIndex(c => String(c ?? '').trim() === n);
-  const lipsa = COLOANE.filter(n => col(n) < 0);
+  const col = n => [...cap].findIndex(c => COLOANE[n].includes(String(c ?? '').trim()));
+  const lipsa = Object.keys(COLOANE).filter(n => col(n) < 0);
   if (lipsa.length) throw eroareFisier(`Nu e exportul din NeoManager: lipsesc coloanele ${lipsa.join(', ')}.`);
-  const [COD, DEN, UM, GRUPA] = COLOANE.map(col);
+  const [COD, DEN, UM, GRUPA] = Object.keys(COLOANE).map(col);
   const text = (r, i) => String(r[i] ?? '').trim();
   const peCod = new Map();
   let sarite = 0;
