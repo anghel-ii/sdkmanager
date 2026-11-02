@@ -17,11 +17,12 @@ export function cautator(produse) {
   const primul = produse.map(p => cuvinte(p.denumire)[0] ?? '');
   const ms = new MiniSearch({
     // codul rămâne întreg („731ALB"), ca „alb" să nu conteze de două ori; litere/cifre se despart doar în denumire
-    idField: 'i', fields: ['denumire', 'cod'], processTerm: t => t,
+    idField: 'i', fields: ['denumire', 'cod', 'grupa'], processTerm: t => t,
     tokenize: (t, camp) => (camp === 'cod' ? normal(t).split(/[^a-z0-9]+/).filter(Boolean) : cuvinte(t)),
     searchOptions: {
       // început de cuvânt de la 2 caractere: „c" singur e exact „C" (nu „cu", „canal", „cod"…)
-      combineWith: 'AND', prefix: t => t.length >= 2, boost: { cod: 2 },
+      // grupa cântăreşte mai puţin: cine scrie „dressing" găseşte toată grupa, dar întâi ce are cuvântul în denumire
+      combineWith: 'AND', prefix: t => t.length >= 2, boost: { cod: 2, grupa: 0.5 },
       // greşeli de tastare doar la cuvintele de litere, de la 4 în sus (la cifre „600" nu e „500")
       fuzzy: t => (/^[a-z]{4,}$/.test(t) ? 0.2 : 0),
       // lungimea denumirii nu contează (altfel „Gola C cu canal pentru led" ar trece, fiind scurtă,
@@ -32,7 +33,7 @@ export function cautator(produse) {
       boostDocument: (id, termen) => (termen.length >= 3 && primul[id].startsWith(termen) ? 2 : 1),
     },
   });
-  ms.addAll(produse.map((p, i) => ({ i, denumire: p.denumire, cod: p.cod })));
+  ms.addAll(produse.map((p, i) => ({ i, denumire: p.denumire, cod: p.cod, grupa: p.grupa })));
   return (q, max = 30) => {
     if (!cuvinte(q).length) return [];
     const tot = normal(q).trim();
@@ -53,7 +54,7 @@ export const lungimeUtila = (denumire, bara) => (bara && CU_CAPETE.test(String(d
 // care încape" (First Fit Decreasing — aceeaşi ca la divizările aplicate UTIL).
 // `taiere` = lăţimea pânzei: fiecare bucată ia l + taiere, iar bara B + taiere
 // (ultima bucată dintr-o bară nu mai are tăietură după ea).
-// Ce se vinde şi pe jumătate de bară: „0.5 1" în modul de facturare (scripts/amanunt.mjs; înainte,
+// Ce se vinde şi pe jumătate de bară: „0.5 1" în modul de facturare (`fact` pe produs; înainte,
 // 2026-10-14, doar profilele Gola fără cupru — fişierul userului din 2026-10-22 spune la fel la Gola).
 export const sePoatePeJumatate = p => !!p.bara && p.fact?.pas === 0.5;
 
@@ -78,7 +79,7 @@ export function debitare(bucati, bara, taiere = 0, peJumatate = false) {
     resturi: rest.map(r => Math.max(0, Math.round((jumatate(r) ? r - bara / 2 : r) - taiere))), preaLungi, bucati: toate.length };
 }
 
-// ── Modul de facturare (userul, 2026-10-22) — `fact` pe produs, din scripts/amanunt.mjs ──
+// ── Modul de facturare (userul, 2026-10-22) — `fact` pe produs, din baza managerului ──
 // lipsă = bucăţi întregi · { pas: 0.5 } = întreg sau jumătate · { procent } = lungimea totală / bară × procent,
 // în sus la 0,5 · { trepte: [[max mm, cât], …] } = fiecare bucată după lungimea ei · { multiplu: n } · { arie } = mp.
 const sus = (x, pas) => Math.round(Math.ceil(x / pas - 1e-9) * pas * 1000) / 1000;

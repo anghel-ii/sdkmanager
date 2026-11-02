@@ -11,13 +11,16 @@ const { citesteXlsx } = require('./xlsx.js');
 //    • ce e nelistat rămâne nelistat
 //    • ce lipseşte din export rămâne cum e (exportul poate fi şi doar cu cele noi)
 //  Listat ↔ nelistat se schimbă doar din pagină. Produsele noi se vând la bucată
-//  întreagă: fără `bara` (debitare) şi fără `fact` (mod de facturare).
+//  întreagă: fără `bara` (debitare) şi fără `fact` (mod de facturare); regula de
+//  facturare o schimbă din pagină conducerea sau adminul — ofertele deja salvate
+//  îşi păstrează cantităţile.
 // ═══════════════════════════════════════════════════════════════════════════
 
 const MAX_FISIER = 5 * 1024 * 1024;   // încape în limita corpului JSON (8 MB) şi ca base64
 const PE_PAGINA = 100;
 const COLOANE = ['Cod', 'Denumire', 'UM', 'Grupa'];
 const ro = new Intl.Collator('ro');
+const POT_REGULA = ['admin', 'conducere'];
 const eroareFisier = mesaj => Object.assign(new Error(mesaj), { cod: 400 });
 
 // Exportul .xlsx → { produse: [{ cod, denumire, um, grupa }], sarite }. Rândurile fără cod sau fără
@@ -87,22 +90,23 @@ function dupaCoduri(ctx) {
   json(ctx.res, 200, { produse: coduri.map(c => unul.get(c)).filter(Boolean).map(pentruOferta) });
 }
 
-// pagina /produse: căutare după cuvinte (cod sau denumire, fără diacritice), câte 100 pe pagină
+// pagina /produse: căutare după cuvinte (cod, denumire sau grupă, fără diacritice), câte 100 pe pagină
 function lista(ctx) {
   const url = new URL(ctx.req.url, 'http://x').searchParams;
   const cuvinte = faraDiacritice(url.get('cauta') ?? '').split(/\s+/).filter(Boolean);
   const stare = { listate: 1, nelistate: 0 }[url.get('stare')];
-  const unde = cuvinte.map(() => `fara_diacritice(cod || ' ' || denumire) LIKE ? ESCAPE '\\'`);
+  const unde = cuvinte.map(() => `fara_diacritice(cod || ' ' || denumire || ' ' || grupa) LIKE ? ESCAPE '\\'`);
   const valori = cuvinte.map(c => `%${c.replace(/[\\%_]/g, '\\$&')}%`);
   if (stare != null) { unde.push('listat = ?'); valori.push(stare); }
   const conditie = unde.length ? `WHERE ${unde.join(' AND ')}` : '';
   const total = db().prepare(`SELECT COUNT(*) AS n FROM produs ${conditie}`).get(...valori).n;
   const pagini = Math.max(1, Math.ceil(total / PE_PAGINA));
   const pagina = Math.min(pagini, Math.max(1, Number(url.get('pagina')) || 1));
-  const produse = db().prepare(`SELECT cod, denumire, um, grupa, listat, adaugat_la FROM produs ${conditie}
+  const produse = db().prepare(`SELECT cod, denumire, um, grupa, bara, fact, listat, adaugat_la FROM produs ${conditie}
     ORDER BY fara_diacritice(denumire), cod LIMIT ${PE_PAGINA} OFFSET ${(pagina - 1) * PE_PAGINA}`).all(...valori);
   const { listate: nrListate, nelistate } = db().prepare('SELECT SUM(listat = 1) AS listate, SUM(listat = 0) AS nelistate FROM produs').get();
-  json(ctx.res, 200, { produse, total, pagina, pagini, listate: nrListate ?? 0, nelistate: nelistate ?? 0 });
+  json(ctx.res, 200, { produse: produse.map(p => ({ ...p, fact: JSON.parse(p.fact ?? 'null') })), total, pagina, pagini,
+    listate: nrListate ?? 0, nelistate: nelistate ?? 0, schimbaRegula: POT_REGULA.includes(ctx.utilizator?.rol) });
 }
 
 // codurile au spaţii şi „/" („SM10/GLASS"), de-aia vin în corp, nu în adresă
@@ -111,6 +115,31 @@ async function listare(ctx) {
   const r = db().prepare('UPDATE produs SET listat = ? WHERE cod = ?').run(listat ? 1 : 0, String(cod ?? ''));
   if (!r.changes) return eroare(ctx.res, 404, 'Produsul nu există.');
   json(ctx.res, 200, { ok: true });
+}
+
+// Regulile care se pot alege din pagină. „După lungimea bucăţii" (trepte) şi „H × L × buc" (arie) vin din
+// fişierul cu modul de facturare: nu se aleg, dar un produs care le are poate trece pe alta.
+const REGULI = {
+  intreg: () => null,
+  jumatate: () => ({ pas: 0.5 }),
+  procent: p => {
+    if (!p.bara) throw eroareFisier('Regula cu lungimea + 15 % e doar pentru produsele vândute la bară.');
+    return { procent: 1.15 };
+  },
+  multiplu: (p, n) => {
+    if (!Number.isInteger(n) || n < 2 || n > 1000) throw eroareFisier('Multiplul trebuie să fie un număr întreg, între 2 şi 1000.');
+    return { multiplu: n, ...(JSON.parse(p.fact ?? 'null')?.set && { set: true }) };
+  },
+};
+
+async function regula(ctx) {
+  const { cod, regula: nume, multiplu } = await corpJson(ctx.req);
+  const p = db().prepare('SELECT * FROM produs WHERE cod = ?').get(String(cod ?? ''));
+  if (!p) return eroare(ctx.res, 404, 'Produsul nu există.');
+  if (!Object.hasOwn(REGULI, nume)) return eroare(ctx.res, 400, 'Regulă necunoscută.');
+  const fact = REGULI[nume](p, Number(multiplu));
+  db().prepare('UPDATE produs SET fact = ? WHERE cod = ?').run(fact && JSON.stringify(fact), p.cod);
+  json(ctx.res, 200, { fact });
 }
 
 module.exports = {
@@ -122,5 +151,6 @@ module.exports = {
     ['POST', '/api/produse/verifica', { handler: verifica }],
     ['POST', '/api/produse/incarca',  { handler: incarca }],
     ['POST', '/api/produse/listare',  { handler: listare }],
+    ['POST', '/api/produse/regula',   { handler: regula, rol: POT_REGULA }],
   ],
 };

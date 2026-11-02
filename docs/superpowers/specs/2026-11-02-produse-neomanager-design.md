@@ -20,7 +20,7 @@ care intră în bundle-ul paginii `amanunt.html`.
    complet sau doar cu produsele noi.
 4. **Ce e nelistat rămâne nelistat** la orice export.
 5. **Produs listat** = colegii îl găsesc la oferta cu amănuntul.
-6. **Produsele noi se vând la bucată întreagă.** Regulile speciale le adaugă Anghel mai târziu.
+6. **Produsele noi se vând la bucată întreagă.** Regula se schimbă din pagina „Produse”.
 
 ## Decizii de design
 
@@ -30,7 +30,12 @@ care intră în bundle-ul paginii `amanunt.html`.
 - Fără preţuri şi stocuri în bază; din export se citesc doar `Cod`, `Denumire`, `UM`, `Grupa`.
 - Listarea din pagina nouă e singura excepţie de la „nu se schimbă”: un produs trece
   listat ↔ nelistat doar prin acţiunea unui om.
-- Nu există ecran pentru modul de facturare în această versiune.
+- **Regula de facturare** se schimbă pe rând, din coloana „Facturare”: bucăţi întregi, întreg sau
+  jumătate, lungimea + 15 % (doar la bară), multiplu de N. O schimbă doar admin şi conducere, ceilalţi
+  o văd. „După lungimea bucăţii” şi „H × L × buc” nu se aleg, doar se pot înlocui, cu confirmare.
+  Ofertele salvate îşi păstrează cantităţile; regula nouă se aplică la următoarea modificare.
+- **Căutarea** merge şi după grupă, la „Produse” şi la oferta cu amănuntul; acolo denumirea are
+  întâietate faţă de grupă, iar lista rămâne tăiată la 30 de rezultate.
 
 ## Date
 
@@ -69,6 +74,7 @@ vin din `amanunt.json`, cu `bara` şi `fact` neschimbate.
 | `POST /api/produse/verifica` | admin, conducere, birou | citeşte fişierul, întoarce noile fără să scrie |
 | `POST /api/produse/incarca` | admin, conducere, birou | citeşte fişierul din nou şi adaugă noile |
 | `POST /api/produse/listare` | admin, conducere, birou | `{ cod, listat }` |
+| `POST /api/produse/regula` | admin, conducere | `{ cod, regula, multiplu? }` |
 
 Codurile conţin spaţii şi `/` („SM10/GLASS”), de aceea `listare` ia codul din corp, nu din cale.
 

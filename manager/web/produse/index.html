@@ -33,7 +33,9 @@
   table.produse tbody tr:last-child td { border-bottom: none; }
   table.produse td.cod { white-space: nowrap; font-variant-numeric: tabular-nums; }
   table.produse td.um, table.produse td.grupa { white-space: nowrap; color: var(--text-dim); }
-  table.produse td.stare { white-space: nowrap; width: 200px; text-align: right; }
+  table.produse td.stare { white-space: nowrap; width: 170px; text-align: right; }
+  table.produse td.regula { white-space: nowrap; color: var(--text-dim); }
+  table.produse td.regula select { width: auto; max-width: 190px; padding: 5px 8px; font-size: 13px; }
   table.produse tr.nelistat td.cod, table.produse tr.nelistat td.denumire { color: var(--text-dim); }
   .eticheta { margin-right: 10px; font-size: 12.5px; color: var(--verde-text); }
   tr.nelistat .eticheta { color: var(--text-dim); }
@@ -67,7 +69,7 @@
 
   <section class="card">
     <div class="filtre">
-      <input type="search" id="cauta" placeholder="Caută după cod sau denumire" aria-label="Caută produse">
+      <input type="search" id="cauta" placeholder="Caută după cod, denumire sau grupă" aria-label="Caută produse">
       <div class="segmented" id="stare">
         <button type="button" class="active" data-stare="">Toate <span id="nrToate"></span></button>
         <button type="button" data-stare="listate">Listate <span id="nrListate"></span></button>
@@ -94,8 +96,23 @@ const cereri = (cale, corp) => fetch(cale, corp === undefined ? {} : { method: '
 const f = { cauta: '', stare: '', pagina: 1 };
 let randuri = [], numarari = { listate: 0, nelistate: 0 };
 
+// Regula de facturare: conducerea şi adminul o schimbă pe rând, ceilalţi doar o văd (server/produse.js).
+let schimbaRegula = false;
+const regulaDin = f => (f?.multiplu ? 'multiplu' : f?.pas ? 'jumatate' : f?.procent ? 'procent' : f?.trepte ? 'trepte' : f?.arie ? 'arie' : 'intreg');
+const TEXT_REGULA = f => ({ intreg: 'Bucăţi întregi', jumatate: 'Întreg sau jumătate', procent: 'Lungimea + 15 %', trepte: 'După lungimea bucăţii',
+  arie: 'H × L × buc', multiplu: f?.multiplu ? `Multiplu de ${f.multiplu}` : 'Multiplu de…' }[regulaDin(f)]);
+function celulaRegula(p, i) {
+  if (!schimbaRegula) return esc(TEXT_REGULA(p.fact));
+  const acum = regulaDin(p.fact);
+  const optiuni = [['intreg', 'Bucăţi întregi'], ['jumatate', 'Întreg sau jumătate'], ...(p.bara ? [['procent', 'Lungimea + 15 %']] : []),
+    ['multiplu', acum === 'multiplu' ? TEXT_REGULA(p.fact) : 'Multiplu de…'], ...(['trepte', 'arie'].includes(acum) ? [[acum, TEXT_REGULA(p.fact)]] : [])];
+  return `<select data-regula="${i}" aria-label="Regula de facturare pentru ${esc(p.cod)}">${optiuni.map(([v, t]) =>
+    `<option value="${v}"${v === acum ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select>`;
+}
+
 const rand = (p, i) => `<tr class="${p.listat ? '' : 'nelistat'}">
   <td class="cod">${esc(p.cod)}</td><td class="denumire">${esc(p.denumire)}</td><td class="um">${esc(p.um)}</td><td class="grupa">${esc(p.grupa)}</td>
+  <td class="regula">${celulaRegula(p, i)}</td>
   <td class="stare"><span class="eticheta">${p.listat ? 'listat' : 'nelistat'}</span><button type="button" data-i="${i}">${p.listat ? 'Nu lista' : 'Listează'}</button></td>
 </tr>`;
 
@@ -107,7 +124,7 @@ const puneNumarari = () => {
 
 const randeaza = () => {
   $('lista').innerHTML = randuri.length
-    ? `<table class="produse"><thead><tr><th>Cod</th><th>Denumire</th><th>UM</th><th>Grupa</th><th></th></tr></thead><tbody>${randuri.map(rand).join('')}</tbody></table>`
+    ? `<table class="produse"><thead><tr><th>Cod</th><th>Denumire</th><th>UM</th><th>Grupa</th><th>Facturare</th><th></th></tr></thead><tbody>${randuri.map(rand).join('')}</tbody></table>`
     : '<div class="gol">Niciun produs găsit.</div>';
 };
 
@@ -118,7 +135,7 @@ async function incarca() {
   try {
     const d = await cereri(`/api/produse/lista?${q}`);
     if (cerere !== ultima) return;   // între timp s-a scris altceva în căutare
-    randuri = d.produse; numarari = d; f.pagina = d.pagina;
+    randuri = d.produse; numarari = d; f.pagina = d.pagina; schimbaRegula = d.schimbaRegula;
     randeaza(); puneNumarari();
     $('jos').hidden = d.pagini < 2;
     $('pagina').textContent = `Pagina ${d.pagina} din ${d.pagini} · ${nr(d.total)} produse`;
@@ -143,6 +160,23 @@ $('lista').addEventListener('click', async e => {
     b.closest('tr').outerHTML = rand(p, +b.dataset.i);
     puneNumarari();
   } catch (err) { b.disabled = false; window.alerta?.(err.message); }
+});
+
+$('lista').addEventListener('change', async e => {
+  const s = e.target.closest('select[data-regula]');
+  if (!s) return;
+  const i = +s.dataset.regula, p = randuri[i], regula = s.value, vechi = regulaDin(p.fact);
+  const pune = () => { s.closest('tr').outerHTML = rand(p, i); };
+  if (['trepte', 'arie'].includes(vechi) && !(await confirma(`Regula „${TEXT_REGULA(p.fact)}” nu se poate pune la loc de aici. O schimbi?`, 'Schimbă'))) return pune();
+  let multiplu;
+  if (regula === 'multiplu') {
+    multiplu = await cereValoare(`Multiplu de câte bucăţi se vinde ${p.cod}?`, { valoare: p.fact?.multiplu ?? '', loc: 'ex. 10', max: 4 });
+    if (multiplu == null) return pune();
+  }
+  s.disabled = true;
+  try { p.fact = (await cereri('/api/produse/regula', { cod: p.cod, regula, multiplu })).fact; }
+  catch (err) { window.alerta?.(err.message); }
+  pune();
 });
 
 let tCauta = null;

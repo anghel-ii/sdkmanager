@@ -25,6 +25,7 @@ const PLATI = { oferta: 'ofertă', proforma: 'proformă', proforma_amanunt: 'pro
 const INCASARI = { op_avans: 'OP avans', op_termen: 'OP la termen', bo_termen: 'BO la termen', bo_ramburs: 'BO ramburs', cash_ramburs: 'Cash ramburs',
                    cash_bf: 'Cash BF', cash_ch: 'Cash chitanta', cash_bf_sofer: 'Cash BF la sofer', cash_ch_sofer: 'Cash CH la sofer', card: 'Card' };
 const ROLURI = { admin: 'administrator', conducere: 'conducere', birou: 'birou' };
+const REGULI_PRODUS = { intreg: 'bucăţi întregi', jumatate: 'întreg sau jumătate', procent: 'lungimea + 15 %', multiplu: 'multiplu de' };
 
 // comanda unei linii de sticlă / a unei cereri de anulare / a unui task — pt. operaţiile care n-o au în adresă
 const comandaLiniei = id => db().prepare('SELECT p.comanda_id AS c FROM pozitie_linie l JOIN pozitie p ON p.id = l.pozitie_id WHERE l.id = ?').get(id)?.c;
@@ -86,6 +87,7 @@ const OPERATII = {
 
   'POST /api/produse/verifica':              ['Export de produse verificat', V],
   'POST /api/produse/incarca':               ['Export de produse încărcat', S, (b, r) => `${r?.adaugate ?? 0} produse noi`],
+  'POST /api/produse/regula':                ['Regula de facturare schimbată', S, b => lista(scurt(b.cod, 60), REGULI_PRODUS[b.regula] ?? b.regula, b.regula === 'multiplu' && b.multiplu)],
   'POST /api/produse/listare':               [b => (b.listat ? 'Produs listat' : 'Produs trecut pe nelistat'), S, b => scurt(b.cod, 60)],
 
   'POST /api/taskuri':                       ['Task nou', S, b => scurt(b.text), null, b => [b.comanda_id]],

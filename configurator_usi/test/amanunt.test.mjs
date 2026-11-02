@@ -23,6 +23,13 @@ const gasite = cauta('maner auriu');
 assert.ok(gasite.length > 0 && gasite.every(p => ['maner', 'auriu'].every(c => normal(p.denumire + ' ' + p.cod).includes(c))),
   'toate cuvintele, în orice ordine');
 assert.deepEqual(cauta('mâner AURIU').map(p => p.cod), gasite.map(p => p.cod), 'fără diacritice şi majuscule');
+// după grupă: produse care n-au cuvântul în denumire, dar întâi cele care îl au
+const dinGrupa = produse.find(p => p.grupa === 'Dressing' && !/dressing/i.test(p.denumire));
+assert.ok(dinGrupa, 'există în Dressing un produs fără cuvântul în denumire');
+const dressing = cauta('dressing', 500);
+assert.ok(dressing.includes(dinGrupa), 'căutarea găseşte produsele după grupă');
+const iaDenumire = dressing.findIndex(p => !/dressing/i.test(p.denumire));
+assert.ok(dressing.slice(iaDenumire).every(p => !/dressing/i.test(p.denumire)), 'denumirea are întâietate faţă de grupă');
 const cuCod = produse.find(p => /^\d{3}$/.test(p.cod));
 assert.equal(cauta(cuCod.cod)[0].cod, cuCod.cod, 'codul exact vine primul');
 assert.deepEqual(cauta('   '), [], 'nimic scris → nicio sugestie');
