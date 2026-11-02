@@ -162,13 +162,14 @@ const agentGresit = async (env, nume) => nume && !(await numeAgenti(env)).includ
 // clientul (neşters) cu id-ul ăsta, sau null
 export const clientul = (env, id) => env.DB.prepare('SELECT * FROM client WHERE id = ? AND sters_la IS NULL').bind(+id || 0).first();
 
-// Câmpurile din cerere (+ agent) → client modificat (id) sau nou (id null). Clientul care
+// Câmpurile din cerere (+ agent, sau agentFix pt. agentul care adaugă pe numele lui) → client
+// modificat (id) sau nou (id null). Clientul care
 // schimbă agentul trece la cel nou; modificarea în aşteptare a celui vechi pe el se pierde.
 // → { client } sau { cod, eroare }
-export async function scrieDirect(request, env, id) {
+export async function scrieDirect(request, env, id, agentFix = null) {
   const { v, eroare } = await clientDinCerere(request.clone(), !id);
   if (eroare) return { cod: 400, eroare };
-  const agent = text((await request.json()).agent, 120);
+  const agent = agentFix ?? text((await request.json()).agent, 120);
   if (!id && !agent) return { cod: 400, eroare: 'Client nou — alege agentul.' };
   const gresit = await agentGresit(env, agent);
   if (gresit) return { cod: 400, eroare: gresit };

@@ -1,7 +1,10 @@
 import { raspuns, eManager, CAMPURI, VERSIUNE_NOUA, clientul, stergeClient, anunta } from '../../../../lib/comun.js';
+import { anuntaClientNou } from '../../../../lib/mail.js';
 
 // POST /api/propuneri/:id/aproba   — DOAR managerul: propunerea intră în `client`
 //      (client nou sau modificat, cu versiune nouă → managerul o preia), apoi dispare.
+//      Clienţii noi nu mai trec pe aici (intră direct); rămân cei trimişi înainte de 2026-11-02,
+//      care primesc mailul pentru NeoManager la aprobare.
 //      Cererea de ştergere: clientul se şterge (sters_la + versiune nouă, ca din manager).
 // POST /api/propuneri/:id/respinge — propunerea dispare, `client` rămâne neschimbat.
 export async function onRequestPost({ request, env, params }) {
@@ -27,5 +30,6 @@ export async function onRequestPost({ request, env, params }) {
         .bind(p.agent, ...col.map(k => v[k] ?? null), p.creat_la);
   await env.DB.batch([scrie, sterge]);   // amândouă sau niciuna
   await anunta(env, { agenti: [p.agent], conducere: true });
-  return raspuns(200, { ok: true });
+  const avertisment = p.client_id ? undefined : await anuntaClientNou(env, { ...v, agent: p.agent }, p.agent);
+  return raspuns(200, { ok: true, avertisment });
 }

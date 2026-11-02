@@ -32,7 +32,7 @@ jobs:
 
       - name: Baza de clienţi — cititorul de Excel
         working-directory: clienti-agenti
-        run: node test/xlsx.test.mjs
+        run: node test/xlsx.test.mjs && node test/mail.test.mjs
 
       # Update fără admin pe Windows (deploy/pachet.mjs, manager/server/actualizare.js): doar pe main,
       # doar dacă au trecut toate testele de mai sus — pachetul gata construit ajunge în release-ul „ultima".

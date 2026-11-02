@@ -5,7 +5,7 @@ Aici e ORIGINALUL bazei de clienţi. Managerul (serverul din firmă) ţine o cop
 singur schimbările la 5 minute (`manager/server/clienti.js`).
 
 - Agentul intră cu user + parolă şi vede doar clienţii cu numele lui în coloana AGENT;
-  îi poate modifica şi poate adăuga clienţi noi (pe numele lui). Nu poate şterge.
+  îi poate modifica (cu aprobare) şi poate adăuga clienţi noi pe numele lui (direct în bază, fără aprobare, + mail). Nu poate şterge.
 - Conturi de CONDUCERE (`agent.rol = 'conducere'`, alese din /admin al managerului: „Tip cont"): văd TOŢI clienţii,
   cu coloana Agent în plus, şi scriu direct, fără aprobare (şi clienţi noi). Agentul schimbat = clientul trece la noul
   agent (îl vede şi îl modifică din contul lui); modificarea în aşteptare a celui vechi pe el se pierde. Agentul trebuie
@@ -42,3 +42,20 @@ singur schimbările la 5 minute (`manager/server/clienti.js`).
 `importa.mjs` a adus Excel-ul „Livrare_MASINA_completat" o singură dată (2026-09-29); refuză
 să mai ruleze cât baza are clienţi. Cheia managerului: secretul `CHEIE_MANAGER` din Pages;
 copia locală e în `.dev.vars` (nu intră în git).
+
+## Mailul pentru NeoManager
+
+La fiecare client nou (agent sau conducere; şi la aprobarea celor vechi rămaşi „De aprobat") pleacă un mail cu toate
+datele, ca un coleg să-l treacă în NeoManager (`lib/mail.js`). Nu pleacă la modificări sau ştergeri. Dacă nu pleacă,
+clientul rămâne salvat, iar cine l-a salvat vede un avertisment.
+
+Mailul îl trimite un Google Apps Script (`mail-script.gs`) de pe contul Gmail al portalului. Rulează pe serverele Google:
+nu trebuie să stea nimeni logat. Limita Google: 100 de destinatari pe zi. Destinatarul se schimbă DOAR în script.
+
+Punere în funcţiune:
+1. `openssl rand -hex 24` → cheia. Pe script.google.com, proiect nou, lipeşti `mail-script.gs`, completezi CHEIE + DESTINATAR.
+2. Run pe funcţia `proba` → autorizezi → trebuie să ajungă mailul de probă.
+3. Deploy → New deployment → Web app; Execute as: Me; Who has access: Anyone → copiezi URL-ul (se termină cu /exec).
+4. Din folderul ăsta, ÎNAINTE de publicarea codului:
+   `npx wrangler pages secret put MAIL_URL --project-name clienti-agenti`, apoi la fel `MAIL_CHEIE`.
+5. Publici portalul. Schimbi scriptul → Deploy → Manage deployments → versiune nouă (URL-ul rămâne).

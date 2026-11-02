@@ -1,4 +1,5 @@
-import { raspuns, clientDinCerere, agentLogat, eManager, vedereAgent, scrieDirect, numeAgenti, semn, anunta, versiunePagina } from '../../../lib/comun.js';
+import { raspuns, agentLogat, eManager, vedereAgent, scrieDirect, numeAgenti, semn, versiunePagina } from '../../../lib/comun.js';
+import { anuntaClientNou } from '../../../lib/mail.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  GET   manager (Bearer CHEIE_MANAGER): ?dupa=<versiune> → tot ce s-a adăugat
@@ -9,8 +10,8 @@ import { raspuns, clientDinCerere, agentLogat, eManager, vedereAgent, scrieDirec
 //        cont de conducere: TOŢI clienţii + agenţii pe care îi poate primi un client.
 //        ?semn → doar { semn } (vezi semn() în lib/comun.js): managerul, la 30 s / 10 min;
 //        pagina, doar când i se redeschide legătura live (functions/api/live.js).
-//  POST  agent logat: client nou, pe numele lui — ca PROPUNERE, până o aprobă cineva
-//        din manager (vezi api/propuneri). Conducerea: direct, cu agentul ales.
+//  POST  client nou, direct în bază (fără aprobare, userul 2026-11-02) + mail pentru NeoManager:
+//        agentul pe numele lui, conducerea cu agentul ales. `avertisment` = mailul n-a plecat.
 // ═══════════════════════════════════════════════════════════════════════════
 
 export async function onRequestGet({ request, env }) {
@@ -45,14 +46,7 @@ export async function onRequestGet({ request, env }) {
 export async function onRequestPost({ request, env }) {
   const agent = await agentLogat(request, env);
   if (!agent) return raspuns(401, { eroare: 'Nu eşti logat.' });
-  if (agent.rol === 'conducere') {
-    const r = await scrieDirect(request, env, null);
-    return r.eroare ? raspuns(r.cod, { eroare: r.eroare }) : raspuns(201, { client: r.client });
-  }
-  const { v, eroare } = await clientDinCerere(request, true);
-  if (eroare) return raspuns(400, { eroare });
-  const p = await env.DB.prepare(`INSERT INTO propunere (client_id, agent, date_json, creat_la)
-    VALUES (NULL, ?, ?, datetime('now')) RETURNING *`).bind(agent.nume, JSON.stringify(v)).first();
-  await anunta(env, { agenti: [agent.nume] });   // celelalte pagini ale lui (alt telefon)
-  return raspuns(201, { client: vedereAgent(p) });
+  const r = await scrieDirect(request, env, null, agent.rol === 'conducere' ? null : agent.nume);
+  if (r.eroare) return raspuns(r.cod, { eroare: r.eroare });
+  return raspuns(201, { client: r.client, avertisment: await anuntaClientNou(env, r.client, agent.nume) });
 }

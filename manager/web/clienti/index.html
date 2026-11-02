@@ -63,7 +63,7 @@
 <div id="continut">
   <header class="pagina-cap">
     <h1>Clienţi</h1>
-    <p>Copia bazei de clienţi a agenţilor de vânzări — se actualizează singură. Ce trimit agenţii aşteaptă întâi la „De aprobat". Conducerea poate modifica sau şterge un client direct din listă.</p>
+    <p>Copia bazei de clienţi a agenţilor de vânzări — se actualizează singură. Clienţii noi intră direct; modificările trimise de agenţi aşteaptă întâi la „De aprobat". Conducerea poate modifica sau şterge un client direct din listă.</p>
   </header>
   <section id="deAprobat" hidden>
     <h2>De aprobat <span class="cate" id="nrPropuneri"></span>
@@ -158,7 +158,9 @@ async function incarcaPropuneri() {
       && !(await confirma(`Ştergi clientul „${p.actual?.nume ?? ''}"? Dispare din baza de clienţi, pentru toată lumea.`, 'Şterge'))) return;
     card.querySelectorAll('button').forEach(x => { x.disabled = true; });
     const r = await api(`/api/clienti/propuneri/${p.id}/${b.dataset.actiune}`, { method: 'POST' });
-    if (r && !r.ok) alerta((await r.json().catch(() => ({}))).eroare || 'Operaţia a eşuat.');
+    const j = r ? await r.json().catch(() => ({})) : {};
+    if (r && !r.ok) alerta(j.eroare || 'Operaţia a eşuat.');
+    else if (j.avertisment) alerta(j.avertisment);
     await incarcaPropuneri();
     if (aproba) incarca();   // clientul aprobat e deja în copia de aici
   }));

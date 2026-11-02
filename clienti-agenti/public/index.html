@@ -139,7 +139,7 @@
     🗑 din stânga şterge clientul (cu confirmare).</p>
   <p class="dim ajutor" id="ajutorAgent">Scrii direct în celule (Enter sau Tab = celula următoare; alt rând = click pe el). La
     sfârşit apeşi „Salvează modificări" sus (verde când ai ceva nesalvat) — modificările pleacă spre aprobare; până sunt
-    aprobate, rândul e galben. Client nou: primul rând, cu TOATE câmpurile completate (în afară de reduceri şi „Alte");
+    aprobate, rândul e galben. Client nou: primul rând, cu TOATE câmpurile completate (în afară de reduceri şi „Alte") — intră direct în bază, fără aprobare;
     la persoane fizice, la CUI scrii „Persoana Fizica".
     Judeţul şi localitatea se aleg din listă (pt. curier şi livrări). Reducerile: doar numărul (15 = 15%).
     🗑 din stânga cere ştergerea clientului (tot cu aprobare); ↺ anulează cererea. Un rând = o singură cerere: dacă îl mai
@@ -171,8 +171,8 @@
 //  Agentul intră cu user + parolă (cookie de sesiune, 90 de zile) şi îşi vede
 //  clienţii (cei cu numele lui în coloana AGENT) într-un tabel ca în Excel
 //  (userul, 2026-10-02): toate coloanele, fiecare celulă editabilă, plus câte o
-//  coloană pe fiecare gamă de reducere. Ce modifică / adaugă aşteaptă APROBAREA
-//  din manager (pagina Clienţi) — până atunci rândul e galben.
+//  coloană pe fiecare gamă de reducere. Ce modifică aşteaptă APROBAREA din
+//  manager (pagina Clienţi) — până atunci rândul e galben. Clienţii noi intră direct.
 //  API: functions/api/{login,logout,clienti,propuneri}.
 //  Contul de CONDUCERE (userul, 2026-10-27): toţi clienţii, coloana Agent în plus,
 //  salvare directă (fără aprobare); agentul schimbat = clientul trece la el.
@@ -477,13 +477,13 @@ async function salveazaCiorna(cheie) {
   try {
     // client existent → PUT pe el; client nou încă neaprobat → PUT pe propunere; altfel client nou
     const cale = c?.id ? `/api/clienti/${c.id}` : c?.propunere_id ? `/api/propuneri/${c.propunere_id}` : '/api/clienti';
-    const { client } = await api(cale, { method: c ? 'PUT' : 'POST', body: JSON.stringify(date) });
+    const { client, avertisment } = await api(cale, { method: c ? 'PUT' : 'POST', body: JSON.stringify(date) });
     if (c) clienti[k] = client; else clienti.unshift(client);   // clientul nou: sus, să se vadă
     ciorne.delete(cheie);
     // conducerea salvează direct; agentul schimbat = clientul a trecut la el
-    const text = !conducere ? (client.inAsteptare ? 'trimis spre aprobare.' : 'înapoi cum era — nimic de aprobat.')
-      : c && client.agent !== c.agent ? `salvat — trecut la ${client.agent || 'niciun agent'}.` : 'salvat.';
-    return { nume: client.nume, text };
+    const text = !c ? 'salvat.' : !conducere ? (client.inAsteptare ? 'trimis spre aprobare.' : 'înapoi cum era — nimic de aprobat.')
+      : client.agent !== c.agent ? `salvat — trecut la ${client.agent || 'niciun agent'}.` : 'salvat.';
+    return { nume: client.nume, text, avertisment };
   } catch (err) {
     return { eroare: textEroare(err) };
   } finally {
@@ -513,8 +513,10 @@ async function salveazaTot() {
   } else if (ok.length === 1) {
     textMesaj(`✓ ${ok[0].nume} — ${ok[0].text}`, 'ok');
   } else if (ok.length) {
-    textMesaj(`✓ ${ok.length} clienţi — ${conducere ? 'salvaţi.' : 'trimişi spre aprobare.'}`, 'ok');
+    textMesaj(`✓ ${ok.length} clienţi — ${conducere ? 'salvaţi.' : 'salvaţi; modificările aşteaptă aprobarea.'}`, 'ok');
   }
+  const faraMail = ok.find(r => r.avertisment);
+  if (faraMail) textMesaj(`⚠ ${faraMail.avertisment}`, 'eroare');
 }
 $('salveaza').addEventListener('click', salveazaTot);
 // ce n-ai salvat nu pleacă fără întrebare (închizi pagina / dai refresh)
