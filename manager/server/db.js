@@ -598,6 +598,8 @@ const MIGRATII = [
     for (const p of require('./produse-start.json'))
       pune.run(p.cod, p.denumire, p.um ?? '', p.grupa ?? '', p.bara ?? null, p.fact ? JSON.stringify(p.fact) : null, p.listat);
   },
+  // v39 → v40 (2026-11-02): permisiunile unui cont de birou, bifate de admin în tablou (auth.js PERMISIUNI)
+  d => d.exec(`ALTER TABLE utilizator ADD COLUMN permisiuni TEXT NOT NULL DEFAULT '[]'`),
 ];
 
 // Exportată pt. test.

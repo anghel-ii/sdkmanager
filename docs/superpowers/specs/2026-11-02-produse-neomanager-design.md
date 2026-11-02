@@ -31,8 +31,8 @@ care intră în bundle-ul paginii `amanunt.html`.
 - Listarea din pagina nouă e singura excepţie de la „nu se schimbă”: un produs trece
   listat ↔ nelistat doar prin acţiunea unui om.
 - **Regula de facturare** se schimbă pe rând, din coloana „Facturare”: bucăţi întregi, întreg sau
-  jumătate, lungimea + 15 % (doar la bară), multiplu de N. O schimbă doar admin şi conducere, ceilalţi
-  o văd. „După lungimea bucăţii” şi „H × L × buc” nu se aleg, doar se pot înlocui, cu confirmare.
+  jumătate, lungimea + 15 % (doar la bară), multiplu de N. O schimbă cine are permisiunea „Produse”.
+  „După lungimea bucăţii” şi „H × L × buc” nu se aleg, doar se pot înlocui, cu confirmare.
   Ofertele salvate îşi păstrează cantităţile; regula nouă se aplică la următoarea modificare.
 - **Căutarea** merge şi după grupă, la „Produse” şi la oferta cu amănuntul; acolo denumirea are
   întâietate faţă de grupă, iar lista rămâne tăiată la 30 de rezultate.
@@ -70,11 +70,13 @@ vin din `amanunt.json`, cu `bara` şi `fact` neschimbate.
 |---|---|---|
 | `GET /api/produse` | autentificat | produsele listate, pentru `amanunt.html` |
 | `GET /api/produse/coduri?coduri=…` | autentificat | produsele cerute, şi nelistate (oferte vechi) |
-| `GET /api/produse/lista?cauta=&stare=&pagina=` | admin, conducere, birou | lista paginii „Produse”, câte 100 |
-| `POST /api/produse/verifica` | admin, conducere, birou | citeşte fişierul, întoarce noile fără să scrie |
-| `POST /api/produse/incarca` | admin, conducere, birou | citeşte fişierul din nou şi adaugă noile |
-| `POST /api/produse/listare` | admin, conducere, birou | `{ cod, listat }` |
-| `POST /api/produse/regula` | admin, conducere | `{ cod, regula, multiplu? }` |
+| `GET /api/produse/lista?cauta=&stare=&pagina=` | permisiunea „Produse” | lista paginii „Produse”, câte 100 |
+| `POST /api/produse/verifica` | permisiunea „Produse” | citeşte fişierul, întoarce noile fără să scrie |
+| `POST /api/produse/incarca` | permisiunea „Produse” | citeşte fişierul din nou şi adaugă noile |
+| `POST /api/produse/listare` | permisiunea „Produse” | `{ cod, listat }` |
+| `POST /api/produse/regula` | permisiunea „Produse” | `{ cod, regula, multiplu? }` |
+
+Permisiunea se bifează în Tabloul admin, la fiecare cont de birou; adminul şi conducerea au tot.
 
 Codurile conţin spaţii şi `/` („SM10/GLASS”), de aceea `listare` ia codul din corp, nu din cale.
 
@@ -96,7 +98,7 @@ iar ce e pe bune ajunge şi în copie. Tabelul are cheie primară, deci sesiunil
 
 ## Pagina „Produse”
 
-`/produse`, link în meniu pentru toate rolurile.
+`/produse`, link în meniu pentru cine are permisiunea „Produse”.
 
 - Sus: încărcarea exportului. După alegerea fişierului apare „X produse noi” cu lista lor şi
   butonul de confirmare. Cu 0 noi, doar un mesaj.

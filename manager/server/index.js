@@ -45,6 +45,7 @@ const produse     = require('./produse.js');
 //   { public: true }   — fără sesiune (login)
 //   { }                — orice utilizator logat
 //   { rol: 'admin' }   — doar administratorii
+//   { permisiune: 'produse' } — adminul, conducerea şi conturile de birou bifate în tablou (auth.js)
 
 const MODULE = [utilizatori, comenzi, scanare, evenimente, sticla, livrari, taskuri, cereri, tichete, notificari, tablou, actualizare, clienti, activitate, produse].filter(Boolean);
 
@@ -69,6 +70,10 @@ async function trateaza(req, res) {
     if (!spec.public && !utilizator)  return eroare(res, 401, 'Trebuie să fii autentificat.');
     // rol: unul ('admin') sau mai multe (['admin', 'conducere'])
     if (spec.rol && ![].concat(spec.rol).includes(utilizator.rol)) {
+      return eroare(res, 403, 'Nu ai drepturile necesare pentru operaţia asta.');
+    }
+
+    if (spec.permisiune && !auth.arePermisiune(utilizator, spec.permisiune)) {
       return eroare(res, 403, 'Nu ai drepturile necesare pentru operaţia asta.');
     }
 

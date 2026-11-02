@@ -12,15 +12,15 @@ const { citesteXlsx } = require('./xlsx.js');
 //    • ce lipseşte din export rămâne cum e (exportul poate fi şi doar cu cele noi)
 //  Listat ↔ nelistat se schimbă doar din pagină. Produsele noi se vând la bucată
 //  întreagă: fără `bara` (debitare) şi fără `fact` (mod de facturare); regula de
-//  facturare o schimbă din pagină conducerea sau adminul — ofertele deja salvate
-//  îşi păstrează cantităţile.
+//  facturare se schimbă din pagină — ofertele deja salvate îşi păstrează cantităţile.
+//  Pagina e doar pentru cine are permisiunea „Produse"; căutarea produselor listate
+//  la oferta cu amănuntul rămâne pentru toţi.
 // ═══════════════════════════════════════════════════════════════════════════
 
 const MAX_FISIER = 5 * 1024 * 1024;   // încape în limita corpului JSON (8 MB) şi ca base64
 const PE_PAGINA = 100;
 const COLOANE = ['Cod', 'Denumire', 'UM', 'Grupa'];
 const ro = new Intl.Collator('ro');
-const POT_REGULA = ['admin', 'conducere'];
 const eroareFisier = mesaj => Object.assign(new Error(mesaj), { cod: 400 });
 
 // Exportul .xlsx → { produse: [{ cod, denumire, um, grupa }], sarite }. Rândurile fără cod sau fără
@@ -106,7 +106,7 @@ function lista(ctx) {
     ORDER BY fara_diacritice(denumire), cod LIMIT ${PE_PAGINA} OFFSET ${(pagina - 1) * PE_PAGINA}`).all(...valori);
   const { listate: nrListate, nelistate } = db().prepare('SELECT SUM(listat = 1) AS listate, SUM(listat = 0) AS nelistate FROM produs').get();
   json(ctx.res, 200, { produse: produse.map(p => ({ ...p, fact: JSON.parse(p.fact ?? 'null') })), total, pagina, pagini,
-    listate: nrListate ?? 0, nelistate: nelistate ?? 0, schimbaRegula: POT_REGULA.includes(ctx.utilizator?.rol) });
+    listate: nrListate ?? 0, nelistate: nelistate ?? 0 });
 }
 
 // codurile au spaţii şi „/" („SM10/GLASS"), de-aia vin în corp, nu în adresă
@@ -147,10 +147,10 @@ module.exports = {
   rute: [
     ['GET',  '/api/produse',          { handler: listate }],
     ['GET',  '/api/produse/coduri',   { handler: dupaCoduri }],
-    ['GET',  '/api/produse/lista',    { handler: lista }],
-    ['POST', '/api/produse/verifica', { handler: verifica }],
-    ['POST', '/api/produse/incarca',  { handler: incarca }],
-    ['POST', '/api/produse/listare',  { handler: listare }],
-    ['POST', '/api/produse/regula',   { handler: regula, rol: POT_REGULA }],
+    ['GET',  '/api/produse/lista',    { handler: lista, permisiune: 'produse' }],
+    ['POST', '/api/produse/verifica', { handler: verifica, permisiune: 'produse' }],
+    ['POST', '/api/produse/incarca',  { handler: incarca, permisiune: 'produse' }],
+    ['POST', '/api/produse/listare',  { handler: listare, permisiune: 'produse' }],
+    ['POST', '/api/produse/regula',   { handler: regula, permisiune: 'produse' }],
   ],
 };

@@ -31,7 +31,12 @@ function verificaParola(parola, hash, salt) {
 
 // ── Utilizatori ──────────────────────────────────────────────────────────────
 
-const PUBLIC = 'id, nume, user, rol, activ, creat_la, mod_test';   // niciodată hash/salt
+const PUBLIC = 'id, nume, user, rol, activ, creat_la, mod_test, permisiuni';   // niciodată hash/salt
+
+// Ce poate primi un cont de birou, bifat de admin în tablou (userul, 2026-11-02); adminul şi conducerea
+// au tot. Pe o rută: { permisiune: 'produse' }. O bifă nouă = o intrare aici + rutele ei.
+const PERMISIUNI = { produse: 'Produse' };
+const arePermisiune = (u, p) => u.rol !== 'birou' || u.permisiuni.includes(p);
 
 // Fără parolă = cont NEACTIVAT (hash şi salt goale): adminul creează doar
 // utilizatorul şi rolul, iar omul îşi alege parola la primul login (vezi
@@ -63,6 +68,7 @@ function reseteazaParola(id) {
 function gasesteUtilizator(id) {
   const u = db().prepare(`SELECT ${PUBLIC} FROM utilizator WHERE id = ?`).get(id) ?? null;
   if (u?.rol === 'admin' && config.adminInTest) u.mod_test = 1;
+  if (u) u.permisiuni = JSON.parse(u.permisiuni);
   return u;
 }
 
@@ -152,6 +158,7 @@ function tokenDinCerere(req) {
 }
 
 module.exports = {
+  PERMISIUNI, arePermisiune,
   hashParola, verificaParola,
   creeazaUtilizator, gasesteUtilizator, schimbaParola, contNeactivat, reseteazaParola,
   login, logout, dinToken, curataSesiuni, sesiuneNoua,

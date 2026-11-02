@@ -310,7 +310,7 @@
       <div class="grup"><span class="txt">Operaţiuni</span></div>
       ${link('/sticla', 'sticla', 'Comandă sticlă', 'id="linkSticla"', '<span class="insigna cald" id="nrSticla"></span>')}
       ${link('/livrari', 'livrari', 'Organizează livrări', 'id="linkLivrari"')}
-      ${link('/produse', 'produse', 'Produse', 'id="linkProduse"')}
+      ${link('/produse', 'produse', 'Produse', 'id="linkProduse" hidden')}
       ${link('/taskuri', 'taskuri', 'Taskuri', 'id="linkTaskuri"', '<span class="insigna rosie" id="nrTaskuri" title="ajunse la ora reminderului"></span>')}
       ${link('/cereri', 'cereri', 'Cereri', 'id="linkCereri"', '<span class="insigna rosie" id="nrCereri" title="cereri de decis (anulări, schimbări de factură)"></span>')}
       ${link('/tichete', 'tichete', 'Tichete', 'id="linkTichete"', '<span class="insigna rosie" id="nrTichete"></span>')}
@@ -342,7 +342,7 @@
       <a href="/" class="buton" title="Comenzi">${icoana('acasa')}<span class="txt">Comenzi</span></a>
       <a href="/sticla" class="buton" id="linkSticla" title="Comandă sticlă">${icoana('sticla')}<span class="txt">Comandă sticlă</span><span class="insigna cald" id="nrSticla"></span></a>
       <a href="/livrari" class="buton" id="linkLivrari" title="Organizează livrări">${icoana('livrari')}<span class="txt">Organizează livrări</span></a>
-      <a href="/produse" class="buton" id="linkProduse" title="Produse">${icoana('produse')}<span class="txt">Produse</span></a>
+      <a href="/produse" class="buton" id="linkProduse" hidden title="Produse">${icoana('produse')}<span class="txt">Produse</span></a>
       <a href="/taskuri" class="buton" id="linkTaskuri" title="Taskuri; numărul = ajunse la ora reminderului">${icoana('taskuri')}<span class="txt">Taskuri</span><span class="insigna rosie" id="nrTaskuri"></span></a>
       <a href="/tichete" class="buton" id="linkTichete" title="Tichete: ce nu merge, idei — pentru administrator">${icoana('tichete')}<span class="txt">Tichete</span><span class="insigna rosie" id="nrTichete"></span></a>
       <a href="/clienti" class="buton" id="linkClienti" hidden title="Clienţi; numărul = trimise de agenţi, de aprobat">${icoana('clienti')}<span class="txt">Clienţi</span><span class="insigna cald" id="nrClienti"></span></a>
@@ -460,6 +460,7 @@
       radacina.querySelector('#linkAdmin').hidden = eu.rol !== 'admin';     // conturile — doar admin
       radacina.querySelector('#linkActivitate')?.toggleAttribute('hidden', eu.rol === 'birou');   // jurnalul tuturor — admin + conducere
       radacina.querySelector('#linkClienti').hidden = eu.rol === 'birou';   // clienţii — nu şi biroul (userul, 2026-10-02)
+      radacina.querySelector('#linkProduse').hidden = eu.rol === 'birou' && !eu.permisiuni?.includes('produse');   // bifa din Tabloul admin
       // de la distanţă se deschid doar tabloul de admin şi tichetele (releu.js le blochează pe restul) → restul meniului dispare
       if (laDistanta) radacina.querySelectorAll('#ofertaNoua, .grup:not(#grupAdmin), a[href]:not(.marca)').forEach(el => {
         if (!['/admin', '/tichete'].includes(el.getAttribute('href'))) el.hidden = true;

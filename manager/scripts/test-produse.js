@@ -121,7 +121,6 @@ const cate = () => db().prepare('SELECT COUNT(*) AS n FROM produs').get().n;
   console.log('\nRegula de facturare');
   const regula = c => cheama('POST', '/api/produse/regula', { corp: c });
   const factul = cod => JSON.parse(produsul(cod).fact ?? 'null');
-  verifica('o schimbă doar conducerea şi adminul', rute.find(r => r[1] === '/api/produse/regula')[2].rol.join() === 'admin,conducere');
   await regula({ cod: 'NOU-2', regula: 'jumatate' });
   verifica('întreg sau jumătate', factul('NOU-2')?.pas === 0.5);
   verifica('oferta primeşte regula nouă', (await cheama('GET', '/api/produse')).date.produse.find(p => p.cod === 'NOU-2').fact?.pas === 0.5);
