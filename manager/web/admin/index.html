@@ -91,7 +91,11 @@
   details > summary { cursor: pointer; color: var(--text-dim); font-size: 13px; }
   .legatura + .legatura { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 14px; }
   @media (max-width: 899px) { .cont-nou { grid-template-columns: 1fr; } .cifre { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-  .permisiune { display: inline-flex; align-items: center; gap: 6px; margin: 0 12px 0 0; font-size: 13px; white-space: nowrap; }
+  .permisiune { display: inline-flex; align-items: center; gap: 6px; margin: 0; font-size: 13px; letter-spacing: 0; text-transform: none; color: var(--text); white-space: nowrap; }
+  /* cu permisiunile, tabelul de conturi nu mai încape pe un rând: butoanele se aşază unul sub altul */
+  #lista td.actiuni { white-space: normal; width: 1%; min-width: 118px; }
+  #lista td.actiuni button { display: block; width: 100%; margin: 0 0 4px; }
+  #lista td.actiuni button:last-child { margin-bottom: 0; }
   .permisiune input { width: auto; margin: 0; }
 </style>
 </head>
