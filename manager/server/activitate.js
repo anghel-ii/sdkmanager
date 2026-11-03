@@ -82,6 +82,8 @@ const OPERATII = {
   'PUT /api/livrari/comanda/:id':            ['Livrare: preţ / observaţii / loc', S, b => lista(b.de_incasat != null && b.de_incasat !== '' && `preţ ${lei(b.de_incasat)}`,
                                                'coloana_borderou' in b && `pe borderou: ${COLOANE_BORDEROU[b.coloana_borderou] ?? 'nealeasă'}`,
                                                b.observatii_livrare && scurt(b.observatii_livrare, 80), b.judet), null, (b, r, p) => [p.id]],
+  'POST /api/livrari/plan':                  ['Livrări: planul în lucru', V, b => lista(typeof b.judet === 'string' && `${b.ales ? 'ales' : 'scos'} judeţul ${b.judet || 'fără judeţ'}`,
+                                               Array.isArray(b.comenzi) && `${b.bifat ? 'bifate' : 'debifate'} ${b.comenzi.length} comenzi`, 'data' in b && `data ${b.data || '—'}`)],
   'POST /api/livrari':                       ['Livrare programată', S, b => lista(b.data, Array.isArray(b.comenzi) && `${b.comenzi.length} comenzi`),
                                                null, b => b.comenzi ?? []],
   'DELETE /api/livrari/:id':                 ['Livrare anulată', S, (b, r, p) => `livrarea ${p.id}`],

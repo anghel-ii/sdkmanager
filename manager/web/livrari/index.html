@@ -205,9 +205,15 @@ const eroareDin = async r => (await r.json().catch(() => ({}))).eroare || 'Opera
 let comenzi = [], judete = [], livrari = [];
 // sediul firmei — de aici pleacă şi aici se întoarce maşina (fix, nu se modifică din pagină)
 const plecare = { adresa: 'Str. Odobeşti 53, Cluj-Napoca', lat: 46.8004944, lon: 23.60057 };
+// Planul în lucru — judeţele alese, comenzile debifate, data — e pe SERVER, comun tuturor (userul, 2026-11-03):
+// rămâne până se programează livrarea şi se vede la fel la toţi. Fiecare clic trimite doar schimbarea lui
+// (server/livrari.js schimbaPlan); la anunţul de la server pagina reia planul de acolo.
 let alese = new Set();              // judeţele alese ('' = fără judeţ)
-try { alese = new Set(JSON.parse(localStorage.getItem('livrariJudete') ?? '[]')); } catch {}
-const debifate = new Set();         // comenzile debifate (implicit toate bifate)
+let debifate = new Set();           // comenzile debifate (implicit toate bifate)
+const trimitePlan = async schimbare => {
+  const r = await api('/api/livrari/plan', { method: 'POST', body: JSON.stringify(schimbare) });
+  if (r && !r.ok) { alerta(await eroareDin(r)); incarca(); }
+};
 let ordine = [];                    // id-urile, în ordinea traseului
 let punePeHarta = null;             // id-ul comenzii care aşteaptă un clic pe hartă
 
@@ -240,7 +246,12 @@ function reordoneaza() {
 async function incarca() {
   const [rc, rl] = await Promise.all([api('/api/livrari/candidati'), api('/api/livrari')]);
   if (!rc || !rl) return;
-  ({ comenzi, judete } = await rc.json());
+  let plan;
+  ({ comenzi, judete, plan } = await rc.json());
+  alese = new Set(plan?.judete ?? []);
+  debifate = new Set(plan?.debifate ?? []);
+  // data din plan, dacă nu a trecut; altfel mâine (nu în timp ce o alege cineva aici)
+  if (document.activeElement !== $('dataLivrare')) $('dataLivrare').value = plan?.data && plan.data >= aziRo() ? plan.data : maine();
   ({ livrari } = await rl.json());
   // ordinea: cea de până acum, apoi cele noi după judeţ şi dată
   const noi = comenzi.filter(c => !ordine.includes(c.id))
@@ -262,10 +273,10 @@ function randeazaJudete() {
   $('judete').innerHTML = lista.map(j => `<button data-j="${esc(j)}" class="${alese.has(j) ? 'activ' : ''}">${esc(j)}<span class="nr">${nr.get(j)}</span></button>`).join('')
     + (nr.has('') ? `<button data-j="" class="fara${alese.has('') ? ' activ' : ''}" title="Adresa nu spune judeţul — alege-l în listă">Fără judeţ<span class="nr">${nr.get('')}</span></button>` : '');
   $('judete').querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
-    const j = b.dataset.j;
-    if (alese.has(j)) alese.delete(j); else alese.add(j);
-    try { localStorage.setItem('livrariJudete', JSON.stringify([...alese])); } catch {}
+    const j = b.dataset.j, ales = !alese.has(j);
+    if (ales) alese.add(j); else alese.delete(j);
     randeazaJudete(); randeazaPlan(); cautaPeHarta();
+    trimitePlan({ judet: j, ales });
   }));
 }
 
@@ -305,15 +316,21 @@ function randeazaPlan() {
             <div class="mic-dim">${esc([PLATI[c.plata], INCASARI[c.incasare]].filter(Boolean).join(' · '))}${c.achitat_la ? ` · achitată${c.avans > 0 ? ` ${lei(c.avans)}` : ''}` : c.avans > 0 ? ` · avans ${lei(c.avans)}` : ''}</div></td>
       </tr>`; }).join('')}</tbody></table>`;
 
-  $('toate').addEventListener('change', e => { v.forEach(c => (e.target.checked ? debifate.delete(c.id) : debifate.add(c.id))); randeazaPlan(); });
+  $('toate').addEventListener('change', e => {
+    v.forEach(c => (e.target.checked ? debifate.delete(c.id) : debifate.add(c.id))); randeazaPlan();
+    trimitePlan({ comenzi: v.map(c => c.id), bifat: e.target.checked });
+  });
   $('tabel').querySelectorAll('tbody tr').forEach(tr => {
     const id = +tr.dataset.id, c = comenzi.find(x => x.id === id);
-    tr.querySelector('.rand').addEventListener('change', e => { if (e.target.checked) debifate.delete(id); else debifate.add(id); randeazaPlan(); });
+    tr.querySelector('.rand').addEventListener('change', e => {
+      if (e.target.checked) debifate.delete(id); else debifate.add(id);
+      randeazaPlan();
+      trimitePlan({ comenzi: [id], bifat: e.target.checked });
+    });
     tr.querySelector('select.judet').addEventListener('change', async e => {
       const r = await api(`/api/livrari/comanda/${id}`, { method: 'PUT', body: JSON.stringify({ judet: e.target.value }) });
       if (r && !r.ok) return alerta(await eroareDin(r));
-      alese.add(e.target.value);   // rămâne la vedere şi în judeţul ales
-      try { localStorage.setItem('livrariJudete', JSON.stringify([...alese])); } catch {}
+      if (!alese.has(e.target.value)) await trimitePlan({ judet: e.target.value, ales: true });   // rămâne la vedere şi în judeţul ales
       incarca();
     });
     const inp = tr.querySelector('input.incasat');
@@ -553,7 +570,7 @@ $('confirma').addEventListener('click', async () => {
   if (!(await confirma(`Programezi livrarea din ${ziua(zi)} cu ${b.length} ${b.length === 1 ? 'comandă' : 'comenzi'}?`))) return;
   const r = await api('/api/livrari', { method: 'POST', body: JSON.stringify({ data: zi, comenzi: b.map(c => c.id) }) });
   if (r && !r.ok) return alerta(await eroareDin(r));
-  b.forEach(c => debifate.delete(c.id));
+  await trimitePlan({ data: null });   // următoarea livrare porneşte iar de la „mâine"
   incarca();
 });
 // „Previzualizează livrarea" (userul, 2026-10-30): borderoul comenzilor bifate, în ordinea traseului, marcat „NU E FINAL" —
@@ -569,7 +586,11 @@ $('previzualizeaza').addEventListener('click', async () => {
 });
 const ziua = zi => new Date(zi + 'T12:00:00').toLocaleDateString('ro-RO', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
 // implicit mâine
-{ const m = new Date(Date.now() + 864e5); $('dataLivrare').value = `${m.getFullYear()}-${String(m.getMonth() + 1).padStart(2, '0')}-${String(m.getDate()).padStart(2, '0')}`; }
+// ziua de azi / mâine după ora României (AAAA-LL-ZZ)
+function aziRo() { return new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Bucharest' }); }
+function maine() { return new Date(Date.now() + 864e5).toLocaleDateString('sv-SE', { timeZone: 'Europe/Bucharest' }); }
+$('dataLivrare').value = maine();
+$('dataLivrare').addEventListener('change', e => trimitePlan({ data: e.target.value || null }));
 
 // ── Livrări programate ──
 function cardLivrare(l) {

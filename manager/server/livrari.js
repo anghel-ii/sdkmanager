@@ -80,7 +80,7 @@ function candidati(ctx) {
      WHERE c.tip = 'comanda' AND c.anulat = 0 AND lower(trim(c.livrare)) = ? AND ${FARA_CERERE}
        AND NOT EXISTS (SELECT 1 FROM livrare_comanda lc WHERE lc.comanda_id = c.id)
      ORDER BY c.creat_la`).all(CU_MASINA);
-  json(ctx.res, 200, { comenzi: cuDetalii(r), judete: JUDETE });
+  json(ctx.res, 200, { comenzi: cuDetalii(r), judete: JUDETE, plan: citestePlan() });
 }
 
 const COLOANE = ['bon', 'factura', 'op'];   // coloanele borderoului în care poate intra preţul
@@ -120,6 +120,50 @@ async function modificaComanda(ctx) {
   db().prepare(`UPDATE comanda SET ${set.join(', ')} WHERE id = ?`).run(...val, id);
   anunta({ livrari: true });
   json(ctx.res, 200, { ok: true });
+}
+
+// ── Planul în lucru (userul, 2026-11-03): judeţele alese, comenzile debifate şi data — COMUNE tuturor
+// utilizatorilor şi păstrate pe server până se programează livrarea (înainte: judeţele în localStorage-ul
+// fiecăruia, bifele doar cât era deschisă pagina). Un rând în `setare` (fără migraţie). Pagina trimite
+// fiecare schimbare ca diferenţă — doi colegi care bifează în acelaşi timp nu-şi şterg unul altuia
+// bifele —, apoi toţi primesc anunţul şi reîncarcă. Implicit comenzile sunt bifate: se ţin cele DEBIFATE.
+const CHEIE_PLAN = 'livrari_plan';
+function citestePlan() {
+  let p = {};
+  try { p = JSON.parse(db().prepare('SELECT valoare FROM setare WHERE cheie = ?').get(CHEIE_PLAN)?.valoare ?? '{}'); } catch {}
+  return {
+    judete: Array.isArray(p.judete) ? p.judete.filter(j => typeof j === 'string') : [],
+    debifate: Array.isArray(p.debifate) ? p.debifate.filter(Number.isInteger) : [],
+    data: typeof p.data === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(p.data) ? p.data : null,
+  };
+}
+const scriePlan = (d, p) => d.prepare(`INSERT INTO setare (cheie, valoare) VALUES (?, ?)
+  ON CONFLICT(cheie) DO UPDATE SET valoare = excluded.valoare`).run(CHEIE_PLAN, JSON.stringify(p));
+// { judet, ales } | { comenzi: [id…], bifat } | { data } — una sau mai multe odată
+async function schimbaPlan(ctx) {
+  const corp = await corpJson(ctx.req);
+  const areJudet = typeof corp.judet === 'string' && typeof corp.ales === 'boolean';
+  const ids = Array.isArray(corp.comenzi) ? corp.comenzi.map(Number).filter(Number.isInteger) : [];
+  const areBife = ids.length > 0 && typeof corp.bifat === 'boolean';
+  const areData = 'data' in corp && (corp.data === null || corp.data === '' || /^\d{4}-\d{2}-\d{2}$/.test(String(corp.data)));
+  if (!areJudet && !areBife && !areData) return eroare(ctx.res, 400, 'Nimic de schimbat în planul de livrare.');
+  const plan = tranzactie(d => {
+    const p = citestePlan();
+    if (areJudet) {
+      const j = corp.judet.slice(0, 60);
+      p.judete = corp.ales ? [...new Set([...p.judete, j])] : p.judete.filter(x => x !== j);
+    }
+    if (areBife) {
+      const deb = new Set(p.debifate);
+      for (const id of ids) corp.bifat ? deb.delete(id) : deb.add(id);
+      p.debifate = [...deb];
+    }
+    if (areData) p.data = corp.data || null;
+    scriePlan(d, p);
+    return p;
+  });
+  anunta({ livrari: true });
+  json(ctx.res, 200, { plan });
 }
 
 // Livrările (toate — pagina le împarte în programate / trecute după dată), cu comenzile în ordine.
@@ -180,6 +224,7 @@ module.exports = {
   rute: [
     ['GET',    '/api/livrari/candidati',    { handler: candidati }],
     ['PUT',    '/api/livrari/comanda/:id',  { handler: modificaComanda }],
+    ['POST',   '/api/livrari/plan',         { handler: schimbaPlan }],   // judeţe / bife / data, comune tuturor
     ['GET',    '/api/livrari',              { handler: livrari }],
     ['POST',   '/api/livrari',              { handler: creeaza }],
     ['DELETE', '/api/livrari/:id',          { handler: anuleaza }],

@@ -1180,6 +1180,24 @@ async function main() {
     const oferta = await noua('Livr Oferta', 'Cu masina noastra', 'Str. Y, Iasi');   // rămâne ofertă
     for (const id of [iasi, vaslui, curier, faraJ]) await cer('POST', `/api/comenzi/${id}/accepta`, { incasare: 'card', plata: 'proforma', avans: 0 });
     const cand = async () => (await cer('GET', '/api/livrari/candidati')).date.comenzi;
+    // planul în lucru (userul, 2026-11-03): judeţele, bifele şi data — pe server, comune tuturor, până se programează
+    const plan = async () => (await cer('GET', '/api/livrari/candidati')).date.plan;
+    verifica('plan gol la început', JSON.stringify(await plan()) === JSON.stringify({ judete: [], debifate: [], data: null }), JSON.stringify(await plan()));
+    verifica('plan: nimic de schimbat → 400', (await cer('POST', '/api/livrari/plan', {})).stare === 400);
+    await Promise.all([cer('POST', '/api/livrari/plan', { judet: 'Iași', ales: true }), cer('POST', '/api/livrari/plan', { judet: 'Vaslui', ales: true }),
+      cer('POST', '/api/livrari/plan', { comenzi: [vaslui], bifat: false }), cer('POST', '/api/livrari/plan', { data: '2030-01-15' })]);
+    const p1 = await plan();
+    verifica('plan: schimbări trimise odată (doi colegi) — nu se şterg una pe alta',
+      p1.judete.length === 2 && p1.judete.includes('Iași') && p1.judete.includes('Vaslui') && JSON.stringify(p1.debifate) === JSON.stringify([vaslui])
+      && p1.data === '2030-01-15', JSON.stringify(p1));
+    verifica('plan: ţinut în baza comună (setare), nu în browser', JSON.parse(db2().prepare("SELECT valoare FROM setare WHERE cheie = 'livrari_plan'").get().valoare).data === '2030-01-15');
+    await cer('POST', '/api/livrari/plan', { judet: 'Vaslui', ales: false });
+    await cer('POST', '/api/livrari/plan', { comenzi: [vaslui], bifat: true });
+    const p2 = await plan();
+    verifica('plan: judeţ scos, comandă bifată la loc', JSON.stringify(p2.judete) === '["Iași"]' && !p2.debifate.length, JSON.stringify(p2));
+    verifica('plan: în jurnal', db2().prepare("SELECT 1 FROM activitate WHERE operatie = 'Livrări: planul în lucru' AND detalii LIKE 'scos judeţul Vaslui%'").get() != null);
+    await cer('POST', '/api/livrari/plan', { judet: 'Iași', ales: false });
+    await cer('POST', '/api/livrari/plan', { data: null });
     let c = await cand();
     const id = x => c.find(k => k.id === x);
     verifica('livrări: doar comenzile acceptate, cu maşina noastră', id(iasi) && id(vaslui) && id(faraJ) && !id(curier) && !id(oferta),
