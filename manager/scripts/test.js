@@ -626,6 +626,20 @@ async function main() {
     (await cer('GET', '/api/sticla')).date.linii.length === 3);
   verifica('fără linii alese → 400', (await cer('POST', '/api/sticla/comanda', { ids: [] })).stare === 400);
   verifica('pagina /sticla se serveşte', String((await cer('GET', '/sticla')).date).includes('Comandă sticlă'));
+  // mailul către furnizor (userul, 2026-11-03): „Model | HxLxBuc | Client" pe fiecare rând
+  verifica('pagina comenzii: liniile de sticlă au numele clientului (pt. mail)',
+    (await cer('GET', `/api/comenzi/${ofS.id}`)).date.sticlaLinii.every(l => l.client_nume === 'Client Sticla'));
+  verifica('pagina „Comandă sticlă": liniile au numele clientului', (await cer('GET', '/api/sticla')).date.linii.every(l => l.client_nume === 'Client Sticla'));
+  {
+    const { randuriMailSticla } = require('../web/mail-sticla.js');
+    const g = (client_nume, h, l, buc, denumire = 'Geam float transparent 4mm GG cod GG004') => ({ denumire, h, l, buc, client_nume });
+    const r = randuriMailSticla([g('Mobila Nord', 1144, 384, 2), g('Casa Zalău', 1144, 384, 1), g('mobila  nord', 1144, 384, 1),
+      g('Mobila Nord', 500, 400, 1, 'Geam satinat maro 4mm securizat CT cod CT063'), g('Casa Zalău', 2000, 400, 3)]);
+    verifica('mail sticlă: model | HxLxBuc | client; acelaşi model la clienţi diferiţi = rânduri separate; acelaşi client se adună',
+      JSON.stringify(r) === JSON.stringify(['Geam float transparent 4mm | 1144x384x3 | Mobila Nord', 'Geam float transparent 4mm | 1144x384x1 | Casa Zalău',
+        'Geam float transparent 4mm | 2000x400x3 | Casa Zalău', 'Geam satinat maro 4mm securizat | 500x400x1 | Mobila Nord']), JSON.stringify(r));
+    verifica('mail sticlă: cota din „debitare" când lipsesc H şi L', randuriMailSticla([{ denumire: 'X', debitare: '1000 × 500 mm', buc: 2, client_nume: 'A' }])[0] === 'X | 1000x500x2 | A');
+  }
 
   console.log('\nMailurile furnizorilor (cardul din Comandă sticlă)');
   {

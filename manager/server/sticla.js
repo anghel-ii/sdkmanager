@@ -40,8 +40,10 @@ function imbogateste(r, F) {
 
 // Sticla unei singure comenzi (pagina comenzii: mail + bifă pe furnizor)
 const sticlaComenzii = (comandaId, F = furnizori()) => db().prepare(`
-  SELECT l.id, l.cod, l.denumire, l.cantitate, l.debitare, l.comandat_la, u.nume AS comandat_de_nume
+  SELECT l.id, l.cod, l.denumire, l.cantitate, l.debitare, l.comandat_la, u.nume AS comandat_de_nume,
+         c.client_nume   -- pe fiecare rând din mailul către furnizor (userul, 2026-11-03)
     FROM pozitie_linie l JOIN pozitie p ON p.id = l.pozitie_id
+    JOIN comanda c ON c.id = p.comanda_id
     LEFT JOIN utilizator u ON u.id = l.comandat_de
    WHERE p.comanda_id = ? AND l.lista = 'sticla' ORDER BY l.idx`).all(comandaId).map(r => imbogateste(r, F));
 
