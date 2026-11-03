@@ -741,6 +741,27 @@ async function main() {
     }
   }
 
+  console.log('\nAşteaptă plata: Înapoi în ofertă oricând + Confirmă fără plată în avans');
+  {
+    const o = await cer('POST', '/api/comenzi', { client: { nume: 'Fara plata', telefon: '0700', adresa: 'X' },
+      detalii: { plata: 'oferta', incasare: 'cash_bf_sofer' }, pozitii: [pozitie('confortGamma', 'Confort Gamma', 1, 1200)] });
+    const id = o.date.comanda.id;
+    await cer('POST', `/api/comenzi/${id}/asteapta-plata`, { plata: 'proforma', numar: 'PF-FP1' });
+    db2().prepare("UPDATE comanda SET tip_schimbat_la = datetime('now', '-3 days') WHERE id = ?").run(id);
+    verifica('aşteaptă plata de 3 zile → înapoi în ofertă tot merge', (await cer('POST', `/api/comenzi/${id}/inapoi-oferta`)).stare === 200);
+    await cer('POST', `/api/comenzi/${id}/asteapta-plata`, { plata: 'proforma', numar: 'PF-FP2' });
+    verifica('fără plată, fără încasare aleasă din nou → 400 (nu ia încasarea de pe ofertă)',
+      (await cer('POST', `/api/comenzi/${id}/accepta`, { faraPlata: true, plata: 'fiscala', telefon: '0700', adresa: 'X' })).stare === 400);
+    verifica('fără plată, fără facturare → 400',
+      (await cer('POST', `/api/comenzi/${id}/accepta`, { faraPlata: true, incasare: 'op_termen', telefon: '0700', adresa: 'X' })).stare === 400);
+    const fp = await cer('POST', `/api/comenzi/${id}/accepta`, { faraPlata: true, plata: 'fiscala', incasare: 'op_termen', avans: '999', telefon: '0700', adresa: 'X' });
+    verifica('confirmă fără plată în avans → în lucru, neachitată, avans 0, facturarea + încasarea noi',
+      fp.stare === 200 && fp.date.comanda.tip === 'comanda' && fp.date.comanda.achitat_la === null && fp.date.comanda.avans === 0
+      && fp.date.comanda.plata === 'fiscala' && fp.date.comanda.incasare === 'op_termen', JSON.stringify(fp.date));
+    verifica('… jurnal: „fără plată în avans"', ((await cer('GET', `/api/comenzi/${id}/activitate`)).date.randuri ?? [])
+      .some(x => x.operatie === 'Acceptată — comandă în lucru' && x.detalii?.startsWith('fără plată în avans')));
+  }
+
   console.log('\nAşteaptă plata + nr. de ofertă scris de mână');
   {
     const o = await cer('POST', '/api/comenzi', { client: { nume: 'Client Plata' }, ofertaNr: ' NM-77 ',

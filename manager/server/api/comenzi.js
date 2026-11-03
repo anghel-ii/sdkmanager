@@ -580,6 +580,8 @@ async function asteaptaPlata(ctx) {
 // acum); avansul (lei) e opţional, implicit 0.
 // Din „Aşteaptă plata" (userul, 2026-10-26): suma încasată e obligatorie, peste 0, iar comanda
 // rămâne marcată achitată (achitat_la) — suma stă tot în `avans`.
+// „Confirmă fără plată în avans" (userul, 2026-11-03): din „Aşteaptă plata" intră în lucru fără sumă
+// ({ faraPlata: true }) — facturarea şi încasarea se aleg din nou (obligatoriu amândouă), avans 0, neachitată.
 async function accepta(ctx) {
   const id = Number(ctx.params.id);
   const corp = await corpJson(ctx.req);
@@ -590,10 +592,11 @@ async function accepta(ctx) {
   if (c.tip === 'comanda') return eroare(ctx.res, 409, 'Oferta e deja comandă în lucru.');
 
   if (!PLATI.includes(corp.plata)) return eroare(ctx.res, 400, 'Alege facturarea: ofertă, factură proformă, proformă cu amănuntul, factură fiscală, bon fiscal sau factură de avans.');
-  const avans = Suma.din(corp.avans) ?? 0;   // cu virgulă sau cu punct
-  const incasare = INCASARI.includes(corp.incasare) ? corp.incasare : c.incasare;
+  const faraPlata = c.tip === 'plata' && corp.faraPlata === true;
+  const avans = faraPlata ? 0 : Suma.din(corp.avans) ?? 0;   // cu virgulă sau cu punct
+  const incasare = INCASARI.includes(corp.incasare) ? corp.incasare : faraPlata ? null : c.incasare;
   if (!incasare) return eroare(ctx.res, 400, 'Alege metoda de încasare.');
-  const achitat = c.tip === 'plata';
+  const achitat = c.tip === 'plata' && !faraPlata;
   if (achitat && !(avans > 0)) return eroare(ctx.res, 400, 'Scrie suma încasată (mai mare de 0) — comanda aştepta plata.');
   if (!Number.isFinite(avans) || avans < 0) return eroare(ctx.res, 400, 'Avansul trebuie să fie un număr (0 = fără avans).');
   // telefonul şi adresa: pe ofertă erau opţionale, la acceptare se cer (userul, 2026-10-05) —
@@ -614,7 +617,8 @@ async function accepta(ctx) {
 
 // „Înapoi în ofertă" (userul, 2026-10-05): o ofertă trecută din greşeală în lucru
 // sau la „aşteaptă plata" se întoarce în oferte (de acolo o duci unde trebuia) —
-// doar în primele MINUTE_INAPOI minute şi doar cât nu s-a lucrat pe ea: fără
+// doar în primele MINUTE_INAPOI minute (de la „Aşteaptă plata" oricând — userul, 2026-11-03:
+// acolo încă nu s-a printat nimic) şi doar cât nu s-a lucrat pe ea: fără
 // factură, finalizare, sticlă comandată sau scanări. (numar_comanda = NULL: şi
 // comenzile vechi, cu CMD-, rămân apoi doar cu nr. de ofertă.)
 const MINUTE_INAPOI = 10;
@@ -624,7 +628,7 @@ function inapoiInOferta(ctx) {
                             FROM comanda WHERE id = ?`).get(id);
   if (!c)                   return eroare(ctx.res, 404, 'Comandă inexistentă.');
   if (c.tip === 'oferta')   return eroare(ctx.res, 409, 'E deja ofertă.');
-  if (!c.la_timp)           return eroare(ctx.res, 409, `Înapoi în ofertă se poate doar în primele ${MINUTE_INAPOI} minute.`);
+  if (!c.la_timp && c.tip !== 'plata') return eroare(ctx.res, 409, `Înapoi în ofertă se poate doar în primele ${MINUTE_INAPOI} minute.`);
   if (c.factura_nr)         return eroare(ctx.res, 409, 'Comanda e deja facturată — anulează întâi factura.');
   if (c.finalizat_la)       return eroare(ctx.res, 409, 'Comanda e deja finalizată.');
   const lucrat = db().prepare(`

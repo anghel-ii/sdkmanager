@@ -946,15 +946,18 @@ document.addEventListener('keydown', e => {
 // Aşteaptă plata / Acceptă oferta (dialogul cu plata şi avansul) / Plată primită /
 // Marchează finalizată / Redeschide / Înapoi în ofertă (10 minute după ce a ieşit din oferte).
 // „Înapoi în ofertă": cât nu s-a lucrat pe ea (serverul verifică oricum; aici doar nu arătăm butonul degeaba)
+// — de la „Aşteaptă plata" oricând (userul, 2026-11-03)
 const msInapoi = c => (c.tip_schimbat_la && !c.factura_nr && !c.finalizat_la ? 10 * 60e3 - c.secunde_schimbat * 1000 : 0);
 const minuteInapoi = c => (msInapoi(c) > 0 ? Math.ceil(msInapoi(c) / 60e3) : 0);
 function butoaneTreceri(c, minute) {
   if (c.anulat) return '';   // o comandă anulată nu mai merge nicăieri
   const eOferta = c.tip === 'oferta', ePlata = c.tip === 'plata', eComanda = c.tip === 'comanda';
-  return `${minute > 0 ? `<button class="rosu" data-trecere="inapoi-oferta" title="Greşeală? O mai poţi întoarce în oferte ${minute} ${minute === 1 ? 'minut' : 'minute'}">↩ Înapoi în ofertă</button>` : ''}
+  return `${ePlata ? '<button class="rosu" data-trecere="inapoi-oferta" title="O întorci în oferte, cu numărul de dinainte de proformă / avans">↩ Înapoi în ofertă</button>'
+    : minute > 0 ? `<button class="rosu" data-trecere="inapoi-oferta" title="Greşeală? O mai poţi întoarce în oferte ${minute} ${minute === 1 ? 'minut' : 'minute'}">↩ Înapoi în ofertă</button>` : ''}
     ${eOferta ? `<button class="galben-contur" data-trecere="asteapta-plata">Aşteaptă plata</button>
                  <button class="verde" data-trecere="accepta" title="Oferta devine comandă: se printează fişa, apoi „Ai printat?"">Acceptă comanda şi printează</button>` : ''}
-    ${ePlata ? '<button class="verde" data-trecere="accepta" title="Comanda intră în lucru: se printează fişa, apoi „Ai printat?"">Plată primită şi printează</button>' : ''}
+    ${ePlata ? `<button class="verde-contur" data-trecere="fara-plata" title="Intră în lucru fără plată: alegi din nou facturarea şi încasarea, se printează fişa">Confirmă fără plată în avans</button>
+               <button class="verde" data-trecere="accepta" title="Comanda intră în lucru: se printează fişa, apoi „Ai printat?"">Plată primită şi printează</button>` : ''}
     ${eComanda && !c.finalizat_la ? '<button class="verde-contur" data-trecere="finalizeaza">Marchează finalizată</button>' : ''}
     ${c.finalizat_la && !c.factura_nr ? '<button class="galben-contur" data-trecere="redeschide">Redeschide</button>' : ''}`;
 }
@@ -1049,22 +1052,26 @@ function leagaTreceri(root, c, dupa, nrFise = 1) {
     posteaza('finalizeaza');
   });
   // butonul dispare singur când trec cele 10 minute
-  if (msInapoi(c) > 0) setTimeout(() => buton('inapoi-oferta')?.remove(), msInapoi(c));
+  if (!ePlata && msInapoi(c) > 0) setTimeout(() => buton('inapoi-oferta')?.remove(), msInapoi(c));
   // Acceptare: dialogul cere modalitatea de plată (obligatoriu) şi avansul.
-  buton('accepta')?.addEventListener('click', () => {
+  // „Confirmă fără plată în avans" (userul, 2026-11-03): acelaşi dialog, fără sumă, cu facturarea şi
+  // încasarea goale — se aleg din nou.
+  const deschideAcceptarea = faraPlata => {
     const dlg = $('dialogAccepta');
     $('formAccepta').reset();
-    $('titluAccepta').textContent = ePlata ? 'Plată primită' : 'Acceptă comanda';
-    $('accOk').textContent = ePlata ? 'Plată primită şi printează' : 'Acceptă comanda şi printează';
+    $('titluAccepta').textContent = faraPlata ? 'Confirmă fără plată în avans' : ePlata ? 'Plată primită' : 'Acceptă comanda';
+    $('accOk').textContent = faraPlata ? 'Confirmă şi printează' : ePlata ? 'Plată primită şi printează' : 'Acceptă comanda şi printează';
     $('accAvansText').textContent = ePlata ? 'Suma încasată (lei) — obligatoriu' : 'Avans încasat (lei) — gol dacă nu se încasează avans';
-    $('accAvans').required = ePlata;
-    $('accAvans').min = ePlata ? '0.01' : '0';
+    $('accAvans').closest('label').hidden = faraPlata;
+    $('accAvans').required = ePlata && !faraPlata;
+    $('accAvans').min = ePlata && !faraPlata ? '0.01' : '0';
     // metoda aleasă deja în configurator (dacă e una din cele actuale)
-    if (c.plata && $('accPlata').querySelector(`option[value="${c.plata}"]`)) $('accPlata').value = c.plata;
+    $('accPlata').value = '';
+    if (!faraPlata && c.plata && $('accPlata').querySelector(`option[value="${c.plata}"]`)) $('accPlata').value = c.plata;
     // încasarea de pe ofertă (ofertele de dinainte de 2026-10-26 n-o au — se alege aici)
     $('accIncasare').innerHTML = '<option value="" disabled>Alege…</option>'
       + Object.entries(INCASARI).map(([cod, t]) => `<option value="${cod}">${t}</option>`).join('');
-    $('accIncasare').value = INCASARI[c.incasare] ? c.incasare : '';
+    $('accIncasare').value = !faraPlata && INCASARI[c.incasare] ? c.incasare : '';
     for (const [camp, inp, are] of [['accTelefonCamp', 'accTelefon', c.client_telefon], ['accAdresaCamp', 'accAdresa', c.client_adresa]]) {
       $(camp).hidden = !!are;
       $(inp).required = !are;
@@ -1079,11 +1086,11 @@ function leagaTreceri(root, c, dupa, nrFise = 1) {
       // plata (şi telefonul / adresa) se salvează abia după print — fişa le primeşte direct de aici
       if (!(await Fise.printeazaToate(id, nrFise, null,
           { plata: $('accPlata').value, incasare: $('accIncasare').value, telefon: $('accTelefon').value.trim(), adresa: $('accAdresa').value.trim() }))) {
-        return alerta(`${ePlata ? 'Plata nu s-a confirmat' : 'Comanda nu s-a acceptat'} — fişa nu s-a printat. Rămâne ${ePlata ? 'la „Aşteaptă plata"' : 'ofertă'}.`);
+        return alerta(`${faraPlata ? 'Comanda nu s-a confirmat' : ePlata ? 'Plata nu s-a confirmat' : 'Comanda nu s-a acceptat'} — fişa nu s-a printat. Rămâne ${ePlata ? 'la „Aşteaptă plata"' : 'ofertă'}.`);
       }
       const rr = await api(`/api/comenzi/${id}/accepta`, { method: 'POST',
-        body: JSON.stringify({ plata: $('accPlata').value, incasare: $('accIncasare').value, avans: $('accAvans').value,
-                               telefon: $('accTelefon').value, adresa: $('accAdresa').value }) });
+        body: JSON.stringify({ plata: $('accPlata').value, incasare: $('accIncasare').value, avans: faraPlata ? 0 : $('accAvans').value,
+                               telefon: $('accTelefon').value, adresa: $('accAdresa').value, ...(faraPlata && { faraPlata: true }) }) });
       if (!rr) return;
       if (!rr.ok) {
         const d = await rr.json().catch(() => ({}));
@@ -1094,7 +1101,9 @@ function leagaTreceri(root, c, dupa, nrFise = 1) {
       dupa();
     };
     dlg.showModal();
-  });
+  };
+  buton('accepta')?.addEventListener('click', () => deschideAcceptarea(false));
+  buton('fara-plata')?.addEventListener('click', () => deschideAcceptarea(true));
 }
 // Din card: comanda mutată în altă stare rămâne aleasă — lista trece pe tabul ei.
 async function mergiLa(id) {
