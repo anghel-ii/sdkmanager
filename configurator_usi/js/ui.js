@@ -1013,12 +1013,10 @@ function renderOferta() {
   const servit = stare === 'logat' || stare === 'nelogat';
 
   // Gama nu se mai schimbă din configurator, deci drumul înapoi spre pagina
-  // principală trebuie să fie la vedere — dar numai când există unde să te duci.
-  // Pe Cloudflare Pages (fără manager) build_pages.js pune <meta name="acasa">
-  // cu adresa paginii principale statice.
-  const acasaStatic = document.querySelector('meta[name="acasa"]')?.content;
-  if (acasa && !servit && acasaStatic) acasa.href = acasaStatic;
-  if (acasa) acasa.style.display = servit || acasaStatic ? '' : 'none';
+  // principală trebuie să fie la vedere — dar numai lângă manager. (Varianta de pe
+  // Cloudflare Pages, cu <meta name="acasa">, e scoasă din funcţiune — ramura
+  // obsolete/configurator-cloudflare.)
+  if (acasa) acasa.style.display = servit ? '' : 'none';
 
   // Câmpurile clientului şi „Printează fişa" sunt statice (index.html) şi merg
   // mereu; aici se decide doar ce ţine de ofertă: butonul de salvare şi

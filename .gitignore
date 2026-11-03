@@ -28,11 +28,7 @@ manager/certs/
 # ── Generate — se refac la build ────────────────────────────────────────────
 node_modules
 configurator_usi/dist/
-configurator_usi/dist_pages/
 
-# ── Varianta statică pt. Cloudflare Pages — doar un test, rămâne local ──────
-configurator_usi/build_pages.js
-configurator_usi/pages/
 # cataloagele binare se reconstruiesc din *.seed.sql (sursa, care intră în git)
 configurator_usi/js/catalog/*.sqlite
 
