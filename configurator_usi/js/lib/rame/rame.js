@@ -82,8 +82,10 @@ export const schiteRame = r => [...(r?.schite ?? []), ...(r?.schita ? [r.schita]
 export const MAX_SCHITE = 6;   // ~0,5 MB fiecare; oferta întreagă intră în 8 MB (manager/server/http.js)
 // Geamul pe care îl montăm noi (userul, 2026-10-20): la 820/822/824 orice sticlă / oglindă de 4 mm;
 // la 831/841/842 doar cea de 4 mm şlefuită sau securizată („nesecurizat" — ex. OVI015 — nu).
+// Sticla adusă de client (ADUS4, 2026-11-03): doar de 4 mm, la toate ramele — la 831/841/842 clientul o aduce
+// şlefuită / securizată (scrie pe fişă).
 export const geamPermisRame = model => g => !!g && g.grosime === 4
-  && (MODELE_RAME[model]?.grup === '820' || /slefuit|(?<!ne)securizat/i.test(g.denumire));
+  && (!!g.adus || MODELE_RAME[model]?.grup === '820' || /slefuit|(?<!ne)securizat/i.test(g.denumire));
 
 // Cotele găurilor de balama pe o ramă, de SUS în jos, în mm (la centrul găurii) —
 // pt. schiţa de găurire de pe verso (CNC). Prima şi ultima la 100 mm de margini,
@@ -475,7 +477,7 @@ export function bomRame(state, s) {
   if (r.asamblare === 'noi') {
     const geam = findGeam(r.geam);
     for (const x of s.pline) {
-      rows.push(line(geam?.cod ?? '⚠ ALEGE GEAM', geam?.denumire ?? 'Geam/oglindă', x.buc, 'buc', `${x.geamH} × ${x.geamL} mm`));
+      rows.push(line(geam?.adus ? 'Client' : geam?.cod ?? '⚠ ALEGE GEAM', geam?.denumire ?? 'Geam/oglindă', x.buc, 'buc', `${x.geamH} × ${x.geamL} mm`));
     }
   }
   return rows;
@@ -485,7 +487,7 @@ export function bomRame(state, s) {
 export function sticlaRame(state, s) {
   const r = state.rame ?? {};
   const geam = r.asamblare === 'noi' ? findGeam(r.geam) : null;
-  if (!geam) return [];
+  if (!geam || geam.adus) return [];   // adusă de client: n-o comandăm
   const m = new Map();
   for (const x of s.pline) {
     if (!(x.geamH > 0 && x.geamL > 0)) continue;
@@ -502,7 +504,8 @@ export function sticlaRame(state, s) {
 // grupată pe cotă, plus totalul (bucăţi şi mp) — tot ce are de comandat.
 export const STICLA_CLIENT = 'Sticlă 4 mm';
 export function clientPanelsRame(state, s) {
-  if ((state.rame ?? {}).asamblare !== 'client') return [];
+  const r = state.rame ?? {};
+  if (r.asamblare !== 'client' && !(r.asamblare === 'noi' && findGeam(r.geam)?.adus)) return [];   // şi sticla adusă de el
   const peCota = new Map();
   for (const x of s.pline) {
     if (!(x.geamH > 0 && x.geamL > 0)) continue;
@@ -542,7 +545,7 @@ export function facturareRame(state, s) {
 
   if (r.asamblare === 'noi') {
     const geam = findGeam(r.geam);
-    if (geam) {
+    if (geam && !geam.adus) {   // sticla adusă de client nu se facturează; manopera da (userul, 2026-11-03)
       add(geam.cod, geam.denumire, s.ariaGeam, 'mp');
       if (geam.oglinda) add(FOLIE_COD, 'Folie pentru securizare 1 rola 50x05ml cod 283', folieCantitate(s.ariaGeam));
     }

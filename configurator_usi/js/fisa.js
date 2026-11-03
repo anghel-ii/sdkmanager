@@ -491,15 +491,15 @@ function tabelMic(randuri, clasa = '') {
 // Necesarul de sticlă/PAL — totaluri rapide, cu COTA DE DEBITARE (înălţime×
 // lăţime mm, nu aria) şi CINE se ocupă de piesa aia. Absoarbe ce arăta
 // înainte tabelul separat "Necesar client": PAL e mereu al clientului (nu
-// circulă prin noi, indiferent cine asamblează uşa), sticla e a lui DOAR la
-// uşile asamblate de CLIENT — la 'noi', sticla o vindem/montăm noi (apare şi
-// pe spatele de facturare, cu codul ei).
+// circulă prin noi, indiferent cine asamblează uşa), sticla e a lui la
+// uşile asamblate de CLIENT şi la cele cu sticla adusă de el (GEAM_ADUS, o montăm noi) —
+// altfel, la 'noi', sticla o vindem/montăm noi (apare şi pe spatele de facturare, cu codul ei).
 // Panourile pot avea înălţimi diferite (divizări / înălţimi introduse) → grupăm pe (cotă, cine).
 function necesarSticlaPal(sys, spec) {
   const grupeazaSticla = () => {
     const m = new Map();
     for (const g of familia(sys).glassPerDoor(spec, state)) {
-      const cine = g.client ? 'Client' : 'Noi';
+      const cine = g.client ? 'Client' : g.adus ? 'Client — o montăm noi' : 'Noi';   // adusă de client (GEAM_ADUS)
       for (const h of g.glassHs) {
         if (h <= 0) continue;
         const cota = `${Math.round(h)} × ${Math.round(g.glassW)} mm`;
@@ -615,8 +615,8 @@ export function deschideFisa(client, oferta = null, salvate = null, { vezi = fal
 
   const necesarSP = util ? '' : rame
     ? tabel(['Geam / oglindă', 'Dimensiuni', 'Cant.', 'Cine'], spec.pline.map(x =>
-        `<tr><td>${rame.asamblare === 'noi' ? esc(findGeam(rame.geam)?.cod ?? '—') : 'Client'}</td><td>${x.geamH} × ${x.geamL} mm</td>
-         <td class="num">${x.buc} buc</td><td>${rame.asamblare === 'noi' ? 'Noi' : 'Client'}</td></tr>`))
+        `<tr><td>${rame.asamblare === 'noi' && !findGeam(rame.geam)?.adus ? esc(findGeam(rame.geam)?.cod ?? '—') : 'Client'}</td><td>${x.geamH} × ${x.geamL} mm</td>
+         <td class="num">${x.buc} buc</td><td>${rame.asamblare !== 'noi' ? 'Client' : findGeam(rame.geam)?.adus ? 'Client — o montăm noi' : 'Noi'}</td></tr>`))
     : tabel(['Sticlă / PAL', 'Dimensiuni', 'Cant.', 'Cine'], necesarSticlaPal(sys, spec));
   // Uşile: pe faţă tabelul Sticlă / PAL (unde erau schiţele), schiţele pe verso — 2026-10-08.
   const schite = rame ? '' : util

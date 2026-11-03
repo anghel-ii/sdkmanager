@@ -155,7 +155,8 @@ export function billingLines(system, state, spec) {
       continue;
     }
 
-    if (!g.client) {
+    // sticla adusă de client nu se facturează — garnitura (mai jos) şi manopera da (userul, 2026-11-03)
+    if (!g.client && !g.adus) {
       const e = byGeam.get(g.geam.cod) ?? { geam: g.geam, areaM2: 0 };
       e.areaM2 += g.areaM2;
       byGeam.set(g.geam.cod, e);

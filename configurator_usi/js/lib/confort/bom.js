@@ -29,7 +29,7 @@ export const clientDoors = state => (state.assembly ?? []).filter(a => a === 'cl
 // Listă separată de necesarul nostru: aici nu e nimic de împachetat sau de
 // facturat, doar cotele de debitare de care are nevoie clientul ca să comande.
 //   • PAL   – nu-l vindem deloc; îl aduce el la ORICE uşă (şi când asamblăm noi)
-//   • Geam  – doar la uşile pe care le asamblează el; noi nu i-l livrăm
+//   • Geam  – la uşile pe care le asamblează el şi la cele cu sticla adusă de el (o montăm noi); noi nu i-l livrăm
 // O linie = { label, qty, unit, cut } — fără cod, fiindcă nu sunt articole
 // de-ale noastre. Generic pentru toate sistemele, deci nu stă în bom()-ul
 // fiecăruia: îl cheamă direct builder.js (currentClientPanels).
@@ -53,7 +53,7 @@ export function clientPanelRows(spec, state) {
       pal.set(k, e);
     }
 
-    if (!g.client) continue;
+    if (!g.client && !g.adus) continue;   // şi sticla adusă de client: el o taie la cotele astea
     for (const h of g.glassHs) {
       if (h <= 0) continue;
       const k = `${g.grosime}|${Math.round(h)}`;

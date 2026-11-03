@@ -4,7 +4,7 @@ import { buildConfig, currentSpec, currentBom, currentClientPanels, currentBilli
 import { clamp, qtyText }          from './lib/comun/num.js';
 import { finishesOf }              from './familii.js';
 import { copyRows } from './lib/comun/clipboard.js';
-import { geamList, geamCount, GROSIMI_CLIENT, clientGeamLabel } from './lib/comun/geam.js';
+import { geamList, geamCount, geamAdusList, GROSIMI_CLIENT, clientGeamLabel } from './lib/comun/geam.js';
 import catalog from './catalog/catalog.generated.json';
 import * as oferta from './oferta.js';
 import { deschideFisa } from './fisa.js';
@@ -249,9 +249,12 @@ function geamOptionsHtml(selectedCod, permis = null) {
   // cod real, deci rândul ăsta nu apare deloc acolo — zero schimbare vizuală.
   const placeholder = selectedCod == null ? `<option value="" selected disabled>Alege geam</option>` : '';
 
+  // sticla adusă de client, montată de noi (userul, 2026-11-03) — doar grosimile pe care le are voie gama
+  const adusa = geamAdusList().filter(g => !permis || permis(g));
   return placeholder +
          (geamuri.length ? `<optgroup label="GEAM">${geamuri.map(opt).join('')}</optgroup>` : '') +
-         (oglinzi.length ? `<optgroup label="OGLINDĂ">${oglinzi.map(opt).join('')}</optgroup>` : '');
+         (oglinzi.length ? `<optgroup label="OGLINDĂ">${oglinzi.map(opt).join('')}</optgroup>` : '') +
+         (adusa.length ? `<optgroup label="ADUCE CLIENTUL (o montăm noi, nu se facturează)">${adusa.map(opt).join('')}</optgroup>` : '');
 }
 
 // ── Role + montaj (per uşă) ──────────────────────────────────────────────────

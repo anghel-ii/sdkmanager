@@ -571,6 +571,52 @@ if (actualizeaza || !fs.existsSync(FISIER)) {
   }
 }
 
+// Sticla ADUSĂ DE CLIENT, montată de noi (userul, 2026-11-03): aceeaşi facturare ca la sticla noastră
+// (garnitură după grosime + manoperă), dar fără linia de sticlă şi fără sticlă comandată la furnizor;
+// cotele ajung la client. 8 mm doar unde e garnitură de 8 (nu la LUX, nu la rame).
+{
+  const verifica = (ok, mesaj) => { if (!ok) { console.error('✗ sticla adusă de client: ' + mesaj); process.exit(1); } };
+  const linii = () => currentBilling().lines.map(l => `${l.cod}|${l.cantitate}`);
+  for (const [id, adus, garnitura] of [['suspendataA', 'ADUS8', '278'], ['suspendataA', 'ADUS4', '277'], ['confortGamma', 'ADUS8', '278'],
+                                       ['luxVent', 'ADUS4', '163']]) {
+    const sys = systems[id];
+    const fin = finishesOf(sys.meta)[0].id;
+    // cotele tipice ale grilei de mai sus (uşi care au cod la toate culorile)
+    const lim = sys.meta.limits, intre = ([a, b], x) => Math.min(b, Math.max(a, x)), doors = sys.meta.doorsRange ? 2 : (sys.meta.doors ?? 1);
+    stareUsi(sys, { W: intre(lim.width, sys.meta.doorsRange ? doors * 900 + 200 : 1100), H: intre(lim.height, 2100), finish: fin, doors, tracks: sys.meta.doorsRange ? 1 : 2, varianta: 'A' });
+    buildConfig();
+    const geamNostru = state.geam[0], cuSticla = linii(), eroriNoastre = JSON.stringify(currentBilling().errors);
+    state.geam = state.geam.map(() => adus);
+    buildConfig();
+    const f = currentBilling(), cu = linii();
+    verifica(JSON.stringify(f.errors) === eroriNoastre, `${id} ${adus}: alte erori decât cu sticla noastră — ${f.errors.join('; ')}`);
+    verifica(!cu.some(l => l.startsWith(geamNostru + '|')) && !f.lines.some(l => /^ADUS/.test(l.cod)), `${id} ${adus}: sticla apare la facturare — ${cu}`);
+    verifica(f.lines.some(l => l.cod === garnitura), `${id} ${adus}: lipseşte garnitura ${garnitura} — ${cu}`);
+    verifica(f.lines.some(l => l.cod === 'Manopera 1' && l.cantitate === state.assembly.length), `${id} ${adus}: manopera — ${cu}`);
+    // în rest, exact ce se factura cu sticla noastră (garnitura de 8 în loc de 4, la ADUS8)
+    const rest = l => !l.startsWith(geamNostru + '|') && !/^(277|278|163)\|/.test(l);
+    verifica(JSON.stringify(cuSticla.filter(rest)) === JSON.stringify(cu.filter(rest)), `${id} ${adus}: alte linii s-au schimbat\n  ${cuSticla}\n  ${cu}`);
+    verifica(!currentSticla().length, `${id} ${adus}: se comandă sticlă la furnizor — ${JSON.stringify(currentSticla())}`);
+    verifica(currentClientPanels().some(r => r.label === `Geam ${adus.slice(4)}mm`), `${id} ${adus}: cotele sticlei nu ajung la client — ${JSON.stringify(currentClientPanels())}`);
+  }
+  verifica(geamPermisLux({ cod: 'ADUS4', grosime: 4, adus: true }) && !geamPermisLux({ cod: 'ADUS8', grosime: 8, adus: true }), 'LUX: doar 4 mm adusă');
+  for (const [id, varianta] of [['rama820', 'noi'], ['rama831', 'noi']]) {
+    const sys = systems[id];
+    stareRame(sys, { finish: finishesOf(sys.meta)[0].id, varianta, randuri: [[1000, 400, 2, 3]] });
+    buildConfig();
+    const geamNostru = state.rame.geam;
+    state.rame.geam = 'ADUS4';
+    buildConfig();
+    const f = currentBilling(), cu = linii();
+    verifica(!currentSpec().erori.length, `${id}: erori ${currentSpec().erori.join('; ')}`);
+    verifica(!f.lines.some(l => l.cod === geamNostru || /^ADUS/.test(l.cod)), `${id}: sticla apare la facturare — ${cu}`);
+    verifica(f.lines.some(l => /^Manop [<>]H1200$/.test(l.cod)), `${id}: lipseşte manopera — ${cu}`);
+    verifica(!currentSticla().length && currentClientPanels().length > 0, `${id}: sticla de comandat / cotele clientului`);
+    verifica(geamPermisRame(sys.meta.rame)({ grosime: 4, adus: true }) && !geamPermisRame(sys.meta.rame)({ grosime: 8, adus: true }), `${id}: doar 4 mm adusă`);
+  }
+  console.log('✓ sticla adusă de client (4 / 8 mm): fără sticlă la facturare şi la furnizor, cu garnitură şi manoperă, cotele la client');
+}
+
 // statistici utile: câte configuraţii au erori (arătate userului în UI)
 const cuErori = Object.entries(rezultate).filter(([, r]) => r.some(x => x.startsWith('E '))).length;
 console.log(`  (${cuErori} configuraţii au erori afişate în UI — incluse în referinţă)`);

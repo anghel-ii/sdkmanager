@@ -14,7 +14,16 @@ const ceil2 = x => Math.ceil(Math.round(x * 1e6) / 1e4) / 100;
 
 export const geamList  = () => catalog.geam ?? [];
 export const geamCount = () => geamList().length;
-export const findGeam  = cod => geamList().find(g => g.cod === cod) ?? null;
+// Sticla ADUSĂ DE CLIENT, pe care o montăm NOI (userul, 2026-11-03): se alege din aceeaşi listă, ca un
+// „model" fals (ADUS4 / ADUS8) — de grosimea ei depinde garnitura. Nu se facturează şi nu se comandă la
+// furnizor; garnitura şi manopera se facturează ca la sticla noastră. Ce grosimi are voie fiecare gamă
+// hotărăşte filtrul ei (LUX şi ramele: doar 4 mm).
+export const GEAM_ADUS = {
+  ADUS4: { cod: 'ADUS4', denumire: 'Aduce clientul sticla 4mm', grosime: 4, oglinda: 0, adus: true },
+  ADUS8: { cod: 'ADUS8', denumire: 'Aduce clientul sticla 8mm', grosime: 8, oglinda: 0, adus: true },
+};
+export const geamAdusList = () => Object.values(GEAM_ADUS);
+export const findGeam  = cod => GEAM_ADUS[cod] ?? geamList().find(g => g.cod === cod) ?? null;
 
 // Garnitura depinde de grosimea geamului/oglinzii: 4mm → cod 277, 8mm → cod 278.
 // LUX: o singură garnitură, pt. sticlă de 4 mm (Excel + NeoManager) — altă grosime n-are cod
@@ -34,7 +43,8 @@ export const GROSIMI_CLIENT = [4];   // LUX: doar sticlă de 4 mm (garnitura Lux
 // Ce geam se poate pune la LUX: doar de 4 mm şi doar prin care NU se vede — satinat / sablat,
 // lacobel, oglindă (userul, 2026-10-08). Transparentul, colorat-transparentul, reflexivul şi
 // riglatul nu apar în listă.
-export const geamPermisLux = g => !!g && g.grosime === 4 && (!!g.oglinda || /satinat|sablat|lacobel/i.test(g.denumire));
+// Sticla adusă de client: doar de 4 mm (alta n-are garnitură Lux); că nu se vede prin ea răspunde clientul.
+export const geamPermisLux = g => !!g && g.grosime === 4 && (!!g.adus || !!g.oglinda || /satinat|sablat|lacobel/i.test(g.denumire));
 export const clientGeamLabel = g => `Clientul asamblează cu geam de ${g}mm`;
 
 // ── Situaţia geamului, uşă cu uşă ──────────────────────────────────────
@@ -69,6 +79,7 @@ export function glassPerDoor(spec, state) {
 
     return {
       i, client, geam, grosime, glassW, palW, heights, mats, glassHs, palHs,
+      adus:     !client && !!geam?.adus,   // sticla e a clientului, o montăm noi (GEAM_ADUS)
       panes:    p.glassPanes,
       palPanes: p.palPanes,
       areaM2:   glassHs.reduce((s, h) => s + (glassW / 1000) * (h / 1000), 0),
@@ -83,7 +94,7 @@ export function glassPerDoor(spec, state) {
 export function sticlaDeComandat(spec, state) {
   const m = new Map();
   for (const g of glassPerDoor(spec, state)) {
-    if (g.client || !g.geam) continue;
+    if (g.client || !g.geam || g.adus) continue;   // adusă de client: n-o comandăm
     for (const hh of g.glassHs) {
       if (!(hh > 0)) continue;
       const h = Math.round(hh), l = Math.round(g.glassW);
