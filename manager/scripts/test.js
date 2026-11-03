@@ -1138,6 +1138,30 @@ async function main() {
     config.clientiUrl = config.clientiCheie = '';
   }
 
+  console.log('\nBorderoul de livrare în Excel (web/borderou-xlsx.js)');
+  {
+    const B = require('../web/borderou-xlsx.js');
+    const { citesteXlsx } = require('../server/xlsx.js');
+    const grupeaza = l => { const m = new Map(); for (const c of l) { const k = c.client_nume.toLowerCase(); if (!m.has(k)) m.set(k, []); m.get(k).push(c); } return [...m.values()]; };
+    const l = { data: '2026-11-05', comenzi: [
+      { client_nume: 'Mobila Nord', client_telefon: '0722', observatii_livrare: 'sună & rampă', client_adresa: 'Str. Lungă 3, Cluj-Napoca, Cluj', judet: 'Cluj', de_incasat: 1200.5, coloana_borderou: 'factura' },
+      { client_nume: 'Casa Zalău', client_telefon: '0733', client_adresa: 'Zalău, Sălaj', judet: 'Sălaj', de_incasat: 450, coloana_borderou: 'bon' },
+      { client_nume: 'mobila nord', client_telefon: '0722', client_adresa: 'Str. Lungă 3, Cluj-Napoca, Cluj', judet: 'Cluj', de_incasat: 300, coloana_borderou: 'op', demo: 1 },
+      { client_nume: 'Fără preţ <x>', client_adresa: 'Dej', judet: 'Cluj', de_incasat: null } ] };
+    const m = B.model(l, grupeaza);
+    verifica('excel: titlul şi numele fişierului ca pe borderou', m.titlu === 'Transport Jud CLUJ-SALAJ 05.11.2026' && m.fisier === 'Borderou CLUJ-SALAJ 05.11.2026.xlsx', JSON.stringify([m.titlu, m.fisier]));
+    const t = citesteXlsx(Buffer.from(B.xlsx(m)));
+    verifica('excel: capul de tabel = coloanele borderoului', t[1].join('|') === 'FIRMA|NUME DELEGAT-NR TELEFON-OBSERVATII|LOCALITATE/ STRADA|Preţ|Bon|Factura + chitanta|OP|colete', t[1].join('|'));
+    verifica('excel: clientul cu 2 comenzi — un rând pe comandă, preţul în coloana lui, ca NUMĂR',
+      t[2][0] === 'Mobila Nord (DEMO)' && t[2][1] === '0722\nsună & rampă' && t[2][3] === '1200.5' && t[2][5] === '1200.5' && t[3][3] === '300' && t[3][6] === '300' && !t[3][0],
+      JSON.stringify(t.slice(2, 4)));
+    verifica('excel: totalurile şi numerarul de încasat (Bon + Factură)', t[6].slice(3, 7).join('|') === '1950.5|450|1200.5|300' && t[7][2] === 'Total numerar de încasat:' && t[7][3] === '1650.5',
+      JSON.stringify(t.slice(6)));
+    verifica('excel: caractere speciale scrise corect', t[5][0] === 'Fără preţ <x>');
+    verifica('excel: CRC-32 corect (zip valid)', B.crc32(Buffer.from('123456789')) === 0xcbf43926);
+    verifica('excel: pagina livrărilor are butonul şi scriptul', (h => h.includes('/borderou-xlsx.js') && h.includes('Exportă în Excel'))(fs.readFileSync(path.join(__dirname, '../web/livrari/index.html'), 'utf8')));
+  }
+
   console.log('\nOrganizează livrări (server/livrari.js)');
   {
     const { judetDin } = require('../server/livrari.js');

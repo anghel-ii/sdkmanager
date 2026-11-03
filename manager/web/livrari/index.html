@@ -13,6 +13,7 @@
 <script src="/dialog.js"></script>
 <script src="/data.js"></script>
 <script src="/suma.js"></script>
+<script src="/borderou-xlsx.js"></script>
 <script src="/live.js"></script>
 <style>
   #continut { padding: 20px 24px 40px; max-width: 1500px; margin: 0 auto; }
@@ -610,6 +611,7 @@ function cardLivrare(l) {
       <span class="mic-dim">${l.comenzi.length} ${l.comenzi.length === 1 ? 'comandă' : 'comenzi'}${judeteL ? ` · ${esc(judeteL)}` : ''} · numerar de încasat <b>${lei(numerar(l.comenzi))}</b></span>
       <span class="spatiu"></span>
       <button class="mic tipar">🖶 Borderou de livrare</button>
+      <button class="mic excel" title="Acelaşi borderou, ca fişier Excel (.xlsx)">⬇ Exportă în Excel</button>
       <button class="mic rosu-contur anuleaza">Anulează livrarea</button>
     </div>
     <table class="lst">
@@ -689,6 +691,12 @@ function randeazaProgramate() {
       incarca();
     });
     card.querySelector('.tipar').addEventListener('click', () => tipareste(livrari.find(l => l.id === id)));
+    // acelaşi borderou ca fişier Excel (userul, 2026-11-03) — web/borderou-xlsx.js
+    card.querySelector('.excel').addEventListener('click', () => {
+      const l = livrari.find(x => x.id === id);
+      const m = BorderouXlsx.descarca(l, grupeaza);
+      noteazaVazut('A exportat borderoul de livrare în Excel', null, `${l.data} · ${l.comenzi.length} comenzi · ${m.fisier}`);
+    });
   });
 }
 
