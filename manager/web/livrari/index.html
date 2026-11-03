@@ -243,7 +243,16 @@ function reordoneaza() {
     .concat(ordine.filter(id => !vizibile().some(c => c.id === id)));
 }
 
-async function incarca() {
+// O singură reîncărcare pe drum (stress test 2026-11-03: 10 colegi × 30 de pagini, fără asta, ajungeau şi la 9 s):
+// anunţurile venite între timp se adună într-o SINGURĂ reîncărcare, imediat după cea de acum.
+let incarcare = null, maiIncarca = false;
+function incarca() {
+  if (incarcare) { maiIncarca = true; return incarcare; }
+  incarcare = (async () => { do { maiIncarca = false; await incarcaAcum(); } while (maiIncarca); })()
+    .finally(() => { incarcare = null; });
+  return incarcare;
+}
+async function incarcaAcum() {
   const [rc, rl] = await Promise.all([api('/api/livrari/candidati'), api('/api/livrari')]);
   if (!rc || !rl) return;
   let plan;
@@ -686,7 +695,9 @@ function randeazaProgramate() {
 // ── Pornire + actualizare live (nu în timp ce scrii o sumă sau observaţii) ──
 let deReimprospatat = false;
 const reimprospateaza = () => {
-  if (document.activeElement?.matches?.('input, select, textarea')) { deReimprospatat = true; return; }
+  // doar cât SCRII (sumă, observaţii, dată, judeţ ales din listă) — o căsuţă bifată rămâne în focus după clic şi
+  // ar opri actualizarea până dai clic în altă parte
+  if (document.activeElement?.matches?.('input:not([type=checkbox]):not([type=radio]), select, textarea')) { deReimprospatat = true; return; }
   deReimprospatat = false; incarca();
 };
 document.addEventListener('focusout', () => { if (deReimprospatat) setTimeout(reimprospateaza, 0); });
