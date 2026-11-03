@@ -72,10 +72,9 @@
   </section>
   <div class="bara-lista">
     <input id="cauta" type="search" placeholder="Caută nume, CUI, telefon, judeţ, agent…">
+    <button id="clientNou" class="primar" hidden>+ Client nou</button>
     <span class="spatiu"></span>
     <span class="dim mic" id="stare"></span>
-    <button id="preia">Preia acum</button>
-    <button id="clientNou" class="primar" hidden>+ Client nou</button>
   </div>
   <div id="lista">Se încarcă…</div>
 </div>
@@ -183,7 +182,6 @@ function randeaza() {
   const u = date.ultimaPreluare;
   $('stare').textContent = !date.activ ? 'Legătura cu Cloudflare nu e configurată — administratorul lipeşte cheia în pagina Utilizatori.'
     : !u ? '' : u.eroare ? `⚠ Ultima preluare a eşuat (${dataOra(new Date(u.la))}): ${u.eroare}` : `Preluat ultima dată: ${dataOra(new Date(u.la))}`;
-  $('preia').hidden = !date.activ;
   $('clientNou').hidden = !date.activ || !areActiuni();
 
   const q = normal($('cauta').value.trim());
@@ -298,15 +296,6 @@ async function sterge(c) {
 
 $('cauta').addEventListener('input', randeaza);
 $('clientNou').addEventListener('click', () => modifica(null));
-
-$('preia').addEventListener('click', async () => {
-  $('preia').disabled = true;
-  const r = await api('/api/clienti/preia', { method: 'POST' });
-  $('preia').disabled = false;
-  if (r && !r.ok) alerta((await r.json().catch(() => ({}))).eroare || 'Preluarea a eşuat.');
-  incarca();
-  if (poateAproba()) incarcaPropuneri();
-});
 
 (async () => {
   const r = await api('/api/eu');
