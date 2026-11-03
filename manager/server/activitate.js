@@ -116,6 +116,7 @@ const OPERATII = {
   'POST /api/clienti/preia':                 ['Clienţii aduşi din Cloudflare', S],
   'POST /api/clienti/propuneri/:id/:actiune':[(b, p) => `Client propus de agent: ${p.actiune === 'aproba' ? 'aprobat' : p.actiune === 'respinge' ? 'respins' : p.actiune}`, S],
   'PUT /api/clienti/cheie':                  ['Cheia Cloudflare schimbată', S],
+  'POST /api/clienti':                       ['Client nou', S, (b, r) => lista(b.nume, `agent: ${r?.client?.agent ?? b.agent ?? 'BIROU'}`, r?.avertisment && 'mailul n-a plecat')],
   'PUT /api/clienti/:id':                    ['Client modificat', S, b => lista(b.nume, b.agent && `agent: ${b.agent}`)],
   'DELETE /api/clienti/:id':                 ['Client şters', S, (b, r, p) => numeClient(p.id)],
   'POST /api/agenti':                        ['Agent nou', S, b => scurt(b.nume)],

@@ -1,4 +1,4 @@
-import { raspuns, agentLogat, eManager, vedereAgent, scrieDirect, numeAgenti, semn, versiunePagina } from '../../../lib/comun.js';
+import { raspuns, agentLogat, eManager, vedereAgent, scrieDirect, numeAgenti, semn, versiunePagina, text } from '../../../lib/comun.js';
 import { anuntaClientNou } from '../../../lib/mail.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -12,6 +12,7 @@ import { anuntaClientNou } from '../../../lib/mail.js';
 //        pagina, doar când i se redeschide legătura live (functions/api/live.js).
 //  POST  client nou, direct în bază (fără aprobare, userul 2026-11-02) + mail pentru NeoManager:
 //        agentul pe numele lui, conducerea cu agentul ales. `avertisment` = mailul n-a plecat.
+//        Şi managerul (Bearer CHEIE_MANAGER, 2026-11-03): agentul din cerere, `adaugat_de` în mail.
 // ═══════════════════════════════════════════════════════════════════════════
 
 export async function onRequestGet({ request, env }) {
@@ -44,6 +45,15 @@ export async function onRequestGet({ request, env }) {
 }
 
 export async function onRequestPost({ request, env }) {
+  // managerul de comenzi (Bearer CHEIE_MANAGER — pagina Clienţi, userul 2026-11-03): biroul / conducerea de acolo
+  // adaugă cu agentul ales (implicit BIROU, pus de manager); `adaugat_de` = cine, pentru mail
+  if (request.headers.has('Authorization')) {
+    if (!eManager(request, env)) return raspuns(401, { eroare: 'Cheie greşită.' });
+    const adaugatDe = text((await request.clone().json().catch(() => ({}))).adaugat_de, 120) ?? 'managerul de comenzi';
+    const r = await scrieDirect(request, env, null);
+    if (r.eroare) return raspuns(r.cod, { eroare: r.eroare });
+    return raspuns(201, { client: r.client, avertisment: await anuntaClientNou(env, r.client, adaugatDe) });
+  }
   const agent = await agentLogat(request, env);
   if (!agent) return raspuns(401, { eroare: 'Nu eşti logat.' });
   const r = await scrieDirect(request, env, null, agent.rol === 'conducere' ? null : agent.nume);

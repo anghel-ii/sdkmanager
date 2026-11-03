@@ -923,7 +923,7 @@ async function main() {
     // GET ?dupa=<versiune> → ce s-a schimbat după ea, în ordinea versiunii, câte `pagina`
     let versiune = 0, pagina = 2, primitAgent = null, cereriDupa = 0;
     const externi = new Map();
-    const rapoarte = [], deCerut = [];
+    const rapoarte = [], deCerut = [], primitNou = [];
     const propuse = new Map([[7, { id: 7, tip: 'nou', agent: 'Ion', trimis_la: '2026-10-01 10:00:00', propus: { nume: 'Propus SRL' }, actual: null }],
                              [8, { id: 8, tip: 'nou', agent: 'Ion', trimis_la: '2026-10-01 10:01:00', propus: { nume: 'Respins SRL' }, actual: null }]]);
     const schimba = c => externi.set(c.id, { ...externi.get(c.id), ...c, versiune: ++versiune });
@@ -953,6 +953,17 @@ async function main() {
         let corp = ''; q.on('data', b => corp += b);
         return q.on('end', () => { primitAgent = { metoda: q.method, ...JSON.parse(corp) };
           r.end(JSON.stringify(q.method === 'POST' ? { user: 'maria', nume: primitAgent.nume, parola: 'p4r0la', clienti: 2, nou: true } : {})); });
+      }
+      // client nou din manager (functions/api/clienti/index.js, Bearer CHEIE_MANAGER): direct, cu mail
+      if (q.url === '/api/clienti' && q.method === 'POST') {
+        let corp = ''; q.on('data', b => corp += b);
+        return q.on('end', () => {
+          const c = JSON.parse(corp); primitNou.push(c);
+          if (!c.cui) { r.writeHead(400); return r.end(JSON.stringify({ eroare: 'Client nou — completează: CUI.' })); }
+          const id = 200 + primitNou.length;
+          schimba({ id, agent: c.agent, nume: c.nume, cui: c.cui });
+          r.writeHead(201); r.end(JSON.stringify({ client: externi.get(id), avertisment: c.nume.includes('fara mail') ? 'mailul nu a plecat' : undefined }));
+        });
       }
       // conducerea modifică / şterge din manager (functions/api/clienti/[id].js): direct, cu versiune nouă
       const cl = q.url.match(/^\/api\/clienti\/(\d+)$/);
@@ -1072,6 +1083,19 @@ async function main() {
     verifica('biroul: nu-l poate muta la un agent de vânzări (403)', (await cer('PUT', '/api/clienti/60', { nume: 'X', agent: 'Ion' })).stare === 403
       && db2().prepare('SELECT agent FROM client WHERE extern_id = 60').get().agent === 'BIROU');
     verifica('… dar are sugestiile din configurator', (await cer('GET', '/api/clienti/cauta?q=an')).stare === 200);
+    // client nou din manager (userul, 2026-11-03): agent implicit BIROU, cine l-a adăugat merge în mail
+    const cn = await cer('POST', '/api/clienti', { nume: 'Nou Din Birou SRL', cui: 'RO99' });
+    verifica('biroul: client nou → 201, agent BIROU, imediat în copie', cn.stare === 201 && primitNou.at(-1).agent === 'BIROU'
+      && db2().prepare("SELECT agent FROM client WHERE nume = 'Nou Din Birou SRL'").get()?.agent === 'BIROU', JSON.stringify([cn, primitNou.at(-1)]));
+    verifica('… „adăugat de" = colegul, din manager', /\(managerul de comenzi\)$/.test(primitNou.at(-1).adaugat_de ?? ''), primitNou.at(-1).adaugat_de);
+    verifica('… jurnal: „Client nou"', db2().prepare("SELECT 1 FROM activitate WHERE operatie = 'Client nou' AND detalii LIKE 'Nou Din Birou SRL%'").get() != null);
+    verifica('biroul: client nou „necunoscut" → NECUNOSCUT', (await cer('POST', '/api/clienti', { nume: 'Nou Necunoscut', cui: 'PF', agent: 'necunoscut' })).stare === 201
+      && primitNou.at(-1).agent === 'NECUNOSCUT');
+    const nAinte = primitNou.length;
+    verifica('biroul: client nou pe un agent de vânzări → 403, nu pleacă la Cloudflare',
+      (await cer('POST', '/api/clienti', { nume: 'Al lui Ion', cui: 'RO1', agent: 'Ion' })).stare === 403 && primitNou.length === nAinte);
+    verifica('… câmp obligatoriu lipsă → eroarea de la Cloudflare (400)', (await cer('POST', '/api/clienti', { nume: 'Fara CUI' })).stare === 400);
+    verifica('… mailul n-a plecat → avertismentul ajunge la pagină', (await cer('POST', '/api/clienti', { nume: 'Client fara mail', cui: 'RO2' })).date.avertisment === 'mailul nu a plecat');
     cookie = null;
     await cer('POST', '/api/login', { user: 'ion', parola: 'parola-noua-1' });
     const ap = await cer('POST', '/api/clienti/propuneri/7/aproba');

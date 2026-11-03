@@ -191,6 +191,22 @@ async function modificaSauSterge({ req, res, params, utilizator }) {
   json(res, r.stare, r.date);
 }
 
+// Client nou din pagina Clienţi (userul, 2026-11-03): biroul, conducerea, adminul. Merge pe Cloudflare (direct
+// în bază, fără aprobare, + mailul pentru NeoManager — ca la agenţi), apoi copia de aici se ia imediat.
+// Agentul implicit e BIROU; biroul poate pune doar BIROU / NECUNOSCUT. Câmpurile obligatorii le verifică Cloudflare.
+async function adauga({ req, res, utilizator }) {
+  if (!activ()) return eroare(res, 409, 'Legătura cu Cloudflare nu e configurată.');
+  const corp = await corpJson(req);
+  corp.agent = String(corp.agent ?? '').trim() || 'BIROU';
+  if (alBiroului(corp.agent)) corp.agent = corp.agent.toUpperCase();
+  else if (utilizator.rol === 'birou') return eroare(res, 403, 'Biroul poate pune la agent doar BIROU sau NECUNOSCUT.');
+  corp.adaugat_de = `${utilizator.nume} (managerul de comenzi)`;
+  const r = await laCF('POST', '/api/clienti', JSON.stringify(corp));
+  if (r.eroare) return eroare(res, ...r.eroare);
+  if (r.stare === 201) await preia();
+  json(res, r.stare, r.date);
+}
+
 // „Intră ca acest agent": link de o folosinţă (60 s) spre site-ul agenţilor
 const intraCaAgent = laCloudflare('/api/agenti/intra');
 
@@ -223,6 +239,7 @@ module.exports = {
     ['GET',  '/api/clienti/propuneri', { handler: propuneri, rol: APROBA }],
     ['POST', '/api/clienti/propuneri/:id/:actiune', { handler: decide, rol: APROBA }],
     ['PUT',   '/api/clienti/cheie', { handler: puneCheie, rol: 'admin' }],
+    ['POST',   '/api/clienti',      { handler: adauga, rol: CLIENTI }],   // client nou (agent implicit BIROU)
     ['PUT',    '/api/clienti/:id',  { handler: modificaSauSterge, rol: CLIENTI }],   // biroul: doar BIROU / NECUNOSCUT
     ['DELETE', '/api/clienti/:id',  { handler: modificaSauSterge, rol: APROBA }],
     ['GET',   '/api/agenti',       { handler: agenti, rol: 'admin' }],
