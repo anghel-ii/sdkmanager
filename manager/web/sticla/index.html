@@ -34,7 +34,11 @@
   .fm.salvat { animation: salvat 1.6s ease-out; }
   @keyframes salvat { from { background: rgba(63, 166, 106, .22); } to { background: transparent; } }
 
-  .taburi { display: flex; gap: 8px; margin-bottom: 20px; }
+  .taburi { display: flex; gap: 8px; margin-bottom: 20px; align-items: center; flex-wrap: wrap; }
+  /* căutarea (userul, 2026-11-04): după dimensiune, mp, client — în ambele taburi */
+  .cauta { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+  .cauta input { width: 340px; padding: 7px 11px; font-size: .9rem; }
+  .cauta .gasite { font-size: .8rem; color: var(--text-dim); white-space: nowrap; }
   .taburi button { border-radius: 999px; padding: 7px 16px; font-size: .9rem; color: var(--text-dim); }
   .taburi button.activ { background: var(--panel-2); border-color: var(--line-3); color: var(--text); font-weight: 600; }
 
@@ -73,6 +77,11 @@
   <div class="taburi">
     <button data-tab="0" class="activ">De comandat</button>
     <button data-tab="1">Comandate</button>
+    <div class="cauta">
+      <span class="gasite" id="gasite"></span>
+      <input type="search" id="cauta" placeholder="Caută: dimensiune (1144x384), mp (0,44), client" autocomplete="off" spellcheck="false"
+             aria-label="Caută după dimensiune, mp sau client">
+    </div>
   </div>
   <div class="doua">
     <div id="lista">Se încarcă…</div>
@@ -129,8 +138,25 @@ async function incarca() {
   randeaza();
 }
 
+// ── Căutarea (userul, 2026-11-04): fiecare cuvânt scris trebuie găsit în dimensiune (H × L, în orice
+// ordine; „1144 x 384" = „1144x384"), în mp (virgulă sau punct), în client (fără diacritice) sau în nr. comenzii.
+const normal = t => String(t ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+const cuvinte = t => normal(t).replace(/(\d)\s*[x×*]\s*(?=\d)/g, '$1x').replace(/(\d),(?=\d)/g, '$1.').split(/\s+/).filter(Boolean);
+const textCautare = l => [l.h && l.l ? `${l.h}x${l.l} ${l.l}x${l.h}` : normal(l.debitare).replace(/\s*[x×]\s*/g, 'x'),
+  l.mp != null ? String(l.mp) : '', normal(l.client_nume), normal(l.numar)].join(' ');
+const filtrate = () => {
+  const c = cuvinte($('cauta').value);
+  return c.length ? linii.filter(l => { const t = textCautare(l); return c.every(x => t.includes(x)); }) : linii;
+};
+
 function randeaza() {
-  const furnizori = peFurnizori(linii);
+  const gasite = filtrate(), cauta = $('cauta').value.trim();
+  $('gasite').textContent = cauta && linii.length ? `${gasite.length} din ${linii.length} ${linii.length === 1 ? 'linie' : 'linii'}` : '';
+  const furnizori = peFurnizori(gasite);
+  if (!furnizori.length && cauta && linii.length) {
+    $('lista').innerHTML = `<div class="gol">Nimic găsit pentru „${esc(cauta)}”${comandate ? ' la comandate' : ''}.</div>`;
+    return;
+  }
   if (!furnizori.length) {
     $('lista').innerHTML = `<div class="gol">${comandate ? 'Nimic comandat încă.'
       : 'Nicio sticlă de comandat. <div class="dim mic" style="margin-top:6px">Apar aici sticlele comenzilor acceptate, asamblate de noi.</div>'}</div>`;
@@ -273,6 +299,9 @@ function randeazaFurnizori(salvat) {
     if (e.key === 'Escape') { e.preventDefault(); renunta(); }
   });
 }
+
+$('cauta').addEventListener('input', () => randeaza());
+$('cauta').addEventListener('keydown', e => { if (e.key === 'Escape' && e.target.value) { e.target.value = ''; randeaza(); } });
 
 document.querySelectorAll('.taburi button').forEach(b => b.addEventListener('click', () => {
   comandate = b.dataset.tab === '1';
