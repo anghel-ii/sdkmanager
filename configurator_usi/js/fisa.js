@@ -499,7 +499,8 @@ function necesarSticlaPal(sys, spec) {
   const grupeazaSticla = () => {
     const m = new Map();
     for (const g of familia(sys).glassPerDoor(spec, state)) {
-      const cine = g.client ? 'Client' : g.adus ? 'Client — o montăm noi' : 'Noi';   // adusă de client (GEAM_ADUS)
+      // „Adus de" (userul, 2026-11-04): cine aduce sticla — adusă de client (GEAM_ADUS) dar montată de noi
+      const cine = g.client ? 'Adus de client' : g.adus ? 'Adus de client — o montăm noi' : 'Adus de noi';
       for (const h of g.glassHs) {
         if (h <= 0) continue;
         const cota = `${Math.round(h)} × ${Math.round(g.glassW)} mm`;
@@ -518,7 +519,7 @@ function necesarSticlaPal(sys, spec) {
       for (const h of g.palHs) {
         if (h <= 0) continue;
         const cota = `${Math.round(h)} × ${Math.round(g.palW)} mm`;
-        const e = m.get(cota) ?? { cota, cine: 'Client', buc: 0 };   // PAL: mereu client
+        const e = m.get(cota) ?? { cota, cine: 'Adus de client', buc: 0 };   // PAL: mereu clientul
         e.buc += 1;
         m.set(cota, e);
       }
@@ -619,7 +620,7 @@ export function deschideFisa(client, oferta = null, salvate = null, { vezi = fal
     ? tabel(['Geam / oglindă', 'Dimensiuni', 'Cant.', 'Cine'], spec.pline.map(x =>
         `<tr><td>${rame.asamblare === 'noi' && !findGeam(rame.geam)?.adus ? esc(findGeam(rame.geam)?.cod ?? '—') : 'Client'}</td><td>${x.geamH} × ${x.geamL} mm</td>
          <td class="num">${x.buc} buc</td><td>${rame.asamblare !== 'noi' ? 'Client' : findGeam(rame.geam)?.adus ? 'Client — o montăm noi' : 'Noi'}</td></tr>`))
-    : tabel(['Sticlă / PAL', 'Dimensiuni', 'Cant.', 'Cine'], necesarSticlaPal(sys, spec));
+    : tabel(['Sticlă / PAL', 'Dimensiuni', 'Cant.', 'Adus de'], necesarSticlaPal(sys, spec));
   // Uşile: pe faţă tabelul Sticlă / PAL (unde erau schiţele), schiţele pe verso — 2026-10-08.
   const schite = rame ? '' : util
     ? blocDesene(sys, spec, [...Array(spec.n).keys()].filter(i => state.assembly?.[i] === 'noi'), i => desenUtil(sys, spec, i))
@@ -632,16 +633,16 @@ export function deschideFisa(client, oferta = null, salvate = null, { vezi = fal
   const detalii = tabelMic([['Mod de livrare', det.livrare ?? '—'], ['Facturare', plataText(det.plata) ?? '—'],
     ['Încasare', incasareText(det.incasare) ?? '—'], ['Agent', det.agent ?? '—'],
     [etNumar, nrOferta]]);
-  const montaj = util ? tabelMic([
+  // cine asamblează — mare şi îngroşat, să se vadă din prima (userul, 2026-11-04)
+  const cineAsambleaza = tabelMic([
     ['Asamblăm noi',        `${nrNoi} uşi`],
     ['Asamblează clientul', `${nrClient} uşi`],
+  ], 'montaj');
+  const montaj = rame ? '' : util ? cineAsambleaza + tabelMic([
     ['Orizontale U', `${spec.nrU} buc`],
     ['Divizări H',   `${spec.nrH} buc`],
     ['Amortizări',   `${spec.nrAmort} buc`],
-  ]) : rame ? '' : tabelMic([
-    ['Asamblăm noi',        `${nrNoi} uşi`],
-    ['Asamblează clientul', `${nrClient} uşi`],
-  ]);
+  ]) : cineAsambleaza;
 
   // 842: ramele nu mai apar ca rânduri în tabel — se văd în secţiunile de
   // debitare 842/841 de deasupra; în tabel rămân accesoriile (+ geamul).
@@ -730,6 +731,9 @@ export function deschideFisa(client, oferta = null, salvate = null, { vezi = fal
   table.necesar-materiale td.bifa { width: 26px; text-align: center; }
   table.mic td:first-child { color: #555; width: 55%; }
   table.mic td.num { font-weight: 600; }
+  /* „Asamblăm noi / Asamblează clientul" — mare şi îngroşat (userul, 2026-11-04) */
+  table.mic.montaj { font-size: 15px; }
+  table.mic.montaj td { font-weight: 700; color: #000; padding: 6px 8px; border-color: #555; }
 
   /* lăţimea utilă A4 şi pe ecran, ca măsurătoarea pt. modul compact să
      corespundă cu ce iese la print */
