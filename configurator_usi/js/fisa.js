@@ -58,6 +58,15 @@ function geamModelLabel(i) {
   const g = findGeam(state.geam?.[i]);
   return g ? g.denumire : (state.geam?.[i] ?? '—');
 }
+// Pe panoul din schiţă (userul, 2026-11-04): „Geam client" / „PAL client" când le aduce clientul, nu doar „Geam" /
+// „PAL"; sticla noastră — denumirea ei. PAL-ul îl aduce mereu clientul (ca în tabelul Sticlă / PAL).
+const PAL_CLIENT = 'PAL client';
+function geamPePanou(i) {
+  if (state.assembly?.[i] === 'client') return `Geam client ${state.geamClient?.[i] ?? 4}mm`;
+  const g = findGeam(state.geam?.[i]);
+  if (g?.adus) return `Geam client ${g.grosime}mm`;   // adusă de client, montată de noi
+  return g ? g.denumire : (state.geam?.[i] ?? '—');
+}
 
 // ── Schiţele uşilor — pe VERSO, sub facturare, cât încap (userul, 2026-10-08: pe faţă
 // erau înghesuite; acolo stă acum tabelul Sticlă / PAL). Alb-negru (tuşul color e
@@ -165,7 +174,7 @@ function desenUtil(sys, spec, i) {
     el.push(`<rect x="${mont}" y="${y}" width="${W - 2 * mont}" height="${hp}" fill="none" stroke="#000" stroke-width="${linie}"/>`,
       ...liniiAplicate(state.divAplicate?.[i], mont, y, W - 2 * mont, hp, linie));
     const font = Math.min((W - 2 * mont) * 0.15, hp * 0.26), cx = W / 2, cy = y + hp / 2;
-    el.push(textPanou(cx, cy - font * 0.15, font, 'PAL', true),
+    el.push(textPanou(cx, cy - font * 0.15, font, PAL_CLIENT, true),
       textPanou(cx, cy + font * 0.95, font * 0.8, `${Math.round(h)}×${Math.round(spec.panouL)}`));
     if (k < p.heights.length - 1) {
       y -= GROS_H_DESEN;
@@ -208,7 +217,7 @@ function desenUsa(sys, spec, i, margH = 0) {
       ...liniiAplicate(state.divAplicate?.[i], mont, Y(y + h), innerW, h, linie));
     const font = Math.min(innerW * 0.15, h * 0.26);
     const cx = mont + innerW / 2, cy = Y(y + h / 2);
-    el.push(...textePanou(cx, cy, innerW, h, font, pal ? 'PAL' : geamModelLabel(i), `${Math.round(p.heights[k])}×${latime}`));
+    el.push(...textePanou(cx, cy, innerW, h, font, pal ? PAL_CLIENT : geamPePanou(i), `${Math.round(p.heights[k])}×${latime}`));
     y += h;
     if (k < p.heights.length - 1) {
       const s = slot(k);
@@ -753,8 +762,9 @@ export function deschideFisa(client, oferta = null, salvate = null, { vezi = fal
   .usa-nr { display: block; font-size: 10px; color: #555; }
   .usa-nr b { color: #000; font-size: 13px; }
   .usa-cine { display: block; font-size: 15px; font-weight: 700; letter-spacing: .02em; line-height: 1.1; }
-  .usa-sub { font-size: 10.5px; line-height: 1.3; margin-top: 3px; overflow-wrap: break-word; }
-  .sub-et { color: #555; }
+  /* sub schiţă: Geam / Amortizare / Role — mai mare şi îngroşat (userul, 2026-11-04) */
+  .usa-sub { font-size: 14px; font-weight: 700; line-height: 1.3; margin-top: 4px; overflow-wrap: break-word; }
+  .sub-et { color: #000; }
   .mostra { width: 7mm; height: 1.2mm; vertical-align: middle; }
   .nota-schite { margin-top: 4mm; font-size: 12px; line-height: 1.6; border-top: 1px solid #999; padding-top: 2mm; }
   .nota-schite .ic { width: 3.6mm; height: 3.6mm; vertical-align: -0.6mm; }
