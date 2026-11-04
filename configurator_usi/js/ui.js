@@ -491,6 +491,9 @@ function renderWheels() {
   // (A-F) au un singur tip (H), deci nu arătăm alegerea (n-are sens un selector
   // cu o singură opţiune). Panourile PAL se declară per sistem (`meta.pal`).
   const meta      = systems[state.system]?.meta;
+  // vopsirea RAL de la uşi: nu la rame (au câmpurile lor în panou)
+  const gv = $('groupVopsire');
+  if (gv) gv.style.display = meta && !meta.rame && currentGama() !== 'rame' ? '' : 'none';
   // Gama rame n-are carduri de uşă — are panoul ei de rânduri (ui_rame.js).
   if (meta?.rame || currentGama() === 'rame') {
     box.innerHTML = '';
@@ -1525,6 +1528,15 @@ export async function initUI() {
   $('btnComanda')?.addEventListener('click', () => trimiteOferta('comanda'));
   $('btnPlata')?.addEventListener('click', () => trimiteOferta('plata'));
   initDetaliiComanda();
+  // vopsirea în RAL (uşile culisante; ramele au câmpurile lor) — în config, pe fişă, manopera pe factură
+  state.vopsire = { ral: '', cant: 0, ...state.vopsire };   // configuraţiile vechi n-o au
+  const ral = /** @type {HTMLInputElement | null} */ ($('vopsireRal')), vcant = /** @type {HTMLInputElement | null} */ ($('vopsireCant'));
+  if (ral && vcant) {
+    ral.value = state.vopsire.ral ?? '';
+    vcant.value = state.vopsire.cant > 0 ? String(state.vopsire.cant) : '';
+    ral.addEventListener('input', () => { state.vopsire = { ...state.vopsire, ral: ral.value.trim() }; rebuild(); });
+    vcant.addEventListener('input', () => { state.vopsire = { ...state.vopsire, cant: Math.max(0, +vcant.value || 0) }; rebuild(); });
+  }
   // observaţiile produsului (în config → se salvează cu el şi ajung pe fişă)
   const obs = /** @type {HTMLTextAreaElement | null} */ ($('observatii'));
   if (obs) { obs.value = state.observatii ?? ''; obs.addEventListener('input', () => { state.observatii = obs.value; }); }

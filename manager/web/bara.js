@@ -111,6 +111,7 @@
     produse: '<path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/>',
     taskuri: '<path d="M10 6.5h10M10 12h10M10 17.5h10"/><path d="m3.5 6.5 1.4 1.4 2.3-2.6M3.5 12l1.4 1.4 2.3-2.6M3.5 17.5l1.4 1.4 2.3-2.6"/>',
     sticla:  '<rect x="4.5" y="3.5" width="15" height="17" rx="1.5"/><path d="m8 9.5 3-3M8 14.5l7.5-7.5"/>',
+    vopsitorie: '<rect x="3.5" y="4" width="14" height="5.5" rx="1.2"/><path d="M17.5 6.8h2.5v5.2h-8v2.5"/><rect x="10.5" y="14.5" width="3" height="6" rx="1"/>',
     livrari: '<path d="M14 16.5V6H3.5v10.5h1.8"/><path d="M14 9h3.8l2.7 3.4v4.1h-1.8M9 16.5h6.2"/><circle cx="7.2" cy="16.8" r="1.8"/><circle cx="17" cy="16.8" r="1.8"/>',
     clienti: '<circle cx="9" cy="8.5" r="3.3"/><path d="M3 19.5c.7-3.2 3.1-5 6-5s5.3 1.8 6 5"/><path d="M15.5 5.3a3.3 3.3 0 0 1 0 6.4M17.6 14.8c1.7.7 2.9 2.2 3.4 4.7"/>',
     admin:   '<path d="M12 3.5 5 6.2v5.3c0 4.3 3 7.6 7 8.9 4-1.3 7-4.6 7-8.9V6.2z"/><path d="m9.2 12 2 2 3.8-4"/>',
@@ -309,6 +310,7 @@
       ${STARI.map(([t, , h, ic, n]) => link('/' + h, ic, n, `data-tab="${t}"`, `<span class="insigna" data-cate-meniu="${t}"></span>`)).join('')}
       <div class="grup"><span class="txt">Operaţiuni</span></div>
       ${link('/sticla', 'sticla', 'Comandă sticlă', 'id="linkSticla"', '<span class="insigna cald" id="nrSticla"></span>')}
+      ${link('/vopsitorie', 'vopsitorie', 'Vopsitorie', 'id="linkVopsitorie"', '<span class="insigna cald" id="nrVopsitorie" title="comenzi cu RAL încă neduse la vopsit"></span>')}
       ${link('/livrari', 'livrari', 'Organizează livrări', 'id="linkLivrari"')}
       ${link('/produse', 'produse', 'Produse', 'id="linkProduse" hidden')}
       ${link('/taskuri', 'taskuri', 'Taskuri', 'id="linkTaskuri"', '<span class="insigna rosie" id="nrTaskuri" title="ajunse la ora reminderului"></span>')}
@@ -341,6 +343,7 @@
       <span class="spatiu"></span>
       <a href="/" class="buton" title="Comenzi">${icoana('acasa')}<span class="txt">Comenzi</span></a>
       <a href="/sticla" class="buton" id="linkSticla" title="Comandă sticlă">${icoana('sticla')}<span class="txt">Comandă sticlă</span><span class="insigna cald" id="nrSticla"></span></a>
+      <a href="/vopsitorie" class="buton" id="linkVopsitorie" title="Vopsitorie; numărul = comenzi cu RAL încă neduse">${icoana('vopsitorie')}<span class="txt">Vopsitorie</span><span class="insigna cald" id="nrVopsitorie"></span></a>
       <a href="/livrari" class="buton" id="linkLivrari" title="Organizează livrări">${icoana('livrari')}<span class="txt">Organizează livrări</span></a>
       <a href="/produse" class="buton" id="linkProduse" hidden title="Produse">${icoana('produse')}<span class="txt">Produse</span></a>
       <a href="/taskuri" class="buton" id="linkTaskuri" title="Taskuri; numărul = ajunse la ora reminderului">${icoana('taskuri')}<span class="txt">Taskuri</span><span class="insigna rosie" id="nrTaskuri"></span></a>
@@ -359,6 +362,7 @@
     window.sumarBara = s;
     const pune = (sel, n) => document.querySelectorAll(sel).forEach(x => { x.textContent = n || ''; });
     pune('#nrSticla', s.sticla);
+    pune('#nrVopsitorie', s.vopsitorie);
     pune('#nrClienti', s.deAprobat);
     pune('#nrCereri', s.cereri);   // doar la conducere / admin (biroul primeşte 0)
     pune('#nrTichete', s.tichete);   // admin: tichete noi; ceilalţi: răspunsuri la tichetele lor, nevăzute
@@ -589,7 +593,7 @@
   };
   if (window.top !== window) return;   // configuratorul din cadrul unei fişe nu e o pagină deschisă de om
   const cale = location.pathname.replace(/\/$/, '') || '/';
-  const PAGINI = { '/': 'Comenzi', '/comenzi': 'Comenzi', '/sticla': 'Comandă sticlă', '/livrari': 'Organizează livrări',
+  const PAGINI = { '/': 'Comenzi', '/comenzi': 'Comenzi', '/sticla': 'Comandă sticlă', '/vopsitorie': 'Vopsitorie', '/livrari': 'Organizează livrări',
     '/taskuri': 'Taskuri', '/tichete': 'Tichete', '/cereri': 'Cereri', '/clienti': 'Clienţi', '/produse': 'Produse', '/admin': 'Tablou admin',
     '/activitate': 'Activitate', '/configurator': 'Configurator', '/configurator/index.html': 'Configurator',
     '/configurator/amanunt.html': 'Ofertă cu amănuntul' };

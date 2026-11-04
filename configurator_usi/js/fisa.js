@@ -592,6 +592,7 @@ export function deschideFisa(client, oferta = null, salvate = null, { vezi = fal
     ['Lăţime uşă',           `${Math.round(spec.doorW)} mm`],
     ['Orizontal U',          { fara: 'fără', sus: 'sus', jos: 'jos', ambele: 'sus şi jos' }[state.util?.orizontale] ?? '—'],
     ['PAL 18 (fără div.)',   `${Math.round(spec.panouH)} × ${Math.round(spec.panouL)} mm`],
+    ['Vopsire cod RAL',      state.vopsire?.ral || null],
   ], 'cote') : rame ? tabelMic([
     ['Nr. rame',          spec.nrRame],
     ['Asamblare',         asamblareRame(rame)],
@@ -611,6 +612,7 @@ export function deschideFisa(client, oferta = null, salvate = null, { vezi = fal
     ['Nr. suprapuneri',      sys.meta.doorsRange ? suprapuneriEfective(state.doors, sys.meta.suprapuneriObligatorii ? 2 : state.tracks) : null],
     ['Înălţime finală uşă',  `${spec.door.h} mm`],
     ['Lăţime finală uşă',    `${spec.door.w} mm`],
+    ['Vopsire cod RAL',      state.vopsire?.ral || null],
   ], 'cote');
 
   const necesarSP = util ? '' : rame

@@ -14,6 +14,7 @@ const comenzi     = require('./api/comenzi.js');
 const scanare     = config.scanare ? require('./scanare.js') : null;
 const evenimente  = require('./evenimente.js');
 const sticla      = require('./sticla.js');
+const vopsitorie  = require('./vopsitorie.js');
 const livrari     = require('./livrari.js');
 const taskuri     = require('./taskuri.js');
 const cereri      = require('./cereri.js');
@@ -47,7 +48,7 @@ const produse     = require('./produse.js');
 //   { rol: 'admin' }   — doar administratorii
 //   { permisiune: 'produse' } — adminul, conducerea şi conturile de birou bifate în tablou (auth.js)
 
-const MODULE = [utilizatori, comenzi, scanare, evenimente, sticla, livrari, taskuri, cereri, tichete, notificari, tablou, actualizare, clienti, activitate, produse].filter(Boolean);
+const MODULE = [utilizatori, comenzi, scanare, evenimente, sticla, vopsitorie, livrari, taskuri, cereri, tichete, notificari, tablou, actualizare, clienti, activitate, produse].filter(Boolean);
 
 const rute = MODULE.flatMap(m => m.rute).map(([metoda, cale, spec]) => [metoda, cale, spec]);
 const potriveste = router(rute);
@@ -139,6 +140,7 @@ async function trateaza(req, res) {
     '/':            'manager',   // pagina principală = listele (oferte / în lucru / finalizate)
     '/comenzi':     'manager',   // (adresa veche — linkurile existente merg în continuare)
     '/sticla':      'sticla',    // comanda de sticlă la furnizori
+    '/vopsitorie':  'vopsitorie', // comenzile cu RAL: când / la cine s-au dus la vopsit (server/vopsitorie.js)
     '/livrari':     'livrari',   // organizează livrările cu maşina noastră
     '/taskuri':     'taskuri',
     '/tichete':     'tichete',   // probleme / idei de la colegi pt. administrator (server/tichete.js)
@@ -220,6 +222,7 @@ function porneste() {
   clienti.porneste();
   actualizare.pornesteRaportarea();   // pagina /admin de pe Cloudflare (update şi din afara firmei)
   ora.porneste();   // ora exactă de pe internet — momentele nu mai depind de ceasul serverului
+  vopsitorie.porneste();   // notificările „sună la vopsitor", la fiecare 5 zile
 
   // Ctrl+C / systemctl stop. server.close() singur aştepta ca TOATE conexiunile
   // să se închidă — dar fiecare tab al managerului ţine una live (WebSocket), iar

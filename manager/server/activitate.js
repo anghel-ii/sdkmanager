@@ -77,6 +77,8 @@ const OPERATII = {
                                                null, b => (b.ids ?? []).map(comandaLiniei)],
   'POST /api/sticla/anuleaza':               ['Comanda de sticlă anulată', S, b => `${(b.ids ?? []).length} ${(b.ids ?? []).length === 1 ? 'linie' : 'linii'}`,
                                                null, b => (b.ids ?? []).map(comandaLiniei)],
+  'PUT /api/vopsitorie/:id':                [b => (b.dus_la || b.vopsitor ? 'Dusă la vopsit' : 'Vopsitoria ştearsă (nu s-a dus încă)'), S,
+                                               b => lista(b.dus_la, scurt(b.vopsitor, 60)), null, (b, r, p) => [+p.id]],
   'PUT /api/sticla/furnizori/:cod':          ['Mailul furnizorului de sticlă modificat', S, (b, r, p) => lista(p.cod, b.email)],
 
   'PUT /api/livrari/comanda/:id':            ['Livrare: preţ / observaţii / loc', S, b => lista(b.de_incasat != null && b.de_incasat !== '' && `preţ ${lei(b.de_incasat)}`,

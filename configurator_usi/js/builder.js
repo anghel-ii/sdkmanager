@@ -2,7 +2,7 @@ import { state }        from './state.js';
 import { systems }       from './systems/registry.js';
 import { clearGroup, conturGol } from './lib/comun/geo.js';
 import { familia }       from './familii.js';
-import { liniaTransport } from './lib/comun/comanda.js';
+import { liniaTransport, liniaVopsit } from './lib/comun/comanda.js';
 
 // Culorile oferite pt. un sistem (filtrate după catalog) — expuse aici ca
 // testele să nu depindă de unde stau bibliotecile familiilor.
@@ -69,6 +69,9 @@ export function currentBilling() {
   const sys = systems[state.system];
   if (!(sys && _spec && familia(sys))) return { lines: [], errors: [], mode: null };
   let f = familia(sys).billingLines(sys, state, _spec);
+  // manopera de vopsit în RAL la uşi (ramele o pun în lib/rame/rame.js) — userul, 2026-11-04
+  const vopsit = sys.meta.rame ? null : liniaVopsit(state);
+  if (vopsit && f.lines.length) f = { ...f, lines: [...f.lines, vopsit] };
   // transportul — al comenzii, la toate gamele (doar dacă există ce factura)
   const transport = liniaTransport(state);
   if (transport && f.lines.length) f = { ...f, lines: [...f.lines, { ...transport }] };

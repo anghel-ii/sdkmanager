@@ -30,6 +30,8 @@ const PASI = [
   { id: 'culoare', titlu: 'Culoare',    el: () => [grupul($('colorSwatches'))] },
   { id: 'dim',     titlu: 'Dimensiuni', el: () => [$('groupHeight'), $('groupWidth'), $('groupDoorsTracks'), $('groupRame'), $('groupUtil')] },
   { id: 'usi',     titlu: 'Uşi',        el: () => [$('groupUsi')] },
+  // vopsirea în RAL la uşi — opţional (userul, 2026-11-04); la rame stă în panoul lor
+  { id: 'vopsire', titlu: 'Vopsire RAL', el: () => [$('groupVopsire')], optional: true },
   // observaţiile produsului, tipărite pe fişă — opţional (userul, 2026-10-08)
   { id: 'obs',     titlu: 'Observaţii', el: () => [$('groupObservatii')], optional: true },
   // mai multe produse pe o ofertă (js/cos.js) — opţional: fără număr, nu e niciodată „pasul următor"
@@ -282,6 +284,7 @@ function actualizeaza() {
     oferta:  !!meta && !n && complet,
     client:  !campuriLipsa().some(x => ['clientNume', 'comandaLivrare', 'comandaAgent'].includes(x.id)),
     cos:     false,   // opţional — nu se bifează
+    vopsire: !!String(state.vopsire?.ral ?? '').trim(),
   };
   const rezumat = {
     model:   meta ? `${esc(meta.label)}${meta.sketch ? ` <img src="${esc(meta.sketch)}" alt="">` : ''}` : '',
@@ -292,6 +295,7 @@ function actualizeaza() {
     usi:     `${state.doors || (meta?.doors ?? 0)} uşi · ${noi} asamblate de noi`,
     oferta:  n ? `${n} ${n === 1 ? 'eroare' : 'erori'}` : `${f.lines.length} linii de facturare`,
     cos:     `${document.querySelectorAll('#groupCos .cos-lista li').length} produse în ofertă`,
+    vopsire: esc([state.vopsire?.ral && `RAL ${String(state.vopsire.ral).trim()}`, +state.vopsire?.cant > 0 && `manoperă ${state.vopsire.cant}`].filter(Boolean).join(' · ')),
     client:  esc([$('clientNume')?.value, $('clientTelefon')?.value].map(v => v?.trim()).filter(Boolean).join(' · ')),
   };
   if (rame) PASI[2].titlu = 'Rânduri şi opţiuni';
@@ -302,7 +306,7 @@ function actualizeaza() {
     if (!s) return;
     s.querySelector('.pas-titlu').textContent = p.titlu;
     // pasul 4 dispare la rame (n-au carduri de uşă) şi până apar cardurile
-    s.hidden = p.id === 'usi' ? !vizibil($('groupUsi')) : p.id === 'oferta' ? !meta : false;
+    s.hidden = p.id === 'usi' ? !vizibil($('groupUsi')) : p.id === 'vopsire' ? !meta || rame : p.id === 'oferta' ? !meta : false;
     s.classList.toggle('gata', gata[p.id]);
     // numerotare doar pe paşii vizibili şi obligatorii (fără 4 lipsă când n-are uşi)
     if (!s.hidden && !p.optional) nr++;

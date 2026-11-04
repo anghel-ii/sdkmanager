@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vopsitorie</title>
+<link rel="stylesheet" href="/comun.css">
+<script src="/dialog.js"></script>
+<script src="/data.js"></script>
+<script src="/live.js"></script>
+<script src="/sugestii.js"></script>
+<style>
+  #continut { padding: 24px; max-width: 1440px; margin: 0 auto; }
+  .sectiune { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; margin-bottom: 18px; }
+  .sectiune .cap { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+  .sectiune h2 { font-size: 1.05rem; }
+  .sectiune .total { color: var(--text-dim); font-size: .85rem; }
+  button.mic { padding: 6px 12px; font-size: .82rem; }
+  button.primar { background: var(--accent-dim); border-color: var(--accent); color: #fff; }
+
+  table.vops { width: 100%; border-collapse: collapse; font-size: .88rem; table-layout: fixed; }
+  /* aceleaşi coloane în ambele tabele, una sub alta */
+  table.vops col.c1 { width: 160px; } table.vops col.c2 { width: 300px; } table.vops col.c3 { width: 120px; }
+  table.vops col.c4 { width: 180px; } table.vops col.c6 { width: 190px; }
+  table.vops th { text-align: left; font-size: .72rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase;
+                  color: var(--text-dim); padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  table.vops td { padding: 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  table.vops tr:last-child td { border-bottom: 0; }
+  table.vops td.comanda a { font-weight: 600; white-space: nowrap; }
+  table.vops .client { color: var(--text-dim); font-size: .82rem; margin-top: 2px; }
+  .ral { display: inline-block; font-family: 'JetBrains Mono', ui-monospace, monospace; font-weight: 600; font-size: .8rem;
+         padding: 1px 7px; border: 1px solid var(--line-3); border-radius: 6px; margin-right: 6px; white-space: nowrap; }
+  .produs { margin-bottom: 3px; }
+  .produs .et { color: var(--text-dim); font-size: .82rem; }
+  table.vops input[type=date] { width: 150px; padding: 6px 8px; font-size: .86rem; }
+  table.vops input.vopsitor { width: 100%; min-width: 160px; padding: 6px 8px; font-size: .86rem; }
+  td.butoane { white-space: nowrap; text-align: right; }
+  td.butoane button + button { margin-left: 6px; }
+  .stare { font-size: .8rem; color: var(--text-dim); margin-top: 4px; }
+  .stare.mult { color: #d4a24c; }
+  .eroare { font-size: .78rem; color: var(--rosu-text); margin-top: 4px; }
+  tr.salvat td { animation: salvat 1.6s ease-out; }
+  @keyframes salvat { from { background: rgba(63, 166, 106, .22); } to { background: transparent; } }
+  .gol { text-align: center; padding: 24px; color: var(--text-dim); }
+</style>
+</head>
+<body>
+
+<div id="bara"></div>
+<script src="/bara.js"></script>
+
+<div id="continut">
+  <header class="pagina-cap">
+    <h1>Vopsitorie</h1>
+    <p>Comenzile în lucru cu vopsire în cod RAL. Scrii când ai dus-o la vopsit şi la ce vopsitor; din 5 în 5 zile primeşti
+      o notificare să suni şi să întrebi cum stă. Când comanda se finalizează, iese de aici.</p>
+  </header>
+  <div id="lista">Se încarcă…</div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+//  Vopsitorie (userul, 2026-11-04) — server/vopsitorie.js. Două liste: încă neduse
+//  la vopsit şi cele de la vopsitor (cele mai vechi sus). Pe fiecare rând: data,
+//  vopsitorul (sugestii din cei scrişi până acum) şi Salvează.
+// ═══════════════════════════════════════════════════════════════════════════
+const DEMO = '<span class="eticheta-demo" title="Făcută sau schimbată în modul demo — pe bune nu e aşa">DEMO</span>';
+const $ = id => document.getElementById(id);
+const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const ZILE = 5;
+const azi = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Bucharest' }).format(new Date());
+const ziua = d => d ? d.split('-').reverse().join('.') : '';
+
+async function api(cale, optiuni = {}) {
+  const r = await fetch(cale, { headers: { 'Content-Type': 'application/json' }, ...optiuni });
+  if (r.status === 401) { location.href = '/login?redirect=' + encodeURIComponent(location.pathname); return null; }
+  return r;
+}
+
+let comenzi = [], vopsitori = [];
+const modificate = new Set();   // rândurile la care omul a schimbat ceva nesalvat — nu se redesenează peste el
+
+function stare(c) {
+  if (c.zile == null) return '';
+  const urm = ZILE - (c.zile % ZILE);
+  return `<div class="stare${c.zile >= ZILE ? ' mult' : ''}">la vopsit de ${c.zile === 0 ? 'azi' : c.zile === 1 ? 'o zi' : `${c.zile} zile`}
+    · următorul telefon ${urm === 1 ? 'mâine' : `peste ${urm} zile`}${c.dus_de_nume ? ` · notificarea: ${esc(c.dus_de_nume)}` : ''}</div>`;
+}
+
+const rand = c => `<tr data-id="${c.id}">
+  <td class="comanda"><a href="/#comanda/${c.id}">${esc(c.numar)}</a>${c.demo ? ' ' + DEMO : ''}<div class="client">${esc(c.client_nume)}</div></td>
+  <td>${c.produse.map(p => `<div class="produs"><span class="ral">RAL ${esc(p.ral)}</span><span class="et">${esc(p.eticheta)}</span></div>`).join('')}</td>
+  <td>${dataOra(c.confirmat_la).slice(0, 10)}</td>
+  <td><input type="date" class="dus" value="${esc(c.dus_la ?? '')}" max="${azi()}" aria-label="Data dusă la vopsit — ${esc(c.numar)}"></td>
+  <td><input type="text" class="vopsitor" value="${esc(c.vopsitor ?? '')}" maxlength="100" placeholder="La ce vopsitor" spellcheck="false"
+        aria-label="Vopsitorul — ${esc(c.numar)}">${stare(c)}<div class="eroare" hidden></div></td>
+  <td class="butoane">${c.dus_la ? '<button type="button" class="mic sterge" title="Nu s-a dus încă la vopsit — o mută înapoi sus">Şterge</button>' : ''}
+    <button type="button" class="mic primar salveaza"${c.dus_la ? ' hidden' : ''}>Salvează</button></td>
+</tr>`;
+
+const tabel = (titlu, ls, gol) => `<section class="sectiune">
+  <div class="cap"><h2>${titlu}</h2><span class="total">${ls.length ? `${ls.length} ${ls.length === 1 ? 'comandă' : 'comenzi'}` : ''}</span></div>
+  ${ls.length ? `<table class="vops"><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="c4"><col class="c5"><col class="c6"></colgroup><thead><tr><th>Comanda</th><th>Produse · RAL</th><th>În lucru din</th><th>Dusă la vopsit</th>
+    <th>Vopsitor</th><th></th></tr></thead><tbody>${ls.map(rand).join('')}</tbody></table>` : `<div class="gol">${gol}</div>`}
+</section>`;
+
+async function incarca(salvat) {
+  const r = await api('/api/vopsitorie');
+  if (!r?.ok) { $('lista').textContent = 'Nu s-a putut încărca lista.'; return; }
+  ({ comenzi, vopsitori } = await r.json());
+  if (modificate.size && !salvat) return;   // nu şterge ce scrie omul acum; se reîncarcă după Salvează
+  modificate.clear();
+  $('lista').innerHTML = tabel('De dus la vopsit', comenzi.filter(c => !c.dus_la), 'Nicio comandă cu RAL care să aştepte.')
+    + tabel('La vopsitor', comenzi.filter(c => c.dus_la), 'Nicio comandă la vopsit acum.');
+  $('lista').querySelectorAll('tr[data-id]').forEach(leaga);
+  if (salvat) $('lista').querySelector(`tr[data-id="${salvat}"]`)?.classList.add('salvat');
+}
+
+function leaga(tr) {
+  const id = +tr.dataset.id, c = comenzi.find(x => x.id === id);
+  const dus = tr.querySelector('.dus'), vop = tr.querySelector('.vopsitor'), err = tr.querySelector('.eroare');
+  const btn = tr.querySelector('.salveaza');
+  const arata = t => { err.textContent = t; err.hidden = !t; };
+  const schimbat = () => {
+    const da = dus.value !== (c.dus_la ?? '') || vop.value.trim() !== (c.vopsitor ?? '');
+    if (da) modificate.add(id); else modificate.delete(id);
+    if (c.dus_la) btn.hidden = !da;
+    arata('');
+  };
+  dus.addEventListener('input', schimbat);
+  vop.addEventListener('input', schimbat);
+  Sugestii.leaga(vop, {
+    cauta: t => vopsitori.filter(v => Sugestii.normal(v).includes(Sugestii.normal(t))).slice(0, 12).map(v => ({ text: v })),
+    alege: e => { vop.value = e.text; schimbat(); },
+  });
+
+  const trimite = async corp => {
+    const r = await api(`/api/vopsitorie/${id}`, { method: 'PUT', body: JSON.stringify(corp) });
+    if (!r) return false;
+    if (!r.ok) { arata((await r.json().catch(() => ({}))).eroare || 'Nu s-a salvat — încearcă din nou.'); return false; }
+    modificate.delete(id);
+    await incarca(id);
+    return true;
+  };
+  const salveaza = () => {
+    if (!dus.value) { arata('Scrie data la care s-a dus la vopsit.'); dus.focus(); return; }
+    if (dus.value > azi()) { arata('Data nu poate fi în viitor.'); dus.focus(); return; }
+    if (!vop.value.trim()) { arata('Scrie la ce vopsitor s-a dus.'); vop.focus(); return; }
+    trimite({ dus_la: dus.value, vopsitor: vop.value.trim() });
+  };
+  btn.addEventListener('click', salveaza);
+  vop.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.defaultPrevented) { e.preventDefault(); salveaza(); } });
+  tr.querySelector('.sterge')?.addEventListener('click', async () => {
+    if (!(await confirma(`Comanda ${c.numar} nu s-a dus încă la vopsit?\n\nSe şterg data (${ziua(c.dus_la)}) şi vopsitorul (${c.vopsitor}), `
+      + 'iar notificările se opresc.', 'Da, şterge'))) return;
+    trimite({ dus_la: '', vopsitor: '' });
+  });
+}
+
+(async () => {
+  const r = await api('/api/eu');
+  if (!r) return;
+  await incarca();
+  urmareste(() => incarca());   // alt coleg a scris o dată / o comandă s-a finalizat
+})();
+</script>
+</body>
+</html>

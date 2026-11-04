@@ -605,6 +605,17 @@ const MIGRATII = [
   d => d.exec(`ALTER TABLE utilizator ADD COLUMN permisiuni TEXT NOT NULL DEFAULT '[]'`),
   // v40 → v41 (2026-11-04): garniturile la amănunt — orice cantitate, în sus la 0,10 (2,64 → 2,70); se schimbă din /produse
   d => d.prepare(`UPDATE produs SET fact = '{"zecimi":true}' WHERE cod IN (${GARNITURI_ZECIMI.map(() => '?').join(', ')})`).run(...GARNITURI_ZECIMI),
+  // v41 → v42 (2026-11-04): Vopsitorie — comenzile cu RAL: când s-au dus la vopsit, la cine, cine a scris (primeşte
+  // notificarea la fiecare 5 zile; notificat_pas = ultimul multiplu de 5 anunţat) — server/vopsitorie.js
+  d => d.exec(`
+    CREATE TABLE vopsire (
+      comanda_id    INTEGER PRIMARY KEY REFERENCES comanda(id) ON DELETE CASCADE,
+      dus_la        TEXT NOT NULL,                   -- YYYY-MM-DD, ziua din România
+      vopsitor      TEXT NOT NULL,
+      dus_de        INTEGER REFERENCES utilizator(id),
+      modificat_la  TEXT NOT NULL,
+      notificat_pas INTEGER NOT NULL DEFAULT 0
+    )`),
 ];
 
 // Exportată pt. test.

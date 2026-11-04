@@ -65,4 +65,7 @@ export const state = {
   comanda: { livrare: null, agent: null, plata: null },
   // observaţiile produsului — se tipăresc pe fişă (userul, 2026-10-08)
   observatii: '',
+  // vopsire în cod RAL — la uşile culisante, ca la rame (userul, 2026-11-04): RAL-ul pe fişă, manopera pe
+  // factură („Manop vopsit"); comenzile cu RAL apar în manager la Vopsitorie. Ramele îl au în state.rame.
+  vopsire: { ral: '', cant: 0 },
 };

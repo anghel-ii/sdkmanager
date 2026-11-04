@@ -128,6 +128,13 @@
       <div id="wheelsUI"></div>
     </div>
 
+    <!-- VOPSIRE RAL — la uşile culisante, aceleaşi câmpuri ca la rame (userul, 2026-11-04); ascuns la rame
+         (le au în panoul lor) şi până se alege modelul. RAL-ul pe fişă, manopera pe factură; în manager: Vopsitorie -->
+    <div class="group" id="groupVopsire">
+      <div class="rame-camp"><span class="rame-et">Vopsire cod RAL</span><input type="text" id="vopsireRal" maxlength="40" placeholder="ex. 9005" autocomplete="off" spellcheck="false"></div>
+      <div class="rame-camp"><span class="rame-et">Manoperă vopsit (cantitate)</span><input type="number" id="vopsireCant" class="mic" min="0" step="1" placeholder="0"></div>
+    </div>
+
     <!-- OBSERVAŢII — ale produsului de pe ecran, se tipăresc pe fişă (userul, 2026-10-08);
          ui_nou.js le pune în pasul lor -->
     <div class="group oferta-client" id="groupObservatii">

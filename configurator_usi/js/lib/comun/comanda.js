@@ -58,6 +58,10 @@ export const dinAcceptare = params => ({
 // Transportul se facturează la TOATE gamele când marfa nu e ridicată personal
 // (userul, 2026-09-25; înainte doar la rame, ca în formularul Excel) — nici la „Curier fara costuri".
 const TRANSPORT = { cod: 'CHLTTRMANIP', denumire: 'Cheltuieli de Transport si Manipulare', um: 'buc', cantitate: 1 };
+// Manopera de vopsit în RAL la uşi (userul, 2026-11-04) — cantitatea o scrie omul, ca la rame (lib/rame/rame.js)
+export const liniaVopsit = state => (+state.vopsire?.cant > 0
+  ? { cod: 'Manop vopsit', denumire: 'Manopera pentru vopsit', um: 'buc', cantitate: Math.round(+state.vopsire.cant * 100) / 100 } : null);
+
 export const liniaTransport = state => {
   const livrare = detaliiComanda(state).livrare;
   return livrare && !FARA_TRANSPORT.includes(livrare) ? TRANSPORT : null;

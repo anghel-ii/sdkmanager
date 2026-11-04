@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { cautator, normal, debitare, sePoatePeJumatate, laBara, arie, rotunjeste, lungimeUtila, cuZecimi, textMod } from '../js/amanunt-calcul.js';
-import { liniaTransport, LIVRARE } from '../js/lib/comun/comanda.js';
+import { liniaTransport, liniaVopsit, LIVRARE } from '../js/lib/comun/comanda.js';
 
 const produse = JSON.parse(fs.readFileSync(new URL('../../manager/server/produse-start.json', import.meta.url))).filter(p => p.listat);
 assert.ok(produse.length > 500, `prea puţine produse: ${produse.length}`);
@@ -114,3 +114,8 @@ assert.equal(transport('Curier ramburs'), 'CHLTTRMANIP', 'curier ramburs → tra
 assert.equal(transport('Cu masina noastra'), 'CHLTTRMANIP', 'maşina noastră → transport');
 
 console.log(`✓ oferta cu amănuntul: ${produse.length} produse (${produse.filter(p => p.bara).length} la bară), căutarea şi debitarea merg`);
+
+// vopsirea în RAL la uşi (userul, 2026-11-04): manopera pe factură doar cu cantitate
+assert.equal(liniaVopsit({}), null, 'fără vopsire → nimic');
+assert.equal(liniaVopsit({ vopsire: { ral: '9005', cant: 0 } }), null, 'doar RAL, fără cantitate → fără manoperă');
+assert.deepEqual(liniaVopsit({ vopsire: { ral: '9005', cant: 2 } }), { cod: 'Manop vopsit', denumire: 'Manopera pentru vopsit', um: 'buc', cantitate: 2 });
