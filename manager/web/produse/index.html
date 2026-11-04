@@ -36,6 +36,12 @@
   table.produse td.stare { white-space: nowrap; width: 170px; text-align: right; }
   table.produse td.regula { white-space: nowrap; color: var(--text-dim); }
   table.produse td.regula select { width: auto; max-width: 190px; padding: 5px 8px; font-size: 13px; }
+  /* lungimea barei şi cea utilizabilă (mm), la profilele din care se debitează — modificabile */
+  table.produse td.mm { white-space: nowrap; width: 96px; }
+  table.produse td.mm input { width: 84px; padding: 5px 7px; font-size: 13px; font-variant-numeric: tabular-nums; text-align: right; }
+  table.produse td.mm input:disabled { opacity: .35; }
+  table.produse td.mm input.mai-mica { border-color: #d4a24c; }
+  table.produse td.mm input::-webkit-inner-spin-button, table.produse td.mm input::-webkit-outer-spin-button { -webkit-appearance: none; }
   table.produse tr.nelistat td.cod, table.produse tr.nelistat td.denumire { color: var(--text-dim); }
   .eticheta { margin-right: 10px; font-size: 12.5px; color: var(--verde-text); }
   tr.nelistat .eticheta { color: var(--text-dim); }
@@ -114,6 +120,11 @@ function celulaRegula(p, i) {
 
 const rand = (p, i) => `<tr class="${p.listat ? '' : 'nelistat'}">
   <td class="cod">${esc(p.cod)}</td><td class="denumire">${esc(p.denumire)}</td><td class="um">${esc(p.um)}</td><td class="grupa">${esc(p.grupa)}</td>
+  <td class="mm"><input type="number" min="100" max="20000" step="1" inputmode="numeric" data-bara="${i}" value="${p.bara ?? ''}" placeholder="—"
+      title="Lungimea barei în mm — gol = nu se vinde la bară (fără debitare)" aria-label="Lungimea barei (mm) pentru ${esc(p.cod)}"></td>
+  <td class="mm"><input type="number" min="1" step="1" inputmode="numeric" data-utila="${i}" value="${p.bara ? (p.bara_utila ?? p.bara) : ''}"
+      ${p.bara ? '' : 'disabled'} class="${p.bara_utila && p.bara_utila < p.bara ? 'mai-mica' : ''}"
+      title="Din cât se calculează debitarea: bara fără capetele care nu se pot folosi" aria-label="Lungimea utilizabilă (mm) pentru ${esc(p.cod)}"></td>
   <td class="regula">${celulaRegula(p, i)}</td>
   <td class="stare"><span class="eticheta">${p.listat ? 'listat' : 'nelistat'}</span><button type="button" data-i="${i}">${p.listat ? 'Nu lista' : 'Listează'}</button></td>
 </tr>`;
@@ -126,7 +137,7 @@ const puneNumarari = () => {
 
 const randeaza = () => {
   $('lista').innerHTML = randuri.length
-    ? `<table class="produse"><thead><tr><th>Cod</th><th>Denumire</th><th>UM</th><th>Grupa</th><th>Facturare</th><th></th></tr></thead><tbody>${randuri.map(rand).join('')}</tbody></table>`
+    ? `<table class="produse"><thead><tr><th>Cod</th><th>Denumire</th><th>UM</th><th>Grupa</th><th title="Lungimea barei, la profilele din care se debitează">Bară (mm)</th><th title="Din cât se calculează debitarea (fără capetele nefolosibile)">Utilizabil (mm)</th><th>Facturare</th><th></th></tr></thead><tbody>${randuri.map(rand).join('')}</tbody></table>`
     : '<div class="gol">Niciun produs găsit.</div>';
 };
 
@@ -179,6 +190,27 @@ $('lista').addEventListener('change', async e => {
   try { p.fact = (await cereri('/api/produse/regula', { cod: p.cod, regula, multiplu })).fact; }
   catch (err) { window.alerta?.(err.message); }
   pune();
+});
+
+// Lungimea barei / utilizabilă (userul, 2026-11-04) — la ieşirea din câmp (sau Enter) se salvează; utilizabila goală = toată bara
+$('lista').addEventListener('change', async e => {
+  const inp = e.target.closest('input[data-bara], input[data-utila]');
+  if (!inp) return;
+  const tr = inp.closest('tr'), i = +(inp.dataset.bara ?? inp.dataset.utila), p = randuri[i];
+  const pune = () => { tr.outerHTML = rand(p, i); };
+  const bara = tr.querySelector('input[data-bara]').value.trim(), utila = tr.querySelector('input[data-utila]').value.trim();
+  const baraNoua = inp.dataset.bara != null;
+  if (baraNoua && !p.bara && bara && !(await confirma(`${p.cod} se va vinde la bară de ${bara} mm: la ofertă se scriu bucăţile de tăiat şi se calculează din câte bare ies.`, 'Da'))) return pune();
+  if (baraNoua && p.bara && !bara && !(await confirma(`${p.cod} nu se mai vinde la bară — la ofertă se scrie doar cantitatea, fără debitare. Continui?`, 'Da'))) return pune();
+  // bara schimbată: utilizabila rămâne cu acelaşi număr de mm scoşi (capetele), dacă avea
+  const scos = p.bara && p.bara_utila ? p.bara - p.bara_utila : 0;
+  const corp = { cod: p.cod, bara, utila: baraNoua ? (bara && scos ? String(+bara - scos) : '') : utila };
+  try { Object.assign(p, await cereri('/api/produse/lungimi', corp)); }
+  catch (err) { window.alerta?.(err.message); }
+  pune();
+});
+$('lista').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.matches('input[data-bara], input[data-utila]')) { e.preventDefault(); e.target.blur(); }
 });
 
 let tCauta = null;

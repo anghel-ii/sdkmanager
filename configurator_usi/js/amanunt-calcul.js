@@ -45,11 +45,8 @@ export function cautator(produse) {
 }
 
 // ── Debitare: bucăţile clientului → din câte bare ies ───────────────────────
-// Gola „C" / „J" şi profilul mâner L (userul, 2026-10-27): câte 5 cm de la fiecare capăt nu se pot folosi —
-// barele se socotesc cu 100 mm mai scurte. Denumirea (şi lungimea din ea) rămâne aceeaşi.
-export const CAPETE_MM = 100;
-const CU_CAPETE = /^(gola\s*(''|")\s*[cj]\s*(''|")|profil\s+maner\s+l\s*\d)/i;
-export const lungimeUtila = (denumire, bara) => (bara && CU_CAPETE.test(String(denumire ?? '').trim()) ? bara - CAPETE_MM : bara);
+// Lungimea UTILIZABILĂ a barei (fără capetele care nu se pot folosi) vine cu produsul (`utila`, din /produse —
+// userul, 2026-11-04); lipsă = toată bara. Pornire: Gola „C" / „J" şi mânerul L — bara − 100 mm (userul, 2026-10-27).
 // `bucati` = [{ l: mm, buc }]. Aşezare „cea mai lungă întâi, în prima bară în
 // care încape" (First Fit Decreasing — aceeaşi ca la divizările aplicate UTIL).
 // `taiere` = lăţimea pânzei: fiecare bucată ia l + taiere, iar bara B + taiere

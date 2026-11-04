@@ -1,6 +1,6 @@
 import * as manager from './manager.js';
 import * as cosul from './cos.js';
-import { cautator, laBara, arie, rotunjeste, textMod, sePoatePeJumatate, lungimeUtila, cuZecimi } from './amanunt-calcul.js';
+import { cautator, laBara, arie, rotunjeste, textMod, sePoatePeJumatate, cuZecimi } from './amanunt-calcul.js';
 import { initSugestiiClienti } from './sugestii-clienti.js';
 import { LIVRARE, AGENTI, PLATI, INCASARI, plataText, incasareText, numarText, detaliiDinManager, dinAcceptare, liniaTransport, campuriLipsa, focusCamp, etichetaNumar, marcheazaDeCompletat, opritDePlata, lipsaPlataAsteapta } from './lib/comun/comanda.js';
 import { copyRows } from './lib/comun/clipboard.js';
@@ -49,9 +49,11 @@ const cunoaste = lista => {
   }
 };
 // la Gola C / J şi mânerul L se calculează cu lungimea utilă (fără capete), în text rămâne şi cea a barei
-const utila = l => lungimeUtila(l?.denumire, l?.bara);
+// lungimea barei şi cea utilizabilă (fără capetele nefolosibile) — din /produse (userul, 2026-11-04), cum sunt acum
+const bara = l => PE_COD.get(l?.cod)?.bara ?? l?.bara;
+const utila = l => PE_COD.get(l?.cod)?.utila ?? bara(l);
 const deb = l => (l?.bara ? laBara(mod(l), l.debitare, utila(l), TAIERE_MM, l.intreaga) : mod(l)?.arie ? arie(l.debitare) : null);
-const textBara = l => `${l.bara} mm${utila(l) !== l.bara ? ` (${utila(l)} mm utili)` : ''}`;
+const textBara = l => `${bara(l)} mm${utila(l) !== bara(l) ? ` (${utila(l)} mm utili)` : ''}`;
 // la fişă: cantităţile îngheţate la salvare, aşa cum au fost
 const cantitate = l => (modFisa ? l.cantitate : deb(l)?.nr ?? rotunjeste(mod(l), l.cantitate));
 const textDebitare = l => {

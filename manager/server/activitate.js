@@ -92,6 +92,8 @@ const OPERATII = {
 
   'POST /api/produse/verifica':              ['Export de produse verificat', V],
   'POST /api/produse/incarca':               ['Export de produse încărcat', S, (b, r) => `${r?.adaugate ?? 0} produse noi`],
+  'POST /api/produse/lungimi':               ['Lungimea barei schimbată', S, b => lista(scurt(b.cod, 60), b.bara ? `bara ${b.bara} mm` : 'fără bară',
+                                               b.bara && b.utila && +b.utila !== +b.bara && `utilizabil ${b.utila} mm`)],
   'POST /api/produse/regula':                ['Regula de facturare schimbată', S, b => lista(scurt(b.cod, 60), REGULI_PRODUS[b.regula] ?? b.regula, b.regula === 'multiplu' && b.multiplu)],
   'POST /api/produse/listare':               [b => (b.listat ? 'Produs listat' : 'Produs trecut pe nelistat'), S, b => scurt(b.cod, 60)],
 

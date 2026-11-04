@@ -76,8 +76,9 @@ async function incarca(ctx) {
 }
 
 // pt. oferta cu amănuntul: doar ce are, ca lista de până acum
-const pentruOferta = ({ cod, denumire, um, grupa, bara, fact }) => ({ cod, denumire, um, grupa,
-  ...(bara && { bara }), ...(fact && { fact: JSON.parse(fact) }) });
+// `utila` = lungimea din care se calculează debitarea (capetele nefolosibile scoase), doar când e alta decât bara
+const pentruOferta = ({ cod, denumire, um, grupa, bara, bara_utila, fact }) => ({ cod, denumire, um, grupa,
+  ...(bara && { bara }), ...(bara && bara_utila && bara_utila !== bara && { utila: bara_utila }), ...(fact && { fact: JSON.parse(fact) }) });
 
 function listate(ctx) {
   const produse = db().prepare('SELECT * FROM produs WHERE listat = 1').all();
@@ -103,7 +104,7 @@ function lista(ctx) {
   const total = db().prepare(`SELECT COUNT(*) AS n FROM produs ${conditie}`).get(...valori).n;
   const pagini = Math.max(1, Math.ceil(total / PE_PAGINA));
   const pagina = Math.min(pagini, Math.max(1, Number(url.get('pagina')) || 1));
-  const produse = db().prepare(`SELECT cod, denumire, um, grupa, bara, fact, listat, adaugat_la FROM produs ${conditie}
+  const produse = db().prepare(`SELECT cod, denumire, um, grupa, bara, bara_utila, fact, listat, adaugat_la FROM produs ${conditie}
     ORDER BY fara_diacritice(denumire), cod LIMIT ${PE_PAGINA} OFFSET ${(pagina - 1) * PE_PAGINA}`).all(...valori);
   const { listate: nrListate, nelistate } = db().prepare('SELECT SUM(listat = 1) AS listate, SUM(listat = 0) AS nelistate FROM produs').get();
   json(ctx.res, 200, { produse: produse.map(p => ({ ...p, fact: JSON.parse(p.fact ?? 'null') })), total, pagina, pagini,
@@ -134,6 +135,27 @@ const REGULI = {
   },
 };
 
+// Lungimea barei şi cea utilizabilă (userul, 2026-11-04), în mm. { cod, bara, utila }: bara goală = nu se mai vinde
+// la bară (doar dacă regula de facturare nu cere bara); utila goală sau egală cu bara = toată bara.
+// Ofertele deja salvate îşi păstrează cantităţile; cele deschise / noi calculează cu lungimile noi.
+const mm = v => (v === '' || v == null ? null : Number(v));
+async function lungimi(ctx) {
+  const corp = await corpJson(ctx.req);
+  const p = db().prepare('SELECT * FROM produs WHERE cod = ?').get(String(corp.cod ?? ''));
+  if (!p) return eroare(ctx.res, 404, 'Produsul nu există.');
+  const bara = mm(corp.bara);
+  let utila = bara == null ? null : mm(corp.utila);
+  if (bara != null && !(Number.isInteger(bara) && bara >= 100 && bara <= 20000)) return eroare(ctx.res, 400, 'Lungimea barei: un număr întreg de mm, între 100 şi 20000.');
+  if (utila != null && !(Number.isInteger(utila) && utila >= 1)) return eroare(ctx.res, 400, 'Lungimea utilizabilă: un număr întreg de mm.');
+  if (utila != null && utila > bara) return eroare(ctx.res, 400, `Lungimea utilizabilă nu poate fi mai mare decât bara (${bara} mm).`);
+  if (utila === bara) utila = null;
+  const f = JSON.parse(p.fact ?? 'null');
+  if (bara == null && (f?.procent || f?.trepte))
+    return eroare(ctx.res, 400, 'Regula de facturare se socoteşte din bară — schimb-o întâi, apoi şterge lungimea barei.');
+  db().prepare('UPDATE produs SET bara = ?, bara_utila = ? WHERE cod = ?').run(bara, utila, p.cod);
+  json(ctx.res, 200, { bara, bara_utila: utila });
+}
+
 async function regula(ctx) {
   const { cod, regula: nume, multiplu } = await corpJson(ctx.req);
   const p = db().prepare('SELECT * FROM produs WHERE cod = ?').get(String(cod ?? ''));
@@ -154,5 +176,6 @@ module.exports = {
     ['POST', '/api/produse/incarca',  { handler: incarca, permisiune: 'produse' }],
     ['POST', '/api/produse/listare',  { handler: listare, permisiune: 'produse' }],
     ['POST', '/api/produse/regula',   { handler: regula, permisiune: 'produse' }],
+    ['POST', '/api/produse/lungimi',  { handler: lungimi, permisiune: 'produse' }],
   ],
 };

@@ -616,6 +616,14 @@ const MIGRATII = [
       modificat_la  TEXT NOT NULL,
       notificat_pas INTEGER NOT NULL DEFAULT 0
     )`),
+  // v42 → v43 (2026-11-04): lungimea UTILIZABILĂ a barei (din care se calculează debitarea la amănunt), modificabilă
+  // din /produse; NULL = toată bara. Pornire: Gola C / J şi mânerul L — bara − 100 mm (capetele, regula de până acum
+  // din amanunt-calcul.js, trecută în produse-start.json); doar unde bara e tot cea de la pornire.
+  d => {
+    d.exec('ALTER TABLE produs ADD COLUMN bara_utila INTEGER');
+    const pune = d.prepare('UPDATE produs SET bara_utila = ? WHERE cod = ? AND bara = ?');
+    for (const p of require('./produse-start.json')) if (p.utila) pune.run(p.utila, p.cod, p.bara);
+  },
 ];
 
 // Exportată pt. test.
