@@ -34,9 +34,9 @@
   .fm.salvat { animation: salvat 1.6s ease-out; }
   @keyframes salvat { from { background: rgba(63, 166, 106, .22); } to { background: transparent; } }
 
-  .taburi { display: flex; gap: 8px; margin-bottom: 20px; align-items: center; flex-wrap: wrap; }
-  /* căutarea (userul, 2026-11-04): după dimensiune, mp, client — în ambele taburi */
-  .cauta { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+  .taburi { display: flex; gap: 8px; margin-bottom: 12px; }
+  /* căutarea (userul, 2026-11-04): după dimensiune, mp, client — în ambele taburi, sub taburi */
+  .cauta { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
   .cauta input { width: 340px; padding: 7px 11px; font-size: .9rem; }
   .cauta .gasite { font-size: .8rem; color: var(--text-dim); white-space: nowrap; }
   .taburi button { border-radius: 999px; padding: 7px 16px; font-size: .9rem; color: var(--text-dim); }
@@ -77,11 +77,11 @@
   <div class="taburi">
     <button data-tab="0" class="activ">De comandat</button>
     <button data-tab="1">Comandate</button>
-    <div class="cauta">
-      <span class="gasite" id="gasite"></span>
-      <input type="search" id="cauta" placeholder="Caută: dimensiune (1144x384), mp (0,44), client" autocomplete="off" spellcheck="false"
-             aria-label="Caută după dimensiune, mp sau client">
-    </div>
+  </div>
+  <div class="cauta">
+    <input type="search" id="cauta" placeholder="Caută: dimensiune (1144x384), mp (0,44), client" autocomplete="off" spellcheck="false"
+           aria-label="Caută după dimensiune, mp sau client">
+    <span class="gasite" id="gasite"></span>
   </div>
   <div class="doua">
     <div id="lista">Se încarcă…</div>
