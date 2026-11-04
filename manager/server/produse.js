@@ -135,25 +135,20 @@ const REGULI = {
   },
 };
 
-// Lungimea barei şi cea utilizabilă (userul, 2026-11-04), în mm. { cod, bara, utila }: bara goală = nu se mai vinde
-// la bară (doar dacă regula de facturare nu cere bara); utila goală sau egală cu bara = toată bara.
-// Ofertele deja salvate îşi păstrează cantităţile; cele deschise / noi calculează cu lungimile noi.
-const mm = v => (v === '' || v == null ? null : Number(v));
+// Lungimea utilizabilă a barei (userul, 2026-11-04), în mm — doar ea se modifică; bara e cât e profilul (userul:
+// „dimensiunea efectivă a barei nu o face modificabilă"). { cod, utila }: goală sau egală cu bara = toată bara.
+// Ofertele deja salvate îşi păstrează cantităţile; cele deschise / noi calculează cu lungimea nouă.
 async function lungimi(ctx) {
   const corp = await corpJson(ctx.req);
   const p = db().prepare('SELECT * FROM produs WHERE cod = ?').get(String(corp.cod ?? ''));
   if (!p) return eroare(ctx.res, 404, 'Produsul nu există.');
-  const bara = mm(corp.bara);
-  let utila = bara == null ? null : mm(corp.utila);
-  if (bara != null && !(Number.isInteger(bara) && bara >= 100 && bara <= 20000)) return eroare(ctx.res, 400, 'Lungimea barei: un număr întreg de mm, între 100 şi 20000.');
+  if (!p.bara) return eroare(ctx.res, 400, 'Produsul nu se vinde la bară.');
+  let utila = corp.utila === '' || corp.utila == null ? null : Number(corp.utila);
   if (utila != null && !(Number.isInteger(utila) && utila >= 1)) return eroare(ctx.res, 400, 'Lungimea utilizabilă: un număr întreg de mm.');
-  if (utila != null && utila > bara) return eroare(ctx.res, 400, `Lungimea utilizabilă nu poate fi mai mare decât bara (${bara} mm).`);
-  if (utila === bara) utila = null;
-  const f = JSON.parse(p.fact ?? 'null');
-  if (bara == null && (f?.procent || f?.trepte))
-    return eroare(ctx.res, 400, 'Regula de facturare se socoteşte din bară — schimb-o întâi, apoi şterge lungimea barei.');
-  db().prepare('UPDATE produs SET bara = ?, bara_utila = ? WHERE cod = ?').run(bara, utila, p.cod);
-  json(ctx.res, 200, { bara, bara_utila: utila });
+  if (utila != null && utila > p.bara) return eroare(ctx.res, 400, `Lungimea utilizabilă nu poate fi mai mare decât bara (${p.bara} mm).`);
+  if (utila === p.bara) utila = null;
+  db().prepare('UPDATE produs SET bara_utila = ? WHERE cod = ?').run(utila, p.cod);
+  json(ctx.res, 200, { bara_utila: utila });
 }
 
 async function regula(ctx) {

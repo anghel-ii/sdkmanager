@@ -151,17 +151,16 @@ const cate = () => db().prepare('SELECT COUNT(*) AS n FROM produs').get().n;
   verifica('pornire: un profil fără capete — toată bara', unul('211').bara_utila === null);
   verifica('oferta primeşte utila doar unde e alta', (await cheama('GET', '/api/produse')).date.produse.find(p => p.cod === '522').utila === 4100
     && !('utila' in (await cheama('GET', '/api/produse')).date.produse.find(p => p.cod === '211')));
-  await lung({ cod: '522', bara: '4200', utila: '4000' });
-  verifica('utilizabila schimbată', unul('522').bara_utila === 4000);
-  await lung({ cod: '522', bara: '4200', utila: '4200' });
+  await lung({ cod: '522', utila: '4000' });
+  verifica('utilizabila schimbată, bara la fel', unul('522').bara_utila === 4000 && unul('522').bara === 4200);
+  verifica('bara nu se schimbă de aici', (await lung({ cod: '522', bara: '3000', utila: '4000' })).cod === 200 && unul('522').bara === 4200);
+  await lung({ cod: '522', utila: '4200' });
   verifica('egală cu bara → toată bara (NULL)', unul('522').bara_utila === null);
-  verifica('mai mare decât bara → refuzat', (await lung({ cod: '522', bara: '4200', utila: '4300' })).cod === 400 && unul('522').bara_utila === null);
-  verifica('bară aiurea → refuzat', (await lung({ cod: '522', bara: 'abc' })).cod === 400 && (await lung({ cod: '522', bara: '50' })).cod === 400);
-  await lung({ cod: 'NOU-1', bara: '3000', utila: '' });
-  verifica('un produs nou primeşte bară → se debitează', unul('NOU-1').bara === 3000 && (await cheama('GET', '/api/produse/coduri', { query: '?cod=NOU-1' })).date.produse[0].bara === 3000);
-  verifica('fără bară cu regula „+ 15 %" → refuzat', (await lung({ cod: cuBara.cod, bara: '' })).cod === 400);
-  await lung({ cod: 'NOU-1', bara: '', utila: '2900' });
-  verifica('bara ştearsă → şi utilizabila', unul('NOU-1').bara === null && unul('NOU-1').bara_utila === null);
+  verifica('mai mare decât bara → refuzat', (await lung({ cod: '522', utila: '4300' })).cod === 400 && unul('522').bara_utila === null);
+  verifica('aiurea → refuzat', (await lung({ cod: '522', utila: 'abc' })).cod === 400);
+  await lung({ cod: '522', utila: '' });
+  verifica('golită → toată bara', unul('522').bara_utila === null);
+  verifica('produs fără bară → refuzat', (await lung({ cod: 'NOU-1', utila: '2900' })).cod === 400 && unul('NOU-1').bara === null);
   verifica('cod inexistent → 404', (await lung({ cod: 'NIMIC', bara: '3000' })).cod === 404);
 
   verifica('regulă necunoscută → refuzat', (await regula({ cod: 'NOU-2', regula: 'constructor' })).cod === 400);
