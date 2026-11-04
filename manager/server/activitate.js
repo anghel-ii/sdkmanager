@@ -25,7 +25,7 @@ const PLATI = { oferta: 'ofertă', proforma: 'proformă', proforma_amanunt: 'pro
 const INCASARI = { op_avans: 'OP avans', op_termen: 'OP la termen', bo_termen: 'BO la termen', bo_ramburs: 'BO ramburs', cash_ramburs: 'Cash ramburs',
                    cash_bf: 'Cash BF', cash_ch: 'Cash chitanta', cash_bf_sofer: 'Cash BF la sofer', cash_ch_sofer: 'Cash CH la sofer', card: 'Card' };
 const ROLURI = { admin: 'administrator', conducere: 'conducere', birou: 'birou' };
-const REGULI_PRODUS = { intreg: 'bucăţi întregi', jumatate: 'întreg sau jumătate', procent: 'lungimea + 15 %', multiplu: 'multiplu de' };
+const REGULI_PRODUS = { intreg: 'bucăţi întregi', jumatate: 'întreg sau jumătate', zecimi: 'orice cantitate, în sus la 0,10', procent: 'lungimea + 15 %', multiplu: 'multiplu de' };
 
 // comanda unei linii de sticlă / a unei cereri de anulare / a unui task — pt. operaţiile care n-o au în adresă
 const comandaLiniei = id => db().prepare('SELECT p.comanda_id AS c FROM pozitie_linie l JOIN pozitie p ON p.id = l.pozitie_id WHERE l.id = ?').get(id)?.c;

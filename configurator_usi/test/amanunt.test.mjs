@@ -1,7 +1,7 @@
 // node test/amanunt.test.mjs — produsele ofertei cu amănuntul + căutarea din pagină
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { cautator, normal, debitare, sePoatePeJumatate, laBara, arie, rotunjeste, lungimeUtila } from '../js/amanunt-calcul.js';
+import { cautator, normal, debitare, sePoatePeJumatate, laBara, arie, rotunjeste, lungimeUtila, cuZecimi, textMod } from '../js/amanunt-calcul.js';
 import { liniaTransport, LIVRARE } from '../js/lib/comun/comanda.js';
 
 const produse = JSON.parse(fs.readFileSync(new URL('../../manager/server/produse-start.json', import.meta.url))).filter(p => p.listat);
@@ -89,6 +89,17 @@ assert.deepEqual(fact('440'), { multiplu: 10 });
 assert.equal(rotunjeste(fact('440'), 12), 20, 'colţar Gola: multiplu de 10');
 assert.deepEqual(fact('SEP150'), { multiplu: 6, set: true });
 assert.deepEqual(fact('GG004'), { arie: true }, 'geamul la mp: arie');
+// garniturile (userul, 2026-11-04): orice cantitate, în sus la 0,10 — 2,64 → 2,70
+for (const cod of ['277', '278', '163', 'GA2045', 'GA835', '20167']) assert.deepEqual(fact(cod), { zecimi: true }, `garnitura ${cod}: la zecime`);
+assert.equal(rotunjeste(fact('GA835'), 2.64), 2.7, '2,64 → 2,70');
+assert.equal(rotunjeste(fact('GA835'), 2.7), 2.7, '2,70 rămâne 2,70');
+assert.equal(rotunjeste(fact('GA835'), 2.61), 2.7);
+assert.equal(rotunjeste(fact('GA835'), 0.3), 0.3, '0,3 nu devine 0,4 (virgulă mobilă)');
+assert.equal(rotunjeste(fact('GA835'), 3), 3);
+assert.equal(rotunjeste(fact('GA835'), 0.01), 0.1);
+assert.equal(cuZecimi(fact('GA835'), 2.7), '2.70', 'se arată cu două zecimale');
+assert.equal(cuZecimi(undefined, 2), 2, 'celelalte produse: neschimbat');
+assert.equal(textMod(fact('277'), 2.7), 'orice cantitate, în sus la 0,10');
 assert.equal(arie([{ h: 2500, l: 450, buc: 3 }]).nr, 3.375, 'exemplul din fişier: 2500 × 450 × 3 = 3,375 mp');
 assert.equal(produse.find(p => p.cod === '800').bara, 3000, '„30000 mm" la usi pliante — bara de 3 m');
 assert.ok(produse.some(p => p.cod === '395') && produse.some(p => p.cod === 'C10Auriu'), 'codurile din fişier intră şi ele');

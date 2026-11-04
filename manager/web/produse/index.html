@@ -101,12 +101,12 @@ const cereri = (cale, corp) => fetch(cale, corp === undefined ? {} : { method: '
 const f = { cauta: '', stare: '', pagina: 1 };
 let randuri = [], numarari = { listate: 0, nelistate: 0 };
 
-const regulaDin = f => (f?.multiplu ? 'multiplu' : f?.pas ? 'jumatate' : f?.procent ? 'procent' : f?.trepte ? 'trepte' : f?.arie ? 'arie' : 'intreg');
-const TEXT_REGULA = f => ({ intreg: 'Bucăţi întregi', jumatate: 'Întreg sau jumătate', procent: 'Lungimea + 15 %', trepte: 'După lungimea bucăţii',
+const regulaDin = f => (f?.multiplu ? 'multiplu' : f?.pas ? 'jumatate' : f?.zecimi ? 'zecimi' : f?.procent ? 'procent' : f?.trepte ? 'trepte' : f?.arie ? 'arie' : 'intreg');
+const TEXT_REGULA = f => ({ intreg: 'Bucăţi întregi', jumatate: 'Întreg sau jumătate', zecimi: 'Orice cantitate (în sus la 0,10)', procent: 'Lungimea + 15 %', trepte: 'După lungimea bucăţii',
   arie: 'H × L × buc', multiplu: f?.multiplu ? `Multiplu de ${f.multiplu}` : 'Multiplu de…' }[regulaDin(f)]);
 function celulaRegula(p, i) {
   const acum = regulaDin(p.fact);
-  const optiuni = [['intreg', 'Bucăţi întregi'], ['jumatate', 'Întreg sau jumătate'], ...(p.bara ? [['procent', 'Lungimea + 15 %']] : []),
+  const optiuni = [['intreg', 'Bucăţi întregi'], ['jumatate', 'Întreg sau jumătate'], ['zecimi', 'Orice cantitate (în sus la 0,10)'], ...(p.bara ? [['procent', 'Lungimea + 15 %']] : []),
     ['multiplu', acum === 'multiplu' ? TEXT_REGULA(p.fact) : 'Multiplu de…'], ...(['trepte', 'arie'].includes(acum) ? [[acum, TEXT_REGULA(p.fact)]] : [])];
   return `<select data-regula="${i}" aria-label="Regula de facturare pentru ${esc(p.cod)}">${optiuni.map(([v, t]) =>
     `<option value="${v}"${v === acum ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select>`;

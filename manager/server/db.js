@@ -223,6 +223,9 @@ function cuIdTest(d, prag) {
   } });
 }
 
+// Ce garnituri se vând la zecime din start (v41): uşi 277/278/163, rame GA2045/GA835/20167
+const GARNITURI_ZECIMI = ['277', '278', '163', 'GA2045', 'GA835', '20167'];
+
 // Schema de bază e idempotentă (`IF NOT EXISTS`), deci se rulează la fiecare
 // pornire. Pentru schimbări care nu se pot exprima aşa se adaugă o funcţie în
 // MIGRATII şi se ridică `user_version` — rulează o singură dată, în ordine.
@@ -600,6 +603,8 @@ const MIGRATII = [
   },
   // v39 → v40 (2026-11-02): permisiunile unui cont de birou, bifate de admin în tablou (auth.js PERMISIUNI)
   d => d.exec(`ALTER TABLE utilizator ADD COLUMN permisiuni TEXT NOT NULL DEFAULT '[]'`),
+  // v40 → v41 (2026-11-04): garniturile la amănunt — orice cantitate, în sus la 0,10 (2,64 → 2,70); se schimbă din /produse
+  d => d.prepare(`UPDATE produs SET fact = '{"zecimi":true}' WHERE cod IN (${GARNITURI_ZECIMI.map(() => '?').join(', ')})`).run(...GARNITURI_ZECIMI),
 ];
 
 // Exportată pt. test.

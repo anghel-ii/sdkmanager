@@ -81,7 +81,8 @@ export function debitare(bucati, bara, taiere = 0, peJumatate = false) {
 
 // ── Modul de facturare (userul, 2026-10-22) — `fact` pe produs, din baza managerului ──
 // lipsă = bucăţi întregi · { pas: 0.5 } = întreg sau jumătate · { procent } = lungimea totală / bară × procent,
-// în sus la 0,5 · { trepte: [[max mm, cât], …] } = fiecare bucată după lungimea ei · { multiplu: n } · { arie } = mp.
+// în sus la 0,5 · { trepte: [[max mm, cât], …] } = fiecare bucată după lungimea ei · { multiplu: n } · { arie } = mp
+// · { zecimi } = orice cantitate, în sus la o zecime (garniturile, userul 2026-11-04: 2,64 → 2,70).
 const sus = (x, pas) => Math.round(Math.ceil(x / pas - 1e-9) * pas * 1000) / 1000;
 const zecimale = (x, n) => Math.round(x * 10 ** n) / 10 ** n;
 
@@ -92,6 +93,7 @@ export function rotunjeste(fact, q) {
   if (fact?.arie) return zecimale(q, 3);
   if (fact?.trepte) return zecimale(q, 2);
   if (fact?.multiplu) return sus(q, fact.multiplu);
+  if (fact?.zecimi) return sus(q, 0.1);
   return sus(q, fact?.pas ?? (fact?.procent ? 0.5 : 1));
 }
 
@@ -128,5 +130,11 @@ export function textMod(fact, cantitate) {
   if (fact?.procent) return `lungimea + ${Math.round((fact.procent - 1) * 100)} %`;
   if (fact?.trepte) return 'după lungimea bucăţii';
   if (fact?.arie) return 'H × L × buc';
+  if (fact?.zecimi) return 'orice cantitate, în sus la 0,10';
   return '';
+}
+
+// Cum se arată cantitatea: cu două zecimale la cele „în sus la 0,10" (2,7 → „2.70")
+export function cuZecimi(fact, q) {
+  return fact?.zecimi && q > 0 ? q.toFixed(2) : q;
 }

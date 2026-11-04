@@ -1,6 +1,6 @@
 import * as manager from './manager.js';
 import * as cosul from './cos.js';
-import { cautator, laBara, arie, rotunjeste, textMod, sePoatePeJumatate, lungimeUtila } from './amanunt-calcul.js';
+import { cautator, laBara, arie, rotunjeste, textMod, sePoatePeJumatate, lungimeUtila, cuZecimi } from './amanunt-calcul.js';
 import { initSugestiiClienti } from './sugestii-clienti.js';
 import { LIVRARE, AGENTI, PLATI, INCASARI, plataText, incasareText, numarText, detaliiDinManager, dinAcceptare, liniaTransport, campuriLipsa, focusCamp, etichetaNumar, marcheazaDeCompletat, opritDePlata, lipsaPlataAsteapta } from './lib/comun/comanda.js';
 import { copyRows } from './lib/comun/clipboard.js';
@@ -105,7 +105,7 @@ const randHtml = (l, i) => {
          role="combobox" aria-controls="sugestii" aria-expanded="false" aria-autocomplete="list"></td>
     <td class="cod">${celulaCod(l)}</td>
     <td class="num"><input class="cant" type="number" min="0" step="any" inputmode="decimal"
-         value="${d ? d.nr : l?.cantitate || ''}"${gol ? ' disabled' : ''}${d ? ' readonly title="Calculat din debitare"' : ''} aria-label="Cantitate"></td>
+         value="${d ? d.nr : cuZecimi(mod(l), l?.cantitate) || ''}"${gol ? ' disabled' : ''}${d ? ' readonly title="Calculat din debitare"' : ''} aria-label="Cantitate"></td>
     <td class="um">${umHtml(l)}</td>
     <td class="x">${gol ? '' : `<button class="sterge" type="button" aria-label="Scoate rândul ${i + 1}">✕</button>`}</td>
   </tr>${cuBucati(l) ? debitareHtml(l, i) : ''}`;
@@ -269,7 +269,8 @@ $('randuri').addEventListener('change', e => {
   const l = linii[rand(e.target)];
   if (!l?.cod || deb(l)) return;
   const q = cantitate(l);
-  if (q !== l.cantitate) { l.cantitate = q; e.target.value = q || ''; actualizeaza(); }
+  if (q !== l.cantitate) { l.cantitate = q; actualizeaza(); }
+  e.target.value = cuZecimi(mod(l), q) || '';
 });
 // Cantităţi / lungimi negative nu există (testarea ca începător, 2026-10-13: „-3" trecea,
 // cu doar „1 eroare" fără loc) — câmpul se goleşte şi spunem de ce.
@@ -637,7 +638,7 @@ function tipareste({ vezi = false } = {}) {
       <tbody>${lines.map((l, k) => { const d = bucatiDebitare(peCod.get(l.cod)); return `<tr><td>${k + 1}</td><td>${esc(l.cod)}</td>
         <td class="produs">${esc(l.denumire)}</td>
         <td class="deb-col">${d ? d.bucati.map(b => `<div>${esc(b)}</div>`).join('') + (d.bara ? `<div class="bara-de">din bare de ${esc(d.bara)}</div>` : '') : ''}</td>
-        <td class="num">${virgula(l.cantitate)} ${d?.bara ? (+l.cantitate === 1 ? 'bară' : 'bare') : esc(l.um)}</td><td class="bifa"></td></tr>`; }).join('')}</tbody>
+        <td class="num">${virgula(cuZecimi(PE_COD.get(l.cod)?.fact, l.cantitate))} ${d?.bara ? (+l.cantitate === 1 ? 'bară' : 'bare') : esc(l.um)}</td><td class="bifa"></td></tr>`; }).join('')}</tbody>
     </table>`;
   if (vezi) {
     return arataPrevizualizare(`<!DOCTYPE html><html lang="ro"><head><meta charset="UTF-8"><link rel="stylesheet" href="/fonte.css">

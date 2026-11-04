@@ -123,6 +123,7 @@ async function listare(ctx) {
 const REGULI = {
   intreg: () => null,
   jumatate: () => ({ pas: 0.5 }),
+  zecimi: () => ({ zecimi: true }),   // orice cantitate, în sus la 0,10 (garniturile, userul 2026-11-04)
   procent: p => {
     if (!p.bara) throw eroareFisier('Regula cu lungimea + 15 % e doar pentru produsele vândute la bară.');
     return { procent: 1.15 };
