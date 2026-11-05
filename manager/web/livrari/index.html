@@ -78,7 +78,6 @@
   .leaflet-tile { filter: brightness(.8) saturate(.85); }
   .marcaj { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; font-weight: 700; font-size: 12px;
             background: #1f6fd1; color: #fff; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.5); }
-  .marcaj.gri { background: #6b7280; width: 18px; height: 18px; font-size: 0; }
   .marcaj.plecare { background: #237a46; }
   .marcaj.demo { background: #ff9d2e; color: #2a1600; }   /* comandă din demo */
   .plecare { margin-bottom: 10px; }
@@ -460,8 +459,7 @@ function randeazaHarta() {
     m.on('dragend', () => salveazaPunct(c, m.getLatLng().lat, m.getLatLng().lng));   // punct greşit → îl muţi
     pct.push([c.lat, c.lon]);
   });
-  inOrdine().filter(c => debifate.has(c.id) && c.lat != null)
-    .forEach(c => L.marker([c.lat, c.lon], { icon: marcaj('', 'gri'), title: c.client_nume + ' (nebifată)' }).addTo(strat));
+  // nebifatele nu mai apar pe hartă (userul, 2026-11-05) — doar plecarea şi comenzile bifate, cu traseul lor
   if (b.length) pct.push([plecare.lat, plecare.lon]);   // înapoi la plecare
   if (pct.length > 1) L.polyline(pct, { color: '#4da3ff', weight: 3, opacity: .8 }).addTo(strat);
   if (pct.length) harta.fitBounds(L.latLngBounds(pct).pad(0.15), { maxZoom: 12 });
