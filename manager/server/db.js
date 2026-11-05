@@ -624,19 +624,16 @@ const MIGRATII = [
     const pune = d.prepare('UPDATE produs SET bara_utila = ? WHERE cod = ? AND bara = ?');
     for (const p of require('./produse-start.json')) if (p.utila) pune.run(p.utila, p.cod, p.bara);
   },
-  // v43 → v44 (2026-11-05): livrări care nu sunt comenzi în manager (ex. ceva trimis greşit, de dus iar) — puse de
-  // mână la Organizează livrări, cu aceleaşi câmpuri ca o comandă; livrare_id = în ce livrare a intrat (NULL = de
-  // organizat; anularea livrării o readuce). Tabel separat: nu apar la comenzi, căutare, tablou, numerotare.
+  // v43 → v44 (2026-11-05): comenzi puse de mână la Organizează livrări — „Livrează din nou o comandă" (deja livrată,
+  // cost 0) şi „Adaugă o comandă la livrare" (în lucru / finalizată, orice mod de livrare). O comandă poate apărea aici
+  // de mai multe ori (livrare_comanda o are o singură dată). Pe rând: ce se schimbă la livrarea ASTA (preţ, coloana de
+  // pe borderou, observaţii, judeţ, punctul de pe hartă); restul vine din comandă. livrare_id = în ce livrare a intrat
+  // (NULL = de organizat; anularea livrării o readuce).
   d => d.exec(`
     CREATE TABLE livrare_extra (
       id                 INTEGER PRIMARY KEY,
-      nr                 TEXT,                    -- nr. comenzii / documentului, opţional
-      client_nume        TEXT NOT NULL,
-      client_telefon     TEXT,
-      client_adresa      TEXT,
-      descriere          TEXT NOT NULL,           -- ce se livrează
-      plata              TEXT,                    -- facturare (ca la comenzi, + 'fara')
-      incasare           TEXT,                    -- încasare (ca la comenzi, + 'fara')
+      comanda_id         INTEGER NOT NULL REFERENCES comanda(id) ON DELETE CASCADE,
+      din_nou            INTEGER NOT NULL DEFAULT 0,   -- 1 = livrată din nou, cost 0
       de_incasat         REAL,
       coloana_borderou   TEXT,
       observatii_livrare TEXT,
@@ -647,7 +644,8 @@ const MIGRATII = [
       creat_la           TEXT NOT NULL,
       creat_de           INTEGER REFERENCES utilizator(id)
     );
-    CREATE INDEX livrare_extra_livrare ON livrare_extra (livrare_id);`),
+    CREATE INDEX livrare_extra_livrare ON livrare_extra (livrare_id);
+    CREATE INDEX livrare_extra_comanda ON livrare_extra (comanda_id);`),
 ];
 
 // Exportată pt. test.

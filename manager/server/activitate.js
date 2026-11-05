@@ -88,8 +88,9 @@ const OPERATII = {
                                                Array.isArray(b.comenzi) && `${b.bifat ? 'bifate' : 'debifate'} ${b.comenzi.length} comenzi`, 'data' in b && `data ${b.data || '—'}`)],
   'POST /api/livrari':                       ['Livrare programată', S, b => lista(b.data, Array.isArray(b.comenzi) && `${b.comenzi.length} comenzi`),
                                                null, b => (b.comenzi ?? []).filter(i => +i > 0)],   // negative = livrări din afara managerului
-  'POST /api/livrari/extra':                 ['Livrare din afara managerului adăugată', S, b => lista(scurt(b.client_nume, 60), b.nr && `nr. ${scurt(b.nr, 40)}`, scurt(b.descriere, 80))],
-  'DELETE /api/livrari/extra/:id':           ['Livrare din afara managerului ştearsă', S, (b, r, p) => `nr. ${Math.abs(+p.id)}`],
+  'POST /api/livrari/extra':                 [b => (b.din_nou === true ? 'Pusă să se livreze din nou (cost 0)' : 'Adăugată la livrare de mână'), S, null,
+                                               null, b => [+b.comanda_id].filter(i => i > 0)],
+  'DELETE /api/livrari/extra/:id':           ['Scoasă de pe lista de livrat', S],
   'DELETE /api/livrari/:id':                 ['Livrare anulată', S, (b, r, p) => `livrarea ${p.id}`],
 
   'POST /api/produse/verifica':              ['Export de produse verificat', V],
