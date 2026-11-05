@@ -1,5 +1,5 @@
 import { state } from './state.js';
-import { acumRo } from './ora.js';
+import { acumRo, momentRo } from './ora.js';
 import { systems } from './systems/registry.js';
 import { currentSpec, currentBom, currentBilling, currentClientPanels } from './builder.js';
 import { finishesOf, familia } from './familii.js';
@@ -553,6 +553,9 @@ function necesarSticlaPal(sys, spec) {
 // `vezi` (userul, 2026-10-21): doar previzualizare în aplicaţie, fără print — „Vezi fişa"; altfel dialogul
 // de print, iar după el (afterprint) managerul primeşte {tip:'fisa-tiparita'} (vezi /fise.js).
 export function deschideFisa(client, oferta = null, salvate = null, { vezi = false } = {}) {
+  // „Vezi fişa" la o comandă salvată: data ei (oferta.data — vezi momentFisa în ora.js), nu ora de acum;
+  // la tipar, ora de acum (aia e ora printării, care se şi notează în manager)
+  const dataFisa = vezi && oferta?.data ? momentRo(oferta.data) : acum();
   const sys  = systems[state.system];
   const spec = currentSpec();
   if (!sys || !spec) { alerta('Configuraţia nu e gata.'); return; }
@@ -899,7 +902,7 @@ export function deschideFisa(client, oferta = null, salvate = null, { vezi = fal
         <span class="eticheta">Client</span>${esc(client || '—')}
       </div>
       ${telefon || adresa ? `<div class="data-mica">${[telefon && `Tel. ${esc(telefon)}`, adresa && esc(adresa)].filter(Boolean).join(' · ')}</div>` : ''}
-      <div class="data-mica">Data: ${acum()}</div>
+      <div class="data-mica">Data: ${dataFisa}</div>
       ${rame ? semnaturiRame() : detalii}
       ${montaj}
     </div>
@@ -919,7 +922,7 @@ export function deschideFisa(client, oferta = null, salvate = null, { vezi = fal
   <div class="spate">
     <!-- la rame versoul începe direct cu schiţa de găurire, fără antet (userul, 2026-10-02) -->
     ${rame ? '' : `<div class="antet-mic"><strong>${esc(modelScurt)} — ${esc(finisajLabel)}</strong>${oferta ? ` · <strong>${esc(oferta.numar)}</strong>` : ''}
-      ${client ? ` · ${esc(client)}` : ''} · ${acum()}</div>`}
+      ${client ? ` · ${esc(client)}` : ''} · ${dataFisa}</div>`}
 
     ${!rame ? '' : schiteRame(rame).length && spec.m?.grup === '820' ? schiteIncarcate(schiteRame(rame)) : schiteGaurire(spec, rame)}
 

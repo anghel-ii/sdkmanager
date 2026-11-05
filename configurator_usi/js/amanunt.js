@@ -5,7 +5,7 @@ import { initSugestiiClienti } from './sugestii-clienti.js';
 import { LIVRARE, AGENTI, PLATI, INCASARI, plataText, incasareText, numarText, detaliiDinManager, dinAcceptare, liniaTransport, campuriLipsa, focusCamp, etichetaNumar, marcheazaDeCompletat, opritDePlata, lipsaPlataAsteapta } from './lib/comun/comanda.js';
 import { copyRows } from './lib/comun/clipboard.js';
 import { qtyText } from './lib/comun/num.js';
-import { dataRo } from './ora.js';
+import { dataRo, ziRo, momentFisa } from './ora.js';
 import { activeazaCampuri } from './campuri.js';
 import * as ciorna from './ciorna.js';
 import { arataPrevizualizare } from './previzualizare.js';
@@ -628,7 +628,7 @@ function tipareste({ vezi = false } = {}) {
   const rand = (et, v) => (v ? `<tr><td>${et}</td><td>${esc(v)}</td></tr>` : '');
   $('tipar').innerHTML = `
     <div class="cap"><div><h1>Ofertă cu amănuntul</h1>${modFisa?.numar ? `<strong>${esc(modFisa.numar)}</strong>` : ''}</div>
-      <div class="dreapta">${configuratDe() ? `<div>Configurat de <b>${esc(configuratDe())}</b></div>` : ''}<div>${dataRo()}</div></div></div>
+      <div class="dreapta">${configuratDe() ? `<div>Configurat de <b>${esc(configuratDe())}</b></div>` : ''}<div>${vezi && modFisa?.data ? ziRo(modFisa.data) : dataRo()}</div></div></div>
     <table class="perechi">
       ${$('clientNume').value.trim() ? `<tr class="client"><td>Client</td><td>${esc($('clientNume').value.trim())}</td></tr>` : ''}${rand('Telefon', $('clientTelefon').value)}${rand('Adresă', $('clientAdresa').value)}
       ${rand('Mod de livrare', comanda.livrare)}${rand('Facturare', plataText(comanda.plata))}${rand('Încasare', incasareText(comanda.incasare))}${rand('Agent', comanda.agent)}
@@ -699,6 +699,7 @@ const puneClientul = (client, ofertaNr, detalii) => {
       $('observatii').value = p.config.observatii ?? '';
       const n = o.pozitii.length;
       modFisa = { numar: `${o.comanda.oferta_nr || o.comanda.numar}${n > 1 ? ` · produsul ${k + 1} din ${n}` : ''}`,
+                  data: momentFisa(o, k),   // pe lista VĂZUTĂ: când s-a printat / confirmat, nu data de azi
                   configurat: o.comanda.creat_de_nume ?? null,
                   etNumar: numarText(p.config.comanda?.plata),   // după plata de la salvare, nu cea de la acceptare
                   debitare: new Map((p.linii.necesar ?? []).filter(x => x.debitare).map(x => [x.cod, x.debitare])) };

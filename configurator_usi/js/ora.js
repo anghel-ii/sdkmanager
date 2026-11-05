@@ -18,3 +18,14 @@ const parti = () => Object.fromEntries(FORMAT.formatToParts(new Date(Date.now() 
 export const acumRo = () => { const p = parti(); return `${p.day}/${p.month}/${p.year} ${p.hour}:${p.minute}`; };
 // „05.10.2026" — doar data (lista de amănunt)
 export const dataRo = () => { const p = parti(); return `${p.day}.${p.month}.${p.year}`; };
+
+// Un moment din manager (SQLite, UTC: „2026-11-03 09:15:00") pe ora României, în aceleaşi formate
+const partiDin = s => Object.fromEntries(FORMAT.formatToParts(new Date(String(s).replace(' ', 'T') + 'Z')).map(x => [x.type, x.value]));
+export const momentRo = s => { const p = partiDin(s); return `${p.day}/${p.month}/${p.year} ${p.hour}:${p.minute}`; };
+export const ziRo = s => { const p = partiDin(s); return `${p.day}.${p.month}.${p.year}`; };
+
+// Data de pe fişa unei comenzi VĂZUTE mai târziu (userul, 2026-11-05: „apare data şi ora curente în loc de data
+// comenzii"): când s-a printat ultima dată fişa produsului k (ce scrie pe hârtia din atelier); neprintată —
+// confirmarea comenzii, apoi data ofertei. `o` = comanda din manager (/api/comenzi/:id, cu `fise`).
+export const momentFisa = (o, k) => (o.fise ?? []).filter(f => f.poz === k).map(f => f.la).sort().at(-1)
+  ?? o.comanda?.confirmat_la ?? o.comanda?.creat_la ?? null;

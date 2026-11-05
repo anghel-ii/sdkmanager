@@ -7,6 +7,7 @@ import { copyRows } from './lib/comun/clipboard.js';
 import { geamList, geamCount, geamAdusList, GROSIMI_CLIENT, clientGeamLabel } from './lib/comun/geam.js';
 import catalog from './catalog/catalog.generated.json';
 import * as oferta from './oferta.js';
+import { momentFisa } from './ora.js';
 import { deschideFisa } from './fisa.js';
 import { suprapuneriConfort, suprapuneriEfective, areCodH, areSinaSimpla } from './lib/confort/index.js';
 import { geamPermisLux } from './lib/lux/index.js';
@@ -1447,6 +1448,7 @@ export async function initUI() {
       $('ofertaNr').value      = o.comanda.oferta_nr || o.comanda.numar || '';   // pe fişă, lângă livrare / plată / agent
       modFisa = {
         numar:  `${o.comanda.oferta_nr || o.comanda.numar}${n > 1 ? ` · produsul ${k + 1} din ${n}` : ''}`,
+        data:   momentFisa(o, k),   // pe fişa VĂZUTĂ: când s-a printat / confirmat, nu ora de acum
         configurat: o.comanda.creat_de_nume ?? null,   // pe fişă: pe cine întreabă atelierul
         // eticheta nr. („Număr ofertă" …) după plata de la salvare — plata aleasă la acceptare schimbă doar
         // rândul „Facturare" (userul, 2026-10-23)

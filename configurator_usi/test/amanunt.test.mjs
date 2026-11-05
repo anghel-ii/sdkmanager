@@ -119,3 +119,14 @@ console.log(`✓ oferta cu amănuntul: ${produse.length} produse (${produse.filt
 assert.equal(liniaVopsit({}), null, 'fără vopsire → nimic');
 assert.equal(liniaVopsit({ vopsire: { ral: '9005', cant: 0 } }), null, 'doar RAL, fără cantitate → fără manoperă');
 assert.deepEqual(liniaVopsit({ vopsire: { ral: '9005', cant: 2 } }), { cod: 'Manop vopsit', denumire: 'Manopera pentru vopsit', um: 'buc', cantitate: 2 });
+
+// data de pe fişa VĂZUTĂ a unei comenzi (userul, 2026-11-05): ultima printare a produsului, altfel confirmarea / oferta
+const { momentFisa, momentRo, ziRo } = await import('../js/ora.js');
+const o = { comanda: { creat_la: '2026-11-01 08:00:00', confirmat_la: '2026-11-03 07:30:00' },
+            fise: [{ poz: 0, la: '2026-11-03 07:31:00' }, { poz: 0, la: '2026-11-04 12:00:00' }, { poz: 1, la: '2026-11-03 07:32:00' }] };
+assert.equal(momentFisa(o, 0), '2026-11-04 12:00:00', 'ultima printare a produsului 1');
+assert.equal(momentFisa(o, 1), '2026-11-03 07:32:00', 'printarea produsului 2');
+assert.equal(momentFisa(o, 2), '2026-11-03 07:30:00', 'neprintat → confirmarea');
+assert.equal(momentFisa({ comanda: { creat_la: '2026-11-01 08:00:00' } }, 0), '2026-11-01 08:00:00', 'ofertă → data ofertei');
+assert.equal(momentRo('2026-11-03 07:30:00'), '03/11/2026 09:30', 'pe ora României (UTC+2 iarna)');
+assert.equal(ziRo('2026-07-31 22:30:00'), '01.08.2026', 'ziua din România (UTC+3 vara)');
