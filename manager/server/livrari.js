@@ -73,6 +73,61 @@ function cuDetalii(randuri) {
     judet: r.judet_ales ?? judetDin(r.client_adresa), judet_recunoscut: !r.judet_ales }));
 }
 
+// ── Livrări care nu sunt comenzi în manager (userul, 2026-11-05: „ceva s-a trimis greşit, aşa că trebuie să plece
+// iar") — tabelul livrare_extra (v44). Pe pagină arată ca o comandă, cu id-ul NEGATIV (−id): bifele, planul comun,
+// traseul, preţul / coloana de pe borderou şi borderoul merg la fel. `extra: true` le deosebeşte.
+const PLATI_EXTRA = ['oferta', 'proforma', 'proforma_amanunt', 'fiscala', 'bon', 'avans', 'fara'];   // + fără facturare
+const INCASARI_EXTRA = ['op_avans', 'op_termen', 'bo_termen', 'bo_ramburs', 'cash_ramburs', 'cash_bf', 'cash_ch',
+  'cash_bf_sofer', 'cash_ch_sofer', 'card', 'fara'];                                                 // + fără încasare
+const EXTRA = `e.id, e.nr, e.client_nume, e.client_telefon, e.client_adresa, e.descriere, e.plata, e.incasare, e.de_incasat,
+  e.coloana_borderou, e.observatii_livrare, e.judet, e.lat, e.lon, e.geo_adresa, e.livrare_id, e.ordine, e.creat_la, u.nume AS creat_de_nume`;
+const caComanda = e => ({
+  id: -e.id, extra: true, numar: e.nr || 'în afara managerului', client_nume: e.client_nume, client_telefon: e.client_telefon,
+  client_adresa: e.client_adresa, creat_la: e.creat_la, confirmat_la: null, finalizat_la: null, plata: e.plata, incasare: e.incasare,
+  avans: null, achitat_la: null, factura_nr: null, observatii_livrare: e.observatii_livrare, judet_ales: e.judet,
+  de_incasat: e.de_incasat, coloana_borderou: e.coloana_borderou, lat: e.lat, lon: e.lon, geo_adresa: e.geo_adresa,
+  livrare_id: e.livrare_id, ordine: e.ordine, creat_de_nume: e.creat_de_nume, produse: [e.descriere],
+  judet: e.judet ?? judetDin(e.client_adresa), judet_recunoscut: !e.judet,
+});
+const extrase = unde => db().prepare(`SELECT ${EXTRA} FROM livrare_extra e LEFT JOIN utilizator u ON u.id = e.creat_de
+  WHERE ${unde} ORDER BY e.creat_la, e.id`).all().map(caComanda);
+
+const text = (v, max) => String(v ?? '').trim().replace(/\s+/g, ' ').slice(0, max) || null;
+async function adaugaExtra(ctx) {
+  const c = await corpJson(ctx.req);
+  const v = {
+    nr: text(c.nr, 60), client_nume: text(c.client_nume, 200), client_telefon: text(c.client_telefon, 100),
+    client_adresa: text(c.client_adresa, 300), descriere: String(c.descriere ?? '').trim().slice(0, 500) || null,
+    plata: c.plata, incasare: c.incasare, observatii_livrare: text(c.observatii_livrare, 300),
+  };
+  if (!v.client_nume) return eroare(ctx.res, 400, 'Scrie clientul.');
+  if (!v.client_adresa) return eroare(ctx.res, 400, 'Scrie adresa de livrare.');
+  if (!v.descriere) return eroare(ctx.res, 400, 'Scrie ce se livrează.');
+  if (!PLATI_EXTRA.includes(v.plata)) return eroare(ctx.res, 400, 'Alege facturarea (sau „Fără facturare").');
+  if (!INCASARI_EXTRA.includes(v.incasare)) return eroare(ctx.res, 400, 'Alege încasarea (sau „Fără încasare").');
+  const suma = Suma.din(c.de_incasat);
+  if (suma != null && !(Number.isFinite(suma) && suma >= 0)) return eroare(ctx.res, 400, 'Preţul trebuie să fie un număr (gol = nimic de încasat).');
+  if (c.coloana_borderou && !COLOANE.includes(c.coloana_borderou)) return eroare(ctx.res, 400, 'Coloana de pe borderou: Bon, Factură + chitanţă sau OP.');
+  const id = Number(db().prepare(`INSERT INTO livrare_extra (nr, client_nume, client_telefon, client_adresa, descriere, plata, incasare,
+      de_incasat, coloana_borderou, observatii_livrare, creat_la, creat_de) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${ACUM()}, ?)`)
+    .run(v.nr, v.client_nume, v.client_telefon, v.client_adresa, v.descriere, v.plata, v.incasare,
+      suma == null ? null : Math.round(suma * 100) / 100, c.coloana_borderou || null, v.observatii_livrare, ctx.utilizator.id).lastInsertRowid);
+  anunta({ livrari: true });
+  const [nou] = extrase(`e.id = ${id}`);
+  json(ctx.res, 201, { comanda: nou });
+}
+
+// doar cât nu e într-o livrare (după programare se anulează livrarea, apoi se şterge)
+function stergeExtra(ctx) {
+  const id = Math.abs(Number(ctx.params.id));
+  const e = db().prepare('SELECT livrare_id FROM livrare_extra WHERE id = ?').get(id);
+  if (!e) return eroare(ctx.res, 404, 'Livrarea nu există.');
+  if (e.livrare_id != null) return eroare(ctx.res, 409, 'E într-o livrare programată — anulează întâi livrarea.');
+  db().prepare('DELETE FROM livrare_extra WHERE id = ?').run(id);
+  anunta({ livrari: true });
+  json(ctx.res, 200, { ok: true });
+}
+
 // Comenzile de livrat: acceptate (în lucru sau finalizate), cu maşina noastră, neprogramate.
 function candidati(ctx) {
   const r = db().prepare(`
@@ -80,16 +135,18 @@ function candidati(ctx) {
      WHERE c.tip = 'comanda' AND c.anulat = 0 AND lower(trim(c.livrare)) = ? AND ${FARA_CERERE}
        AND NOT EXISTS (SELECT 1 FROM livrare_comanda lc WHERE lc.comanda_id = c.id)
      ORDER BY c.creat_la`).all(CU_MASINA);
-  json(ctx.res, 200, { comenzi: cuDetalii(r), judete: JUDETE, plan: citestePlan() });
+  json(ctx.res, 200, { comenzi: [...cuDetalii(r), ...extrase('e.livrare_id IS NULL')], judete: JUDETE, plan: citestePlan() });
 }
 
 const COLOANE = ['bon', 'factura', 'op'];   // coloanele borderoului în care poate intra preţul
 
 // Pe comandă: judeţul ales de mână, suma de încasat, coordonatele găsite în browser.
+// Id negativ = livrare din afara managerului (livrare_extra): aceleaşi coloane, alt tabel.
 async function modificaComanda(ctx) {
-  const id = Number(ctx.params.id);
+  const idPagina = Number(ctx.params.id);
+  const tabel = idPagina < 0 ? 'livrare_extra' : 'comanda', id = Math.abs(idPagina);
   const corp = await corpJson(ctx.req);
-  if (!db().prepare('SELECT 1 FROM comanda WHERE id = ?').get(id)) return eroare(ctx.res, 404, 'Comandă inexistentă.');
+  if (!db().prepare(`SELECT 1 FROM ${tabel} WHERE id = ?`).get(id)) return eroare(ctx.res, 404, 'Comandă inexistentă.');
   const set = [], val = [];
   if ('judet' in corp) {
     if (corp.judet != null && corp.judet !== '' && !JUDETE.includes(corp.judet)) return eroare(ctx.res, 400, 'Judeţ necunoscut.');
@@ -117,7 +174,7 @@ async function modificaComanda(ctx) {
     val.push(lat, lon, String(corp.geo_adresa ?? '').slice(0, 300));
   }
   if (!set.length) return eroare(ctx.res, 400, 'Nimic de modificat.');
-  db().prepare(`UPDATE comanda SET ${set.join(', ')} WHERE id = ?`).run(...val, id);
+  db().prepare(`UPDATE ${tabel} SET ${set.join(', ')} WHERE id = ?`).run(...val, id);
   anunta({ livrari: true });
   json(ctx.res, 200, { ok: true });
 }
@@ -174,7 +231,9 @@ function livrari(ctx) {
     SELECT ${CAMPURI}, lc.livrare_id, lc.ordine FROM livrare_comanda lc JOIN comanda c ON c.id = lc.comanda_id
      WHERE ${FARA_CERERE}
      ORDER BY lc.livrare_id, lc.ordine`).all());
-  json(ctx.res, 200, { livrari: ls.map(l => ({ ...l, comenzi: comenzi.filter(c => c.livrare_id === l.id) })) });
+  const extra = extrase('e.livrare_id IS NOT NULL');
+  json(ctx.res, 200, { livrari: ls.map(l => ({ ...l, comenzi: [...comenzi, ...extra].filter(c => c.livrare_id === l.id)
+    .sort((a, b) => a.ordine - b.ordine) })) });
 }
 
 // „Confirmă livrarea": data + comenzile bifate, în ordinea traseului.
@@ -186,12 +245,21 @@ async function creeaza(ctx) {
   if (!ids.length) return eroare(ctx.res, 400, 'Bifează cel puţin o comandă.');
   if (new Set(ids).size !== ids.length) return eroare(ctx.res, 400, 'O comandă apare de două ori.');
 
-  const bune = new Set(db().prepare(`SELECT id FROM comanda c WHERE tip = 'comanda' AND anulat = 0 AND lower(trim(livrare)) = ?
-                                     AND ${FARA_CERERE} AND id IN (${ids.map(() => '?').join(',')})`).all(CU_MASINA, ...ids).map(r => r.id));
-  if (bune.size !== ids.length) return eroare(ctx.res, 400, 'Unele comenzi nu se livrează cu maşina noastră, nu sunt acceptate sau au o cerere de anulare.');
+  // id negativ = livrare din afara managerului (livrare_extra), încă neprogramată
+  const din = xs => xs.map(() => '?').join(',');
+  const cmd = ids.filter(i => i > 0), ext = ids.filter(i => i < 0).map(i => -i);
+  const bune = new Set(cmd.length ? db().prepare(`SELECT id FROM comanda c WHERE tip = 'comanda' AND anulat = 0 AND lower(trim(livrare)) = ?
+                                     AND ${FARA_CERERE} AND id IN (${din(cmd)})`).all(CU_MASINA, ...cmd).map(r => r.id) : []);
+  if (bune.size !== cmd.length) return eroare(ctx.res, 400, 'Unele comenzi nu se livrează cu maşina noastră, nu sunt acceptate sau au o cerere de anulare.');
+  const bunePeExtra = ext.length ? db().prepare(`SELECT COUNT(*) AS n FROM livrare_extra WHERE livrare_id IS NULL AND id IN (${din(ext)})`).get(...ext).n : 0;
+  if (bunePeExtra !== ext.length) return eroare(ctx.res, 409, 'O livrare din afara managerului a fost ştearsă sau programată între timp — reîncarcă pagina.');
   // preţ fără coloană → n-ar apărea corect pe borderou (după programare nu se mai modifică)
-  const faraColoana = db().prepare(`SELECT client_nume FROM comanda WHERE de_incasat IS NOT NULL AND coloana_borderou IS NULL
-                                    AND id IN (${ids.map(() => '?').join(',')})`).all(...ids).map(r => r.client_nume);
+  const faraColoana = [
+    ...(cmd.length ? db().prepare(`SELECT client_nume FROM comanda WHERE de_incasat IS NOT NULL AND coloana_borderou IS NULL
+                                    AND id IN (${din(cmd)})`).all(...cmd) : []),
+    ...(ext.length ? db().prepare(`SELECT client_nume FROM livrare_extra WHERE de_incasat IS NOT NULL AND coloana_borderou IS NULL
+                                    AND id IN (${din(ext)})`).all(...ext) : []),
+  ].map(r => r.client_nume);
   if (faraColoana.length) return eroare(ctx.res, 400, `Alege unde ajunge preţul pe borderou (Bon / Factură + chitanţă / OP) la: ${faraColoana.join(', ')}.`);
 
   try {
@@ -199,7 +267,11 @@ async function creeaza(ctx) {
       const livrareId = Number(d.prepare(`INSERT INTO livrare (data, creat_la, creat_de) VALUES (?, ${ACUM()}, ?)`)
         .run(data, ctx.utilizator.id).lastInsertRowid);
       const pune = d.prepare('INSERT INTO livrare_comanda (livrare_id, comanda_id, ordine) VALUES (?, ?, ?)');
-      ids.forEach((c, k) => pune.run(livrareId, c, k + 1));
+      const puneExtra = d.prepare('UPDATE livrare_extra SET livrare_id = ?, ordine = ? WHERE id = ? AND livrare_id IS NULL');
+      ids.forEach((c, k) => {
+        if (c > 0) pune.run(livrareId, c, k + 1);
+        else if (!puneExtra.run(livrareId, k + 1, -c).changes) throw new Error('UNIQUE: livrare externă deja programată');
+      });
       return livrareId;
     });
     anunta({ livrari: true });
@@ -223,6 +295,8 @@ module.exports = {
   judetDin, adresaDin, JUDETE,
   rute: [
     ['GET',    '/api/livrari/candidati',    { handler: candidati }],
+    ['POST',   '/api/livrari/extra',        { handler: adaugaExtra }],   // o livrare care nu e comandă în manager
+    ['DELETE', '/api/livrari/extra/:id',    { handler: stergeExtra }],
     ['PUT',    '/api/livrari/comanda/:id',  { handler: modificaComanda }],
     ['POST',   '/api/livrari/plan',         { handler: schimbaPlan }],   // judeţe / bife / data, comune tuturor
     ['GET',    '/api/livrari',              { handler: livrari }],

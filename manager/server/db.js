@@ -624,6 +624,30 @@ const MIGRATII = [
     const pune = d.prepare('UPDATE produs SET bara_utila = ? WHERE cod = ? AND bara = ?');
     for (const p of require('./produse-start.json')) if (p.utila) pune.run(p.utila, p.cod, p.bara);
   },
+  // v43 → v44 (2026-11-05): livrări care nu sunt comenzi în manager (ex. ceva trimis greşit, de dus iar) — puse de
+  // mână la Organizează livrări, cu aceleaşi câmpuri ca o comandă; livrare_id = în ce livrare a intrat (NULL = de
+  // organizat; anularea livrării o readuce). Tabel separat: nu apar la comenzi, căutare, tablou, numerotare.
+  d => d.exec(`
+    CREATE TABLE livrare_extra (
+      id                 INTEGER PRIMARY KEY,
+      nr                 TEXT,                    -- nr. comenzii / documentului, opţional
+      client_nume        TEXT NOT NULL,
+      client_telefon     TEXT,
+      client_adresa      TEXT,
+      descriere          TEXT NOT NULL,           -- ce se livrează
+      plata              TEXT,                    -- facturare (ca la comenzi, + 'fara')
+      incasare           TEXT,                    -- încasare (ca la comenzi, + 'fara')
+      de_incasat         REAL,
+      coloana_borderou   TEXT,
+      observatii_livrare TEXT,
+      judet              TEXT,
+      lat REAL, lon REAL, geo_adresa TEXT,
+      livrare_id         INTEGER REFERENCES livrare(id) ON DELETE SET NULL,
+      ordine             INTEGER,
+      creat_la           TEXT NOT NULL,
+      creat_de           INTEGER REFERENCES utilizator(id)
+    );
+    CREATE INDEX livrare_extra_livrare ON livrare_extra (livrare_id);`),
 ];
 
 // Exportată pt. test.

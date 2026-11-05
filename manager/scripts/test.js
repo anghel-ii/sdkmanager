@@ -517,7 +517,7 @@ async function main() {
     const idVechi = Number(db2().prepare("INSERT INTO utilizator (nume, user, parola_hash, parola_salt, rol) VALUES ('Vechi', 'vechi', 'x', 'x', 'operator')").run().lastInsertRowid);
     require('../server/db.js').roluriNoi(db2());
     verifica('migraţie: operator → birou', db2().prepare('SELECT rol FROM utilizator WHERE id = ?').get(idVechi).rol === 'birou');
-    verifica('schema la versiunea 43', db2().prepare('PRAGMA user_version').get().user_version === 43);
+    verifica('schema la versiunea 44', db2().prepare('PRAGMA user_version').get().user_version === 44);
   }
 
   console.log('\nFixare şi sortare — per utilizator');

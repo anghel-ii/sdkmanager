@@ -83,11 +83,13 @@ const OPERATII = {
 
   'PUT /api/livrari/comanda/:id':            ['Livrare: preţ / observaţii / loc', S, b => lista(b.de_incasat != null && b.de_incasat !== '' && `preţ ${lei(b.de_incasat)}`,
                                                'coloana_borderou' in b && `pe borderou: ${COLOANE_BORDEROU[b.coloana_borderou] ?? 'nealeasă'}`,
-                                               b.observatii_livrare && scurt(b.observatii_livrare, 80), b.judet), null, (b, r, p) => [p.id]],
+                                               b.observatii_livrare && scurt(b.observatii_livrare, 80), b.judet), null, (b, r, p) => [+p.id].filter(i => i > 0)],
   'POST /api/livrari/plan':                  ['Livrări: planul în lucru', V, b => lista(typeof b.judet === 'string' && `${b.ales ? 'ales' : 'scos'} judeţul ${b.judet || 'fără judeţ'}`,
                                                Array.isArray(b.comenzi) && `${b.bifat ? 'bifate' : 'debifate'} ${b.comenzi.length} comenzi`, 'data' in b && `data ${b.data || '—'}`)],
   'POST /api/livrari':                       ['Livrare programată', S, b => lista(b.data, Array.isArray(b.comenzi) && `${b.comenzi.length} comenzi`),
-                                               null, b => b.comenzi ?? []],
+                                               null, b => (b.comenzi ?? []).filter(i => +i > 0)],   // negative = livrări din afara managerului
+  'POST /api/livrari/extra':                 ['Livrare din afara managerului adăugată', S, b => lista(scurt(b.client_nume, 60), b.nr && `nr. ${scurt(b.nr, 40)}`, scurt(b.descriere, 80))],
+  'DELETE /api/livrari/extra/:id':           ['Livrare din afara managerului ştearsă', S, (b, r, p) => `nr. ${Math.abs(+p.id)}`],
   'DELETE /api/livrari/:id':                 ['Livrare anulată', S, (b, r, p) => `livrarea ${p.id}`],
 
   'POST /api/produse/verifica':              ['Export de produse verificat', V],
