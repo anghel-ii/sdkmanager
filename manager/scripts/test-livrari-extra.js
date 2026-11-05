@@ -66,16 +66,21 @@ function comanda({ client, adresa = 'Str. Mare 1, Sibiu, Sibiu', livrare = 'Cu m
   let r = await cauta('din_nou');
   verifica('„din nou": doar cele deja livrate', r.length === 1 && r[0] === livrata, JSON.stringify(r));
   r = await cauta('adauga');
-  verifica('„adaugă": în lucru + finalizate, fără cele deja pe listă şi fără oferte', r.includes(curier) && r.includes(livrata)
-    && !r.includes(deLivrat) && !r.includes(oferta) && r.includes(faraLivrare), JSON.stringify(r));
-  verifica('caută după client, fără diacritice', (await cauta('adauga', 'stefan')).join() === String(curier));
+  verifica('„adaugă": doar cu maşina noastră (în lucru + finalizate), fără oferte', r.includes(deLivrat) && r.includes(livrata)
+    && !r.includes(curier) && !r.includes(oferta) && !r.includes(faraLivrare), JSON.stringify(r));
+  const brut = (await cheama('GET', '/api/livrari/cauta', { query: '?fel=adauga&q=' })).date.comenzi;
+  verifica('ştie care sunt neprogramate (deja la comenzile de livrat) + judeţul', brut.find(c => c.id === deLivrat).neprogramata === true
+    && brut.find(c => c.id === livrata).neprogramata === false && brut.find(c => c.id === deLivrat).judet === 'Sibiu');
+  verifica('caută după client, fără diacritice', (await cauta('din_nou', 'mobila')).join() === String(livrata) && (await cauta('adauga', 'popescu')).join() === String(deLivrat));
   verifica('după produs', (await cauta('adauga', 'rama 820')).join() === String(livrata));
-  verifica('după nr.', (await cauta('adauga', 'OF-2026-0003')).join() === String(curier));
-  verifica('după adresă', (await cauta('adauga', 'turda')).join() === String(curier));
+  verifica('după nr.', (await cauta('adauga', 'OF-2026-0002')).join() === String(deLivrat));
+  verifica('după adresă', (await cauta('din_nou', 'sibiu')).join() === String(livrata));
   verifica('după dată (zz.ll.aaaa, şi cu „/")', (await cauta('adauga', '20.10.2026')).join() === String(livrata) && (await cauta('adauga', '20/10')).join() === String(livrata));
   const [a, l, z] = zi(-3).split('-');
   verifica('„din nou" după data livrării', (await cauta('din_nou', `${z}.${l}.${a}`)).join() === String(livrata));
   verifica('cuvinte care nu se potrivesc → nimic', (await cauta('adauga', 'popescu turda')).length === 0);
+  verifica('fără maşina noastră → refuzat', (await pune(curier)).cod === 400);
+  verifica('neprogramată (deja la comenzile de livrat) → 409', (await pune(deLivrat)).cod === 409);
 
   console.log('\nPuse pe lista de livrat');
   verifica('ofertă → 404', (await pune(oferta)).cod === 404);
@@ -83,12 +88,13 @@ function comanda({ client, adresa = 'Str. Mare 1, Sibiu, Sibiu', livrare = 'Cu m
   verifica('livrată din nou — cost 0', dn.cod === 201 && dn.date.comanda.din_nou === true && dn.date.comanda.de_incasat === 0
     && dn.date.comanda.id < 0 && dn.date.comanda.client_nume === 'Mobila Design SRL' && dn.date.comanda.produse[0].startsWith('Ramă 820'), JSON.stringify(dn.date));
   verifica('a doua oară cât e pe listă → 409', (await pune(livrata, true)).cod === 409);
-  const ad = await pune(curier);
-  verifica('comanda cu curier adăugată, judeţul din adresă', ad.cod === 201 && ad.date.comanda.judet === 'Cluj' && ad.date.comanda.din_nou === false);
+  const programata = comanda({ client: 'Ionescu Programat', adresa: 'Str. Lungă 3, Turda, Cluj' });
+  db().prepare('INSERT INTO livrare_comanda (livrare_id, comanda_id, ordine) VALUES (?, ?, 2)').run(l0, programata);
+  const ad = await pune(programata);
+  verifica('una deja programată, adăugată încă o dată, judeţul din adresă', ad.cod === 201 && ad.date.comanda.judet === 'Cluj' && ad.date.comanda.din_nou === false, JSON.stringify(ad.date));
   let c = await candidati();
   verifica('apar la comenzile de livrat', c.some(k => k.id === dn.date.comanda.id) && c.some(k => k.id === ad.date.comanda.id) && c.some(k => k.id === deLivrat));
-  verifica('nu mai apar în ferestre', !(await cauta('din_nou')).includes(livrata) && !(await cauta('adauga')).includes(curier));
-  verifica('comanda nu se schimbă (livrare = Curier)', db().prepare('SELECT livrare FROM comanda WHERE id = ?').get(curier).livrare === 'Curier');
+  verifica('nu mai apar în ferestre', !(await cauta('din_nou')).includes(livrata) && !(await cauta('adauga')).includes(programata));
 
   console.log('\nPe pagină');
   verifica('la „din nou" preţul nu se schimbă', (await cheama('PUT', '/api/livrari/comanda/:id', { id: dn.date.comanda.id, corp: { de_incasat: '100' } })).cod === 400);
@@ -97,7 +103,7 @@ function comanda({ client, adresa = 'Str. Mare 1, Sibiu, Sibiu', livrare = 'Cu m
   c = await candidati();
   const ad2 = c.find(k => k.id === ad.date.comanda.id);
   verifica('salvate pe rândul ei, comanda neatinsă', ad2.de_incasat === 250 && ad2.coloana_borderou === 'bon' && ad2.observatii_livrare === 'sună'
-    && db().prepare('SELECT de_incasat FROM comanda WHERE id = ?').get(curier).de_incasat === null);
+    && db().prepare('SELECT de_incasat FROM comanda WHERE id = ?').get(programata).de_incasat === null);
 
   console.log('\nProgramarea');
   const p = await cheama('POST', '/api/livrari', { corp: { data: zi(2), comenzi: [ad.date.comanda.id, deLivrat, dn.date.comanda.id] } });
@@ -114,7 +120,7 @@ function comanda({ client, adresa = 'Str. Mare 1, Sibiu, Sibiu', livrare = 'Cu m
   c = await candidati();
   verifica('cele puse de mână se întorc de organizat', c.some(k => k.id === ad.date.comanda.id) && c.some(k => k.id === dn.date.comanda.id));
   verifica('scoasă de pe listă, comanda rămâne', (await cheama('DELETE', '/api/livrari/extra/:id', { id: ad.date.comanda.id })).cod === 200
-    && !(await candidati()).some(k => k.id === ad.date.comanda.id) && !!db().prepare('SELECT 1 FROM comanda WHERE id = ?').get(curier));
+    && !(await candidati()).some(k => k.id === ad.date.comanda.id) && !!db().prepare('SELECT 1 FROM comanda WHERE id = ?').get(programata));
   verifica('scoasă de două ori → 404', (await cheama('DELETE', '/api/livrari/extra/:id', { id: ad.date.comanda.id })).cod === 404);
 
   inchide();

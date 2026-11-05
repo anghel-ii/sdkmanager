@@ -121,19 +121,23 @@ function cauta(ctx) {
       OR l.id IN (SELECT e.livrare_id FROM livrare_extra e WHERE e.comanda_id = c.id)))`;
   const text = dinNou ? `(${TEXT_COMANDA} || ' ' || COALESCE(${ziLivrare(livrata)}, ''))` : TEXT_COMANDA;
   const randuri = db().prepare(`
-    SELECT c.id, COALESCE(c.oferta_nr, c.numar) AS numar, c.client_nume, c.client_adresa, c.livrare,
-           c.confirmat_la, c.finalizat_la, ${livrata} AS livrata_la
+    SELECT c.id, COALESCE(c.oferta_nr, c.numar) AS numar, c.client_nume, c.client_adresa, c.livrare, c.judet AS judet_ales,
+           c.confirmat_la, c.finalizat_la, ${livrata} AS livrata_la,
+           NOT EXISTS (SELECT 1 FROM livrare_comanda lc WHERE lc.comanda_id = c.id) AS neprogramata
       FROM comanda c
      WHERE c.tip = 'comanda' AND c.anulat = 0 AND ${FARA_CERERE}
        ${dinNou ? `AND ${livrata} IS NOT NULL` : ''}
        -- ce e deja pe lista de livrat nu se mai arată
        AND NOT EXISTS (SELECT 1 FROM livrare_extra e WHERE e.comanda_id = c.id AND e.livrare_id IS NULL)
-       ${dinNou ? '' : `AND NOT (lower(trim(COALESCE(c.livrare, ''))) = '${CU_MASINA}' AND NOT EXISTS (SELECT 1 FROM livrare_comanda lc WHERE lc.comanda_id = c.id))`}
+       -- „Adaugă o comandă la livrare": doar cele cu maşina noastră (userul, 2026-11-05). Cele încă neprogramate sunt deja
+       -- la comenzile de livrat (poate în alt judeţ) — pagina doar le aduce la vedere; celelalte intră încă o dată pe listă.
+       ${dinNou ? '' : `AND lower(trim(COALESCE(c.livrare, ''))) = '${CU_MASINA}'`}
        ${cuv.filter((_, k) => k % 2 === 0).map(() => `AND (${text} LIKE ? ESCAPE '\\' OR ${text} LIKE ? ESCAPE '\\')`).join(' ')}
      ORDER BY ${dinNou ? 'livrata_la DESC,' : ''} COALESCE(c.finalizat_la, c.confirmat_la, c.creat_la) DESC
      LIMIT 60`).all(...cuv);
   const p = produse(randuri.map(r => r.id));
-  json(ctx.res, 200, { comenzi: randuri.map(r => ({ ...r, produse: p.get(r.id) ?? [] })) });
+  json(ctx.res, 200, { comenzi: randuri.map(({ judet_ales, ...r }) => ({ ...r, neprogramata: !!r.neprogramata, produse: p.get(r.id) ?? [],
+    judet: judet_ales ?? judetDin(r.client_adresa) })) });
 }
 
 // { comanda_id, din_nou } — pe lista de livrat; locul de pe hartă, judeţul şi observaţiile de livrare se iau din comandă
@@ -144,6 +148,10 @@ async function adaugaExtra(ctx) {
   if (!c) return eroare(ctx.res, 404, 'Comanda nu e în lucru sau finalizată (sau are o anulare cerută).');
   if (db().prepare('SELECT 1 FROM livrare_extra WHERE comanda_id = ? AND livrare_id IS NULL').get(id))
     return eroare(ctx.res, 409, 'Comanda e deja pe lista de livrat.');
+  if (!dinNou && String(c.livrare ?? '').trim().toLowerCase() !== CU_MASINA)
+    return eroare(ctx.res, 400, 'La livrare se adaugă doar comenzi cu „Cu maşina noastră".');
+  if (!dinNou && !db().prepare('SELECT 1 FROM livrare_comanda WHERE comanda_id = ?').get(id))
+    return eroare(ctx.res, 409, 'Comanda e deja la comenzile de livrat — alege-i judeţul de sus.');
   const r = db().prepare(`INSERT INTO livrare_extra (comanda_id, din_nou, observatii_livrare, judet, lat, lon, geo_adresa, creat_la, creat_de)
       VALUES (?, ?, ?, ?, ?, ?, ?, ${ACUM()}, ?)`)
     .run(id, dinNou ? 1 : 0, c.observatii_livrare, c.judet, c.lat, c.lon, c.geo_adresa, ctx.utilizator.id);

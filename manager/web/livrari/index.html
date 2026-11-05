@@ -643,17 +643,28 @@ const ziua = zi => new Date(zi + 'T12:00:00').toLocaleDateString('ro-RO', { week
     const r = await api(`/api/livrari/cauta?fel=${fel}&q=${encodeURIComponent($('dlgText').value.trim())}`);
     if (!r || nr !== cerere) return;
     if (!r.ok) { $('dlgRez').innerHTML = `<div class="gol">${esc(await eroareDin(r))}</div>`; return; }
-    const { comenzi: ls } = await r.json();
+    // ce se vede deja bifat în tabel nu mai apare aici
+    const ls = (await r.json()).comenzi.filter(c => !(vizibile().some(x => x.id === c.id) && !debifate.has(c.id)));
     $('dlgRez').innerHTML = ls.length ? `<table><thead><tr><th>Client</th><th>Nr.</th><th>Produse</th><th>Adresă</th>
         <th>${fel === 'din_nou' ? 'Livrată' : 'Stare'}</th><th></th></tr></thead><tbody>${ls.map(c => `<tr>
         <td><b>${esc(c.client_nume)}</b></td><td class="mono">${esc(c.numar)}</td>
         <td>${c.produse.map(p => `<div>${esc(p)}</div>`).join('')}</td><td>${esc(c.client_adresa ?? '—')}</td>
         <td>${fel === 'din_nou' ? esc(ziua(c.livrata_la)) : c.finalizat_la ? `finalizată ${data(c.finalizat_la)}` : `în lucru din ${data(c.confirmat_la)}`}
-          ${fel !== 'din_nou' && c.livrare ? `<div class="mic-dim">${esc(c.livrare)}</div>` : ''}</td>
+          ${fel !== 'din_nou' && !c.neprogramata ? '<div class="mic-dim">deja programată / livrată</div>' : ''}</td>
         <td class="actiune"><button type="button" class="primar mic" data-id="${c.id}">${fel === 'din_nou' ? 'Livrează din nou' : 'Adaugă'}</button></td>
-      </tr>`).join('')}</tbody></table>` : `<div class="gol">${$('dlgText').value.trim() ? 'Nimic găsit.' : fel === 'din_nou' ? 'Nicio comandă livrată încă.' : 'Nicio comandă.'}</div>`;
+      </tr>`).join('')}</tbody></table>` : `<div class="gol">${$('dlgText').value.trim() ? 'Nimic găsit.' : fel === 'din_nou' ? 'Nicio comandă livrată încă.' : 'Nicio altă comandă cu „Cu maşina noastră”.'}</div>`;
     $('dlgRez').querySelectorAll('button[data-id]').forEach(b => b.addEventListener('click', async () => {
       b.disabled = true;
+      const c = ls.find(x => x.id === +b.dataset.id);
+      // cu maşina noastră şi neprogramată = e deja la comenzile de livrat: doar o aducem la vedere (judeţ ales, bifată)
+      if (fel === 'adauga' && c.neprogramata) {
+        d.close();
+        if (!alese.has(c.judet ?? '')) await trimitePlan({ judet: c.judet ?? '', ales: true });
+        if (debifate.has(c.id)) await trimitePlan({ comenzi: [c.id], bifat: true });
+        await incarca();
+        document.querySelector(`#tabel tr[data-id="${c.id}"]`)?.scrollIntoView({ block: 'center' });
+        return;
+      }
       const r2 = await api('/api/livrari/extra', { method: 'POST', body: JSON.stringify({ comanda_id: +b.dataset.id, din_nou: fel === 'din_nou' }) });
       if (!r2) return;
       if (!r2.ok) { b.disabled = false; return alerta(await eroareDin(r2)); }
@@ -666,7 +677,7 @@ const ziua = zi => new Date(zi + 'T12:00:00').toLocaleDateString('ro-RO', { week
   };
   const deschide = f => {
     fel = f;
-    $('dlgTitlu').textContent = f === 'din_nou' ? 'Livrează din nou o comandă — cost 0 pe borderou' : 'Adaugă o comandă la livrare';
+    $('dlgTitlu').textContent = f === 'din_nou' ? 'Livrează din nou o comandă — cost 0 pe borderou' : 'Adaugă o comandă la livrare — cu maşina noastră';
     $('dlgText').value = ''; $('dlgRez').innerHTML = '<div class="gol">Se încarcă…</div>';
     d.showModal(); $('dlgText').focus();
     cauta();
