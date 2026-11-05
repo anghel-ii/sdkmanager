@@ -82,7 +82,7 @@ const INCASARI_EXTRA = ['op_avans', 'op_termen', 'bo_termen', 'bo_ramburs', 'cas
 const EXTRA = `e.id, e.nr, e.client_nume, e.client_telefon, e.client_adresa, e.descriere, e.plata, e.incasare, e.de_incasat,
   e.coloana_borderou, e.observatii_livrare, e.judet, e.lat, e.lon, e.geo_adresa, e.livrare_id, e.ordine, e.creat_la, u.nume AS creat_de_nume`;
 const caComanda = e => ({
-  id: -e.id, extra: true, numar: e.nr || 'în afara managerului', client_nume: e.client_nume, client_telefon: e.client_telefon,
+  id: -e.id, extra: true, numar: e.nr || '', client_nume: e.client_nume, client_telefon: e.client_telefon,
   client_adresa: e.client_adresa, creat_la: e.creat_la, confirmat_la: null, finalizat_la: null, plata: e.plata, incasare: e.incasare,
   avans: null, achitat_la: null, factura_nr: null, observatii_livrare: e.observatii_livrare, judet_ales: e.judet,
   de_incasat: e.de_incasat, coloana_borderou: e.coloana_borderou, lat: e.lat, lon: e.lon, geo_adresa: e.geo_adresa,

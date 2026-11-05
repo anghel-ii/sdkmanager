@@ -53,7 +53,7 @@ const BUN = { client_nume: 'Mobila Design SRL', client_telefon: '0740 000 000', 
   verifica('adăugată — „Fără facturare" / „Fără încasare"', a.cod === 201 && a.date.comanda.plata === 'fara' && a.date.comanda.incasare === 'fara', JSON.stringify(a));
   const x = a.date.comanda;
   verifica('id negativ, marcată extra, judeţul din adresă, produsul = ce se livrează',
-    x.id < 0 && x.extra === true && x.judet === 'Cluj' && x.produse[0] === BUN.descriere && x.creat_de_nume === 'Ana Birou', JSON.stringify(x));
+    x.id < 0 && x.extra === true && x.numar === '' && x.judet === 'Cluj' && x.produse[0] === BUN.descriere && x.creat_de_nume === 'Ana Birou', JSON.stringify(x));
   const b = (await adauga({ ...BUN, client_nume: 'Ionescu', nr: 'OF-1188', plata: 'fiscala', incasare: 'cash_ch_sofer', de_incasat: '1.200,50', coloana_borderou: 'factura' })).date.comanda;
   verifica('cu nr., preţ şi coloană', b.numar === 'OF-1188' && b.de_incasat === 1200.5 && b.coloana_borderou === 'factura', JSON.stringify(b));
   verifica('nu e o comandă (tabelul comanda neatins)', db().prepare('SELECT COUNT(*) AS n FROM comanda').get().n === 1);

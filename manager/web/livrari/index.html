@@ -90,20 +90,17 @@
   .livrare .cap { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
   .livrare .cap h3 { font-size: 1rem; }
   .livrare .cap .spatiu { flex: 1; }
-  /* livrare din afara managerului (userul, 2026-11-05) — butonul, formularul, rândul din tabel */
-  .pagina-cap .cap-rand { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
-  .pagina-cap .cap-rand > div { flex: 1; }
+  /* rândul liber din capul tabelului (userul, 2026-11-05): o livrare care nu e comandă în manager */
+  tr.rand-nou td { background: rgba(77, 163, 255, .05); border-bottom: 2px solid var(--line-2, var(--line)); vertical-align: top; }
+  tr.rand-nou input[type=text], tr.rand-nou select, tr.rand-nou textarea { width: 100%; padding: 6px 8px; font-size: .84rem; }
+  tr.rand-nou .mic-camp { margin-top: 5px; }
+  tr.rand-nou .nou-client, tr.rand-nou .nou-telefon { min-width: 140px; }
+  tr.rand-nou .nou-plata, tr.rand-nou .nou-incasare { min-width: 120px; font-size: .78rem; padding: 6px 4px 6px 6px; }
+  tr.rand-nou .adresa-campuri { grid-template-columns: 1fr !important; min-width: 140px; }
+  tr.rand-nou .lipsa { border-color: #d4a24c !important; }
+  tr.rand-nou .adresa-campuri { display: grid; gap: 5px; }
+  tr.rand-nou button.adauga { margin-top: 6px; width: 100%; }
   button.primar { background: var(--accent-dim); border-color: var(--accent); color: #fff; font-weight: 600; }
-  dialog.extra-dialog { width: min(760px, calc(100% - 32px)); }
-  .extra-dialog h2 { font-size: 1.05rem; margin-bottom: 4px; }
-  .extra-dialog .campuri { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; margin-top: 14px; }
-  .extra-dialog label { display: grid; gap: 5px; font-size: .8rem; color: var(--text-dim); }
-  .extra-dialog label.lat { grid-column: 1 / -1; }
-  .extra-dialog label b { color: var(--rosu-text); font-weight: 600; }
-  .extra-dialog input, .extra-dialog select, .extra-dialog textarea { width: 100%; padding: 8px 10px; font-size: .9rem; color: var(--text); }
-  .extra-dialog textarea { resize: vertical; }
-  .extra-dialog .eroare { margin-top: 12px; color: var(--rosu-text); font-size: .86rem; }
-  .eticheta-extra { display: inline-block; font-size: .72rem; padding: 1px 7px; border-radius: 6px; border: 1px solid #d4a24c; color: #d4a24c; white-space: nowrap; }
   details.trecute > summary { cursor: pointer; color: var(--text-dim); margin: 6px 0 10px; }
   .gol { text-align: center; padding: 30px; color: var(--text-dim); }
 
@@ -147,36 +144,9 @@
 
 <div id="continut">
   <header class="pagina-cap">
-    <div class="cap-rand">
-      <div>
-        <h1>Organizează livrări</h1>
-        <p>Comenzile în lucru sau finalizate care se livrează cu maşina noastră şi nu sunt încă într-o livrare.</p>
-      </div>
-      <button type="button" class="primar" id="adaugaExtra" title="Ceva de dus cu maşina care nu e o comandă în manager — ex. trimis greşit, pleacă iar">+ Livrare care nu e în manager</button>
-    </div>
+    <h1>Organizează livrări</h1>
+    <p>Comenzile în lucru sau finalizate care se livrează cu maşina noastră şi nu sunt încă într-o livrare.</p>
   </header>
-
-  <!-- livrare din afara managerului (userul, 2026-11-05): apare la comenzile de livrat şi pe borderou ca o comandă -->
-  <dialog class="mesaj-dialog extra-dialog" id="dlgExtra">
-    <form id="formExtra" novalidate>
-      <h2>Livrare care nu e în manager</h2>
-      <p class="mic-dim">De ex. ceva trimis greşit, care trebuie să plece iar. Apare la comenzile de livrat, pe hartă şi pe borderou ca o comandă.</p>
-      <div class="campuri">
-        <label><span>Client <b>*</b></span><input type="text" id="exClient" maxlength="200" placeholder="Scrie numele — alege din listă" autocomplete="off" spellcheck="false"></label>
-        <label><span>Telefon</span><input type="text" id="exTelefon" maxlength="100" autocomplete="off"></label>
-        <label class="lat"><span>Adresa de livrare <b>*</b></span><input type="text" id="exAdresa" maxlength="300" autocomplete="off"></label>
-        <label class="lat"><span>Ce se livrează <b>*</b></span><textarea id="exDescriere" rows="2" maxlength="500" placeholder="ex. 2 uşi Confort Verona, înlocuite — trimise greşit"></textarea></label>
-        <label><span>Nr. comandă / document</span><input type="text" id="exNr" maxlength="60" placeholder="opţional" autocomplete="off"></label>
-        <label><span>Facturare <b>*</b></span><select id="exPlata"></select></label>
-        <label><span>Preţ de încasat</span><input type="text" id="exPret" inputmode="decimal" placeholder="0 — gol = nimic de încasat" title="Cu virgulă sau cu punct: 1200,50 · 1200.50 · 1.200,50"></label>
-        <label><span>Încasare <b>*</b></span><select id="exIncasare"></select></label>
-        <label><span>Pe borderou la</span><select id="exColoana"></select></label>
-        <label><span>Observaţii livrare</span><input type="text" id="exObs" maxlength="300" placeholder="ex. sună înainte" autocomplete="off"></label>
-      </div>
-      <div class="eroare" id="exEroare" hidden></div>
-      <div class="butoane"><button type="button" id="exRenunta">Renunţă</button><button type="submit" class="primar">Adaugă la livrări</button></div>
-    </form>
-  </dialog>
 
   <div class="card">
     <h2>1 · Alege judeţele</h2>
@@ -340,8 +310,12 @@ function randeazaJudete() {
 function randeazaPlan() {
   reordoneaza();
   const v = inOrdine();
-  $('plan').hidden = !v.length;
-  if (!v.length) return;
+  // tabelul e mereu la vedere — are rândul liber pentru o livrare din afara managerului; harta şi „Confirmă" doar cu comenzi
+  $('plan').hidden = false;
+  document.querySelector('#plan .harta-card').style.display = v.length ? '' : 'none';
+  document.querySelector('#plan .confirma').style.display = v.length ? '' : 'none';
+  const activ = randNou.contains(document.activeElement) ? document.activeElement : null;
+  const sel = activ?.selectionStart != null ? [activ.selectionStart, activ.selectionEnd] : null;
   const nr = numere(bifate());
   const peClient = new Map();   // cheie → { toate, bifate } (dintre cele la vedere)
   for (const c of v) { const g = peClient.get(cheieClient(c)) ?? { toate: 0, bifate: 0 }; g.toate++; if (!debifate.has(c.id)) g.bifate++; peClient.set(cheieClient(c), g); }
@@ -354,7 +328,7 @@ function randeazaPlan() {
         <td class="bifa"><input type="checkbox" class="rand" ${bif ? 'checked' : ''}></td>
         <td class="ordine">${bif ? `<span class="bulina">${nr.get(c.id)}</span>` : ''}</td>
         <td><div class="client">${esc(c.client_nume)}${c.demo ? DEMO : ''}</div>
-            <div class="mic-dim">${esc(c.client_telefon ?? '')}${c.client_telefon ? ' · ' : ''}<span class="mono">${esc(c.numar)}</span></div>
+            <div class="mic-dim">${esc(c.client_telefon ?? '')}${c.client_telefon && c.numar ? ' · ' : ''}<span class="mono">${esc(c.numar)}</span></div>
             ${g.toate > 1 ? `<div class="comasat" title="Pe borderou: un singur rând pentru client, cu preţul fiecărei comenzi bifate">${g.toate} comenzi ale clientului${
               g.bifate < g.toate ? ` · ${g.bifate} ${g.bifate === 1 ? 'bifată' : 'bifate'}` : ''} — un rând pe borderou</div>` : ''}</td>
         <td class="produse">${c.produse.map(p => `<div>${esc(p)}</div>`).join('') || '<span class="dim">—</span>'}</td>
@@ -364,8 +338,7 @@ function randeazaPlan() {
               ${judete.map(j => `<option${j === c.judet ? ' selected' : ''}>${esc(j)}</option>`).join('')}</select>
             ${c.lat == null ? ` <span class="fara-punct">nu e pe hartă</span> <button class="mic pune">📍 Pune pe hartă</button>` : ''}</div></td>
         <td><textarea class="obs" rows="2" maxlength="300" placeholder="ex. sună înainte, descărcare la rampă">${esc(c.observatii_livrare ?? '')}</textarea></td>
-        <td>${c.extra ? `<span class="eticheta-extra" title="Adăugată de mână${c.creat_de_nume ? ` de ${esc(c.creat_de_nume)}` : ''} — nu e o comandă în manager">în afara managerului</span>
-              <div class="mic-dim">${data(c.creat_la)}</div><button class="mic rosu-contur sterge-extra" title="Scoate-o (n-a fost programată)">Şterge</button>`
+        <td>${c.extra ? `${data(c.creat_la)}<div><button class="mic rosu-contur sterge-extra">Şterge</button></div>`
           : `${data(c.creat_la)}<div class="mic-dim">${c.finalizat_la ? 'finalizată' : 'în lucru'}</div>`}</td>
         <td><input class="incasat" inputmode="decimal" placeholder="0" title="Cu virgulă sau cu punct: 1200,50 · 1200.50 · 1.200,50" value="${Suma.text(c.de_incasat)}">
             <div><select class="coloana${faraColoana(c) ? ' lipsa' : ''}" title="Unde ajunge preţul pe borderou">
@@ -373,12 +346,14 @@ function randeazaPlan() {
               ${Object.entries(COLOANE).map(([k, t]) => `<option value="${k}"${k === c.coloana_borderou ? ' selected' : ''}>${t}</option>`).join('')}</select></div>
             <div class="mic-dim">${esc([PLATI[c.plata], INCASARI[c.incasare]].filter(Boolean).join(' · '))}${c.achitat_la ? ` · achitată${c.avans > 0 ? ` ${lei(c.avans)}` : ''}` : c.avans > 0 ? ` · avans ${lei(c.avans)}` : ''}</div></td>
       </tr>`; }).join('')}</tbody></table>`;
+  $('tabel').querySelector('tbody').prepend(randNou);   // acelaşi rând, cu ce s-a scris în el
+  if (activ) { activ.focus(); if (sel) try { activ.setSelectionRange(...sel); } catch {} }
 
   $('toate').addEventListener('change', e => {
     v.forEach(c => (e.target.checked ? debifate.delete(c.id) : debifate.add(c.id))); randeazaPlan();
     trimitePlan({ comenzi: v.map(c => c.id), bifat: e.target.checked });
   });
-  $('tabel').querySelectorAll('tbody tr').forEach(tr => {
+  $('tabel').querySelectorAll('tbody tr[data-id]').forEach(tr => {
     const id = +tr.dataset.id, c = comenzi.find(x => x.id === id);
     tr.querySelector('.rand').addEventListener('change', e => {
       if (e.target.checked) debifate.delete(id); else debifate.add(id);
@@ -422,7 +397,7 @@ function randeazaPlan() {
       obs.classList.add('salvat'); setTimeout(() => obs.classList.remove('salvat'), 1200);
     });
     tr.querySelector('.sterge-extra')?.addEventListener('click', async () => {
-      if (!(await confirma(`Ştergi livrarea pentru ${c.client_nume}${c.produse[0] ? ` („${c.produse[0]}”)` : ''}?\n\nNu e o comandă în manager — dispare de tot.`, 'Da, şterge'))) return;
+      if (!(await confirma(`Ştergi livrarea pentru ${c.client_nume}${c.produse[0] ? ` („${c.produse[0]}”)` : ''}?`, 'Da, şterge'))) return;
       const r = await api(`/api/livrari/extra/${id}`, { method: 'DELETE' });
       if (r && !r.ok) return alerta(await eroareDin(r));
       incarca();
@@ -433,7 +408,7 @@ function randeazaPlan() {
     });
   });
   randeazaTotal();
-  randeazaHarta();
+  if (v.length) randeazaHarta();
 }
 
 function randeazaTotal() {
@@ -651,17 +626,30 @@ $('previzualizeaza').addEventListener('click', async () => {
 const ziua = zi => new Date(zi + 'T12:00:00').toLocaleDateString('ro-RO', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
 // implicit mâine
 // ziua de azi / mâine după ora României (AAAA-LL-ZZ)
-// ── Livrare din afara managerului (userul, 2026-11-05): formularul — clientul din lista de clienţi (completează
-// telefonul şi adresa), facturare / încasare ca la comenzi + „Fără facturare" / „Fără încasare". La salvare apare în
-// listă (cu judeţul ei ales în plan), la fel ca o comandă.
+// ── Rândul liber din capul tabelului (userul, 2026-11-05): o livrare care nu e comandă în manager — clientul din
+// lista de clienţi (completează telefonul şi adresa), produsul scris liber, facturare / încasare (+ „Fără…"), preţ.
+// Făcut O DATĂ şi mutat întreg la fiecare redesenare a tabelului: ce scrie colegul rămâne (şi când lucrează altcineva).
+const randNou = document.createElement('tr');
+randNou.className = 'rand-nou';
+randNou.innerHTML = `<td></td><td class="ordine"></td>
+  <td><input type="text" class="nou-client" maxlength="200" placeholder="Client — alege din listă" autocomplete="off" spellcheck="false">
+      <input type="text" class="nou-telefon mic-camp" maxlength="100" placeholder="Telefon" autocomplete="off"></td>
+  <td><input type="text" class="nou-produs" maxlength="500" placeholder="Produs" autocomplete="off"></td>
+  <td><input type="text" class="nou-adresa" maxlength="300" autocomplete="off"></td>
+  <td><textarea class="obs nou-obs" rows="2" maxlength="300" placeholder="Observaţii livrare"></textarea></td>
+  <td><select class="nou-plata"></select><select class="nou-incasare mic-camp"></select></td>
+  <td><input type="text" class="incasat nou-pret" inputmode="decimal" placeholder="0" title="Cu virgulă sau cu punct: 1200,50 · 1200.50 · 1.200,50">
+      <div><select class="coloana nou-coloana" title="Unde ajunge preţul pe borderou"></select></div>
+      <button type="button" class="primar mic adauga">Adaugă</button></td>`;
 (() => {
-  const d = $('dlgExtra'), f = $('formExtra');
+  const q = c => randNou.querySelector('.nou-' + c);
   const optiuni = (o, gol) => `<option value="">${gol}</option>` + Object.entries(o).map(([k, t]) => `<option value="${k}">${esc(t)}</option>`).join('');
-  $('exPlata').innerHTML = optiuni({ fara: PLATI.fara, ...Object.fromEntries(Object.entries(PLATI).filter(([k]) => k !== 'fara')) }, 'Alege facturarea');
-  $('exIncasare').innerHTML = optiuni({ fara: INCASARI.fara, ...Object.fromEntries(Object.entries(INCASARI).filter(([k]) => k !== 'fara')) }, 'Alege încasarea');
-  $('exColoana').innerHTML = optiuni(COLOANE, '—');
-  Adresa.campuri($('exAdresa'));
-  Sugestii.leaga($('exClient'), {
+  const faraIntai = o => ({ fara: o.fara, ...Object.fromEntries(Object.entries(o).filter(([k]) => k !== 'fara')) });
+  q('plata').innerHTML = optiuni(faraIntai(PLATI), 'Facturare');
+  q('incasare').innerHTML = optiuni(faraIntai(INCASARI), 'Încasare');
+  q('coloana').innerHTML = optiuni(COLOANE, 'Pe borderou la…');
+  Adresa.campuri(q('adresa'));
+  Sugestii.leaga(q('client'), {
     cauta: async t => {
       if (t.trim().length < 2) return [];
       const r = await api('/api/clienti/cauta?q=' + encodeURIComponent(t.trim()));
@@ -669,41 +657,48 @@ const ziua = zi => new Date(zi + 'T12:00:00').toLocaleDateString('ro-RO', { week
         sub: [c.adresa_livrare || c.adresa_sediu, c.localitate, c.cui].filter(Boolean).join(' · ') })) : [];
     },
     alege: c => {
-      $('exClient').value = c.nume;
-      $('exTelefon').value = c.telefon_delegat || c.telefon_administrator || '';
-      $('exAdresa').value = [c.adresa_livrare || c.adresa_sediu, c.localitate, c.judet].filter(Boolean).join(', ');
+      q('client').value = c.nume;
+      q('telefon').value = c.telefon_delegat || c.telefon_administrator || '';
+      q('adresa').value = [c.adresa_livrare || c.adresa_sediu, c.localitate, c.judet].filter(Boolean).join(', ');
+      q('produs').focus();
     },
   });
   // coloana de pe borderou: sugerată din facturare la primul preţ (ca la comenzi), se poate schimba
-  const sugereaza = () => { if (Suma.din($('exPret').value) != null && !$('exColoana').value) $('exColoana').value = COLOANA_DIN_PLATA[$('exPlata').value] ?? ''; };
-  $('exPret').addEventListener('change', sugereaza);
-  $('exPlata').addEventListener('change', sugereaza);
-  const arata = t => { $('exEroare').textContent = t; $('exEroare').hidden = !t; };
-  $('adaugaExtra').addEventListener('click', () => {
-    f.reset(); $('exAdresa').value = ''; arata('');
-    d.showModal(); $('exClient').focus();
-  });
-  $('exRenunta').addEventListener('click', () => d.close());
-  f.addEventListener('submit', async e => {
-    e.preventDefault();
-    const lipsa = [['exClient', 'clientul'], ['exAdresa', 'adresa de livrare'], ['exDescriere', 'ce se livrează'],
-      ['exPlata', 'facturarea'], ['exIncasare', 'încasarea']].filter(([id]) => !$(id).value.trim());
-    if (lipsa.length) { arata(`Completează: ${lipsa.map(x => x[1]).join(', ')}.`); $(lipsa[0][0]).focus(); return; }
-    const pret = Suma.din($('exPret').value);
-    if ($('exPret').value.trim() && pret == null) { arata('Preţul trebuie să fie un număr (ex. 1200,50).'); $('exPret').focus(); return; }
-    if (pret != null && !$('exColoana').value) { arata('Alege unde ajunge preţul pe borderou (Bon / Factură + chitanţă / OP).'); $('exColoana').focus(); return; }
-    const r = await api('/api/livrari/extra', { method: 'POST', body: JSON.stringify({
-      client_nume: $('exClient').value, client_telefon: $('exTelefon').value, client_adresa: $('exAdresa').value,
-      descriere: $('exDescriere').value, nr: $('exNr').value, plata: $('exPlata').value, incasare: $('exIncasare').value,
-      de_incasat: $('exPret').value, coloana_borderou: $('exColoana').value, observatii_livrare: $('exObs').value }) });
-    if (!r) return;
-    if (!r.ok) return arata(await eroareDin(r));
-    const { comanda } = await r.json();
-    d.close();
-    // să se vadă imediat: judeţul ei intră în plan (sau „Fără judeţ")
-    if (!alese.has(comanda.judet ?? '')) await trimitePlan({ judet: comanda.judet ?? '', ales: true });
-    await incarca();
-    document.querySelector(`#tabel tr[data-id="${comanda.id}"]`)?.scrollIntoView({ block: 'center' });
+  const sugereaza = () => { if (Suma.din(q('pret').value) != null && !q('coloana').value) q('coloana').value = COLOANA_DIN_PLATA[q('plata').value] ?? ''; };
+  q('pret').addEventListener('change', sugereaza);
+  q('plata').addEventListener('change', sugereaza);
+  randNou.addEventListener('input', e => e.target.classList?.remove('lipsa'));
+  randNou.addEventListener('change', e => e.target.classList?.remove('lipsa'));
+  const adauga = async () => {
+    const adr = randNou.querySelector('.adresa-campuri');
+    const lipsa = [[q('client'), !q('client').value.trim()], [q('produs'), !q('produs').value.trim()],
+      [adr?.querySelector('.adr-judet') ?? q('adresa'), !q('adresa').value.trim()],
+      [q('plata'), !q('plata').value], [q('incasare'), !q('incasare').value]].filter(([, l]) => l).map(([el]) => el);
+    const pret = Suma.din(q('pret').value);
+    if (q('pret').value.trim() && pret == null) lipsa.push(q('pret'));
+    if (pret != null && !q('coloana').value) lipsa.push(q('coloana'));
+    lipsa.forEach(el => el.classList.add('lipsa'));
+    if (lipsa.length) { lipsa[0].focus(); return; }
+    const b = randNou.querySelector('.adauga');
+    b.disabled = true;
+    try {
+      const r = await api('/api/livrari/extra', { method: 'POST', body: JSON.stringify({
+        client_nume: q('client').value, client_telefon: q('telefon').value, client_adresa: q('adresa').value,
+        descriere: q('produs').value, plata: q('plata').value, incasare: q('incasare').value,
+        de_incasat: q('pret').value, coloana_borderou: q('coloana').value, observatii_livrare: q('obs').value }) });
+      if (!r) return;
+      if (!r.ok) return alerta(await eroareDin(r));
+      const { comanda } = await r.json();
+      for (const c of ['client', 'telefon', 'produs', 'obs', 'pret']) q(c).value = '';
+      q('adresa').value = ''; q('plata').value = ''; q('incasare').value = ''; q('coloana').value = '';
+      // să se vadă imediat: judeţul ei intră în plan (sau „Fără judeţ")
+      if (!alese.has(comanda.judet ?? '')) await trimitePlan({ judet: comanda.judet ?? '', ales: true });
+      await incarca();
+    } finally { b.disabled = false; }
+  };
+  randNou.querySelector('.adauga').addEventListener('click', adauga);
+  randNou.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.defaultPrevented && e.target.matches('input')) { e.preventDefault(); adauga(); }
   });
 })();
 
