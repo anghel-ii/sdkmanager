@@ -108,6 +108,23 @@ function comanda(livrare = 'Ridicare personala', produse = ['Confort Verona', 'R
   const m = await cheama('PUT', '/api/comenzi/:id', { params: { id: id2 }, corp: { ...corp, pozitii: [vechi[0], vechi[1]] } });
   verifica('scos doar unul nefacturat → merge, factura rămâne pe produsul ei', m.cod === 200 && poz(id2).join() === 'F300,', JSON.stringify(m.date));
 
+  console.log('\nArhivate (30 de zile de la facturare)');
+  const zile = n => db().prepare(`SELECT datetime('now', ?) AS d`).get(`-${n} days`).d;
+  const fact = (cid, n) => db().prepare(`UPDATE comanda SET factura_nr = 'FA', facturat_la = ?, finalizat_la = ? WHERE id = ?`).run(zile(n), zile(n), cid);
+  const a29 = comanda(), a30 = comanda(), partial = comanda();
+  fact(a29, 29); fact(a30, 30);
+  await separat(partial, [0], 'FP');
+  db().prepare('UPDATE pozitie SET facturat_la = ? WHERE comanda_id = ?').run(zile(90), partial);   // produs facturat demult, restul nu
+  const arh = (await lista('arhivata')).map(x => x.id), fz = (await lista('finalizata')).map(x => x.id);
+  verifica('facturată de 30 de zile → Arhivate, nu Finalizate', arh.includes(a30) && !fz.includes(a30), JSON.stringify({ arh, fz }));
+  verifica('facturată de 29 de zile → încă la Finalizate', fz.includes(a29) && !arh.includes(a29));
+  verifica('facturată parţial (chiar de 90 de zile) → nu se arhivează', !arh.includes(partial) && fz.includes(partial));
+  const sum = (await cheama('GET', '/api/sumar')).date;
+  verifica('numărătoarea Arhivate / Finalizate', sum.arhivate === arh.length && !fz.some(x => arh.includes(x)), JSON.stringify(sum));
+  verifica('pagina comenzii ştie că e arhivată', (await cheama('GET', '/api/comenzi/:id', { params: { id: a30 } })).date.comanda.arhivata === 1
+    && (await cheama('GET', '/api/comenzi/:id', { params: { id: a29 } })).date.comanda.arhivata === 0);
+  verifica('căutarea peste tot o marchează arhivată', (await lista('toate')).find(x => x.id === a30).arhivata === 1);
+
   inchide();
   try { fs.rmSync(TEMP, { recursive: true, force: true }); } catch {}
   console.log(`\n${treceri} trecute, ${caderi} căzute\n`);

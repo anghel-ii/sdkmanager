@@ -106,6 +106,7 @@
     plata:   '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
     lucru:   '<path d="M20.5 7.5 12 3 3.5 7.5v9L12 21l8.5-4.5z"/><path d="M3.5 7.5 12 12l8.5-4.5M12 12v9"/>',
     gata:    '<circle cx="12" cy="12" r="8.5"/><path d="m8.5 12.2 2.4 2.4 4.6-5"/>',
+    arhiva:  '<rect x="3.5" y="4.5" width="17" height="4" rx="1"/><path d="M5 8.5v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-10M10 12.5h4"/>',
     cereri:  '<path d="M5 4.5h14v11H9.5L5 19.5z"/><path d="M9 8.5h6M9 11.5h4"/>',
     tichete: '<path d="M9.5 18h5M10.5 21h3"/><path d="M12 3.5a5.8 5.8 0 0 0-3.4 10.5c.6.5.9 1.1.9 1.8v.2h5v-.2c0-.7.3-1.3.9-1.8A5.8 5.8 0 0 0 12 3.5z"/>',
     produse: '<path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/>',
@@ -143,7 +144,9 @@
   const ROLURI = { admin: 'Administrator', conducere: 'Conducere', birou: 'Birou' };
   // stările comenzilor — aceleaşi patru taburi ca în pagina principală (data-tab = tabCurent de acolo)
   const STARI = [['oferta', 'oferte', '#oferte', 'oferta', 'Oferte'], ['plata', 'plata', '#plata', 'plata', 'Aşteaptă plata'],
-                 ['comanda', 'comenzi', '#comenzi', 'lucru', 'În lucru'], ['finalizata', 'finalizate', '#finalizate', 'gata', 'Finalizate']];
+                 ['comanda', 'comenzi', '#comenzi', 'lucru', 'În lucru'], ['finalizata', 'finalizate', '#finalizate', 'gata', 'Finalizate'],
+                 // facturate de cel puţin 30 de zile (userul, 2026-11-06) — server/api/comenzi.js ARHIVATA
+                 ['arhivata', 'arhivate', '#arhivate', 'arhiva', 'Arhivate']];
 
   const stil = document.createElement('style');
   stil.textContent = `

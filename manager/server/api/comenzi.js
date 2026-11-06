@@ -373,13 +373,20 @@ async function adauga(ctx) {
 // Facturată parţial: nefacturată ca întreg, dar cu cel puţin un produs facturat separat („Facturează separat")
 const FACTURATA_PARTIAL = `(c.factura_nr IS NULL AND EXISTS (SELECT 1 FROM pozitie pf WHERE pf.comanda_id = c.id AND pf.factura_nr IS NOT NULL))`;
 
-// tab: 'oferta' | 'plata' (aşteaptă plata) | 'comanda' (în lucru) | 'finalizata'
+// Arhivată (userul, 2026-11-06): facturată ca întreg (la cele facturate separat — după ultimele produse) de cel puţin
+// 30 de zile calendaristice, ziua din România. Calculată, nu mutată: nimic de uitat, nimic de mutat înapoi.
+const ZILE_ARHIVA = 30;
+const ARHIVATA = () => `(c.tip = 'comanda' AND c.factura_nr IS NOT NULL AND c.finalizat_la IS NOT NULL
+  AND date(c.facturat_la, 'localtime') <= date(${ACUM()}, 'localtime', '-${ZILE_ARHIVA} days'))`;
+
+// tab: 'oferta' | 'plata' (aşteaptă plata) | 'comanda' (în lucru) | 'finalizata' | 'arhivata'
 const FILTRE = {
   oferta:     "c.tip = 'oferta'",
   plata:      "c.tip = 'plata'",
   comanda:    "c.tip = 'comanda' AND c.finalizat_la IS NULL",
-  // + cele facturate parţial (userul, 2026-11-06): stau şi la În lucru, şi aici, până se facturează tot
-  finalizata: `c.tip = 'comanda' AND (c.finalizat_la IS NOT NULL OR ${FACTURATA_PARTIAL})`,
+  // + cele facturate parţial (userul, 2026-11-06): stau şi la În lucru, şi aici, până se facturează tot; fără arhivate
+  finalizata: () => `c.tip = 'comanda' AND (c.finalizat_la IS NOT NULL OR ${FACTURATA_PARTIAL}) AND NOT ${ARHIVATA()}`,
+  arhivata:   () => ARHIVATA(),
   toate:      '1',   // căutarea globală din manager: toate stările la un loc
 };
 
@@ -410,12 +417,14 @@ function stareSticla(brut) {
 function listeaza(ctx) {
   const uid = ctx.utilizator.id;
   const tab = new URL(ctx.req.url, 'http://x').searchParams.get('tip');
-  const filtru = FILTRE[tab] ?? FILTRE.oferta;
+  const f = FILTRE[tab] ?? FILTRE.oferta;
+  const filtru = typeof f === 'function' ? f() : f;   // arhivatele depind de ziua de azi
 
   const randuri = db().prepare(`
     SELECT c.id, c.numar, c.oferta_nr, c.tip, c.client_nume, c.client_telefon, c.creat_la, c.confirmat_la, c.finalizat_la, c.tip_schimbat_la,
            c.factura_nr, c.facturat_la, c.plata, c.incasare, c.avans, c.achitat_la,
            u.nume AS creat_de_nume,
+           ${ARHIVATA()} AS arhivata,
            -- facturarea pe produs: câte produse sunt facturate separat şi cu ce numere
            (SELECT COUNT(*) FROM pozitie pf WHERE pf.comanda_id = c.id AND pf.factura_nr IS NOT NULL) AS poz_facturate,
            (SELECT GROUP_CONCAT(DISTINCT pf.factura_nr) FROM pozitie pf WHERE pf.comanda_id = c.id AND pf.factura_nr IS NOT NULL) AS facturi_produse,
@@ -447,7 +456,7 @@ function detaliu(ctx) {
   const id = Number(ctx.params.id);
   // cine a făcut fiecare pas — numele, pentru pagina comenzii
   const comanda = db().prepare(`
-    SELECT c.*, u.nume AS creat_de_nume, ua.nume AS confirmat_de_nume,
+    SELECT c.*, u.nume AS creat_de_nume, ua.nume AS confirmat_de_nume, ${ARHIVATA()} AS arhivata,
            -- de cât timp a ieşit din oferte (pt. „Înapoi în ofertă"), după ora exactă a serverului
            CAST((julianday(${ACUM()}) - julianday(c.tip_schimbat_la)) * 86400 AS INTEGER) AS secunde_schimbat,
            uf.nume AS facturat_de_nume, ufi.nume AS finalizat_de_nume, ufp.nume AS fisa_printata_de_nume
@@ -856,7 +865,8 @@ const sumar = ctx => json(ctx.res, 200, {
   SELECT SUM(tip = 'oferta')                              AS oferte,
          SUM(tip = 'plata')                               AS plata,
          SUM(tip = 'comanda' AND finalizat_la IS NULL)     AS comenzi,
-         SUM(tip = 'comanda' AND (finalizat_la IS NOT NULL OR ${FACTURATA_PARTIAL})) AS finalizate
+         SUM(tip = 'comanda' AND (finalizat_la IS NOT NULL OR ${FACTURATA_PARTIAL}) AND NOT ${ARHIVATA()}) AS finalizate,
+         SUM(${ARHIVATA()}) AS arhivate
     FROM comanda c WHERE anulat = 0
 `).get(),
   sticla: require('../sticla.js').sumarSticla(),   // bucăţi de sticlă de comandat

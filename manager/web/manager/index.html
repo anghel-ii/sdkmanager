@@ -273,7 +273,7 @@ function leagaCopiere(el, randuri) {
 
 // ── Lista ────────────────────────────────────────────────────────────────────
 
-const HASH_TAB = { oferta: '#oferte', plata: '#plata', comanda: '#comenzi', finalizata: '#finalizate' };
+const HASH_TAB = { oferta: '#oferte', plata: '#plata', comanda: '#comenzi', finalizata: '#finalizate', arhivata: '#arhivate' };
 
 // Coloana „Status" = ultima operaţie scanată în atelier
 // Facturare: nr. facturii sau „nefacturat" (în listă). Câmpul pt. număr + „Marchează
@@ -528,7 +528,7 @@ let lista = [], listaPt = null, cautare = '', sortare = 'data';
 let pesteTot = localStorage.getItem('cautaPesteTot') !== '0';
 const ceLista = () => (cautare.trim() && pesteTot ? 'toate' : tabCurent);   // ce listă trebuie să fie pe ecran
 // starea unei comenzi = tabul în care stă
-const stareRand = c => (c.tip === 'comanda' ? (c.finalizat_la ? 'finalizata' : 'comanda') : c.tip);
+const stareRand = c => (c.tip === 'comanda' ? (c.arhivata ? 'arhivata' : c.finalizat_la ? 'finalizata' : 'comanda') : c.tip);
 // utilizatorul logat (/api/eu) — rolul decide ce butoane apar. Serverul verifică
 // oricum: „birou" nu poate schimba / anula un nr. de factură deja trecut.
 let eu = null;
@@ -578,7 +578,8 @@ function leagaNumar(root, c, plataNumar, cerereNumar, dupa) {
   });
 }
 
-const TABURI = [['oferta', 'Oferte'], ['plata', 'Aşteaptă plata'], ['comanda', 'Comenzi în lucru'], ['finalizata', 'Comenzi finalizate']];
+const TABURI = [['oferta', 'Oferte'], ['plata', 'Aşteaptă plata'], ['comanda', 'Comenzi în lucru'], ['finalizata', 'Comenzi finalizate'],
+                ['arhivata', 'Comenzi arhivate']];   // facturate de cel puţin 30 de zile (userul, 2026-11-06)
 
 // fără diacritice şi litere mari: „şerban" găseşte „Serban"
 const normal = t => String(t ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -588,9 +589,9 @@ const normal = t => String(t ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toL
 // stări pe un singur rând — ELE sunt taburile listei. Construite o singură dată,
 // în afara conţinutului; pe pagina unei comenzi se ascund (nou.css) — stările
 // rămân în meniul din stânga. Fiecare stare cu iconiţa ei (bara.js).
-const ICOANA_TAB = { oferta: 'oferta', plata: 'plata', comanda: 'lucru', finalizata: 'gata' };
+const ICOANA_TAB = { oferta: 'oferta', plata: 'plata', comanda: 'lucru', finalizata: 'gata', arhivata: 'arhiva' };
 // pe plăcile înguste, numele din meniul din stânga (cel întreg rămâne în title)
-const NUME_SCURT = { oferta: 'Oferte', plata: 'Aşteaptă plata', comanda: 'În lucru', finalizata: 'Finalizate' };
+const NUME_SCURT = { oferta: 'Oferte', plata: 'Aşteaptă plata', comanda: 'În lucru', finalizata: 'Finalizate', arhivata: 'Arhivate' };
 
 // Plăcile „Ofertă nouă" + ciornele: ofertele lăsate ca ciornă la plecarea din configurator stau DOAR
 // în browserul ăsta, cel mult 48 de ore (configurator_usi/js/ciorna.js, localStorage „ciorne"); aici doar
@@ -799,8 +800,8 @@ function randeazaTabel() {
   // momentul fiecărui tab (userul, 2026-10-05: o comandă acceptată acum arăta ora ofertei, „în urmă"):
   // ofertat · trimis la plată · acceptat · finalizat
   const dataRand = c => ({ oferta: c.creat_la, plata: c.tip_schimbat_la, comanda: c.confirmat_la,
-                           finalizata: c.finalizat_la }[tabRand(c)] || c.creat_la);
-  const titluData = totul ? 'Data' : { oferta: 'Ofertat', plata: 'Trimis la plată', comanda: 'Acceptat', finalizata: 'Finalizat' }[tabCurent];
+                           finalizata: c.finalizat_la, arhivata: c.facturat_la }[tabRand(c)] || c.creat_la);
+  const titluData = totul ? 'Data' : { oferta: 'Ofertat', plata: 'Trimis la plată', comanda: 'Acceptat', finalizata: 'Finalizat', arhivata: 'Facturat' }[tabCurent];
   const randuri = lista
     // fiecare cuvânt trebuie să apară undeva: „andrei 4471" = clientul Andrei cu factura 4471
     .filter(c => q.split(/\s+/).every(cuv => !cuv ||
@@ -822,7 +823,7 @@ function randeazaTabel() {
   potriviri = totul ? Object.fromEntries(TABURI.map(([t]) => [t, randuri.filter(c => tabRand(c) === t).length])) : null;
   puneCate();
   const coloane = 7 + cuStatus + cuSticla + 2 * cuFacturare;
-  const facturaCel = c => (tabRand(c) === 'comanda' || tabRand(c) === 'finalizata' ? facturareHtml(c) : '<span class="dim">—</span>');
+  const facturaCel = c => (['comanda', 'finalizata', 'arhivata'].includes(tabRand(c)) ? facturareHtml(c) : '<span class="dim">—</span>');
   // căutare: un rând-titlu înaintea fiecărei stări („Oferte 2")
   const titluGrup = (c, i) => !totul || (i && tabRand(randuri[i - 1]) === tabRand(c)) ? '' : `
         <tr class="grup"><td colspan="${coloane}">${TABURI[ordine(c)][1]}<span class="cate">${
@@ -938,7 +939,7 @@ const deVerificat = c => c.livrare && c.livrare !== 'Ridicare personala' ? ' dat
 function cardDetalii({ comanda: c, cerere, cerereFactura, cerereNumar, plataNumar, pozitii, sticlaLinii = [], fise: printari = [] }, fise) {
   const eOferta = c.tip === 'oferta', ePlata = c.tip === 'plata', eComanda = c.tip === 'comanda';
   const [cls, stare] = eOferta ? ['oferta', 'Ofertă'] : ePlata ? ['plata', 'Aşteaptă plata']
-    : c.finalizat_la ? ['gata', 'Comandă finalizată'] : ['lucru', 'Comandă în lucru'];
+    : c.arhivata ? ['gata', 'Comandă arhivată'] : c.finalizat_la ? ['gata', 'Comandă finalizată'] : ['lucru', 'Comandă în lucru'];
   const comandate = sticlaLinii.filter(l => l.comandat_la);
   const sticla = sticlaLinii.length ? { total: sticlaLinii.length, comandate: comandate.length } : null;
   const activa = !c.anulat && cerere?.stare !== 'deschisa';
@@ -1205,7 +1206,7 @@ async function mergiLa(id) {
   const r = await api('/api/comenzi/' + id);
   const c = r?.ok ? (await r.json()).comanda : null;
   if (!c || !$('tabelLista')) return;
-  tabCurent = c.tip === 'oferta' ? 'oferta' : c.tip === 'plata' ? 'plata' : c.finalizat_la ? 'finalizata' : 'comanda';
+  tabCurent = c.tip === 'oferta' ? 'oferta' : c.tip === 'plata' ? 'plata' : c.arhivata ? 'arhivata' : c.finalizat_la ? 'finalizata' : 'comanda';
   history.replaceState(null, '', HASH_TAB[tabCurent]);
   selectat = id;
   await renderLista();
@@ -1335,7 +1336,7 @@ async function renderDetaliu(id) {
         <h1>${esc(c.client_nume)}</h1>
         <div class="nr-comanda"><span class="mono">${esc(c.oferta_nr || c.numar)}</span>${butonNumar(c, plataNumar)}${cerereNumarText(cerereNumar)}</div>
         <div class="dim mic">${c.anulat ? '<span class="stare-pastila anulata">Anulată</span>' : `<span class="stare-pastila ${eOferta ? 'oferta' : ePlata ? 'plata' : c.finalizat_la ? 'gata' : 'lucru'}">${eOferta ? 'Ofertă'
-          : ePlata ? 'Aşteaptă plata' : c.finalizat_la ? 'Comandă finalizată' : 'Comandă în lucru'}</span>`}${c.demo ? DEMO : ''}</div>
+          : ePlata ? 'Aşteaptă plata' : c.arhivata ? 'Comandă arhivată' : c.finalizat_la ? 'Comandă finalizată' : 'Comandă în lucru'}</span>`}${c.demo ? DEMO : ''}</div>
         ${fisaPrintata(printari, pozitii.length, fise)}
       </div>
       <div class="spatiu"></div>
@@ -1409,7 +1410,7 @@ async function renderDetaliu(id) {
     document.querySelectorAll('.taburi-detaliu button').forEach(x => x.classList.toggle('active', x === b));
     document.querySelectorAll('.panou-detaliu').forEach(x => { x.hidden = x.dataset.panou !== tabDetaliu; });
   }));
-  tabCurent = eOferta ? 'oferta' : ePlata ? 'plata' : c.finalizat_la ? 'finalizata' : 'comanda';
+  tabCurent = eOferta ? 'oferta' : ePlata ? 'plata' : c.arhivata ? 'arhivata' : c.finalizat_la ? 'finalizata' : 'comanda';
   asiguraTaburi();   // taburile rămân sus şi aici, cu tabul comenzii marcat
   $('modifica')?.addEventListener('click', () => { location.href = '/configurator/?oferta=' + id; });
   // Aşteaptă plata / Acceptă / Plată primită / Finalizată / Redeschide / Înapoi în ofertă
@@ -1516,6 +1517,7 @@ function ruteaza() {
   if (m) { noteazaVazut('A deschis comanda', +m[1]); return renderDetaliu(m[1]); }
   if (location.hash === '#comenzi') tabCurent = 'comanda';
   else if (location.hash === '#finalizate') tabCurent = 'finalizata';
+  else if (location.hash === '#arhivate') tabCurent = 'arhivata';
   else if (location.hash === '#plata') tabCurent = 'plata';
   else if (location.hash === '#oferte') tabCurent = 'oferta';
   return renderLista();
@@ -1558,7 +1560,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') inchideAlege
 let sumar = window.sumarBara ?? null, potriviri = null;
 function puneCate() {
   if (!sumar) return;
-  for (const [t, n] of [['oferta', sumar.oferte], ['plata', sumar.plata], ['comanda', sumar.comenzi], ['finalizata', sumar.finalizate]]) {
+  for (const [t, n] of [['oferta', sumar.oferte], ['plata', sumar.plata], ['comanda', sumar.comenzi], ['finalizata', sumar.finalizate], ['arhivata', sumar.arhivate]]) {
     const el = document.querySelector(`[data-cate="${t}"]`);
     if (el) el.innerHTML = potriviri ? `${potriviri[t]} <span class="din">din ${n ?? 0}</span>` : `${n ?? 0}`;
   }
