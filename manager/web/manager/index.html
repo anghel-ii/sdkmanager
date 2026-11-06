@@ -112,7 +112,9 @@
   .fact-sep-lista input { width: auto; margin-top: 3px; }
   .fact-sep-lista span { display: grid; gap: 2px; }
   .fact-sep-nr { display: grid; gap: 5px; font-size: .84rem; color: var(--text-dim); }
-  .fact-sep-copiere { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .fact-sep-copiere { display: grid; gap: 6px; margin-bottom: 12px; }
+  .fact-sep-copiere .rand-copiere { display: flex; gap: 8px; }
+  .fact-sep-copiere .rand-copiere button { width: auto; white-space: nowrap; }
   .nota-facturare { margin: 0 0 8px; color: #d4a24c; font-size: .86rem; }
   .fact-sep-nr input { padding: 8px 10px; font-size: .95rem; }
   .fact-sep-dialog .eroare { margin-top: 10px; color: var(--rosu-text); font-size: .86rem; }
@@ -312,7 +314,7 @@ function deschideFacturaSeparat(c, pozitii, dupa) {
     <div class="fact-sep-lista">${ls.map(({ p, k }) => `<label><input type="checkbox" value="${k}"> <span><b>${k + 1}. ${esc(p.eticheta)}</b>
       <span class="dim mic">${esc(rezumatProdus(p))}</span></span></label>`).join('')}</div>
     <div class="fact-sep-copiere"><span class="dim mic">Pentru NeoManager, liniile produselor bifate:</span>
-      <button type="button" class="mic cop-cod" disabled>Copiază coduri</button><button type="button" class="mic cop-cant" disabled>Copiază cantităţi</button></div>
+      <div class="rand-copiere"><button type="button" class="mic cop-cod" disabled>Copiază coduri</button><button type="button" class="mic cop-cant" disabled>Copiază cantităţi</button></div></div>
     <label class="fact-sep-nr">Nr. factură <input type="text" maxlength="40" placeholder="nr. din NeoManager" autocomplete="off"></label>
     <div class="eroare" hidden></div>
     <div class="butoane"><button type="button" class="renunta">Renunţă</button><button type="button" class="primar ok" disabled>Facturează</button></div>`;
