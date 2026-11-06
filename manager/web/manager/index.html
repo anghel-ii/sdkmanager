@@ -99,6 +99,23 @@
   td.facturare, dd.facturare { white-space: nowrap; }
   .facturat { color: var(--ok); }
   .nefacturat { color: var(--danger); font-size: .84rem; margin-right: 8px; }
+  /* facturată separat, pe produse (userul, 2026-11-06) */
+  .facturat-partial { color: #d4a24c; font-size: .84rem; }
+  .fact-produse { margin: 2px 0 8px; display: grid; gap: 3px; font-size: .86rem; }
+  .facturat-produs { display: block; color: var(--ok); font-size: .78rem; }
+  dialog.fact-sep-dialog { width: min(560px, calc(100% - 32px)); }
+  .fact-sep-dialog h3 { margin-bottom: 4px; }
+  .fact-sep-lista { display: grid; gap: 6px; margin: 12px 0; max-height: 50vh; overflow-y: auto; }
+  .fact-sep-lista label { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border: 1px solid var(--line); border-radius: 9px; cursor: pointer;
+                          text-transform: none; letter-spacing: normal; font-size: .9rem; color: var(--text); }
+  .fact-sep-lista label:has(input:checked) { border-color: var(--accent); background: rgba(77, 163, 255, .08); }
+  .fact-sep-lista input { width: auto; margin-top: 3px; }
+  .fact-sep-lista span { display: grid; gap: 2px; }
+  .fact-sep-nr { display: grid; gap: 5px; font-size: .84rem; color: var(--text-dim); }
+  .fact-sep-copiere { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .nota-facturare { margin: 0 0 8px; color: #d4a24c; font-size: .86rem; }
+  .fact-sep-nr input { padding: 8px 10px; font-size: .95rem; }
+  .fact-sep-dialog .eroare { margin-top: 10px; color: var(--rosu-text); font-size: .86rem; }
   .factura-form { display: inline-flex; gap: 6px; vertical-align: middle; }
   .factura-form input { width: 110px; padding: 5px 8px; font-size: .84rem; }
   button.mic { padding: 5px 10px; font-size: .8rem; }
@@ -260,9 +277,75 @@ const HASH_TAB = { oferta: '#oferte', plata: '#plata', comanda: '#comenzi', fina
 // Facturare: nr. facturii sau „nefacturat" (în listă). Câmpul pt. număr + „Marchează
 // facturat" (activ doar cu numărul completat) stau în cardul din dreapta şi în pagina comenzii.
 // La o comandă în lucru facturarea o şi finalizează (userul, 2026-10-26) — butonul o spune.
+// alte facturi pe produse decât a comenzii (facturată separat, apoi restul)
+const altele = c => String(c.facturi_produse ?? '').split(',').filter(x => x && x !== c.factura_nr);
 const facturareHtml = c => c.factura_nr
-  ? `<span class="facturat">✓ <strong class="mono">${esc(c.factura_nr)}</strong></span>`
+  ? `<span class="facturat">✓ <strong class="mono">${esc([c.factura_nr, ...altele(c)].join(' + '))}</strong></span>`
+  : c.poz_facturate > 0   // „Facturează separat" (userul, 2026-11-06): şi la În lucru, şi la Finalizate
+  ? `<span class="facturat-partial" title="Produse facturate separat: ${esc(c.facturi_produse ?? '')}">parţial ${c.poz_facturate}/${c.nr_pozitii} · <strong class="mono">${esc(c.facturi_produse ?? '')}</strong></span>`
   : '<span class="nefacturat">nefacturat</span>';
+
+// ── Facturează separat (userul, 2026-11-06) — doar la ridicare personală, cu cel puţin 2 produse nefacturate:
+// fereastra cu produsele (bifezi ce se facturează) + nr. facturii. Comanda rămâne una; facturată parţial apare şi
+// la În lucru, şi la Finalizate; cu ultimele produse e facturată ca întreg (server/api/comenzi.js facturaSeparat).
+const nefacturate = pozitii => pozitii.map((p, k) => ({ p, k })).filter(x => !x.p.factura_nr);
+const poateSeparat = (c, pozitii) => c.tip === 'comanda' && !c.anulat && !c.factura_nr
+  && String(c.livrare ?? '').trim().toLowerCase() === 'ridicare personala' && nefacturate(pozitii ?? []).length >= 2;
+const butonSeparat = (c, pozitii) => (poateSeparat(c, pozitii)
+  ? ' <button class="mic fact-sep" title="Bifezi produsele care se facturează acum — restul rămân nefacturate">Facturează separat…</button>' : '');
+// produsele facturate separat (în pagina comenzii / cardul din dreapta), cu Anulează pt. conducere / admin
+const facturateSeparat = (c, pozitii, cuAnulare = false) => {
+  // facturată ca întreg: doar produsele cu altă factură decât a comenzii (facturate separat înainte)
+  const f = pozitii.map((p, k) => ({ p, k })).filter(x => x.p.factura_nr && x.p.factura_nr !== c.factura_nr);
+  if (!f.length) return '';
+  cuAnulare = cuAnulare && !c.factura_nr;
+  return `<div class="fact-produse"><span class="dim mic">${c.factura_nr ? 'Facturate separat înainte' : `Facturate separat (${f.length}/${pozitii.length})`}:</span>${f.map(({ p, k }) => `<div>
+    ${k + 1}. ${esc(p.eticheta)} — <strong class="mono">${esc(p.factura_nr)}</strong> <span class="dim mic">${deCine(p.facturat_de_nume, p.facturat_la)}</span>${
+      cuAnulare && poateAnulaFactura() ? ` <button class="mic rosu-contur anuleaza-fact-produs" data-poz="${k}">Anulează</button>` : ''}</div>`).join('')}</div>`;
+};
+function deschideFacturaSeparat(c, pozitii, dupa) {
+  const d = document.createElement('dialog');
+  d.className = 'mesaj-dialog fact-sep-dialog';
+  const ls = nefacturate(pozitii);
+  d.innerHTML = `<h3>Facturează separat</h3>
+    <p class="dim mic">Bifează produsele care se facturează acum. Celelalte rămân nefacturate, pe aceeaşi comandă.</p>
+    <div class="fact-sep-lista">${ls.map(({ p, k }) => `<label><input type="checkbox" value="${k}"> <span><b>${k + 1}. ${esc(p.eticheta)}</b>
+      <span class="dim mic">${esc(rezumatProdus(p))}</span></span></label>`).join('')}</div>
+    <div class="fact-sep-copiere"><span class="dim mic">Pentru NeoManager, liniile produselor bifate:</span>
+      <button type="button" class="mic cop-cod" disabled>Copiază coduri</button><button type="button" class="mic cop-cant" disabled>Copiază cantităţi</button></div>
+    <label class="fact-sep-nr">Nr. factură <input type="text" maxlength="40" placeholder="nr. din NeoManager" autocomplete="off"></label>
+    <div class="eroare" hidden></div>
+    <div class="butoane"><button type="button" class="renunta">Renunţă</button><button type="button" class="primar ok" disabled>Facturează</button></div>`;
+  document.body.append(d);
+  const bife = [...d.querySelectorAll('input[type=checkbox]')], nr = d.querySelector('.fact-sep-nr input'), ok = d.querySelector('.ok');
+  const err = d.querySelector('.eroare');
+  const bifate = () => bife.filter(b => b.checked).map(b => pozitii[+b.value]);
+  const copiere = (cls, f) => d.querySelector(cls).addEventListener('click', async e => {
+    const linii = facturareTotala(bifate()), b = e.currentTarget, t = b.textContent;
+    b.textContent = (await copiaza(linii.map(f))) ? '✓ copiat' : '⚠ eroare';
+    setTimeout(() => { b.textContent = t; }, 1400);
+  });
+  copiere('.cop-cod', l => l.cod);
+  copiere('.cop-cant', l => qtyText(l.cantitate));
+  const stare = () => {
+    const n = bife.filter(b => b.checked).length;
+    d.querySelectorAll('.cop-cod, .cop-cant').forEach(b => { b.disabled = !n; });
+    ok.disabled = !n || !nr.value.trim();
+    ok.textContent = !n ? 'Facturează' : n === ls.length ? `Facturează tot (${n})` : `Facturează ${n} din ${ls.length}`;
+  };
+  bife.forEach(b => b.addEventListener('change', stare)); nr.addEventListener('input', stare);
+  const inchide = () => { d.close(); d.remove(); };
+  d.querySelector('.renunta').addEventListener('click', inchide);
+  d.addEventListener('cancel', e => { e.preventDefault(); inchide(); });
+  ok.addEventListener('click', async () => {
+    ok.disabled = true;
+    const r = await api(`/api/comenzi/${c.id}/factura-separat`, { method: 'POST',
+      body: JSON.stringify({ pozitii: bife.filter(b => b.checked).map(b => +b.value), numar: nr.value }) });
+    if (r && !r.ok) { err.textContent = (await r.json().catch(() => ({}))).eroare || 'Salvarea a eşuat.'; err.hidden = false; stare(); return; }
+    inchide(); dupa();
+  });
+  d.showModal(); stare();
+}
 const formFactura = c => `<span class="factura-form" data-id="${c.id}">
        <input class="factura-nr" placeholder="nr. factură" autocomplete="off">
        <button class="mic primar factura-ok" disabled>${c.finalizat_la ? 'Marchează facturat' : 'Marchează finalizat şi facturat'}</button>
@@ -270,7 +353,16 @@ const formFactura = c => `<span class="factura-form" data-id="${c.id}">
 
 // Leagă câmpurile de facturare din `radacina`; după salvare, `dupa()` re-randează. `c` = comanda —
 // facturarea o finalizează, deci aceeaşi întrebare ca la „Marchează finalizată" (livrarea schimbată după print).
-function leagaFacturare(radacina, c, dupa) {
+function leagaFacturare(radacina, c, dupa, pozitii = []) {
+  radacina.querySelectorAll('.fact-sep').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); deschideFacturaSeparat(c, pozitii, dupa); }));
+  radacina.querySelectorAll('.anuleaza-fact-produs').forEach(b => b.addEventListener('click', async e => {
+    e.stopPropagation();
+    const p = pozitii[+b.dataset.poz];
+    if (!(await confirma(`Anulezi factura ${p.factura_nr} pentru „${p.eticheta}”? Produsul redevine nefacturat.`, 'Da, anulează'))) return;
+    const r = await api(`/api/comenzi/${c.id}/factura-separat/${b.dataset.poz}`, { method: 'DELETE' });
+    if (r && !r.ok) return alerta((await r.json().catch(() => ({}))).eroare || 'Anularea a eşuat.');
+    dupa();
+  }));
   radacina.querySelectorAll('.factura-form').forEach(f => {
     const inp = f.querySelector('.factura-nr'), btn = f.querySelector('.factura-ok');
     f.addEventListener('click', e => e.stopPropagation());   // nu deschide detaliul
@@ -888,8 +980,8 @@ function cardDetalii({ comanda: c, cerere, cerereFactura, cerereNumar, plataNuma
       ${c.confirmat_la ? pas('gata', 'Acceptat', deCine(c.confirmat_de_nume, c.confirmat_la))
         : pas(c.anulat ? 'viitor' : 'acum', 'Acceptat', c.anulat ? '' : `<span class="urmeaza">urmează „${ePlata ? 'Plată primită şi printează' : 'Acceptă comanda şi printează'}"</span>`)}
       ${!eComanda ? pas('viitor', 'Facturat', '')
-        : c.factura_nr ? pas('gata', 'Facturat', `<strong class="mono">${esc(c.factura_nr)}</strong> · ${deCine(c.facturat_de_nume, c.facturat_la)}${schimbareFactura(c, cerereFactura)}`)
-        : pas(activa ? 'acum' : 'viitor', 'Facturat', activa ? formFactura(c) : '<span class="nefacturat">nefacturat</span>', 'facturare')}
+        : c.factura_nr ? pas('gata', 'Facturat', `<strong class="mono">${esc(c.factura_nr)}</strong> · ${deCine(c.facturat_de_nume, c.facturat_la)}${schimbareFactura(c, cerereFactura)}${facturateSeparat(c, pozitii)}`)
+        : pas(activa ? 'acum' : 'viitor', 'Facturat', `${facturateSeparat(c, pozitii)}${activa ? formFactura(c) + butonSeparat(c, pozitii) : '<span class="nefacturat">nefacturat</span>'}`, 'facturare')}
       ${!eComanda ? '' : !sticla ? pas('info', 'Sticlă', '<span class="dim">fără sticlă</span>')
         : sticla.comandate === sticla.total ? pas('gata', 'Sticlă', `comandată ${deCine(comandate.at(-1)?.comandat_de_nume, comandate.map(l => l.comandat_la).sort().at(-1))}`)
         : pas(activa ? 'acum' : 'viitor', 'Sticlă', `${sticlaHtml(sticla)}${activa ? ` <a class="cc-link" href="#comanda/${c.id}" title="Sticla se comandă din pagina comenzii, pe furnizori">Comandă sticla</a>` : ''}`)}
@@ -898,7 +990,8 @@ function cardDetalii({ comanda: c, cerere, cerereFactura, cerereNumar, plataNuma
         : pas('viitor', 'Finalizat', eComanda && activa ? '<span class="dim">cu „Marchează finalizată" de sus</span>' : '')}
     </dl>
     <div class="cc-eticheta">${pozitii.length === 1 ? 'Produs' : `Produse <span class="cate">${pozitii.length}</span>`}</div>
-    <ul class="cc-produse">${pozitii.map(p => `<li><b>${esc(p.eticheta)}</b><span>${esc(rezumatProdus(p))}</span></li>`).join('')}</ul>
+    <ul class="cc-produse">${pozitii.map(p => `<li><b>${esc(p.eticheta)}</b><span>${esc(rezumatProdus(p))}</span>${p.factura_nr && !c.factura_nr
+      ? `<span class="facturat-produs">✓ facturat <span class="mono">${esc(p.factura_nr)}</span></span>` : ''}</li>`).join('')}</ul>
     ${c.observatii ? `<div class="cc-eticheta">Observaţii</div><p class="cc-obs">${esc(c.observatii)}</p>` : ''}`;
 }
 
@@ -917,7 +1010,7 @@ async function incarcaCard() {
   Adresa.marcheaza(el);
   opresteActiuni(el, d.cerere);
   leagaTreceri(el, d.comanda, () => mergiLa(id), d.pozitii.length);
-  leagaFacturare(el, d.comanda, () => mergiLa(id));
+  leagaFacturare(el, d.comanda, () => mergiLa(id), d.pozitii);
   leagaNumar(el, d.comanda, d.plataNumar, d.cerereNumar, () => mergiLa(id));
   $('ccInchide').addEventListener('click', () => selecteaza(null));
   $('ccDeschide').addEventListener('click', () => { location.hash = '#comanda/' + id; });
@@ -1148,7 +1241,7 @@ function specUsi(p) {
                 <dt>Nr. uşi</dt><dd class="mono">${p.nr_usi}</dd>`}</dl>`;
 }
 
-function blocTaburi(pozitii, total) {
+function blocTaburi(pozitii, total, notaFacturare = '') {
   const cell = (l, areCod) => `<tr>
     ${areCod ? `<td class="cod">${esc(l.cod ?? '—')}</td>` : ''}<td>${esc(l.denumire)}</td>
     <td class="num">${virgula(l.cantitate)}${l.um && l.um !== 'buc' ? ' ' + esc(l.um) : ''}</td>
@@ -1166,7 +1259,7 @@ function blocTaburi(pozitii, total) {
     spec: pePozitii(specPoz),
     necesar: pePozitii(p => (p.linii.necesar.length ? tabel(['Cod', 'Reper', 'Cant.', 'Debitare'], p.linii.necesar.map(l => cell(l, true)).join('')) : '')),
     client:  pePozitii(p => (p.linii.client.length ? tabel(['Reper', 'Cant.', 'Debitare'], p.linii.client.map(l => cell(l, false)).join('')) : '')),
-    facturare: `${tabel(['Cod', 'Denumire', 'Cant.'], total.map(l => cell({ ...l, debitare: undefined }, true)).join(''))}
+    facturare: `${notaFacturare ? `<p class="nota-facturare">${esc(notaFacturare)}</p>` : ''}${tabel(['Cod', 'Denumire', 'Cant.'], total.map(l => cell({ ...l, debitare: undefined }, true)).join(''))}
       <div class="butoane"><button id="copCod" class="primar">Copiază coduri</button><button id="copCant" class="primar">Copiază cantităţi</button></div>
       <p class="dim mic" style="margin-top:8px">Paste pe coloană în grila NeoManager: întâi celula de start din „Cod", apoi cea din „Cantitate".</p>`,
   };
@@ -1221,7 +1314,11 @@ async function renderDetaliu(id) {
 
   const { comanda: c, cerere, cerereFactura, cerereNumar, plataNumar, pozitii, coduri, scanari, sticlaLinii = [], fise: printari = [] } = await r.json();
   const fise = pozitii.length > 1 ? numeFise(pozitii, await incarcaGame()) : [];
-  const total = facturareTotala(pozitii);
+  // facturată parţial (userul, 2026-11-06): de copiat în NeoManager doar produsele încă nefacturate
+  const ramase = c.factura_nr ? pozitii : pozitii.filter(p => !p.factura_nr);
+  const total = facturareTotala(ramase);
+  const notaFacturare = ramase.length < pozitii.length
+    ? `Doar produsele încă nefacturate (${ramase.length} din ${pozitii.length}) — cele facturate separat nu mai intră aici.` : '';
   const eOferta = c.tip === 'oferta';
   const ePlata  = c.tip === 'plata';     // aşteaptă plata — încă nu e comandă în lucru
   const eComanda = c.tip === 'comanda';
@@ -1280,8 +1377,8 @@ async function renderDetaliu(id) {
           : pas(c.anulat ? 'viitor' : 'acum', 'Acceptat', c.anulat ? '' : `<span class="urmeaza">Urmează: „${ePlata ? 'Plată primită şi printează' : 'Acceptă comanda şi printează'}"</span>`)}
         ${eComanda ? pas(c.factura_nr ? 'gata' : 'acum', 'Facturat', c.factura_nr
           ? `<strong class="mono">${esc(c.factura_nr)}</strong> · ${deCine(c.facturat_de_nume, c.facturat_la)}${poateAnulaFactura() ? ' <button class="mic rosu-contur" id="anuleazaFactura">Anulează</button>'
-            : cerereFactura?.stare === 'deschisa' || c.anulat ? '' : ' <button class="mic" id="cereFactura" title="Numărul nou îl aprobă conducerea">Cere schimbarea…</button>'}${schimbareFactura(c, cerereFactura)}`
-          : formFactura(c), 'facturare') : pas('viitor', 'Facturat', '')}
+            : cerereFactura?.stare === 'deschisa' || c.anulat ? '' : ' <button class="mic" id="cereFactura" title="Numărul nou îl aprobă conducerea">Cere schimbarea…</button>'}${schimbareFactura(c, cerereFactura)}${facturateSeparat(c, pozitii)}`
+          : `${facturateSeparat(c, pozitii, true)}${formFactura(c)}${butonSeparat(c, pozitii)}`, 'facturare') : pas('viitor', 'Facturat', '')}
         ${eComanda ? pas('info', 'Sticlă', sticlaLinii.length ? blocSticla(sticlaLinii) : '<span class="dim">— fără sticlă de comandat</span>') : ''}
         ${c.finalizat_la ? pas('gata', 'Finalizat', deCine(c.finalizat_de_nume, c.finalizat_la))
           : pas('viitor', 'Finalizat', eComanda ? '<span class="dim">după „Marchează finalizată" sau la facturare</span>' : '')}
@@ -1293,7 +1390,7 @@ async function renderDetaliu(id) {
       <span class="dim">AWB-ul se va genera şi printa direct de aici.</span>
       <button disabled title="În curând">Generează AWB</button></div>` : ''}
 
-    ${blocTaburi(pozitii, total)}
+    ${blocTaburi(pozitii, total, notaFacturare)}
 
     ${scanari ? `<div class="sectiune" data-z="atelier">
       <h2>Atelier</h2>
@@ -1348,7 +1445,7 @@ async function renderDetaliu(id) {
     };
     dlg.showModal();
   });
-  leagaFacturare($('continut'), c, () => renderDetaliu(id));
+  leagaFacturare($('continut'), c, () => renderDetaliu(id), pozitii);
   leagaNumar($('continut'), c, plataNumar, cerereNumar, () => renderDetaliu(id));
   leagaSticla(sticlaLinii, () => renderDetaliu(id));
   $('anuleazaFactura')?.addEventListener('click', async () => {

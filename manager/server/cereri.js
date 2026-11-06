@@ -126,8 +126,10 @@ const decide = aproba => async ctx => {
     }
     if (aproba && r.tip === 'numar' && r.comanda_id) d.prepare('UPDATE comanda SET oferta_nr = ? WHERE id = ?').run(r.numar_nou, r.comanda_id);
     if (aproba && r.tip === 'factura' && r.comanda_id) {
+      const vechi = d.prepare('SELECT factura_nr FROM comanda WHERE id = ?').get(r.comanda_id)?.factura_nr;
       d.prepare(`UPDATE comanda SET factura_nr = ?, facturat_la = ${ACUM()}, facturat_de = ? WHERE id = ?`)
         .run(r.numar_nou, r.creat_de, r.comanda_id);
+      if (vechi) d.prepare('UPDATE pozitie SET factura_nr = ? WHERE comanda_id = ? AND factura_nr = ?').run(r.numar_nou, r.comanda_id, vechi);
     }
   });
   anunta({ comanda: r.comanda_id });

@@ -282,6 +282,9 @@ async function modifica(ctx) {
       if (v) folosite.add(v.id);
       return v ?? null;
     });
+    // un produs facturat separat nu se schimbă şi nu se scoate (factura lui e deja în NeoManager)
+    const facturatAtins = vechi.find(p => p.factura_nr && !folosite.has(p.id));
+    if (facturatAtins) throw Object.assign(new Error(`„${facturatAtins.eticheta}” e deja facturat (${facturatAtins.factura_nr}) — nu se mai schimbă şi nu se scoate din comandă.`), { cod: 409 });
     // idx temporar peste cele finale (UNIQUE pe comandă), apoi poziţiile noi
     d.prepare('UPDATE pozitie SET idx = idx + 10000 WHERE comanda_id = ?').run(id);
     const ids = corp.pozitii.map((p, k) => potrivit[k]?.id ?? scriePozitia(d, id, p));
@@ -367,12 +370,16 @@ async function adauga(ctx) {
 
 // ── Citire ───────────────────────────────────────────────────────────────────
 
+// Facturată parţial: nefacturată ca întreg, dar cu cel puţin un produs facturat separat („Facturează separat")
+const FACTURATA_PARTIAL = `(c.factura_nr IS NULL AND EXISTS (SELECT 1 FROM pozitie pf WHERE pf.comanda_id = c.id AND pf.factura_nr IS NOT NULL))`;
+
 // tab: 'oferta' | 'plata' (aşteaptă plata) | 'comanda' (în lucru) | 'finalizata'
 const FILTRE = {
   oferta:     "c.tip = 'oferta'",
   plata:      "c.tip = 'plata'",
   comanda:    "c.tip = 'comanda' AND c.finalizat_la IS NULL",
-  finalizata: "c.tip = 'comanda' AND c.finalizat_la IS NOT NULL",
+  // + cele facturate parţial (userul, 2026-11-06): stau şi la În lucru, şi aici, până se facturează tot
+  finalizata: `c.tip = 'comanda' AND (c.finalizat_la IS NOT NULL OR ${FACTURATA_PARTIAL})`,
   toate:      '1',   // căutarea globală din manager: toate stările la un loc
 };
 
@@ -409,6 +416,9 @@ function listeaza(ctx) {
     SELECT c.id, c.numar, c.oferta_nr, c.tip, c.client_nume, c.client_telefon, c.creat_la, c.confirmat_la, c.finalizat_la, c.tip_schimbat_la,
            c.factura_nr, c.facturat_la, c.plata, c.incasare, c.avans, c.achitat_la,
            u.nume AS creat_de_nume,
+           -- facturarea pe produs: câte produse sunt facturate separat şi cu ce numere
+           (SELECT COUNT(*) FROM pozitie pf WHERE pf.comanda_id = c.id AND pf.factura_nr IS NOT NULL) AS poz_facturate,
+           (SELECT GROUP_CONCAT(DISTINCT pf.factura_nr) FROM pozitie pf WHERE pf.comanda_id = c.id AND pf.factura_nr IS NOT NULL) AS facturi_produse,
            -- toate produsele ofertei, în ordine: „Ramă 820 + Confort Gamma + Ofertă cu amănuntul"
            (SELECT GROUP_CONCAT(eticheta, ' + ') FROM (SELECT p.eticheta FROM pozitie p WHERE p.comanda_id = c.id ORDER BY p.idx)) AS sistem,
            (SELECT COUNT(*) FROM pozitie p WHERE p.comanda_id = c.id) AS nr_pozitii,
@@ -454,7 +464,8 @@ function detaliu(ctx) {
   comanda.fisa_de_completat = !!comanda.livrare_modificata_la && !!db().prepare(`SELECT 1 FROM (SELECT MAX(la) AS ultima
     FROM fisa_printare WHERE comanda_id = ? GROUP BY poz) WHERE ultima < ? LIMIT 1`).get(id, comanda.livrare_modificata_la);
 
-  const pozitii = db().prepare('SELECT * FROM pozitie WHERE comanda_id = ? ORDER BY idx').all(id);
+  const pozitii = db().prepare(`SELECT p.*, uf.nume AS facturat_de_nume FROM pozitie p LEFT JOIN utilizator uf ON uf.id = p.facturat_de
+                                  WHERE p.comanda_id = ? ORDER BY p.idx`).all(id);
   const linii   = db().prepare(`
     SELECT l.* FROM pozitie_linie l JOIN pozitie p ON p.id = l.pozitie_id
      WHERE p.comanda_id = ? ORDER BY l.pozitie_id, l.lista, l.idx
@@ -631,6 +642,8 @@ function inapoiInOferta(ctx) {
   if (!c.la_timp && c.tip !== 'plata') return eroare(ctx.res, 409, `Înapoi în ofertă se poate doar în primele ${MINUTE_INAPOI} minute.`);
   if (c.factura_nr)         return eroare(ctx.res, 409, 'Comanda e deja facturată — anulează întâi factura.');
   if (c.finalizat_la)       return eroare(ctx.res, 409, 'Comanda e deja finalizată.');
+  if (db().prepare('SELECT 1 FROM pozitie WHERE comanda_id = ? AND factura_nr IS NOT NULL').get(id))
+    return eroare(ctx.res, 409, 'Unele produse sunt deja facturate separat.');
   const lucrat = db().prepare(`
     SELECT EXISTS (SELECT 1 FROM pozitie_linie l JOIN pozitie p ON p.id = l.pozitie_id
                     WHERE p.comanda_id = ? AND l.comandat_la IS NOT NULL) AS sticla,
@@ -707,9 +720,62 @@ async function factura(ctx) {
   const finalizeaza = !!numar && !c.finalizat_la;
   db().prepare(`UPDATE comanda SET factura_nr = ?, facturat_la = ${numar ? ACUM() : 'NULL'}, facturat_de = ? WHERE id = ?`)
     .run(numar || null, numar ? ctx.utilizator.id : null, id);
+  // produsele facturate cu numărul vechi (ultimul „Facturează separat" care a facturat tot) îl urmează
+  if (c.factura_nr) db().prepare(`UPDATE pozitie SET factura_nr = ?, facturat_la = ${numar ? 'facturat_la' : 'NULL'}, facturat_de = ${numar ? 'facturat_de' : 'NULL'}
+    WHERE comanda_id = ? AND factura_nr = ?`).run(numar || null, id, c.factura_nr);
   if (finalizeaza) db().prepare(`UPDATE comanda SET finalizat_la = ${ACUM()}, finalizat_de = ? WHERE id = ?`).run(ctx.utilizator.id, id);
   anunta({ comanda: id });
   json(ctx.res, 200, { comanda: db().prepare('SELECT * FROM comanda WHERE id = ?').get(id), finalizata: finalizeaza });
+}
+
+// ── Facturează separat (userul, 2026-11-06) — doar la ridicare personală: produsele bifate primesc un nr. de
+// factură; comanda rămâne una singură, facturată parţial (şi la În lucru, şi la Finalizate). Când se facturează şi
+// ultimele produse, e facturată ca întreg (factura_nr = numărul ăsta) şi finalizată, ca la facturarea obişnuită.
+// { pozitii: [k…] (0, 1, … — ordinea din comandă), numar }
+const RIDICARE = 'ridicare personala';
+async function facturaSeparat(ctx) {
+  const id = Number(ctx.params.id);
+  const corp = await corpJson(ctx.req);
+  const c = db().prepare('SELECT * FROM comanda WHERE id = ?').get(id);
+  if (!c)                  return eroare(ctx.res, 404, 'Comandă inexistentă.');
+  if (c.tip !== 'comanda' || c.anulat) return eroare(ctx.res, 409, 'Doar o comandă acceptată se poate factura.');
+  if (String(c.livrare ?? '').trim().toLowerCase() !== RIDICARE) return eroare(ctx.res, 409, 'Facturarea separată e doar la ridicare personală.');
+  if (c.factura_nr)        return eroare(ctx.res, 409, `Comanda e deja facturată (${c.factura_nr}).`);
+  if (require('../cereri.js').peHold(id)) return eroare(ctx.res, 409, 'Comanda are o anulare cerută.');
+  const numar = String(corp.numar ?? '').trim().slice(0, 40);
+  if (!numar) return eroare(ctx.res, 400, 'Completează numărul facturii.');
+  const pozitii = db().prepare('SELECT id, idx, eticheta, factura_nr FROM pozitie WHERE comanda_id = ? ORDER BY idx').all(id);
+  const alese = [...new Set((Array.isArray(corp.pozitii) ? corp.pozitii : []).map(Number).filter(Number.isInteger))];
+  if (!alese.length) return eroare(ctx.res, 400, 'Bifează produsele care se facturează.');
+  const pe = alese.map(k => pozitii[k]);
+  if (pe.some(p => !p)) return eroare(ctx.res, 400, 'Produs inexistent.');
+  const deja = pe.find(p => p.factura_nr);
+  if (deja) return eroare(ctx.res, 409, `„${deja.eticheta}” e deja facturat (${deja.factura_nr}).`);
+  const tot = pozitii.every(p => p.factura_nr || alese.includes(p.idx - 1));
+  tranzactie(d => {
+    const pune = d.prepare(`UPDATE pozitie SET factura_nr = ?, facturat_la = ${ACUM()}, facturat_de = ? WHERE id = ?`);
+    for (const p of pe) pune.run(numar, ctx.utilizator.id, p.id);
+    if (!tot) return;
+    // ultimele produse: comanda e facturată ca întreg — şi finalizată
+    d.prepare(`UPDATE comanda SET factura_nr = ?, facturat_la = ${ACUM()}, facturat_de = ? WHERE id = ?`).run(numar, ctx.utilizator.id, id);
+    if (!c.finalizat_la) d.prepare(`UPDATE comanda SET finalizat_la = ${ACUM()}, finalizat_de = ? WHERE id = ?`).run(ctx.utilizator.id, id);
+  });
+  anunta({ comanda: id });
+  json(ctx.res, 200, { comanda: db().prepare('SELECT * FROM comanda WHERE id = ?').get(id), toata: tot });
+}
+
+// Anularea facturii unui produs — ca la comandă: doar conducerea / adminul (biroul o cere de la ei)
+function anuleazaFacturaProdus(ctx) {
+  const id = Number(ctx.params.id), k = Number(ctx.params.poz);
+  if (!DECID.includes(ctx.utilizator.rol)) return eroare(ctx.res, 403, 'Factura unui produs o anulează doar conducerea sau administratorul.');
+  const c = db().prepare('SELECT factura_nr FROM comanda WHERE id = ?').get(id);
+  if (!c) return eroare(ctx.res, 404, 'Comandă inexistentă.');
+  if (c.factura_nr) return eroare(ctx.res, 409, 'Comanda e facturată ca întreg — anulează întâi factura comenzii.');
+  const r = db().prepare('UPDATE pozitie SET factura_nr = NULL, facturat_la = NULL, facturat_de = NULL WHERE comanda_id = ? AND idx = ? AND factura_nr IS NOT NULL')
+    .run(id, k + 1);
+  if (!r.changes) return eroare(ctx.res, 404, 'Produsul nu e facturat.');
+  anunta({ comanda: id });
+  json(ctx.res, 200, { ok: true });
 }
 
 // Fişa de atelier a pornit la print (butonul „Fişă" din manager — userul, 2026-10-13:
@@ -790,8 +856,8 @@ const sumar = ctx => json(ctx.res, 200, {
   SELECT SUM(tip = 'oferta')                              AS oferte,
          SUM(tip = 'plata')                               AS plata,
          SUM(tip = 'comanda' AND finalizat_la IS NULL)     AS comenzi,
-         SUM(tip = 'comanda' AND finalizat_la IS NOT NULL) AS finalizate
-    FROM comanda WHERE anulat = 0
+         SUM(tip = 'comanda' AND (finalizat_la IS NOT NULL OR ${FACTURATA_PARTIAL})) AS finalizate
+    FROM comanda c WHERE anulat = 0
 `).get(),
   sticla: require('../sticla.js').sumarSticla(),   // bucăţi de sticlă de comandat
   vopsitorie: require('../vopsitorie.js').nrNeduse(),   // comenzi cu RAL încă neduse la vopsit
@@ -820,6 +886,8 @@ module.exports = {
     ['POST', '/api/comenzi/:id/finalizeaza', { handler: schimbaFinalizare(true) }],
     ['POST', '/api/comenzi/:id/redeschide',  { handler: schimbaFinalizare(false) }],
     ['POST', '/api/comenzi/:id/factura',     { handler: factura }],
+    ['POST', '/api/comenzi/:id/factura-separat',        { handler: facturaSeparat }],
+    ['DELETE', '/api/comenzi/:id/factura-separat/:poz', { handler: anuleazaFacturaProdus }],
     ['POST', '/api/comenzi/:id/numar',       { handler: numar }],
     ['POST', '/api/comenzi/:id/fixare',      { handler: fixeaza }],
     ['POST', '/api/comenzi/:id/fisa',        { handler: fisaPrintata }],

@@ -646,6 +646,13 @@ const MIGRATII = [
     );
     CREATE INDEX livrare_extra_livrare ON livrare_extra (livrare_id);
     CREATE INDEX livrare_extra_comanda ON livrare_extra (comanda_id);`),
+  // v44 → v45 (2026-11-06): factura pe PRODUS — „Facturează separat" la ridicare personală: o comandă cu mai multe
+  // produse se facturează pe bucăţi; facturată parţial apare şi la În lucru, şi la Finalizate (server/api/comenzi.js)
+  d => {
+    d.exec('ALTER TABLE pozitie ADD COLUMN factura_nr TEXT');
+    d.exec('ALTER TABLE pozitie ADD COLUMN facturat_la TEXT');
+    d.exec('ALTER TABLE pozitie ADD COLUMN facturat_de INTEGER REFERENCES utilizator(id)');
+  },
 ];
 
 // Exportată pt. test.
