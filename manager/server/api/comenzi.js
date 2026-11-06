@@ -327,9 +327,22 @@ async function modifica(ctx) {
     // renumerotare 1..N, în ordine (toate sunt acum peste N)
     ids.forEach((pid, k) => d.prepare('UPDATE pozitie SET idx = ? WHERE id = ?').run(k + 1, pid));
 
+    // ce s-a schimbat (userul, 2026-11-06: „Vezi detalii" la Modificat, în drumul comenzii) — jurnalul îl scrie
+    const nouC = d.prepare('SELECT * FROM comanda WHERE id = ?').get(id);
+    const campuri = ['client_nume', 'client_telefon', 'client_adresa', 'livrare', 'agent', 'oferta_nr', 'plata', 'incasare']
+      .filter(k => (c[k] ?? '') !== (nouC[k] ?? '')).map(k => ({ camp: k, din: c[k] ?? null, in: nouC[k] ?? null }));
+    const scoaseVechi = vechi.filter(p => !folosite.has(p.id));
+    const produse = corp.pozitii.map((p, k) => {
+      if (potrivit[k]) return null;
+      const peLoc = scoaseVechi.find(v => v.idx - 10000 === k + 1 || v.idx === k + 1);   // acelaşi loc → modificat
+      if (peLoc) { scoaseVechi.splice(scoaseVechi.indexOf(peLoc), 1); return { fel: 'modificat', nr: k + 1, eticheta: String(p.eticheta || p.sistem), din: peLoc.eticheta }; }
+      return { fel: 'adaugat', nr: k + 1, eticheta: String(p.eticheta || p.sistem) };
+    }).filter(Boolean).concat(scoaseVechi.map(v => ({ fel: 'scos', eticheta: v.eticheta })));
+
     return { comanda: { id, numar: c.numar, ...(config.scanare && { coduri: cod ? [{ cod_bare: cod }] : [] }) },
              // la comandă: produsele de printat din nou (poz) + sticla comandată care nu mai e în ea
-             ...(eComanda && { pozitii: schimbate, sticlaRamasa: ramasa }) };
+             ...(eComanda && { pozitii: schimbate, sticlaRamasa: ramasa }),
+             schimbari: { campuri, produse } };
   });
 
   anunta({ comanda: id });
@@ -495,6 +508,7 @@ function detaliu(ctx) {
     sticla,                          // null = comanda n-are sticlă de comandat
     sticlaLinii: require('../sticla.js').sticlaComenzii(id),   // pe furnizor: mail + bifă
     fise: fiseComenzii(id),          // printările fişei (prima + retipăririle)
+    modificari: require('../activitate.js').modificariComenzii(id),   // drumul comenzii: modificat / adăugat, cine şi când
     // codul de bare + istoricul din atelier — doar cu scanarea pornită
     ...(config.scanare && { coduri, scanari: require('../scanare.js').scanariComanda(id) }),
     pozitii: pozitii.map(p => ({

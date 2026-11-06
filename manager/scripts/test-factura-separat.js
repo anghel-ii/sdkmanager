@@ -108,6 +108,25 @@ function comanda(livrare = 'Ridicare personala', produse = ['Confort Verona', 'R
   const m = await cheama('PUT', '/api/comenzi/:id', { params: { id: id2 }, corp: { ...corp, pozitii: [vechi[0], vechi[1]] } });
   verifica('scos doar unul nefacturat → merge, factura rămâne pe produsul ei', m.cod === 200 && poz(id2).join() === 'F300,', JSON.stringify(m.date));
 
+  console.log('\nCe s-a schimbat (drumul comenzii: „Vezi detalii")');
+  verifica('produsul scos e notat', m.date.schimbari.produse.some(x => x.fel === 'scos' && x.eticheta === 'UTIL Atena'), JSON.stringify(m.date.schimbari));
+  const m2 = await cheama('PUT', '/api/comenzi/:id', { params: { id: id2 }, corp: { ...corp, client: { nume: 'Client Nou', adresa: 'Str. Nouă 5, Cluj-Napoca, Cluj' },
+    pozitii: [vechi[0], { ...vechi[1], latime: 1500 }, { ...vechi[2], eticheta: 'Lux Vent' }] } });
+  const sc = m2.date.schimbari;
+  verifica('câmpurile schimbate: client + adresă', sc.campuri.some(x => x.camp === 'client_nume' && x.din === 'Client' && x.in === 'Client Nou')
+    && sc.campuri.some(x => x.camp === 'client_adresa'), JSON.stringify(sc.campuri));
+  verifica('produsul 2 modificat, al 3-lea adăugat', sc.produse.some(x => x.fel === 'modificat' && x.nr === 2) && sc.produse.some(x => x.fel === 'adaugat' && x.eticheta === 'Lux Vent'), JSON.stringify(sc.produse));
+  const { OPERATII } = require('../server/activitate.js');
+  const text = OPERATII['PUT /api/comenzi/:id'][2]({}, m2.date);
+  verifica('jurnalul: textul detaliat', /Client: Client → Client Nou/.test(text) && /produsul 2 modificat/.test(text) && /produs adăugat: Lux Vent/.test(text), text);
+  verifica('fără schimbări → „nimic schimbat"', /nimic schimbat/.test(OPERATII['PUT /api/comenzi/:id'][2]({}, { schimbari: { campuri: [], produse: [] } })));
+  verifica('adăugare: numele produselor', OPERATII['POST /api/comenzi/:id/adauga'][2]({ pozitii: [{ eticheta: 'Ramă 820' }, { eticheta: 'UTIL Roma' }] }) === 'Ramă 820 · UTIL Roma');
+  const { noteaza } = require('../server/activitate.js');
+  noteaza({ utilizator: ana, fel: 'schimbare', operatie: 'Comandă modificată', detalii: text, comanda: id2 });
+  noteaza({ utilizator: ana, fel: 'vizualizare', operatie: 'A deschis comanda', comanda: id2 });
+  const mods = (await cheama('GET', '/api/comenzi/:id', { params: { id: id2 } })).date.modificari;
+  verifica('pagina comenzii primeşte modificările (fără vizualizări)', mods.length === 1 && mods[0].operatie === 'Comandă modificată' && mods[0].utilizator_nume === 'Ana Birou', JSON.stringify(mods));
+
   console.log('\nArhivate (30 de zile de la facturare)');
   const zile = n => db().prepare(`SELECT datetime('now', ?) AS d`).get(`-${n} days`).d;
   const fact = (cid, n) => db().prepare(`UPDATE comanda SET factura_nr = 'FA', facturat_la = ?, finalizat_la = ? WHERE id = ?`).run(zile(n), zile(n), cid);

@@ -38,6 +38,27 @@ const comandaTaskului = id => db().prepare('SELECT comanda_id AS c FROM task WHE
 // „METODĂ /cale" → [operaţie, fel, detalii(corp, răspuns, params), comenzi(corp, răspuns, params)]
 // operaţia poate fi şi o funcţie (ex. factura: trecută / anulată); `comenzi` — când nu e :id din /api/comenzi/:id
 const S = 'schimbare', C = 'cont', V = 'vizualizare';
+// Ce s-a schimbat la „Modifică" (server/api/comenzi.js întoarce `schimbari`) — textul din jurnal şi din „Vezi detalii"
+// (drumul comenzii). Nimic schimbat → null (rămâne textul scurt de până acum).
+const NUME_CAMP = { client_nume: 'Client', client_telefon: 'Telefon', client_adresa: 'Adresă', livrare: 'Livrare', agent: 'Agent',
+  oferta_nr: 'Nr. ofertă / document', plata: 'Facturare', incasare: 'Încasare' };
+const valoareCamp = (k, v) => (v == null || v === '' ? '—' : k === 'plata' ? (PLATI[v] ?? v) : k === 'incasare' ? (INCASARI[v] ?? v) : scurt(v, 80));
+function textSchimbari(s) {
+  if (!s) return null;
+  const x = [
+    ...(s.campuri ?? []).map(c => `${NUME_CAMP[c.camp] ?? c.camp}: ${valoareCamp(c.camp, c.din)} → ${valoareCamp(c.camp, c.in)}`),
+    ...(s.produse ?? []).map(p => (p.fel === 'adaugat' ? `produs adăugat: ${scurt(p.eticheta, 60)}`
+      : p.fel === 'scos' ? `produs scos: ${scurt(p.eticheta, 60)}`
+      : `produsul ${p.nr} modificat: ${scurt(p.eticheta, 60)}${p.din && p.din !== p.eticheta ? ` (era ${scurt(p.din, 60)})` : ''}`)),
+  ];
+  return x.length ? lista(...x) : 'nimic schimbat';
+}
+
+// Pt. drumul comenzii (userul, 2026-11-06): modificările şi adăugările, în ordine — cine, când, ce
+const OP_DRUM = ['Ofertă modificată', 'Comandă modificată', 'Produse adăugate la comandă', 'Livrarea / adresa modificată'];
+const modificariComenzii = id => peBune(() => db().prepare(`SELECT la, utilizator_nume, operatie, detalii FROM activitate
+  WHERE comanda_id = ? AND operatie IN (${OP_DRUM.map(() => '?').join(', ')}) ORDER BY la, id`).all(id, ...OP_DRUM));
+
 const OPERATII = {
   'POST /api/login':                         ['A intrat în cont', C],
   'POST /api/logout':                        ['A ieşit din cont', C],
@@ -52,14 +73,14 @@ const OPERATII = {
   'POST /api/comenzi':                       ['Ofertă nouă', S, b => lista(b.nume, b.ofertaNr, Array.isArray(b.pozitii) && `${b.pozitii.length} ${b.pozitii.length === 1 ? 'produs' : 'produse'}`),
                                                null, (b, r) => [r?.comanda?.id]],
   'PUT /api/comenzi/:id':                    [(b, p) => (db().prepare('SELECT tip FROM comanda WHERE id = ?').get(p.id)?.tip !== 'oferta' ? 'Comandă modificată' : 'Ofertă modificată'), S,
-                                               (b, r) => lista(b.nume, Array.isArray(b.pozitii) && `${b.pozitii.length} ${b.pozitii.length === 1 ? 'produs' : 'produse'}`,
+                                               (b, r) => lista(textSchimbari(r?.schimbari) ?? lista(b.nume, Array.isArray(b.pozitii) && `${b.pozitii.length} ${b.pozitii.length === 1 ? 'produs' : 'produse'}`),
                                                  Array.isArray(r?.pozitii) && (r.pozitii.length ? `de printat din nou: ${r.pozitii.map(k => `fişa ${k + 1}`).join(', ')}` : 'fişele rămân aceleaşi'),
-                                                 r?.sticlaRamasa?.length && `sticlă comandată scoasă: ${r.sticlaRamasa.map(l => l.cod).join(', ')}`)],
+                                                 r?.sticlaRamasa?.length > 0 && `sticlă comandată scoasă: ${r.sticlaRamasa.map(l => l.cod).join(', ')}`)],
   'POST /api/comenzi/:id/accepta':           ['Acceptată — comandă în lucru', S, (b, r) => lista(b.faraPlata === true && 'fără plată în avans', PLATI[b.plata] ?? b.plata, INCASARI[r?.comanda?.incasare],
                                                Number(b.avans) > 0 && `${r?.comanda?.achitat_la ? 'achitată' : 'avans'} ${lei(b.avans)}`)],
   'POST /api/comenzi/:id/asteapta-plata':    ['Trimisă la „Aşteaptă plata"', S, b => lista(PLATI[b.plata] ?? b.plata, b.numar && `nr. ${scurt(b.numar, 40)}`)],
   'POST /api/comenzi/:id/livrare':           ['Livrarea / adresa modificată', S, b => lista(b.livrare, b.adresa && scurt(b.adresa, 80))],
-  'POST /api/comenzi/:id/adauga':            ['Produse adăugate la comandă', S, b => Array.isArray(b.pozitii) && `${b.pozitii.length} ${b.pozitii.length === 1 ? 'produs' : 'produse'}`],
+  'POST /api/comenzi/:id/adauga':            ['Produse adăugate la comandă', S, b => Array.isArray(b.pozitii) && lista(...b.pozitii.map(x => scurt(x?.eticheta || x?.sistem, 60)))],
   'POST /api/comenzi/:id/inapoi-oferta':     ['Întoarsă în oferte', S],
   'POST /api/comenzi/:id/finalizeaza':       ['Marcată finalizată', S],
   'POST /api/comenzi/:id/redeschide':        ['Redeschisă (nu mai e finalizată)', S],
@@ -227,7 +248,7 @@ function getToate(ctx) {
 }
 
 module.exports = {
-  noteaza, dupaCerere, OPERATII,
+  noteaza, dupaCerere, OPERATII, modificariComenzii,
   rute: [
     ['POST', '/api/activitate',               { handler: postVazut }],
     ['GET',  '/api/activitate',               { rol: ['admin', 'conducere'], handler: getToate }],
