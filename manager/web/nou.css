@@ -162,7 +162,13 @@ table.lista td .sub { margin-top: 4px; }
 /* lista lângă card: nicio coloană nu iese (userul, 2026-10-26: „mai ales avansul") — când nu încap,
    data trece sub cine a creat-o (.stivuit, în aceeaşi celulă) */
 table.lista .stivuit { display: none; }
-body.ui-nou table.lista .facturat, body.ui-nou table.lista .nefacturat { white-space: nowrap; }
+body.ui-nou table.lista .nefacturat { white-space: nowrap; }
+/* numărul facturii: cel mult ~158 px, apoi pe rândul doi — la spaţii / după separatori (<wbr>, nrRupt în
+   web/manager); un număr fără separatori mai lung decât rândul se rupe doar ca ultimă soluţie (userul, 2026-11-06) */
+body.ui-nou table.lista .facturat, body.ui-nou table.lista .facturat-partial {
+  display: inline-block; max-width: 158px; white-space: normal; overflow-wrap: break-word; line-height: 1.35; vertical-align: top; }
+body.ui-nou table.lista .facturat { border-radius: 10px; display: inline-flex; gap: 4px; align-items: baseline; }   /* ✓ în stânga, numărul alături */
+body.ui-nou table.lista .facturat strong { min-width: 0; font-size: .74rem; }
 @container lista (max-width: 1060px) {
   body.ui-nou table.lista [data-c="data"] { display: none; }
   body.ui-nou table.lista td .stivuit { display: block; margin-top: 4px; }

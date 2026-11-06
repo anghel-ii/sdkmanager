@@ -281,12 +281,15 @@ const HASH_TAB = { oferta: '#oferte', plata: '#plata', comanda: '#comenzi', fina
 // Facturare: nr. facturii sau „nefacturat" (în listă). Câmpul pt. număr + „Marchează
 // facturat" (activ doar cu numărul completat) stau în cardul din dreapta şi în pagina comenzii.
 // La o comandă în lucru facturarea o şi finalizează (userul, 2026-10-26) — butonul o spune.
+// Numărul facturii în listă (userul, 2026-11-06: lista intra sub cardul din dreapta): poate trece pe rândul doi,
+// dar doar la spaţii sau după separatori (- / . _ ,) — nu prin mijlocul cuvintelor sau al numerelor
+const nrRupt = t => esc(t).replace(/([-/._,])/g, '$1<wbr>');
 // alte facturi pe produse decât a comenzii (facturată separat, apoi restul)
 const altele = c => String(c.facturi_produse ?? '').split(',').filter(x => x && x !== c.factura_nr);
 const facturareHtml = c => c.factura_nr
-  ? `<span class="facturat">✓ <strong class="mono">${esc([c.factura_nr, ...altele(c)].join(' + '))}</strong></span>`
+  ? `<span class="facturat">✓ <strong class="mono">${nrRupt([c.factura_nr, ...altele(c)].join(' + '))}</strong></span>`
   : c.poz_facturate > 0   // „Facturează separat" (userul, 2026-11-06): şi la În lucru, şi la Finalizate
-  ? `<span class="facturat-partial" title="Produse facturate separat: ${esc(c.facturi_produse ?? '')}">parţial ${c.poz_facturate}/${c.nr_pozitii} · <strong class="mono">${esc(c.facturi_produse ?? '')}</strong></span>`
+  ? `<span class="facturat-partial" title="Produse facturate separat: ${esc(c.facturi_produse ?? '')}">parţial ${c.poz_facturate}/${c.nr_pozitii} · <strong class="mono">${nrRupt(String(c.facturi_produse ?? '').replace(/,/g, ', '))}</strong></span>`
   : '<span class="nefacturat">nefacturat</span>';
 
 // ── Facturează separat (userul, 2026-11-06) — doar la ridicare personală, cu cel puţin 2 produse nefacturate:
