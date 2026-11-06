@@ -387,7 +387,7 @@ const FILTRE = {
   // + cele facturate parţial (userul, 2026-11-06): stau şi la În lucru, şi aici, până se facturează tot; fără arhivate
   finalizata: () => `c.tip = 'comanda' AND (c.finalizat_la IS NOT NULL OR ${FACTURATA_PARTIAL}) AND NOT ${ARHIVATA()}`,
   arhivata:   () => ARHIVATA(),
-  toate:      '1',   // căutarea globală din manager: toate stările la un loc
+  toate:      () => `NOT ${ARHIVATA()}`,   // căutarea globală din manager: toate stările la un loc — fără arhivate (au căutarea lor)
 };
 
 // Ultima operaţie scanată a comenzii — coloana „Status" din liste.

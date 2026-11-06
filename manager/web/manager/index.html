@@ -99,6 +99,8 @@
   td.facturare, dd.facturare { white-space: nowrap; }
   .facturat { color: var(--ok); }
   .nefacturat { color: var(--danger); font-size: .84rem; margin-right: 8px; }
+  .titlu-arhiva { font-size: 1.05rem; margin: 0 0 10px; }
+  .titlu-arhiva .dim { font-weight: 400; }
   /* facturată separat, pe produse (userul, 2026-11-06) */
   .facturat-partial { color: #d4a24c; font-size: .84rem; }
   .fact-produse { margin: 2px 0 8px; display: grid; gap: 3px; font-size: .86rem; }
@@ -526,7 +528,9 @@ const statusHtml = st => st
 // ponytail: toată lista vine în browser şi se filtrează aici; căutare pe server (LIKE) când se adună mii de comenzi
 let lista = [], listaPt = null, cautare = '', sortare = 'data';
 let pesteTot = localStorage.getItem('cautaPesteTot') !== '0';
-const ceLista = () => (cautare.trim() && pesteTot ? 'toate' : tabCurent);   // ce listă trebuie să fie pe ecran
+// ce listă trebuie să fie pe ecran. Arhivatele (userul, 2026-11-06) au căutarea LOR: „în toate secţiunile" nu le
+// cuprinde, iar din Arhivate se caută doar în arhivate.
+const ceLista = () => (tabCurent === 'arhivata' ? 'arhivata' : cautare.trim() && pesteTot ? 'toate' : tabCurent);
 // starea unei comenzi = tabul în care stă
 const stareRand = c => (c.tip === 'comanda' ? (c.arhivata ? 'arhivata' : c.finalizat_la ? 'finalizata' : 'comanda') : c.tip);
 // utilizatorul logat (/api/eu) — rolul decide ce butoane apar. Serverul verifică
@@ -623,7 +627,7 @@ function asiguraTaburi() {
     $('taburiSus').innerHTML = `
       <div class="eticheta-sus">Ofertă nouă</div>
       <div class="placi-game" id="placiGame"></div>
-      <div class="taburi">${TABURI.map(([t, n]) => `
+      <div class="taburi">${TABURI.filter(([t]) => t !== 'arhivata').map(([t, n]) => `
         <button data-tab="${t}" class="placa ton-${t}" title="${n}">
           <span class="placa-ic">${icoana(ICOANA_TAB[t])}</span><span class="tab-nume">${NUME_SCURT[t]}</span><span class="tab-cate" data-cate="${t}"></span>
         </button>`).join('')}</div>`;
@@ -651,6 +655,16 @@ const numeTab = () => TABURI.find(([t]) => t === tabCurent)[1];
 // stările din meniul din stânga = plăcile de aici (click pe placă: goleşte căutarea „în toate", iese din comandă)
 document.addEventListener('click', e => {
   const a = e.target.closest('#meniu a[data-tab]');
+  // Arhivate — doar în meniu, fără placă (userul, 2026-11-06): lista lor, fără căutarea de până acum
+  if (a?.dataset.tab === 'arhivata' && $('taburiSus') && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+    e.preventDefault();
+    tabCurent = 'arhivata'; cautare = '';
+    if ($('cauta')) $('cauta').value = '';
+    if (location.hash.startsWith('#comanda/')) { location.hash = HASH_TAB.arhivata; return; }
+    history.replaceState(null, '', HASH_TAB.arhivata);
+    renderLista();
+    return;
+  }
   const b = a && document.querySelector(`#taburiSus button[data-tab="${a.dataset.tab}"]`);
   if (!b || e.ctrlKey || e.metaKey || e.shiftKey) return;
   e.preventDefault();
@@ -667,6 +681,7 @@ function asiguraBaraLista() {
     $('continut').innerHTML = `
       <div class="lucru">
         <section class="lucru-lista">
+          <h2 class="titlu-arhiva" id="titluArhiva" hidden>Comenzi arhivate <span class="dim mic">— facturate de cel puţin 30 de zile; se caută doar aici</span></h2>
           <div class="cauta-lista">
             <label class="camp-cauta" title="Caută (Ctrl K sau /)">${icoana('cauta')}
               <input id="cauta" type="search" placeholder="Caută client, telefon, sistem, nr. ofertă, factură, utilizator…" autocomplete="off">
@@ -782,7 +797,7 @@ document.addEventListener('keydown', e => {
 
 function randeazaTabel() {
   const q = normal(cautare.trim());
-  const totul = !!q && pesteTot;                        // căutare în toate secţiunile: grupat pe stări
+  const totul = !!q && pesteTot && tabCurent !== 'arhivata';   // căutare în toate secţiunile (fără arhivate): grupat pe stări
   const tabRand = c => (totul ? stareRand(c) : tabCurent);
   const ordine = c => TABURI.findIndex(([t]) => t === tabRand(c));
   const cuFacturare = totul || (tabCurent !== 'oferta' && tabCurent !== 'plata');
@@ -793,7 +808,10 @@ function randeazaTabel() {
   $('unde').firstElementChild.textContent = 'Doar în ' + numeTab();
   for (const b of $('unde').children) b.classList.toggle('active', (b.dataset.unde === 'toate') === pesteTot);
   // „Doar în … / În toate secţiunile" contează doar cât se caută — fără text părea o setare pornită
-  $('undeRand').hidden = !q;
+  $('undeRand').hidden = !q || tabCurent === 'arhivata';   // în Arhivate se caută doar în ele
+  $('cauta').placeholder = tabCurent === 'arhivata' ? 'Caută în comenzile arhivate: client, telefon, sistem, nr. ofertă, factură…'
+    : 'Caută client, telefon, sistem, nr. ofertă, factură, utilizator…';
+  $('titluArhiva').hidden = tabCurent !== 'arhivata';
   btnSort.textContent = sortare === 'facturare' ? '⇅ Nefacturate primele' : '⇅ Cele mai noi primele';
   btnSort.classList.toggle('activ', sortare === 'facturare');
 

@@ -123,7 +123,7 @@ function comanda(livrare = 'Ridicare personala', produse = ['Confort Verona', 'R
   verifica('numărătoarea Arhivate / Finalizate', sum.arhivate === arh.length && !fz.some(x => arh.includes(x)), JSON.stringify(sum));
   verifica('pagina comenzii ştie că e arhivată', (await cheama('GET', '/api/comenzi/:id', { params: { id: a30 } })).date.comanda.arhivata === 1
     && (await cheama('GET', '/api/comenzi/:id', { params: { id: a29 } })).date.comanda.arhivata === 0);
-  verifica('căutarea peste tot o marchează arhivată', (await lista('toate')).find(x => x.id === a30).arhivata === 1);
+  verifica('căutarea „în toate secţiunile" NU găseşte arhivate', !(await lista('toate')).some(x => x.id === a30) && (await lista('toate')).some(x => x.id === a29));
 
   inchide();
   try { fs.rmSync(TEMP, { recursive: true, force: true }); } catch {}

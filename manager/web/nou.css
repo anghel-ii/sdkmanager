@@ -82,13 +82,8 @@ body.ui-nou:has(#continut > .antet) #taburiSus { display: none; }
 .ciorna-chip small { flex: none; font-size: 12px; color: #e0a54a; }
 .ciorna-chip:hover { background: rgba(183, 121, 31, .30); }
 
-/* ── cele cinci stări (+ Arhivate, 2026-11-06): un rând de plăci joase — iconiţa, numele, numărul ── */
-.taburi { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) repeat(3, minmax(0, 1fr)); gap: 6px; }
-/* cu cinci plăci pe rând — mai strânse, ca numele să încapă întregi */
-.taburi .placa { gap: 6px; padding: 0 9px 0 6px; }
-.taburi .placa-ic { width: 22px; height: 22px; }
-.taburi .placa .tab-nume { font-size: 13px; }
-.taburi .placa .tab-cate { font-size: 16px; }
+/* ── cele patru stări: un rând de plăci joase — iconiţa, numele, numărul ── */
+.taburi { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
 .placa { display: flex; align-items: center; gap: 8px; height: 46px; padding: 0 12px 0 8px; min-width: 0; text-align: left;
          font: inherit; color: var(--text); cursor: pointer;
          background: var(--panel); border: 1px solid var(--line); border-radius: 10px; transition: border-color .15s, background .15s; }
@@ -103,7 +98,6 @@ body.ui-nou:has(#continut > .antet) #taburiSus { display: none; }
 .ton-plata .placa-ic      { background: rgba(212, 162, 76, .13);  color: var(--cald); }
 .ton-comanda .placa-ic    { background: rgba(180, 156, 255, .13); color: var(--mov); }
 .ton-finalizata .placa-ic { background: rgba(107, 155, 122, .16); color: var(--verde-text); }
-.ton-arhivata .placa-ic   { background: rgba(139, 146, 160, .14); color: var(--text-dim); }
 /* tabul arătat acum în listă */
 .taburi .placa.activ { border-color: var(--accent); background: linear-gradient(rgba(31, 111, 209, .14), rgba(31, 111, 209, .14)), var(--panel);
                        box-shadow: inset 0 0 0 1px var(--accent); }
